@@ -268,35 +268,38 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
         {/* Search & Filters Card */}
         <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
           <div className="flex flex-col gap-4">
-            {/* Top Row: Search + Type Filter + View Toggle - matches fase grid */}
+            {/* Top Row: Search + Type Filter + View Toggle */}
             <div className="flex gap-2 items-center">
-              {/* Search - spans width of Fase 0 + Fase 1 + Fase 2 (3 units) */}
-              <div className="flex-[3] min-w-[240px] relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
-                <Input
-                  placeholder="Zoek technieken..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+              {/* Search + Filter container - matches fase button widths exactly */}
+              <div className="flex-1 flex gap-2">
+                {/* Search - 3 units (Fase 0 + 1 + 2) */}
+                <div className="flex-[3] relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
+                  <Input
+                    placeholder="Zoek technieken..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                
+                {/* Type Filter - 2 units (Fase 3 + 4) */}
+                <div className="flex-[2]">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Alle Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle Types</SelectItem>
+                      <SelectItem value="video">Video</SelectItem>
+                      <SelectItem value="webinar">Webinar</SelectItem>
+                      <SelectItem value="hugo-ai">Hugo AI Chat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
-              {/* Type Filter - spans width of Fase 3 + Fase 4 (2 units) */}
-              <div className="flex-[2] min-w-[160px]">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Alle Types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle Types</SelectItem>
-                    <SelectItem value="video">Video</SelectItem>
-                    <SelectItem value="webinar">Webinar</SelectItem>
-                    <SelectItem value="hugo-ai">Hugo AI Chat</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* View Toggle - Right Side */}
+              {/* View Toggle - Fixed right */}
               <div className="flex gap-1 flex-shrink-0">
                 <Button
                   variant="ghost"
