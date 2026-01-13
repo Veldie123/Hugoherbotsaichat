@@ -50,6 +50,17 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-13: Dashboard Refactor
+  - Added 4 KPI cards (Video's bekeken, Live sessies, Analyses, AI Chats)
+  - Renamed Digital Coaching → Video, Live Coaching → Webinar
+  - Added Chat met Hugo a.i. and Gespreksanalyse action cards
+  - Now has 4 main action cards in 2x2 grid layout
+- 2026-01-13: Created TechniqueLibrary.tsx
+  - New User View component for E.P.I.C Technieken
+  - Follows Admin layout pattern (4 KPI cards, search, filters, list/grid toggle)
+  - Read-only: no checkboxes, no edit/delete buttons, no "Nieuwe Techniek" button
+  - Uses hh-primary (steel blue) color scheme instead of purple
+  - Actions: Bekijk details, Bekijk Video's, Speel Rollenspel
 - 2026-01-13: UI Consistency Updates
   - Standardized table header styling across AdminTechniqueManagement, AdminDashboard, AdminBilling, AdminOrganizationManagement
   - Fixed TechniqueDetailsDialog type interface (naam instead of name property)
@@ -59,3 +70,7 @@ src/
   - Configured Vite for Replit (port 5000, allowedHosts)
   - Added TypeScript configuration
   - Created missing component stubs (Help, Coaching, RolePlayOverview, Analysis)
+
+## User View vs Admin View Design Pattern
+- **Admin View**: Purple/green color scheme, checkboxes for selection, edit/delete buttons, "Nieuwe X" buttons
+- **User View**: Steel blue (hh-primary) color scheme, no checkboxes, read-only detail dialogs, action buttons for viewing/playing content

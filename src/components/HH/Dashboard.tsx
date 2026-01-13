@@ -22,6 +22,8 @@ import {
   Calendar,
   Flame,
   ArrowRight,
+  Video,
+  FileSearch,
 } from "lucide-react";
 import { getDailyQuote } from "../../data/hugoQuotes";
 
@@ -138,22 +140,77 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
           ]}
         />
 
-        {/* 2 Main Action Blocks - PROMINENT */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Digital Coaching */}
+        {/* 4 KPI Cards - User Statistics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="p-4 sm:p-5 rounded-[16px] border-hh-border">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
+                <Video className="w-5 h-5 text-hh-primary" />
+              </div>
+              <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
+                +3
+              </Badge>
+            </div>
+            <p className="text-[13px] text-hh-muted mb-1">Video's bekeken</p>
+            <p className="text-[28px] leading-[32px] text-hh-text font-medium">11</p>
+          </Card>
+
+          <Card className="p-4 sm:p-5 rounded-[16px] border-hh-border">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                <Radio className="w-5 h-5 text-red-500" />
+              </div>
+              <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
+                +1
+              </Badge>
+            </div>
+            <p className="text-[13px] text-hh-muted mb-1">Live sessies</p>
+            <p className="text-[28px] leading-[32px] text-hh-text font-medium">4</p>
+          </Card>
+
+          <Card className="p-4 sm:p-5 rounded-[16px] border-hh-border">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <FileSearch className="w-5 h-5 text-blue-500" />
+              </div>
+              <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
+                +2
+              </Badge>
+            </div>
+            <p className="text-[13px] text-hh-muted mb-1">Analyses</p>
+            <p className="text-[28px] leading-[32px] text-hh-text font-medium">11</p>
+          </Card>
+
+          <Card className="p-4 sm:p-5 rounded-[16px] border-hh-border">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-green-500" />
+              </div>
+              <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
+                +5
+              </Badge>
+            </div>
+            <p className="text-[13px] text-hh-muted mb-1">AI Chats</p>
+            <p className="text-[28px] leading-[32px] text-hh-text font-medium">19</p>
+          </Card>
+        </div>
+
+        {/* 4 Main Action Blocks */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Video */}
           <Card 
             className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all group cursor-pointer active:scale-[0.98]"
-            onClick={() => navigate?.("coaching")}
+            onClick={() => navigate?.("videos")}
           >
             <div className="mb-4 sm:mb-5">
               <div className="flex items-center gap-2 mb-2">
-                <Play className="w-5 h-5 text-hh-primary" />
+                <Video className="w-5 h-5 text-hh-primary" />
                 <h3 className="text-[18px] leading-[24px] text-hh-text">
-                  Digital Coaching
+                  Video
                 </h3>
               </div>
               <p className="text-[13px] leading-[18px] sm:text-[14px] sm:leading-[20px] text-hh-muted">
-                Epic Sales Flow • Video + Rollenspel
+                Epic Sales Flow • Video trainingen
               </p>
             </div>
 
@@ -169,33 +226,29 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               </div>
             </div>
 
-            {/* CTA Button */}
             <Button
               className="w-full h-12 sm:h-11 gap-2 text-[15px] sm:text-[16px]"
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                navigate?.("coaching");
+                navigate?.("videos");
               }}
             >
               <Play className="w-4 h-4" />
-              Vervolg training
+              Bekijk video's
               <ArrowRight className="w-4 h-4 ml-auto" />
             </Button>
           </Card>
 
-          {/* Live Coaching */}
+          {/* Webinar */}
           <Card 
             className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all cursor-pointer group active:scale-[0.98]"
-            onClick={() => {
-              console.log("Navigating to live coaching...");
-              navigate?.("live");
-            }}
+            onClick={() => navigate?.("live")}
           >
             <div className="mb-4 sm:mb-5">
               <div className="flex items-center gap-2 mb-2">
                 <Radio className="w-5 h-5 text-destructive animate-pulse" />
                 <h3 className="text-[18px] leading-[24px] text-hh-text">
-                  Live Coaching
+                  Webinar
                 </h3>
               </div>
               <p className="text-[13px] leading-[18px] sm:text-[14px] sm:leading-[20px] text-hh-muted">
@@ -218,13 +271,97 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             <Button
               variant="outline"
               className="w-full h-12 sm:h-11 text-[15px] sm:text-[16px] border-destructive/30 text-destructive hover:bg-destructive/10"
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                console.log("Button clicked - navigating to live...");
                 navigate?.("live");
               }}
             >
               Bekijk live sessie
+            </Button>
+          </Card>
+
+          {/* Chat met Hugo a.i. */}
+          <Card 
+            className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-green-500/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all cursor-pointer group active:scale-[0.98]"
+            onClick={() => navigate?.("coaching")}
+          >
+            <div className="mb-4 sm:mb-5">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="w-5 h-5 text-green-500" />
+                <h3 className="text-[18px] leading-[24px] text-hh-text">
+                  Chat met Hugo a.i.
+                </h3>
+              </div>
+              <p className="text-[13px] leading-[18px] sm:text-[14px] sm:leading-[20px] text-hh-muted">
+                AI-gestuurde sales coaching & rollenspel
+              </p>
+            </div>
+
+            <div className="mb-5 sm:mb-6 p-4 rounded-lg bg-green-500/5 border border-green-500/20">
+              <div className="text-[12px] leading-[16px] sm:text-[13px] sm:leading-[18px] text-hh-muted mb-1.5">
+                Laatste sessie
+              </div>
+              <div className="text-[17px] leading-[23px] sm:text-[18px] sm:leading-[24px] text-hh-text font-medium mb-1">
+                Bezwaren behandelen
+              </div>
+              <div className="text-[12px] leading-[16px] sm:text-[13px] sm:leading-[18px] text-hh-muted">
+                Score: 82% • 15 min geleden
+              </div>
+            </div>
+
+            <Button
+              className="w-full h-12 sm:h-11 gap-2 text-[15px] sm:text-[16px] bg-green-500 hover:bg-green-600"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                navigate?.("coaching");
+              }}
+            >
+              <MessageSquare className="w-4 h-4" />
+              Start chat
+              <ArrowRight className="w-4 h-4 ml-auto" />
+            </Button>
+          </Card>
+
+          {/* Gespreksanalyse */}
+          <Card 
+            className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-blue-500/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all cursor-pointer group active:scale-[0.98]"
+            onClick={() => navigate?.("analysis")}
+          >
+            <div className="mb-4 sm:mb-5">
+              <div className="flex items-center gap-2 mb-2">
+                <FileSearch className="w-5 h-5 text-blue-500" />
+                <h3 className="text-[18px] leading-[24px] text-hh-text">
+                  Gespreksanalyse
+                </h3>
+              </div>
+              <p className="text-[13px] leading-[18px] sm:text-[14px] sm:leading-[20px] text-hh-muted">
+                Upload en analyseer je gesprekken
+              </p>
+            </div>
+
+            <div className="mb-5 sm:mb-6 p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
+              <div className="text-[12px] leading-[16px] sm:text-[13px] sm:leading-[18px] text-hh-muted mb-1.5">
+                Laatste analyse
+              </div>
+              <div className="text-[17px] leading-[23px] sm:text-[18px] sm:leading-[24px] text-hh-text font-medium mb-1">
+                Discovery call - Acme Inc
+              </div>
+              <div className="text-[12px] leading-[16px] sm:text-[13px] sm:leading-[18px] text-hh-muted">
+                Score: 76% • Gisteren
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full h-12 sm:h-11 gap-2 text-[15px] sm:text-[16px] border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                navigate?.("analysis");
+              }}
+            >
+              <FileSearch className="w-4 h-4" />
+              Bekijk analyses
+              <ArrowRight className="w-4 h-4 ml-auto" />
             </Button>
           </Card>
         </div>
