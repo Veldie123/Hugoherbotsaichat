@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { AppLayout } from "./AppLayout";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -30,15 +30,14 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  CheckCircle2,
   MessageCircle,
   Radio,
 } from "lucide-react";
+import { getTechniquesByPhase } from "../../data/epicTechniques";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
-import { 
-  getAllTechnieken, 
-  getFaseNaam,
-  Techniek 
-} from "../../data/technieken-service";
+import technieken_index from "../../data/technieken_index";
+import { getAllTechnieken } from "../../data/technieken-service";
 
 interface TechniqueLibraryProps {
   navigate?: (page: string) => void;
@@ -54,6 +53,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedTechnique, setSelectedTechnique] = useState<any>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const handleSort = (column: "code" | "name" | "videos" | "roleplays" | "score") => {
     if (sortBy === column) {
@@ -75,45 +75,60 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
     );
   };
 
-  const technieken = useMemo(() => {
-    const seedFromString = (str: string): number => {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash = hash & hash;
-      }
-      return Math.abs(hash);
-    };
-
-    const allTechnieken = getAllTechnieken().filter(t => !t.is_fase);
-    
-    const toTechniqueItem = (t: Techniek, baseId: number, index: number) => {
-      const seed = seedFromString(t.nummer + t.naam);
-      return {
-        id: baseId + index,
-        code: t.nummer,
-        name: t.naam,
-        fase: t.fase,
-        videos: (seed % 5) + 1,
-        roleplays: (seed % 400) + 100,
-        avgScore: (seed % 20) + 70,
-        completion: (seed % 40) + 60,
-        status: "Actief" as const,
-      };
-    };
-
+  const generateMockStats = (techniqueNumber: string) => {
+    const hash = techniqueNumber.split('.').reduce((acc, num) => acc + parseInt(num || '0', 10), 0);
     return {
-      "fase-0": allTechnieken.filter(t => t.fase === "0").map((t, i) => toTechniqueItem(t, 1, i)),
-      "fase-1": allTechnieken.filter(t => t.fase === "1").map((t, i) => toTechniqueItem(t, 10, i)),
-      "fase-2": allTechnieken.filter(t => t.fase === "2").map((t, i) => toTechniqueItem(t, 20, i)),
-      "fase-3": allTechnieken.filter(t => t.fase === "3").map((t, i) => toTechniqueItem(t, 50, i)),
-      "fase-4": allTechnieken.filter(t => t.fase === "4").map((t, i) => toTechniqueItem(t, 70, i)),
+      videos: 2 + (hash % 4),
+      roleplays: 150 + (hash * 50),
+      avgScore: 74 + (hash % 15),
+      completion: 79 + (hash % 13),
+      status: "Actief" as const,
     };
-  }, []);
+  };
 
-  const currentTechnieken = activeFase === "all" 
-    ? Object.values(technieken).flat() 
-    : technieken[activeFase as keyof typeof technieken] || [];
+  const technieken = {
+    "fase-1": getTechniquesByPhase("1").map((tech, idx) => ({
+      id: idx + 1,
+      code: tech.nummer,
+      name: tech.naam,
+      ...generateMockStats(tech.nummer),
+    })),
+    "fase-2": getTechniquesByPhase("2").map((tech, idx) => ({
+      id: idx + 5,
+      code: tech.nummer,
+      name: tech.naam,
+      ...generateMockStats(tech.nummer),
+    })),
+    "fase-3": getTechniquesByPhase("3").map((tech, idx) => ({
+      id: idx + 13,
+      code: tech.nummer,
+      name: tech.naam,
+      ...generateMockStats(tech.nummer),
+    })),
+    "fase-4": getTechniquesByPhase("4").map((tech, idx) => ({
+      id: idx + 18,
+      code: tech.nummer,
+      name: tech.naam,
+      ...generateMockStats(tech.nummer),
+    })),
+  };
+
+  const getFaseLabel = (fase: string) => {
+    switch (fase) {
+      case "fase-1":
+        return "Fase 1 - Voorbereiding";
+      case "fase-2":
+        return "Fase 2 - Ontdekkingsfase";
+      case "fase-3":
+        return "Fase 3 - Aanbevelingsfase";
+      case "fase-4":
+        return "Fase 4 - Beslissingsfase";
+      default:
+        return fase;
+    }
+  };
+
+  const currentTechnieken = activeFase === "all" ? Object.values(technieken).flat() : technieken[activeFase as keyof typeof technieken];
 
   const sortedTechnieken = [...currentTechnieken].sort((a, b) => {
     let comparison = 0;
@@ -142,29 +157,22 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
     tech.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalCount = Object.values(technieken).reduce((sum, arr) => sum + arr.length, 0);
-  const totalVideos = Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.videos, 0), 0);
-  const totalRoleplays = Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.roleplays, 0), 0);
-  const avgScore = Math.round(
-    Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.avgScore, 0), 0) / totalCount
-  );
-
   return (
-    <AppLayout currentPage="library" navigate={navigate} isAdmin={isAdmin}>
+    <AppLayout currentPage="techniques" navigate={navigate} isAdmin={isAdmin}>
       <div className="p-6 space-y-6">
-        {/* Header - No button for User View */}
+        {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
-              E.P.I.C Technieken
+              Technieken & Role-Plays
             </h1>
             <p className="text-[16px] leading-[24px] text-hh-muted">
-              25 verkooptechnieken verdeeld over 4 fases
+              25 EPIC technieken verdeeld over 4 fases
             </p>
           </div>
         </div>
 
-        {/* KPI Cards - User View colors (hh-ink/hh-primary) */}
+        {/* Overall Stats - Exact zoals AdminDashboard */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
@@ -181,15 +189,15 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Technieken
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
-              {totalCount}
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+              {Object.values(technieken).reduce((sum, arr) => sum + arr.length, 0)}
             </p>
           </Card>
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
-                <Video className="w-4 h-4 sm:w-5 sm:h-5 text-hh-primary" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
+                <Video className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
               </div>
               <Badge
                 variant="outline"
@@ -201,15 +209,15 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Video's
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
-              {totalVideos}
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+              {Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.videos, 0), 0)}
             </p>
           </Card>
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600/10 flex items-center justify-center">
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
               <Badge
                 variant="outline"
@@ -221,8 +229,8 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Role-Plays
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
-              {totalRoleplays}
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+              {Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.roleplays, 0), 0)}
             </p>
           </Card>
 
@@ -239,10 +247,14 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               </Badge>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
-              Jouw Gem. Score
+              Gem. Score
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
-              {avgScore}%
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+              {Math.round(
+                Object.values(technieken).reduce((sum, arr) =>
+                  sum + arr.reduce((s, t) => s + t.avgScore, 0), 0
+                ) / Object.values(technieken).reduce((sum, arr) => sum + arr.length, 0)
+              )}%
             </p>
           </Card>
         </div>
@@ -250,6 +262,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
         {/* Search, View Toggle & Filters Card */}
         <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
           <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search - Left Side */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
@@ -260,14 +273,14 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               />
             </div>
             
+            {/* Filters - Middle */}
             <Select value={activeFase} onValueChange={setActiveFase}>
               <SelectTrigger className="w-full lg:w-[220px]">
                 <SelectValue placeholder="Alle Fases" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Fases</SelectItem>
-                <SelectItem value="fase-0">Fase 0 - Voorbereiding</SelectItem>
-                <SelectItem value="fase-1">Fase 1 - Openingsfase</SelectItem>
+                <SelectItem value="fase-1">Fase 1 - Voorbereiding</SelectItem>
                 <SelectItem value="fase-2">Fase 2 - Ontdekkingsfase</SelectItem>
                 <SelectItem value="fase-3">Fase 3 - Aanbevelingsfase</SelectItem>
                 <SelectItem value="fase-4">Fase 4 - Beslissingsfase</SelectItem>
@@ -282,10 +295,11 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                 <SelectItem value="all">Alle Status</SelectItem>
                 <SelectItem value="actief">Actief</SelectItem>
                 <SelectItem value="concept">Concept</SelectItem>
+                <SelectItem value="archief">Archief</SelectItem>
               </SelectContent>
             </Select>
             
-            {/* View Toggle - hh-ink colors */}
+            {/* View Toggle - Right Side */}
             <div className="flex gap-1">
               <Button
                 variant="ghost"
@@ -315,7 +329,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
           </div>
         </Card>
 
-        {/* List View - Table (No checkboxes for User View) */}
+        {/* List View - Table */}
         {viewMode === "list" && (
           <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
             <div className="overflow-x-auto">
@@ -363,12 +377,12 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       onClick={() => handleSort("score")}
                     >
                       <div className="flex items-center justify-end gap-1.5">
-                        Jouw Score
+                        Avg Score
                         <SortIcon column="score" />
                       </div>
                     </th>
                     <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Voortgang
+                      Completion
                     </th>
                     <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Status
@@ -401,13 +415,13 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1 text-[14px] leading-[20px] text-hh-text">
-                          <Video className="w-3.5 h-3.5 text-hh-primary" />
+                          <Video className="w-3.5 h-3.5 text-hh-ink" />
                           {techniek.videos}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1 text-[14px] leading-[20px] text-hh-text">
-                          <Play className="w-3.5 h-3.5 text-hh-ink" />
+                          <Play className="w-3.5 h-3.5 text-blue-600" />
                           {techniek.roleplays}
                         </div>
                       </td>
@@ -434,6 +448,18 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => navigate?.("videos")}>
+                              <Video className="w-4 h-4 mr-2" />
+                              Bekijk Video's
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
+                              <Play className="w-4 h-4 mr-2" />
+                              Bekijk Role-Plays
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <TrendingUp className="w-4 h-4 mr-2" />
+                              Analytics
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
                                 const allTech = getAllTechnieken();
@@ -449,20 +475,13 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                                     stappenplan: fullTech.stappenplan,
                                     voorbeeld: fullTech.voorbeeld,
                                   });
+                                  setIsEditMode(false);
                                   setDetailsDialogOpen(true);
                                 }
                               }}
                             >
                               <Eye className="w-4 h-4 mr-2" />
                               Bekijk details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate?.("videos")}>
-                              <Video className="w-4 h-4 mr-2" />
-                              Bekijk Video's
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
-                              <Play className="w-4 h-4 mr-2" />
-                              Speel Rollenspel
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -481,7 +500,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             {filteredTechnieken.map((techniek) => (
               <Card 
                 key={`${techniek.code}-${techniek.id}`} 
-                className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md hover:border-hh-ink/30 transition-all cursor-pointer"
+                className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md transition-shadow cursor-pointer"
                 onClick={() => {
                   const allTech = getAllTechnieken();
                   const fullTech = allTech.find(t => t.nummer === techniek.code);
@@ -501,6 +520,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                 }}
               >
                 <div className="space-y-3">
+                  {/* Header */}
                   <div className="flex items-start justify-between">
                     <Badge
                       variant="outline"
@@ -515,16 +535,26 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => navigate?.("videos")}>
+                          <Video className="w-4 h-4 mr-2" />
+                          Bekijk Video's
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
+                          <Play className="w-4 h-4 mr-2" />
+                          Bekijk Role-Plays
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <TrendingUp className="w-4 h-4 mr-2" />
+                          Analytics
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
-                            const allTech = getAllTechnieken();
-                            const fullTech = allTech.find(t => t.nummer === techniek.code);
+                            const fullTech = Object.values(technieken_index.technieken).find(
+                              (t: any) => t.nummer === techniek.code
+                            );
                             if (fullTech) {
-                              setSelectedTechnique({
-                                nummer: fullTech.nummer,
-                                naam: fullTech.naam,
-                                fase: fullTech.fase,
-                              });
+                              setSelectedTechnique(fullTech);
+                              setIsEditMode(false);
                               setDetailsDialogOpen(true);
                             }
                           }}
@@ -532,44 +562,40 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                           <Eye className="w-4 h-4 mr-2" />
                           Bekijk details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate?.("videos")}>
-                          <Video className="w-4 h-4 mr-2" />
-                          Bekijk Video's
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
-                          <Play className="w-4 h-4 mr-2" />
-                          Speel Rollenspel
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
 
+                  {/* Title */}
                   <h3 className="text-[14px] leading-[20px] text-hh-text font-medium">
                     {techniek.name}
                   </h3>
 
+                  {/* Stats */}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-1.5 text-[13px] text-hh-muted">
-                      <Video className="w-3.5 h-3.5 text-hh-primary" />
+                      <Video className="w-3.5 h-3.5 text-hh-ink" />
                       <span>{techniek.videos} video's</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[13px] text-hh-muted">
-                      <Play className="w-3.5 h-3.5 text-hh-ink" />
+                      <Play className="w-3.5 h-3.5 text-blue-600" />
                       <span>{techniek.roleplays}</span>
                     </div>
                   </div>
 
+                  {/* Progress & Score */}
                   <div className="space-y-2 pt-2 border-t border-hh-border">
                     <div className="flex justify-between text-[12px]">
-                      <span className="text-hh-muted">Jouw Score</span>
+                      <span className="text-hh-muted">Avg Score</span>
                       <span className="text-hh-success font-medium">{techniek.avgScore}%</span>
                     </div>
                     <div className="flex justify-between text-[12px]">
-                      <span className="text-hh-muted">Voortgang</span>
+                      <span className="text-hh-muted">Completion</span>
                       <span className="text-hh-text">{techniek.completion}%</span>
                     </div>
                   </div>
 
+                  {/* Navigation Buttons */}
                   <div className="flex gap-2 pt-2">
                     <Button
                       variant="outline"
@@ -587,7 +613,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-1.5 text-[11px] h-8 bg-hh-primary/5 text-hh-primary border-hh-primary/20 hover:bg-hh-primary hover:text-white"
+                      className="flex-1 gap-1.5 text-[11px] h-8 bg-hh-ink/5 text-hh-ink border-hh-ink/20 hover:bg-hh-ink hover:text-white"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         localStorage.setItem('filterTechniek', techniek.code);
@@ -600,7 +626,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-1.5 text-[11px] h-8 bg-hh-primary/5 text-hh-primary border-hh-primary/20 hover:bg-hh-primary hover:text-white"
+                      className="flex-1 gap-1.5 text-[11px] h-8 bg-hh-ink/5 text-hh-ink border-hh-ink/20 hover:bg-hh-ink hover:text-white"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         localStorage.setItem('filterTechniek', techniek.code);
@@ -618,7 +644,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
         )}
       </div>
 
-      {/* Technique Details Dialog - Read Only */}
+      {/* Technique Details Dialog */}
       {selectedTechnique && (
         <TechniqueDetailsDialog
           open={detailsDialogOpen}
@@ -635,6 +661,9 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             voorbeeld: selectedTechnique.voorbeeld,
           }}
           isEditable={false}
+          onSave={() => {
+            setDetailsDialogOpen(false);
+          }}
         />
       )}
     </AppLayout>
