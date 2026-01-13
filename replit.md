@@ -50,6 +50,11 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-13: User View Data Consistency Update
+  - Removed "Aanbevolen door Hugo" section from Library.tsx and RolePlayOverview.tsx
+  - Replaced "Start" button with dropdown menu (Bekijk details, Start oefening)
+  - User View now mirrors Admin View data structure exactly
+  - Principle: User View = Admin View data with read-only UI (no edit/delete/create)
 - 2026-01-13: TalkToHugoAI Chat Interface Redesign
   - Created new TalkToHugoAI.tsx based on AdminChatExpertMode but for User View
   - Archived original as TalkToHugoAI_V0.tsx
