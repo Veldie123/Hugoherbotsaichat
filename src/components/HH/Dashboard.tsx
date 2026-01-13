@@ -12,6 +12,7 @@ import {
   FileSearch,
 } from "lucide-react";
 import { getDailyQuote } from "../../data/hugoQuotes";
+import { getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
 
 // Fase progress bar component - shows completion across 5 phases
 const FaseProgressBar = ({ progress }: { progress: number[] }) => {
@@ -48,6 +49,10 @@ interface DashboardProps {
 }
 
 export function Dashboard({ hasData = true, navigate, isAdmin = false }: DashboardProps) {
+  // Load current technique from SSOT for "Huidige topic"
+  const currentTechnique = getTechniekByNummer("2.1.1");
+  const currentFaseNaam = currentTechnique ? getFaseNaam(currentTechnique.fase) : "";
+
   if (!hasData) {
     return (
       <AppLayout currentPage="dashboard" navigate={navigate} isAdmin={isAdmin}>
@@ -94,9 +99,9 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
         </div>
 
 
-        {/* 4 Action Cards - Compact with Fase Progress */}
+        {/* 4 Action Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Video */}
+          {/* Video - with progress bar + huidige topic */}
           <Card 
             className="p-4 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("videos")}
@@ -118,6 +123,17 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               <FaseProgressBar progress={[100, 100, 60, 20, 0]} />
             </div>
 
+            {/* Huidige topic */}
+            <div className="mb-3 p-3 rounded-lg bg-hh-ui-50/50 border border-hh-border">
+              <div className="text-[11px] text-hh-muted mb-1">Huidige topic</div>
+              <div className="text-[15px] text-hh-text font-medium mb-0.5">
+                {currentTechnique ? `${currentTechnique.nummer} ${currentTechnique.naam}` : "Geen techniek"}
+              </div>
+              <div className="text-[11px] text-hh-muted">
+                {currentTechnique ? `Fase ${currentTechnique.fase} • ${currentFaseNaam} • 18 min` : ""}
+              </div>
+            </div>
+
             <Button
               className="w-full h-10 gap-2 text-[14px]"
               onClick={(e: React.MouseEvent) => {
@@ -131,7 +147,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </Button>
           </Card>
 
-          {/* Webinar */}
+          {/* Webinar - eerstvolgende sessie only, no progress bar */}
           <Card 
             className="p-4 rounded-[16px] border-hh-border hover:border-destructive/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("live")}
@@ -149,8 +165,15 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[10px]">+1</Badge>
             </div>
             
-            <div className="mb-3">
-              <FaseProgressBar progress={[100, 80, 40, 0, 0]} />
+            {/* Eerstvolgende sessie */}
+            <div className="mb-3 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+              <div className="text-[11px] text-hh-muted mb-1">Eerstvolgende sessie</div>
+              <div className="text-[15px] text-hh-text font-medium mb-0.5">
+                Live Q&A: Discovery Technieken
+              </div>
+              <div className="text-[11px] text-hh-muted">
+                Woensdag 22 jan • 14:00 - 15:00
+              </div>
             </div>
 
             <Button
@@ -166,7 +189,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </Button>
           </Card>
 
-          {/* Talk to Hugo AI */}
+          {/* Talk to Hugo AI - with progress bar + huidige topic */}
           <Card 
             className="p-4 rounded-[16px] border-hh-ink/20 hover:border-hh-ink/40 hover:shadow-lg bg-gradient-to-br from-hh-ink/5 to-transparent transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("talk-to-hugo")}
@@ -188,6 +211,17 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               <FaseProgressBar progress={[100, 100, 80, 50, 10]} />
             </div>
 
+            {/* Huidige topic */}
+            <div className="mb-3 p-3 rounded-lg bg-hh-ink/5 border border-hh-ink/20">
+              <div className="text-[11px] text-hh-muted mb-1">Huidige topic</div>
+              <div className="text-[15px] text-hh-text font-medium mb-0.5">
+                {currentTechnique ? `${currentTechnique.nummer} ${currentTechnique.naam}` : "Geen techniek"}
+              </div>
+              <div className="text-[11px] text-hh-muted">
+                {currentTechnique ? `Fase ${currentTechnique.fase} • ${currentFaseNaam}` : ""}
+              </div>
+            </div>
+
             <Button
               className="w-full h-10 gap-2 text-[14px] bg-hh-ink hover:bg-hh-ink/90 text-white"
               onClick={(e: React.MouseEvent) => {
@@ -201,7 +235,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </Button>
           </Card>
 
-          {/* Gespreksanalyse */}
+          {/* Gespreksanalyse - stats only, no progress bar */}
           <Card 
             className="p-4 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("analysis")}
@@ -219,8 +253,15 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[10px]">+2</Badge>
             </div>
             
-            <div className="mb-3">
-              <FaseProgressBar progress={[100, 60, 30, 0, 0]} />
+            {/* Laatste analyse */}
+            <div className="mb-3 p-3 rounded-lg bg-hh-primary/5 border border-hh-primary/20">
+              <div className="text-[11px] text-hh-muted mb-1">Laatste analyse</div>
+              <div className="text-[15px] text-hh-text font-medium mb-0.5">
+                Discovery call - Acme Inc
+              </div>
+              <div className="text-[11px] text-hh-muted">
+                Score: 76% • Gisteren
+              </div>
             </div>
 
             <Button
