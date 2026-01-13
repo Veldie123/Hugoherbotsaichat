@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { getTechniqueByNumber } from "../../data/epicTechniques";
+import { getTechniekByNummer } from "../../data/technieken-service";
 
 interface AdminAnalyticsProps {
   navigate?: (page: string) => void;

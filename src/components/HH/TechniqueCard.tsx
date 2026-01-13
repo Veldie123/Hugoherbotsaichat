@@ -2,10 +2,10 @@
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";
 import { CheckCircle2, Lock, Info } from "lucide-react";
-import { EpicTechnique, getPhaseLabel } from "../../data/epicTechniques";
+import { Techniek, getFaseNaam } from "../../data/technieken-service";
 
 interface TechniqueCardProps {
-  technique: EpicTechnique;
+  technique: Techniek & { ai_eval_points?: string[] };
   userScore?: number;
   attempts?: number;
   isLocked?: boolean;
@@ -57,7 +57,7 @@ export function TechniqueCard({
                 variant="outline"
                 className={`text-[11px] border ${getPhaseColor(technique.fase)}`}
               >
-                {getPhaseLabel(technique.fase)}
+                {getFaseNaam(technique.fase)}
               </Badge>
             </div>
             <h3 className="text-hh-text mb-1">{technique.naam}</h3>
@@ -76,22 +76,24 @@ export function TechniqueCard({
         </div>
 
         {/* AI Evaluation Points */}
-        <div className="space-y-2">
-          <h4 className="text-[12px] leading-[16px] text-hh-muted font-medium">
-            AI beoordeelt:
-          </h4>
-          <ul className="space-y-1">
-            {technique.ai_eval_points.map((point, idx) => (
-              <li
-                key={idx}
-                className="text-[13px] leading-[18px] text-hh-text flex items-start gap-2"
-              >
-                <span className="text-hh-primary mt-0.5">•</span>
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {technique.ai_eval_points && technique.ai_eval_points.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-[12px] leading-[16px] text-hh-muted font-medium">
+              AI beoordeelt:
+            </h4>
+            <ul className="space-y-1">
+              {technique.ai_eval_points.map((point: string, idx: number) => (
+                <li
+                  key={idx}
+                  className="text-[13px] leading-[18px] text-hh-text flex items-start gap-2"
+                >
+                  <span className="text-hh-primary mt-0.5">•</span>
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* User Stats (if available) */}
         {!isLocked && userScore !== undefined && (

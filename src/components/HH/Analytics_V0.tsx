@@ -20,7 +20,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { ProgressBar } from "./ProgressBar";
-import { EPIC_TECHNIQUES, getTechniqueByNumber } from "../../data/epicTechniques";
+import { getAllTechnieken, getTechniekByNummer } from "../../data/technieken-service";
 
 interface AnalyticsProps {
   navigate?: (page: string) => void;
@@ -41,37 +41,37 @@ export function Analytics({ navigate, isAdmin }: AnalyticsProps) {
 
   const skillsBreakdown = [
     {
-      skill: getTechniqueByNumber("2.1.2")?.naam || "Meningsgerichte vragen",
+      skill: getTechniekByNummer("2.1.2")?.naam || "Meningsgerichte vragen",
       score: 91,
       sessions: 18,
       trend: 7,
     },
     {
-      skill: getTechniqueByNumber("4.2.4")?.naam || "Bezwaren",
+      skill: getTechniekByNummer("4.2.4")?.naam || "Bezwaren",
       score: 85,
       sessions: 22,
       trend: 12,
     },
     {
-      skill: getTechniqueByNumber("3.3")?.naam || "Voordeel",
+      skill: getTechniekByNummer("3.3")?.naam || "Voordeel",
       score: 78,
       sessions: 15,
       trend: -2,
     },
     {
-      skill: getTechniqueByNumber("4.1")?.naam || "Proefafsluiting",
+      skill: getTechniekByNummer("4.1")?.naam || "Proefafsluiting",
       score: 74,
       sessions: 12,
       trend: 5,
     },
     {
-      skill: getTechniqueByNumber("2.1.6")?.naam || "Actief en empathisch luisteren",
+      skill: getTechniekByNummer("2.1.6")?.naam || "Actief en empathisch luisteren",
       score: 88,
       sessions: 20,
       trend: 4,
     },
     {
-      skill: getTechniqueByNumber("1.2")?.naam || "Gentleman's agreement",
+      skill: getTechniekByNummer("1.2")?.naam || "Gentleman's agreement",
       score: 71,
       sessions: 8,
       trend: -5,
@@ -256,7 +256,7 @@ export function Analytics({ navigate, isAdmin }: AnalyticsProps) {
                     </span>
                   </div>
                 </div>
-                <ProgressBar value={skill.score} size="md" />
+                <ProgressBar label="" value={skill.score} size="md" showValue={false} />
               </div>
             ))}
           </div>
@@ -315,7 +315,7 @@ export function Analytics({ navigate, isAdmin }: AnalyticsProps) {
                       </span>
                     </div>
                   </div>
-                  <ProgressBar value={week.avgScore} size="sm" />
+                  <ProgressBar label="" value={week.avgScore} size="sm" showValue={false} />
                 </div>
               ))}
             </div>

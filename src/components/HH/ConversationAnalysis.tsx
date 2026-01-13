@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
-import { EPIC_TECHNIQUES, getTechniqueByNumber, getPhaseLabel } from "../../data/epicTechniques";
+import { getAllTechnieken, getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
 
 interface UploadedAnalysis {
   id: string;
@@ -86,7 +86,7 @@ export function ConversationAnalysis({
       status: "completed",
       overallScore: 78,
       scoreDelta: "up",
-      topTechnique: getTechniqueByNumber("2.1.2")?.naam || "Meningsgerichte vragen",
+      topTechnique: getTechniekByNummer("2.1.2")?.naam || "Meningsgerichte vragen",
       phase: "Fase 2 • Ontdekking",
     },
     {
@@ -98,7 +98,7 @@ export function ConversationAnalysis({
       status: "completed",
       overallScore: 85,
       scoreDelta: "up",
-      topTechnique: getTechniqueByNumber("4.2.3")?.naam || "Poging tot uitstel",
+      topTechnique: getTechniekByNummer("4.2.3")?.naam || "Poging tot uitstel",
       phase: "Fase 4 • Afsluiting",
     },
     {
@@ -118,7 +118,7 @@ export function ConversationAnalysis({
       status: "completed",
       overallScore: 72,
       scoreDelta: "down",
-      topTechnique: getTechniqueByNumber("3.2")?.naam || "Oplossing",
+      topTechnique: getTechniekByNummer("3.2")?.naam || "Oplossing",
       phase: "Fase 3 • Voorstel",
     },
     {

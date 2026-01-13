@@ -23,6 +23,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { AdminLayout } from "./AdminLayout";
@@ -51,7 +52,26 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../ui/dialog";
-import { getTechniqueByNumber } from "../../data/epicTechniques";
+import { getTechniekByNummer } from "../../data/technieken-service";
+
+interface Session {
+  id: number;
+  user: string;
+  userEmail: string;
+  techniek: string;
+  fase: string;
+  type: string;
+  duration: string;
+  score: number;
+  quality: string;
+  date: string;
+  flagged: boolean;
+  transcript: Array<{ speaker: string; time: string; text: string }>;
+  feedback: {
+    strengths: string[];
+    improvements: string[];
+  };
+}
 
 interface AdminSessionTranscriptsProps {
   navigate?: (page: string) => void;
@@ -63,6 +83,11 @@ export function AdminSessionTranscripts({ navigate }: AdminSessionTranscriptsPro
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
+
+  const openTranscriptDialog = (session: Session) => {
+    setSelectedSession(session);
+    setTranscriptDialogOpen(true);
+  };
   const [sortField, setSortField] = useState<"user" | "score" | "date" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -522,7 +547,7 @@ export function AdminSessionTranscripts({ navigate }: AdminSessionTranscriptsPro
                           <AvatarFallback className="bg-purple-600/10 text-purple-600 text-[11px]">
                             {session.user
                               .split(" ")
-                              .map((n) => n[0])
+                              .map((n: string) => n[0])
                               .join("")}
                           </AvatarFallback>
                         </Avatar>
@@ -664,21 +689,21 @@ export function AdminSessionTranscripts({ navigate }: AdminSessionTranscriptsPro
                   <div className="flex items-center justify-between">
                     <span className="text-[12px] text-hh-muted">{session.date}</span>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuTrigger asChild onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openTranscriptDialog(session); }}>
+                        <DropdownMenuItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); openTranscriptDialog(session); }}>
                           <Eye className="w-4 h-4 mr-2" />
                           Bekijk Transcript
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                           <Download className="w-4 h-4 mr-2" />
                           Download
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()} className="text-hh-error">
+                        <DropdownMenuItem onClick={(e: React.MouseEvent) => e.stopPropagation()} className="text-hh-error">
                           <Trash2 className="w-4 h-4 mr-2" />
                           Verwijderen
                         </DropdownMenuItem>

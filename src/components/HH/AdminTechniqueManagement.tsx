@@ -37,10 +37,8 @@ import {
   MessageCircle,
   Radio,
 } from "lucide-react";
-import { getTechniquesByPhase } from "../../data/epicTechniques";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
-import technieken_index from "../../data/technieken_index";
-import { getAllTechnieken } from "../../data/technieken-service";
+import { getTechniekenByFase, getAllTechnieken } from "../../data/technieken-service";
 
 interface AdminTechniqueManagementProps {
   navigate?: (page: string) => void;
@@ -120,26 +118,32 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
 
   // Convert EPIC techniques to admin format
   const technieken = {
-    "fase-1": getTechniquesByPhase("1").map((tech, idx) => ({
+    "fase-0": getTechniekenByFase("0").map((tech, idx) => ({
       id: idx + 1,
       code: tech.nummer,
       name: tech.naam,
       ...generateMockStats(tech.nummer),
     })),
-    "fase-2": getTechniquesByPhase("2").map((tech, idx) => ({
-      id: idx + 5,
+    "fase-1": getTechniekenByFase("1").map((tech, idx) => ({
+      id: idx + 10,
       code: tech.nummer,
       name: tech.naam,
       ...generateMockStats(tech.nummer),
     })),
-    "fase-3": getTechniquesByPhase("3").map((tech, idx) => ({
-      id: idx + 13,
+    "fase-2": getTechniekenByFase("2").map((tech, idx) => ({
+      id: idx + 20,
       code: tech.nummer,
       name: tech.naam,
       ...generateMockStats(tech.nummer),
     })),
-    "fase-4": getTechniquesByPhase("4").map((tech, idx) => ({
-      id: idx + 18,
+    "fase-3": getTechniekenByFase("3").map((tech, idx) => ({
+      id: idx + 40,
+      code: tech.nummer,
+      name: tech.naam,
+      ...generateMockStats(tech.nummer),
+    })),
+    "fase-4": getTechniekenByFase("4").map((tech, idx) => ({
+      id: idx + 50,
       code: tech.nummer,
       name: tech.naam,
       ...generateMockStats(tech.nummer),
@@ -148,8 +152,10 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
 
   const getFaseLabel = (fase: string) => {
     switch (fase) {
+      case "fase-0":
+        return "Fase 0 - Pre-contactfase";
       case "fase-1":
-        return "Fase 1 - Voorbereiding";
+        return "Fase 1 - Openingsfase";
       case "fase-2":
         return "Fase 2 - Ontdekkingsfase";
       case "fase-3":
@@ -326,7 +332,8 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Fases</SelectItem>
-                <SelectItem value="fase-1">Fase 1 - Voorbereiding</SelectItem>
+                <SelectItem value="fase-0">Fase 0 - Pre-contactfase</SelectItem>
+                <SelectItem value="fase-1">Fase 1 - Openingsfase</SelectItem>
                 <SelectItem value="fase-2">Fase 2 - Ontdekkingsfase</SelectItem>
                 <SelectItem value="fase-3">Fase 3 - Aanbevelingsfase</SelectItem>
                 <SelectItem value="fase-4">Fase 4 - Beslissingsfase</SelectItem>
@@ -615,10 +622,8 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
-                            // Find full technique details from technieken_index
-                            const fullTech = Object.values(technieken_index.technieken).find(
-                              (t: any) => t.nummer === techniek.code
-                            );
+                            const allTech = getAllTechnieken();
+                            const fullTech = allTech.find(t => t.nummer === techniek.code);
                             if (fullTech) {
                               setSelectedTechnique(fullTech);
                               setIsEditMode(false);

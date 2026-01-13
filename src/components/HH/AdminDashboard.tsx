@@ -26,7 +26,7 @@ import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { ProgressBar } from "./ProgressBar";
-import { getTechniqueByNumber } from "../../data/epicTechniques";
+import { getTechniekByNummer } from "../../data/technieken-service";
 
 interface AdminDashboardProps {
   navigate?: (page: string) => void;

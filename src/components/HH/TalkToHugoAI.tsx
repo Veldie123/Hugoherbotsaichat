@@ -27,7 +27,7 @@ import {
   MessageSquare,
   StopCircle,
 } from "lucide-react";
-import { EPIC_TECHNIQUES } from "../../data/epicTechniques";
+import { getAllTechnieken } from "../../data/technieken-service";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { cn } from "../ui/utils";
@@ -89,7 +89,14 @@ export function TalkToHugoAI({
     4: "Beslissingsfase"
   };
 
-  const klantHoudingenArray = Object.values(KLANT_HOUDINGEN.houdingen);
+  const klantHoudingenArray = Object.entries(KLANT_HOUDINGEN.houdingen).map(([key, houding]) => ({
+    id: houding.id,
+    key: key,
+    naam: houding.naam,
+    beschrijving: houding.houding_beschrijving,
+    technieken: [...(houding.recommended_technique_ids || [])],
+    recommended_technique_ids: [...(houding.recommended_technique_ids || [])],
+  }));
 
   const getTechniqueNameByNumber = (techniqueNumber: string): string => {
     const technique = Object.values(technieken_index.technieken).find(

@@ -52,7 +52,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../ui/dialog";
-import { getTechniqueByNumber } from "../../data/epicTechniques";
+import { getTechniekByNummer } from "../../data/technieken-service";
 
 interface AdminUserManagementProps {
   navigate?: (page: string) => void;
@@ -463,17 +463,17 @@ export function AdminUserManagement({ navigate }: AdminUserManagementProps) {
                     </th>
                     <th
                       className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
-                      onClick={() => handleSort("date")}
+                      onClick={() => handleSort("joined")}
                     >
                       <div className="flex items-center gap-2">
                         Aangemaakt
-                        {sortField === "date" &&
+                        {sortField === "joined" &&
                           (sortDirection === "asc" ? (
                             <ArrowUp className="w-3 h-3" />
                           ) : (
                             <ArrowDown className="w-3 h-3" />
                           ))}
-                        {sortField !== "date" && (
+                        {sortField !== "joined" && (
                           <ArrowUpDown className="w-3 h-3 opacity-30" />
                         )}
                       </div>
@@ -648,25 +648,25 @@ export function AdminUserManagement({ navigate }: AdminUserManagementProps) {
                 <div className="flex items-center justify-between text-[12px] text-hh-muted">
                   <span>{user.joined}</span>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuTrigger asChild onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); viewUserDetail(user); }}>
+                      <DropdownMenuItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); viewUserDetail(user); }}>
                         <Eye className="w-4 h-4 mr-2" />
                         Bekijk Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <Edit className="w-4 h-4 mr-2" />
                         Bewerken
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <Mail className="w-4 h-4 mr-2" />
                         Email verzenden
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => e.stopPropagation()} className="text-hh-error">
+                      <DropdownMenuItem onClick={(e: React.MouseEvent) => e.stopPropagation()} className="text-hh-error">
                         <Trash2 className="w-4 h-4 mr-2" />
                         Verwijderen
                       </DropdownMenuItem>

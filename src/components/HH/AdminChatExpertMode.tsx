@@ -33,7 +33,7 @@ import {
   StopCircle,
   AlertCircle,
 } from "lucide-react";
-import { EPIC_TECHNIQUES } from "../../data/epicTechniques";
+import { getAllTechnieken } from "../../data/technieken-service";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { cn } from "../ui/utils";
@@ -140,7 +140,14 @@ export function AdminChatExpertMode({
   };
 
   // Convert KLANT_HOUDINGEN object to array for rendering
-  const klantHoudingenArray = Object.values(KLANT_HOUDINGEN.houdingen);
+  const klantHoudingenArray = Object.entries(KLANT_HOUDINGEN.houdingen).map(([key, houding]) => ({
+    id: houding.id,
+    key: key,
+    naam: houding.naam,
+    beschrijving: houding.houding_beschrijving,
+    technieken: [...(houding.recommended_technique_ids || [])],
+    recommended_technique_ids: [...(houding.recommended_technique_ids || [])],
+  }));
 
   // Helper function to get technique name from number
   const getTechniqueNameByNumber = (techniqueNumber: string): string => {
@@ -759,7 +766,7 @@ export function AdminChatExpertMode({
                                   <Badge 
                                     variant="outline" 
                                     className="text-[11px] cursor-pointer hover:bg-purple-100"
-                                    onClick={() => openTechniqueDetails(message.debugInfo.chosenTechniqueForSeller || "")}
+                                    onClick={() => openTechniqueDetails(message.debugInfo?.chosenTechniqueForSeller || "")}
                                   >
                                     {message.debugInfo.chosenTechniqueForSeller}
                                   </Badge>
@@ -1273,7 +1280,7 @@ export function AdminChatExpertMode({
                                   <div className="flex justify-between">
                                     <span className="text-hh-muted">Evaluatie:</span>
                                     <Badge variant="outline" className={`text-[10px] ${
-                                      message.debugInfo.aiDecision.evaluatie === "positief" || message.debugInfo.aiDecision.evaluatie === "perfect"
+                                      (message.debugInfo.aiDecision.evaluatie as string) === "positief" || (message.debugInfo.aiDecision.evaluatie as string) === "perfect"
                                         ? "bg-green-100 text-green-700 border-green-300"
                                         : message.debugInfo.aiDecision.evaluatie === "gemist"
                                         ? "bg-red-100 text-red-700 border-red-300"

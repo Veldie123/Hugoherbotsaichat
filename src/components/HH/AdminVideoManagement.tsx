@@ -57,7 +57,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "../ui/dialog";
-import { getTechniqueByNumber } from "../../data/epicTechniques";
+import { getTechniekByNummer } from "../../data/technieken-service";
 import { CustomCheckbox } from "../ui/custom-checkbox";
 
 interface AdminVideoManagementProps {
@@ -108,7 +108,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
   const videos: Video[] = [
     {
       id: 1,
-      title: getTechniqueByNumber("2.1.2")?.naam || "Meningsgerichte vragen",
+      title: getTechniekByNummer("2.1.2")?.naam || "Meningsgerichte vragen",
       techniqueNumber: "2.1.2",
       fase: "Ontdekkingsfase",
       niveau: "Gemiddeld",
@@ -121,7 +121,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 2,
-      title: getTechniqueByNumber("1.1")?.naam || "Koopklimaat creëren",
+      title: getTechniekByNummer("1.1")?.naam || "Koopklimaat creëren",
       techniqueNumber: "1.1",
       fase: "Voorbereiding",
       niveau: "Beginner",
@@ -134,7 +134,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 3,
-      title: getTechniqueByNumber("2.1")?.naam || "Explore questioning",
+      title: getTechniekByNummer("2.1")?.naam || "Explore questioning",
       techniqueNumber: "2.1",
       fase: "Ontdekkingsfase",
       niveau: "Gemiddeld",
@@ -147,7 +147,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 4,
-      title: getTechniqueByNumber("4.2.4")?.naam || "Bezwaren",
+      title: getTechniekByNummer("4.2.4")?.naam || "Bezwaren",
       techniqueNumber: "4.2.4",
       fase: "Beslissingsfase",
       niveau: "Gevorderd",
@@ -160,7 +160,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 5,
-      title: getTechniqueByNumber("3.2")?.naam || "Oplossing",
+      title: getTechniekByNummer("3.2")?.naam || "Oplossing",
       techniqueNumber: "3.2",
       fase: "Aanbevelingsfase",
       niveau: "Gemiddeld",
@@ -173,7 +173,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 6,
-      title: getTechniqueByNumber("1.2")?.naam || "Gentleman's agreement",
+      title: getTechniekByNummer("1.2")?.naam || "Gentleman's agreement",
       techniqueNumber: "1.2",
       fase: "Voorbereiding",
       niveau: "Beginner",
@@ -186,7 +186,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 7,
-      title: getTechniqueByNumber("2.1.1")?.naam || "Feitgerichte vragen",
+      title: getTechniekByNummer("2.1.1")?.naam || "Feitgerichte vragen",
       techniqueNumber: "2.1.1",
       fase: "Ontdekkingsfase",
       niveau: "Beginner",
@@ -199,7 +199,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 8,
-      title: getTechniqueByNumber("2.1.3")?.naam || "Feitgerichte vragen onder alternatieve vorm",
+      title: getTechniekByNummer("2.1.3")?.naam || "Feitgerichte vragen onder alternatieve vorm",
       techniqueNumber: "2.1.3",
       fase: "Ontdekkingsfase",
       niveau: "Gemiddeld",
@@ -212,7 +212,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 9,
-      title: getTechniqueByNumber("2.1.4")?.naam || "Ter zijde schuiven",
+      title: getTechniekByNummer("2.1.4")?.naam || "Ter zijde schuiven",
       techniqueNumber: "2.1.4",
       fase: "Ontdekkingsfase",
       niveau: "Gevorderd",
@@ -225,7 +225,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 10,
-      title: getTechniqueByNumber("2.1.5")?.naam || "Pingpong techniek",
+      title: getTechniekByNummer("2.1.5")?.naam || "Pingpong techniek",
       techniqueNumber: "2.1.5",
       fase: "Ontdekkingsfase",
       niveau: "Gemiddeld",
@@ -238,7 +238,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 11,
-      title: getTechniqueByNumber("2.1.6")?.naam || "Actief en empathisch luisteren",
+      title: getTechniekByNummer("2.1.6")?.naam || "Actief en empathisch luisteren",
       techniqueNumber: "2.1.6",
       fase: "Ontdekkingsfase",
       niveau: "Beginner",
@@ -251,7 +251,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 12,
-      title: getTechniqueByNumber("4.2")?.naam || "Houdingen van de klant",
+      title: getTechniekByNummer("4.2")?.naam || "Houdingen van de klant",
       techniqueNumber: "4.2",
       fase: "Beslissingsfase",
       niveau: "Gevorderd",
@@ -264,7 +264,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 13,
-      title: getTechniqueByNumber("4.2.1")?.naam || "Klant stelt vragen",
+      title: getTechniekByNummer("4.2.1")?.naam || "Klant stelt vragen",
       techniqueNumber: "4.2.1",
       fase: "Beslissingsfase",
       niveau: "Gemiddeld",
@@ -277,7 +277,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 14,
-      title: getTechniqueByNumber("4.2.2")?.naam || "Twijfels",
+      title: getTechniekByNummer("4.2.2")?.naam || "Twijfels",
       techniqueNumber: "4.2.2",
       fase: "Beslissingsfase",
       niveau: "Gemiddeld",
@@ -290,7 +290,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 15,
-      title: getTechniqueByNumber("4.2.3")?.naam || "Poging tot uitstel",
+      title: getTechniekByNummer("4.2.3")?.naam || "Poging tot uitstel",
       techniqueNumber: "4.2.3",
       fase: "Beslissingsfase",
       niveau: "Gevorderd",
@@ -303,7 +303,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 16,
-      title: getTechniqueByNumber("4.2.5")?.naam || "Angst / Bezorgdheden",
+      title: getTechniekByNummer("4.2.5")?.naam || "Angst / Bezorgdheden",
       techniqueNumber: "4.2.5",
       fase: "Beslissingsfase",
       niveau: "Gevorderd",
@@ -316,7 +316,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
     },
     {
       id: 17,
-      title: getTechniqueByNumber("A1")?.naam || "Antwoord op de vraag",
+      title: getTechniekByNummer("A1")?.naam || "Antwoord op de vraag",
       techniqueNumber: "A1",
       fase: "Algemeen",
       niveau: "Beginner",
@@ -1222,7 +1222,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
                     </Label>
                     <Select
                       value={formData.fase}
-                      onValueChange={(value) =>
+                      onValueChange={(value: string) =>
                         setFormData({ ...formData, fase: value })
                       }
                     >
@@ -1244,7 +1244,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
                     </Label>
                     <Select
                       value={formData.niveau}
-                      onValueChange={(value) =>
+                      onValueChange={(value: string) =>
                         setFormData({ ...formData, niveau: value })
                       }
                     >
@@ -1488,7 +1488,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
                     </Label>
                     <Select
                       value={formData.fase}
-                      onValueChange={(value) =>
+                      onValueChange={(value: string) =>
                         setFormData({ ...formData, fase: value })
                       }
                     >
@@ -1510,7 +1510,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
                     </Label>
                     <Select
                       value={formData.niveau}
-                      onValueChange={(value) =>
+                      onValueChange={(value: string) =>
                         setFormData({ ...formData, niveau: value })
                       }
                     >
