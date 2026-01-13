@@ -20,7 +20,7 @@ interface EPICSidebarProps {
   activeHouding: string | null;
   recommendedTechnique: string | null;
   openTechniqueDetails: (techniqueNumber: string) => void;
-  startTechniqueChat: (techniqueNumber: string, techniqueName: string) => void; // NEW
+  startTechniqueChat: (techniqueNumber: string, techniqueName: string) => void;
   techniquesByPhase: Record<number, any[]>;
   phaseNames: Record<number, string>;
   getFaseBadgeColor: (phase: number) => string;
@@ -35,7 +35,8 @@ interface EPICSidebarProps {
     technieken: string[];
     recommended_technique_ids?: string[];
   }>;
-  difficultyLevel: "beginner" | "gemiddeld" | "expert"; // NEW: Track difficulty level
+  difficultyLevel: "beginner" | "gemiddeld" | "expert";
+  isUserView?: boolean;
 }
 
 export function EPICSidebar({
@@ -55,7 +56,7 @@ export function EPICSidebar({
   activeHouding,
   recommendedTechnique,
   openTechniqueDetails,
-  startTechniqueChat, // NEW
+  startTechniqueChat,
   techniquesByPhase,
   phaseNames,
   getFaseBadgeColor,
@@ -63,20 +64,23 @@ export function EPICSidebar({
   hasChildren,
   getChildTechniques,
   klantHoudingen,
-  difficultyLevel, // NEW: Track difficulty level
+  difficultyLevel,
+  isUserView = false,
 }: EPICSidebarProps) {
   return (
     <div className="h-full bg-hh-ui-50/30 border-r border-hh-border overflow-y-auto">
       <div className="p-4 space-y-4">
         {/* Header - Title + Badges */}
-        <div className="pb-3 border-b border-hh-border">
-          <h3 className="text-[18px] leading-[24px] font-semibold text-hh-text mb-1">
-            Chat Expert Mode
-          </h3>
-          <p className="text-[13px] leading-[18px] text-hh-muted mb-3">
-            Training AI Model
-          </p>
-        </div>
+        {!isUserView && (
+          <div className="pb-3 border-b border-hh-border">
+            <h3 className="text-[18px] leading-[24px] font-semibold text-hh-text mb-1">
+              Chat Expert Mode
+            </h3>
+            <p className="text-[13px] leading-[18px] text-hh-muted mb-3">
+              Training AI Model
+            </p>
+          </div>
+        )}
 
         {/* Overall Progress */}
         <div className="pb-4 border-b border-hh-border">
