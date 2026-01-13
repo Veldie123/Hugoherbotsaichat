@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
+import { CustomCheckbox } from "../ui/custom-checkbox";
 import {
   Select,
   SelectContent,
@@ -31,8 +32,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Check,
   Trash2,
+  CheckCircle2,
 } from "lucide-react";
 import { getTechniquesByPhase } from "../../data/epicTechniques";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
@@ -53,7 +54,9 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [selectionMode, setSelectionMode] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+
+  const selectionMode = selectedIds.length > 0;
 
   // Handle column click for sorting
   const handleSort = (column: "code" | "name" | "videos" | "roleplays" | "score") => {
@@ -67,7 +70,7 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
     }
   };
 
-  const toggleSelection = (id: number) => {
+  const toggleSelectId = (id: number) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
@@ -85,7 +88,6 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
     if (window.confirm(`Weet je zeker dat je ${selectedIds.length} technieken wilt verwijderen?`)) {
       console.log("Delete techniques:", selectedIds);
       setSelectedIds([]);
-      setSelectionMode(false);
     }
   };
 
@@ -377,16 +379,15 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
               <table className="w-full">
                 <thead className="bg-hh-ui-50">
                   <tr>
-                    {selectionMode && (
-                      <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium w-[40px]">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium w-12">
+                      {selectionMode && (
+                        <CustomCheckbox
                           checked={selectedIds.length === filteredTechnieken.length && filteredTechnieken.length > 0}
                           onChange={toggleSelectAll}
+                          onClick={(e) => e.stopPropagation()}
                         />
-                      </th>
-                    )}
+                      )}
+                    </th>
                     <th 
                       className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
                       onClick={() => handleSort("code")}
@@ -444,21 +445,24 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTechnieken.map((techniek) => (
+                  {filteredTechnieken.map((techniek, index) => (
                     <tr
                       key={`${techniek.code}-${techniek.id}`}
-                      className="border-t border-hh-border hover:bg-hh-ui-50 transition-colors"
+                      onMouseEnter={() => setHoveredRow(techniek.id)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                      className={`border-t border-hh-border hover:bg-hh-ui-50 transition-colors cursor-pointer ${
+                        index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
+                      }`}
                     >
-                      {selectionMode && (
-                        <td className="py-3 px-4">
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
+                      <td className="py-3 px-4 w-12">
+                        {(selectionMode || hoveredRow === techniek.id) ? (
+                          <CustomCheckbox
                             checked={selectedIds.includes(techniek.id)}
-                            onChange={() => toggleSelection(techniek.id)}
+                            onChange={() => toggleSelectId(techniek.id)}
+                            onClick={(e) => e.stopPropagation()}
                           />
-                        </td>
-                      )}
+                        ) : <div className="w-4 h-4" />}
+                      </td>
                       <td className="py-3 px-4">
                         <Badge
                           variant="outline"

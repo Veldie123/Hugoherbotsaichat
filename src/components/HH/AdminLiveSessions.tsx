@@ -22,8 +22,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Video,
-  Check,
 } from "lucide-react";
+import { CustomCheckbox } from "../ui/custom-checkbox";
 import { useState } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
@@ -75,8 +75,16 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [selectionMode, setSelectionMode] = useState(false);
-  
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+
+  const selectionMode = selectedIds.length > 0;
+
+  const toggleSelectId = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+    );
+  };
+
   const liveSessions = [
     {
       id: 1,
@@ -176,25 +184,10 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
     }
   };
 
-  const toggleSelection = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === filteredSessions.length && filteredSessions.length > 0) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(filteredSessions.map((s) => s.id));
-    }
-  };
-
   const handleBulkDelete = () => {
     if (window.confirm(`Weet je zeker dat je ${selectedIds.length} webinars wilt verwijderen?`)) {
       console.log("Delete sessions:", selectedIds);
       setSelectedIds([]);
-      setSelectionMode(false);
     }
   };
 
@@ -223,6 +216,14 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
     }
     return sortDirection === "asc" ? comparison : -comparison;
   });
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === sortedSessions.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(sortedSessions.map(item => item.id));
+    }
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -605,16 +606,15 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
             <table className="w-full">
               <thead className="bg-hh-ui-50 border-b border-hh-border">
                 <tr>
-                  {selectionMode && (
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium w-[40px]">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
-                        checked={selectedIds.length === filteredSessions.length && filteredSessions.length > 0}
+                  <th className="text-left py-3 px-4 w-12">
+                    {selectionMode && (
+                      <CustomCheckbox
+                        checked={selectedIds.length === sortedSessions.length && sortedSessions.length > 0}
                         onChange={toggleSelectAll}
+                        onClick={(e) => e.stopPropagation()}
                       />
-                    </th>
-                  )}
+                    )}
+                  </th>
                   <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-20">
                     #
                   </th>
@@ -666,21 +666,22 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
                 {sortedSessions.map((session, index) => (
                   <tr
                     key={session.id}
+                    onMouseEnter={() => setHoveredRow(session.id)}
+                    onMouseLeave={() => setHoveredRow(null)}
                     onClick={() => viewSessionDetail(session)}
                     className={`border-b border-hh-border last:border-0 hover:bg-hh-ui-50 transition-colors cursor-pointer ${
                       index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                     }`}
                   >
-                    {selectionMode && (
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
+                    <td className="px-4 py-3 w-12" onClick={(e) => e.stopPropagation()}>
+                      {(selectionMode || hoveredRow === session.id) ? (
+                        <CustomCheckbox
                           checked={selectedIds.includes(session.id)}
-                          onChange={() => toggleSelection(session.id)}
+                          onChange={() => toggleSelectId(session.id)}
+                          onClick={(e) => e.stopPropagation()}
                         />
-                      </td>
-                    )}
+                      ) : <div className="w-4 h-4" />}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-[13px] font-semibold">
                         {session.techniqueNumber}

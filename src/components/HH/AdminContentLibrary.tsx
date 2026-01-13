@@ -21,6 +21,7 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
+import { CustomCheckbox } from "../ui/custom-checkbox";
 import { useState } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
@@ -483,11 +484,10 @@ export function AdminContentLibrary({ navigate }: AdminContentLibraryProps) {
                 <tr>
                   <th className="text-left px-4 py-3 w-12">
                     {selectionMode && (
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
+                      <CustomCheckbox
                         checked={selectedIds.length === sortedContent.length && sortedContent.length > 0}
                         onChange={toggleSelectAll}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     )}
                   </th>
@@ -541,20 +541,15 @@ export function AdminContentLibrary({ navigate }: AdminContentLibraryProps) {
                         index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                       }`}
                     >
-                      {(selectionMode || hoveredRow === content.id) && (
-                        <td className="px-4 py-3">
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
+                      <td className="px-4 py-3 w-12" onClick={(e) => e.stopPropagation()}>
+                        {(selectionMode || hoveredRow === content.id) ? (
+                          <CustomCheckbox
                             checked={selectedIds.includes(content.id)}
                             onChange={() => toggleSelectId(content.id)}
                             onClick={(e) => e.stopPropagation()}
                           />
-                        </td>
-                      )}
-                      {!selectionMode && hoveredRow !== content.id && (
-                        <td className="px-4 py-3"></td>
-                      )}
+                        ) : <div className="w-4 h-4" />}
+                      </td>
                       <td className="px-4 py-3">
                         {content.techniqueNumber && (
                           <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-[13px] font-semibold">

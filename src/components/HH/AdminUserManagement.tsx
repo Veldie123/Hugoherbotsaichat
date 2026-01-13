@@ -24,6 +24,7 @@ import {
   ArrowDown,
   Edit,
 } from "lucide-react";
+import { CustomCheckbox } from "../ui/custom-checkbox";
 import { useState } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
@@ -427,11 +428,10 @@ export function AdminUserManagement({ navigate }: AdminUserManagementProps) {
                   <tr>
                     <th className="text-left py-3 px-4 w-12">
                       {selectionMode && (
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
+                        <CustomCheckbox
                           checked={selectedIds.length === sortedUsers.length && sortedUsers.length > 0}
                           onChange={toggleSelectAll}
+                          onClick={(e) => e.stopPropagation()}
                         />
                       )}
                     </th>
@@ -492,19 +492,15 @@ export function AdminUserManagement({ navigate }: AdminUserManagementProps) {
                       onMouseEnter={() => setHoveredRow(user.id)}
                       onMouseLeave={() => setHoveredRow(null)}
                     >
-                      {(selectionMode || hoveredRow === user.id) && (
-                        <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
+                      <td className="py-3 px-4 w-12" onClick={(e) => e.stopPropagation()}>
+                        {(selectionMode || hoveredRow === user.id) ? (
+                          <CustomCheckbox
                             checked={selectedIds.includes(user.id)}
                             onChange={() => toggleSelectId(user.id)}
+                            onClick={(e) => e.stopPropagation()}
                           />
-                        </td>
-                      )}
-                      {!selectionMode && hoveredRow !== user.id && (
-                        <td className="py-3 px-4"></td>
-                      )}
+                        ) : <div className="w-4 h-4" />}
+                      </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
