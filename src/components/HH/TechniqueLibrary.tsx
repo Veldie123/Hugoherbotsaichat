@@ -104,13 +104,13 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
       ...generateMockStats(tech.nummer),
     })),
     "fase-3": getTechniekenByFase("3").map((tech, idx) => ({
-      id: idx + 50,
+      id: idx + 40,
       code: tech.nummer,
       name: tech.naam,
       ...generateMockStats(tech.nummer),
     })),
     "fase-4": getTechniekenByFase("4").map((tech, idx) => ({
-      id: idx + 70,
+      id: idx + 50,
       code: tech.nummer,
       name: tech.naam,
       ...generateMockStats(tech.nummer),

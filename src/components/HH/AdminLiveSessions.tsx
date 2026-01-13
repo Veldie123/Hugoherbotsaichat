@@ -53,13 +53,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { liveSessions, LiveSession } from "../../data/live-sessions-data";
 
 interface AdminLiveSessionsProps {
   navigate?: (page: string) => void;
 }
 
 type ViewMode = "list" | "calendar" | "grid";
-type SortField = "date" | "participants" | null;
+type SortField = "date" | "participants" | "title" | "status" | null;
 type SortDirection = "asc" | "desc";
 
 export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
@@ -70,7 +71,7 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedSession, setSelectedSession] = useState<typeof liveSessions[0] | null>(null);
+  const [selectedSession, setSelectedSession] = useState<LiveSession | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
@@ -85,73 +86,10 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
     );
   };
 
-  const liveSessions = [
-    {
-      id: 1,
-      techniqueNumber: "2.1.2",
-      title: "Meningsgerichte vragen (open vragen)",
-      fase: "Ontdekkingsfase",
-      date: "2026-01-22",
-      time: "14:00",
-      duration: "60 min",
-      status: "scheduled",
-      attendees: 0,
-      maxAttendees: null,
-      platform: "Zoom",
-    },
-    {
-      id: 2,
-      techniqueNumber: "2.1.1",
-      title: "Feitgerichte vragen",
-      fase: "Ontdekkingsfase",
-      date: "2026-01-25",
-      time: "10:00",
-      duration: "90 min",
-      status: "scheduled",
-      attendees: 0,
-      maxAttendees: 50,
-      platform: "Zoom",
-    },
-    {
-      id: 3,
-      techniqueNumber: "4.2.4",
-      title: "Bezwaren behandelen",
-      fase: "Beslissingsfase",
-      date: "2026-01-15",
-      time: "16:00",
-      duration: "120 min",
-      status: "completed",
-      attendees: 42,
-      maxAttendees: 50,
-      platform: "Microsoft Teams",
-    },
-    {
-      id: 4,
-      techniqueNumber: "1.1",
-      title: "Koopklimaat creëren",
-      fase: "Openingsfase",
-      date: "2026-01-08",
-      time: "11:00",
-      duration: "45 min",
-      status: "completed",
-      attendees: 28,
-      maxAttendees: 30,
-      platform: "Google Meet",
-    },
-    {
-      id: 5,
-      techniqueNumber: "4.1",
-      title: "Proefafsluiting",
-      fase: "Beslissingsfase",
-      date: "2026-01-29",
-      time: "13:00",
-      duration: "90 min",
-      status: "scheduled",
-      attendees: 0,
-      maxAttendees: 40,
-      platform: "Zoom",
-    },
-  ];
+  const viewSessionDetail = (session: LiveSession) => {
+    setSelectedSession(session);
+    setIsEditDialogOpen(true);
+  };
 
   const upcomingSessions = liveSessions.filter((s) => s.status === "scheduled");
   const pastSessions = liveSessions.filter((s) => s.status === "completed");
@@ -1198,7 +1136,7 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
                 <Label htmlFor="fase">Fase</Label>
                 <Select
                   value={selectedSession?.fase}
-                  onValueChange={(value) => {
+                  onValueChange={(value: string) => {
                     if (selectedSession) {
                       setSelectedSession({ ...selectedSession, fase: value });
                     }
@@ -1236,7 +1174,7 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
                 <Label htmlFor="platform">Platform</Label>
                 <Select
                   defaultValue={selectedSession?.platform}
-                  onValueChange={(value) => {
+                  onValueChange={(value: string) => {
                     if (selectedSession) {
                       setSelectedSession({ ...selectedSession, platform: value });
                     }
@@ -1259,10 +1197,10 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
                   type="number"
                   placeholder="50"
                   className="bg-hh-ui-100"
-                  value={selectedSession?.maxAttendees}
+                  value={selectedSession?.maxAttendees ?? ""}
                   onChange={(e) => {
                     if (selectedSession) {
-                      setSelectedSession({ ...selectedSession, maxAttendees: e.target.value });
+                      setSelectedSession({ ...selectedSession, maxAttendees: e.target.value ? parseInt(e.target.value, 10) : null });
                     }
                   }}
                 />

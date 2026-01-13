@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -31,104 +31,35 @@ import {
   ArrowUp,
   ArrowDown,
   TrendingUp,
-  Eye,
+  CheckCircle2,
+  Video,
   Bell,
+  Eye,
 } from "lucide-react";
-import { getAllTechnieken } from "../../data/technieken-service";
+import { liveSessions } from "../../data/live-sessions-data";
 
 interface LiveCoachingProps {
   navigate?: (page: string) => void;
   isAdmin?: boolean;
 }
 
-interface WebinarSession {
-  id: number;
-  techniqueNumber: string;
-  title: string;
-  fase: string;
-  date: string;
-  time: string;
-  duration: string;
-  status: "live" | "scheduled" | "completed";
-  attendees: number;
-  maxAttendees: number | null;
-  platform: string;
-  registered: boolean;
-}
+type ViewMode = "list" | "grid";
+type SortField = "date" | "participants" | null;
+type SortDirection = "asc" | "desc";
 
 export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhaseFilter, setSelectedPhaseFilter] = useState("all");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
-  const [sortField, setSortField] = useState<"date" | "attendees" | null>("date");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
-  const webinars: WebinarSession[] = useMemo(() => {
-    const allTechnieken = getAllTechnieken().filter(t => !t.is_fase);
-    const seedFromString = (str: string): number => {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash = hash & hash;
-      }
-      return Math.abs(hash);
-    };
-
-    const faseNamen: Record<string, string> = {
-      "0": "Voorbereiding",
-      "1": "Openingsfase",
-      "2": "Ontdekkingsfase",
-      "3": "Aanbevelingsfase",
-      "4": "Beslissingsfase",
-    };
-
-    const durations = ["45 min", "60 min", "90 min", "120 min"];
-    const platforms = ["Zoom", "Microsoft Teams", "Google Meet"];
-    const statuses: ("scheduled" | "completed")[] = ["scheduled", "completed"];
-
-    return allTechnieken.slice(0, 12).map((tech, idx) => {
-      const seed = seedFromString(tech.nummer + tech.naam);
-      const isCompleted = seed % 3 === 0;
-      const baseDate = new Date();
-      baseDate.setDate(baseDate.getDate() + (isCompleted ? -seed % 30 : seed % 60));
-      
-      return {
-        id: idx + 1,
-        techniqueNumber: tech.nummer,
-        title: tech.naam,
-        fase: faseNamen[tech.fase] || "Algemeen",
-        date: baseDate.toISOString().split('T')[0],
-        time: `${10 + (seed % 8)}:00`,
-        duration: durations[seed % durations.length],
-        status: statuses[isCompleted ? 1 : 0],
-        attendees: isCompleted ? 20 + (seed % 40) : 0,
-        maxAttendees: 50,
-        platform: platforms[seed % platforms.length],
-        registered: seed % 2 === 0,
-      };
-    });
-  }, []);
-
-  const handleSort = (field: "date" | "attendees") => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  const SortIcon = ({ column }: { column: string }) => {
-    if (sortField !== column) {
-      return <ArrowUpDown className="w-3.5 h-3.5 text-hh-muted/40" />;
-    }
-    return sortDirection === "asc" ? (
-      <ArrowUp className="w-3.5 h-3.5 text-hh-ink" />
-    ) : (
-      <ArrowDown className="w-3.5 h-3.5 text-hh-ink" />
-    );
-  };
+  const upcomingSessions = liveSessions.filter((s) => s.status === "scheduled");
+  const pastSessions = liveSessions.filter((s) => s.status === "completed");
+  const avgAttendees = Math.round(
+    pastSessions.reduce((sum, s) => sum + s.attendees, 0) / pastSessions.length
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -155,51 +86,66 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
     }
   };
 
-  const filteredWebinars = webinars.filter((session) => {
-    const matchesSearch = searchQuery === "" ||
+  const filteredSessions = liveSessions.filter((session) => {
+    const matchesSearch =
+      searchQuery === "" ||
       session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       session.fase.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = selectedStatusFilter === "all" || session.status === selectedStatusFilter;
-    const matchesFase = selectedPhaseFilter === "all" || session.fase.toLowerCase().includes(selectedPhaseFilter.toLowerCase());
+    const matchesStatus =
+      selectedStatusFilter === "all" || session.status === selectedStatusFilter;
+    const matchesFase = selectedPhaseFilter === "all" || session.fase === selectedPhaseFilter;
     return matchesSearch && matchesStatus && matchesFase;
   });
 
-  const sortedWebinars = [...filteredWebinars].sort((a, b) => {
+  const sortedSessions = [...filteredSessions].sort((a, b) => {
     let comparison = 0;
     switch (sortField) {
       case "date":
         comparison = a.date.localeCompare(b.date);
         break;
-      case "attendees":
+      case "participants":
         comparison = a.attendees - b.attendees;
         break;
     }
     return sortDirection === "asc" ? comparison : -comparison;
   });
 
-  const upcomingSessions = webinars.filter((s) => s.status === "scheduled");
-  const completedSessions = webinars.filter((s) => s.status === "completed");
-  const registeredSessions = webinars.filter((s) => s.registered);
-  const avgAttendees = completedSessions.length > 0
-    ? Math.round(completedSessions.reduce((sum, s) => sum + s.attendees, 0) / completedSessions.length)
-    : 0;
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-3 h-3 text-hh-muted" />;
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="w-3 h-3 text-hh-ink" />
+    ) : (
+      <ArrowDown className="w-3 h-3 text-hh-ink" />
+    );
+  };
 
   return (
     <AppLayout currentPage="live" navigate={navigate} isAdmin={isAdmin}>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
-          <div>
+          <div className="max-w-[50%]">
             <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
-              Live Webinars
+              Live Coaching Sessies
             </h1>
             <p className="text-[16px] leading-[24px] text-hh-muted">
-              Live coaching sessies met Hugo — vraag & antwoord
+              Bekijk en meld je aan voor live training sessies
             </p>
           </div>
         </div>
 
-        {/* KPI Cards */}
+        {/* KPI Tiles - 4 columns */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
@@ -210,13 +156,34 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
                 variant="outline"
                 className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
               >
+                <TrendingUp className="w-3 h-3 mr-0.5" />
+                +12%
+              </Badge>
+            </div>
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Totaal Sessies
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+              {liveSessions.length}
+            </p>
+          </Card>
+
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+              </div>
+              <Badge
+                variant="outline"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+              >
                 +2
               </Badge>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
-              Gepland
+              Aankomend
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {upcomingSessions.length}
             </p>
           </Card>
@@ -224,78 +191,74 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
               </div>
-            </div>
-            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
-              Ingeschreven
-            </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
-              {registeredSessions.length}
-            </p>
-          </Card>
-
-          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
-            <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-success/10 flex items-center justify-center">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-hh-success" />
-              </div>
+              <Badge
+                variant="outline"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+              >
+                <TrendingUp className="w-3 h-3 mr-0.5" />
+                +8%
+              </Badge>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Gem. Deelnemers
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-success">
               {avgAttendees}
             </p>
           </Card>
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-hh-primary" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
               </div>
               <Badge
                 variant="outline"
                 className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
               >
-                +3
+                100%
               </Badge>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
-              Bijgewoond
+              Voltooide Sessies
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
-              {completedSessions.length}
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+              {pastSessions.length}
             </p>
           </Card>
         </div>
 
-        {/* Filters & Search */}
+        {/* Filter Card - Uniform Structure */}
         <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
           <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search - Left Side */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
-                placeholder="Zoek webinars..."
-                className="pl-10"
+                placeholder="Zoek op titel, fase..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
               />
             </div>
             
+            {/* Filters - Middle */}
             <Select value={selectedPhaseFilter} onValueChange={setSelectedPhaseFilter}>
               <SelectTrigger className="w-full lg:w-[180px]">
                 <SelectValue placeholder="Alle Fases" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Fases</SelectItem>
-                <SelectItem value="opening">Openingsfase</SelectItem>
-                <SelectItem value="ontdekking">Ontdekkingsfase</SelectItem>
-                <SelectItem value="aanbeveling">Aanbevelingsfase</SelectItem>
-                <SelectItem value="beslissing">Beslissingsfase</SelectItem>
+                <SelectItem value="Voorbereiding">Voorbereiding</SelectItem>
+                <SelectItem value="Openingsfase">Openingsfase</SelectItem>
+                <SelectItem value="Ontdekkingsfase">Ontdekkingsfase</SelectItem>
+                <SelectItem value="Aanbevelingsfase">Aanbevelingsfase</SelectItem>
+                <SelectItem value="Beslissingsfase">Beslissingsfase</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Select value={selectedStatusFilter} onValueChange={setSelectedStatusFilter}>
               <SelectTrigger className="w-full lg:w-[180px]">
                 <SelectValue placeholder="Alle Status" />
@@ -303,10 +266,12 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
               <SelectContent>
                 <SelectItem value="all">Alle Status</SelectItem>
                 <SelectItem value="scheduled">Gepland</SelectItem>
+                <SelectItem value="live">Live</SelectItem>
                 <SelectItem value="completed">Afgelopen</SelectItem>
               </SelectContent>
             </Select>
             
+            {/* View Toggle - Right Side */}
             <div className="flex gap-1">
               <Button
                 variant="ghost"
@@ -336,197 +301,262 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
           </div>
         </Card>
 
-        {/* List View */}
-        {viewMode === "list" && (
-          <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-hh-ui-50">
-                  <tr>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Webinar
-                    </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Techniek
-                    </th>
-                    <th 
-                      className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
-                      onClick={() => handleSort("date")}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        Datum
-                        <SortIcon column="date" />
-                      </div>
-                    </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Tijd
-                    </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Duur
-                    </th>
-                    <th 
-                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
-                      onClick={() => handleSort("attendees")}
-                    >
-                      <div className="flex items-center justify-end gap-1.5">
-                        Deelnemers
-                        <SortIcon column="attendees" />
-                      </div>
-                    </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Status
-                    </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Acties
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedWebinars.map((session, index) => (
-                    <tr
-                      key={session.id}
-                      className={`border-t border-hh-border hover:bg-hh-ui-50 transition-colors cursor-pointer ${
-                        index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
-                      }`}
-                    >
-                      <td className="py-3 px-4">
-                        <p className="text-[14px] leading-[20px] text-hh-text font-medium">
-                          {session.title}
-                        </p>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge
-                          variant="outline"
-                          className="text-[11px] font-mono bg-hh-ink/10 text-hh-ink border-hh-ink/20"
-                        >
-                          {session.techniqueNumber}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5 text-[14px] text-hh-text">
-                          <CalendarIcon className="w-3.5 h-3.5 text-hh-primary" />
-                          {new Date(session.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5 text-[14px] text-hh-muted">
-                          <Clock className="w-3.5 h-3.5" />
-                          {session.time}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-[14px] text-hh-muted">
-                        {session.duration}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5 text-[14px] text-hh-text">
-                          <Users className="w-3.5 h-3.5 text-hh-primary" />
-                          {session.attendees}/{session.maxAttendees || '∞'}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {getStatusBadge(session.status)}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {session.status === "scheduled" ? (
-                              <>
-                                <DropdownMenuItem>
-                                  <Bell className="w-4 h-4 mr-2" />
-                                  {session.registered ? "Uitschrijven" : "Inschrijven"}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <CalendarIcon className="w-4 h-4 mr-2" />
-                                  Toevoegen aan agenda
-                                </DropdownMenuItem>
-                              </>
-                            ) : (
-                              <>
-                                <DropdownMenuItem>
-                                  <Play className="w-4 h-4 mr-2" />
-                                  Bekijk opname
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate?.("library")}>
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  Bekijk techniek
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )}
-
-        {/* Grid View */}
+        {/* Content - Based on View Mode */}
         {viewMode === "grid" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedWebinars.map((session) => (
-              <Card
-                key={session.id}
-                className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden hover:shadow-hh-md hover:border-hh-ink/30 transition-all"
-              >
-                <div className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedSessions.length === 0 ? (
+              <Card className="col-span-full p-8 rounded-[16px] border-hh-border text-center">
+                <CalendarIcon className="w-12 h-12 text-hh-muted mx-auto mb-3" />
+                <p className="text-[16px] text-hh-muted">
+                  Geen sessies gevonden
+                </p>
+              </Card>
+            ) : (
+              sortedSessions.map((session) => (
+                <Card
+                  key={session.id}
+                  className="p-4 rounded-[16px] border-hh-border hover:shadow-md transition-shadow"
+                >
+                  <div className="space-y-3">
+                    {/* Header */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-8 h-8 rounded-lg bg-hh-ink/10 text-hh-ink flex items-center justify-center text-[11px] font-semibold flex-shrink-0">
+                            {session.techniqueNumber}
+                          </div>
+                          <h3 className="text-[16px] font-semibold text-hh-text truncate">
+                            {session.title}
+                          </h3>
+                        </div>
+                        {getStatusBadge(session.status)}
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {session.status === "scheduled" ? (
+                            <>
+                              <DropdownMenuItem>
+                                <Bell className="w-4 h-4 mr-2" />
+                                Inschrijven
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <CalendarIcon className="w-4 h-4 mr-2" />
+                                Toevoegen aan agenda
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <>
+                              <DropdownMenuItem>
+                                <Play className="w-4 h-4 mr-2" />
+                                Bekijk opname
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate?.("library")}>
+                                <Eye className="w-4 h-4 mr-2" />
+                                Bekijk techniek
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {/* Details */}
+                    <div className="space-y-2 text-[13px] text-hh-muted">
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="w-4 h-4 flex-shrink-0" />
+                        <span>
+                          {new Date(session.date).toLocaleDateString("nl-NL", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 flex-shrink-0" />
+                        <span>{session.time} • {session.duration}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Video className="w-4 h-4 flex-shrink-0" />
+                        <span>{session.platform}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 flex-shrink-0" />
+                        <span>
+                          {session.attendees}
+                          {session.maxAttendees && ` / ${session.maxAttendees}`} deelnemers
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Fase Badge */}
                     <Badge
                       variant="outline"
-                      className="text-[11px] font-mono bg-hh-ink/10 text-hh-ink border-hh-ink/20"
+                      className="text-[11px] bg-blue-100 text-blue-700 border-blue-300"
                     >
-                      {session.techniqueNumber}
+                      {session.fase}
                     </Badge>
-                    {getStatusBadge(session.status)}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-2">
+                      {session.status === "scheduled" ? (
+                        <Button
+                          size="sm"
+                          className="w-full gap-2 bg-hh-ink hover:bg-hh-ink/90 text-white"
+                        >
+                          <Bell className="w-4 h-4" />
+                          Inschrijven
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="w-full gap-2 bg-hh-ink hover:bg-hh-ink/90 text-white"
+                        >
+                          <Play className="w-4 h-4" />
+                          Bekijk opname
+                        </Button>
+                      )}
+                    </div>
                   </div>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
 
-                  <h3 className="text-[16px] leading-[24px] text-hh-text font-semibold">
-                    {session.title}
-                  </h3>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[13px]">
-                      <CalendarIcon className="w-4 h-4 text-hh-primary" />
-                      <span className="text-hh-text">
-                        {new Date(session.date).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}
-                      </span>
+        {viewMode === "list" && (
+          <div className="rounded-[16px] border border-hh-border overflow-hidden bg-white">
+            <table className="w-full">
+              <thead className="bg-hh-ui-50 border-b border-hh-border">
+                <tr>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-20">
+                    #
+                  </th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
+                    Sessie
+                  </th>
+                  <th
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("date")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Datum & Tijd
+                      <SortIcon field="date" />
                     </div>
-                    <div className="flex items-center gap-2 text-[13px]">
-                      <Clock className="w-4 h-4 text-hh-muted" />
-                      <span className="text-hh-muted">{session.time} • {session.duration}</span>
+                  </th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
+                    Fase
+                  </th>
+                  <th
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("participants")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Deelnemers
+                      <SortIcon field="participants" />
                     </div>
-                    <div className="flex items-center gap-2 text-[13px]">
-                      <Users className="w-4 h-4 text-hh-muted" />
-                      <span className="text-hh-muted">{session.attendees}/{session.maxAttendees || '∞'} deelnemers</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-hh-border">
-                    {session.status === "scheduled" ? (
-                      <Button 
-                        className={`w-full ${session.registered ? 'bg-hh-muted hover:bg-hh-muted/90' : 'bg-hh-ink hover:bg-hh-ink/90'}`}
-                        size="sm"
+                  </th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
+                    Status
+                  </th>
+                  <th className="text-right px-4 py-3 text-[13px] font-semibold text-hh-text">
+                    Acties
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedSessions.map((session, index) => (
+                  <tr
+                    key={session.id}
+                    className={`border-b border-hh-border last:border-0 hover:bg-hh-ui-50 transition-colors cursor-pointer ${
+                      index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
+                    }`}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="w-10 h-10 rounded-lg bg-hh-ink/10 text-hh-ink flex items-center justify-center text-[13px] font-semibold">
+                        {session.techniqueNumber}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-[14px] text-hh-text font-medium">
+                        {session.title}
+                      </div>
+                      <div className="text-[12px] text-hh-muted flex items-center gap-1 mt-0.5">
+                        <Video className="w-3 h-3" />
+                        {session.platform} • {session.duration}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-[13px] text-hh-text">
+                        {new Date(session.date).toLocaleDateString("nl-NL", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </div>
+                      <div className="text-[12px] text-hh-muted">
+                        {session.time}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge
+                        variant="outline"
+                        className="text-[11px] bg-blue-100 text-blue-700 border-blue-300"
                       >
-                        <Bell className="w-4 h-4 mr-2" />
-                        {session.registered ? "Ingeschreven" : "Inschrijven"}
-                      </Button>
-                    ) : (
-                      <Button className="w-full bg-hh-ink hover:bg-hh-ink/90" size="sm">
-                        <Play className="w-4 h-4 mr-2" />
-                        Bekijk opname
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
+                        {session.fase}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-[13px] text-hh-success font-medium">
+                        {session.attendees}
+                        {session.maxAttendees && <span className="text-hh-text font-normal"> / {session.maxAttendees}</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">{getStatusBadge(session.status)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {session.status === "scheduled" ? (
+                            <>
+                              <DropdownMenuItem>
+                                <Bell className="w-4 h-4 mr-2" />
+                                Inschrijven
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <CalendarIcon className="w-4 h-4 mr-2" />
+                                Toevoegen aan agenda
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <>
+                              <DropdownMenuItem>
+                                <Play className="w-4 h-4 mr-2" />
+                                Bekijk opname
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate?.("library")}>
+                                <Eye className="w-4 h-4 mr-2" />
+                                Bekijk techniek
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
