@@ -268,9 +268,9 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
         {/* Search & Filters Card */}
         <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
           <div className="flex flex-col gap-4">
-            {/* Top Row: Search + Type Filter + View Toggle */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Search - Left Side */}
+            {/* Top Row: Search + View Toggle */}
+            <div className="flex gap-3 items-center">
+              {/* Search - Full width */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
                 <Input
@@ -281,21 +281,8 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                 />
               </div>
               
-              {/* Type Filter - Replacing Fase Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full lg:w-[200px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle Types</SelectItem>
-                  <SelectItem value="video">Video</SelectItem>
-                  <SelectItem value="webinar">Webinar</SelectItem>
-                  <SelectItem value="hugo-ai">Hugo AI Chat</SelectItem>
-                </SelectContent>
-              </Select>
-              
               {/* View Toggle - Right Side */}
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -323,26 +310,67 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               </div>
             </div>
 
-            {/* Fase Tabs - Visual representation */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {[
-                { key: "fase-1", label: "Fase 1", count: technieken["fase-1"].length },
-                { key: "fase-2", label: "Fase 2", count: technieken["fase-2"].length },
-                { key: "fase-3", label: "Fase 3", count: technieken["fase-3"].length },
-                { key: "fase-4", label: "Fase 4", count: technieken["fase-4"].length },
-              ].map((fase) => (
-                <button
-                  key={fase.key}
-                  onClick={() => setActiveFase(activeFase === fase.key ? "all" : fase.key)}
-                  className={`flex-1 min-w-[120px] py-2.5 px-4 rounded-full text-[14px] font-medium transition-all ${
-                    activeFase === fase.key
-                      ? "bg-hh-ink text-white"
-                      : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
-                  }`}
-                >
-                  {fase.label} ({fase.count})
-                </button>
-              ))}
+            {/* Fase Tabs + Type Filter Row */}
+            <div className="flex gap-2 items-center overflow-x-auto pb-1">
+              {/* Fase 1 & 2 buttons */}
+              <button
+                onClick={() => setActiveFase(activeFase === "fase-1" ? "all" : "fase-1")}
+                className={`flex-1 min-w-[100px] py-2.5 px-4 rounded-full text-[14px] font-medium transition-all ${
+                  activeFase === "fase-1"
+                    ? "bg-hh-ink text-white"
+                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
+                }`}
+              >
+                Fase 1 ({technieken["fase-1"].length})
+              </button>
+              <button
+                onClick={() => setActiveFase(activeFase === "fase-2" ? "all" : "fase-2")}
+                className={`flex-1 min-w-[100px] py-2.5 px-4 rounded-full text-[14px] font-medium transition-all ${
+                  activeFase === "fase-2"
+                    ? "bg-hh-ink text-white"
+                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
+                }`}
+              >
+                Fase 2 ({technieken["fase-2"].length})
+              </button>
+              
+              {/* Divider */}
+              <div className="w-px h-8 bg-hh-border flex-shrink-0" />
+              
+              {/* Fase 3 & 4 + Type Filter */}
+              <button
+                onClick={() => setActiveFase(activeFase === "fase-3" ? "all" : "fase-3")}
+                className={`flex-1 min-w-[100px] py-2.5 px-4 rounded-full text-[14px] font-medium transition-all ${
+                  activeFase === "fase-3"
+                    ? "bg-hh-ink text-white"
+                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
+                }`}
+              >
+                Fase 3 ({technieken["fase-3"].length})
+              </button>
+              <button
+                onClick={() => setActiveFase(activeFase === "fase-4" ? "all" : "fase-4")}
+                className={`flex-1 min-w-[100px] py-2.5 px-4 rounded-full text-[14px] font-medium transition-all ${
+                  activeFase === "fase-4"
+                    ? "bg-hh-ink text-white"
+                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
+                }`}
+              >
+                Fase 4 ({technieken["fase-4"].length})
+              </button>
+              
+              {/* Type Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px] flex-shrink-0">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Types</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="webinar">Webinar</SelectItem>
+                  <SelectItem value="hugo-ai">Hugo AI Chat</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </Card>
