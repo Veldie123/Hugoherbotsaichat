@@ -106,7 +106,8 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
   const [sortField, setSortField] = useState<"user" | "score" | "date" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [selectionMode, setSelectionMode] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const selectionMode = selectedIds.length > 0;
   const [expandedDebug, setExpandedDebug] = useState<string | null>(null);
   const [techniqueValidation, setTechniqueValidation] = useState<Record<string, boolean | null>>({});
   const [showFeedbackInput, setShowFeedbackInput] = useState<Record<string, boolean>>({});
@@ -139,7 +140,6 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
     if (window.confirm(`Weet je zeker dat je ${selectedIds.length} sessies wilt verwijderen?`)) {
       console.log("Delete sessions:", selectedIds);
       setSelectedIds([]);
-      setSelectionMode(false);
     }
   };
 
@@ -659,10 +659,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setSelectedIds([]);
-                    setSelectionMode(false);
-                  }}
+                  onClick={() => setSelectedIds([])}
                 >
                   Annuleer
                 </Button>
@@ -680,21 +677,6 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
           </Card>
         )}
 
-        {/* Selection Mode Toggle */}
-        {!selectionMode && (
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSelectionMode(true)}
-              className="gap-2"
-            >
-              <Check className="w-4 h-4" />
-              Selecteer Sessies
-            </Button>
-          </div>
-        )}
-
         {/* Sessions List/Grid */}
         {viewMode === "list" ? (
           <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
@@ -702,14 +684,14 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
               <table className="w-full">
               <thead className="bg-hh-ui-50 border-b border-hh-border">
                 <tr>
-                  {selectionMode && (
-                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[40px]">
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[40px]">
+                    {selectionMode && (
                       <CustomCheckbox
                         checked={selectedIds.length === filteredSessions.length && filteredSessions.length > 0}
                         onChange={toggleSelectAll}
                       />
-                    </th>
-                  )}
+                    )}
+                  </th>
                   <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[80px]">
                     #
                   </th>
@@ -783,18 +765,20 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                   <tr
                     key={session.id}
                     onClick={() => viewTranscript(session)}
+                    onMouseEnter={() => setHoveredRow(session.id)}
+                    onMouseLeave={() => setHoveredRow(null)}
                     className={`border-b border-hh-border last:border-0 hover:bg-hh-ui-50 transition-colors cursor-pointer ${
                       index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                     }`}
                   >
-                    {selectionMode && (
-                      <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3 px-4 w-[40px]" onClick={(e) => e.stopPropagation()}>
+                      {(selectionMode || hoveredRow === session.id) ? (
                         <CustomCheckbox
                           checked={selectedIds.includes(session.id)}
                           onChange={() => toggleSelection(session.id)}
                         />
-                      </td>
-                    )}
+                      ) : <div className="w-4 h-4" />}
+                    </td>
                     <td className="py-3 px-4">
                       <Badge className="bg-purple-600/10 text-purple-600 border-purple-600/20 text-[11px] font-mono">
                         {session.techniek.split(' - ')[0]}
