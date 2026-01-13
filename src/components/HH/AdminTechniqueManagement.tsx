@@ -34,6 +34,8 @@ import {
   ArrowDown,
   Trash2,
   CheckCircle2,
+  MessageCircle,
+  Radio,
 } from "lucide-react";
 import { getTechniquesByPhase } from "../../data/epicTechniques";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
@@ -632,10 +634,48 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                     </div>
                   </div>
 
-                  {/* Status Badge */}
-                  <Badge className="w-full justify-center bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
-                    {techniek.status}
-                  </Badge>
+                  {/* Navigation Buttons */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-[11px] h-8 bg-purple-600/5 text-purple-600 border-purple-600/20 hover:bg-purple-600 hover:text-white"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        localStorage.setItem('selectedTechniek', techniek.code);
+                        navigate?.("talk-to-hugo");
+                      }}
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      Chat
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-[11px] h-8 bg-purple-600/5 text-purple-600 border-purple-600/20 hover:bg-purple-600 hover:text-white"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        localStorage.setItem('filterTechniek', techniek.code);
+                        navigate?.("videos");
+                      }}
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      Video
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-[11px] h-8 bg-purple-600/5 text-purple-600 border-purple-600/20 hover:bg-purple-600 hover:text-white"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        localStorage.setItem('filterTechniek', techniek.code);
+                        navigate?.("live");
+                      }}
+                    >
+                      <Radio className="w-3.5 h-3.5" />
+                      Webinar
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
