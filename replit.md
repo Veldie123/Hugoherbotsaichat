@@ -50,6 +50,15 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-13: Content Data Consolidation + E.P.I.C Grid Navigation
+  - Created `src/data/content-items.ts` as shared data source for all content (videos, scenarios, live, documents)
+  - Library.tsx and AdminContentLibrary.tsx now import from same source
+  - Replaced "Actief" badge in E.P.I.C grid view with 3 navigation buttons:
+    - Chat (navigates to Hugo a.i. with technique context)
+    - Video (navigates to Videos with technique filter)
+    - Webinar (navigates to Webinars with technique filter)
+  - Uses localStorage to pass technique context between pages
+  - Applied to both TechniqueLibrary.tsx (User) and AdminTechniqueManagement.tsx (Admin)
 - 2026-01-13: User View Data Consistency Update
   - Removed "Aanbevolen door Hugo" section from Library.tsx and RolePlayOverview.tsx
   - Replaced "Start" button with dropdown menu (Bekijk details, Start oefening)
