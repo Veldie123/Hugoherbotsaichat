@@ -445,6 +445,24 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       className={`border-t border-hh-border hover:bg-hh-ui-50 transition-colors cursor-pointer ${
                         index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                       }`}
+                      onClick={() => {
+                        const allTech = getAllTechnieken();
+                        const fullTech = allTech.find(t => t.nummer === techniek.code);
+                        if (fullTech) {
+                          setSelectedTechnique({
+                            nummer: fullTech.nummer,
+                            naam: fullTech.naam,
+                            fase: fullTech.fase,
+                            tags: fullTech.tags,
+                            doel: fullTech.doel,
+                            hoe: fullTech.hoe,
+                            stappenplan: fullTech.stappenplan,
+                            voorbeeld: fullTech.voorbeeld,
+                          });
+                          setIsEditMode(false);
+                          setDetailsDialogOpen(true);
+                        }
+                      }}
                     >
                       <td className="py-3 px-4">
                         <Badge
@@ -486,7 +504,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                           {techniek.status}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -574,41 +592,43 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                     >
                       {techniek.code}
                     </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate?.("videos")}>
-                          <Video className="w-4 h-4 mr-2" />
-                          Bekijk Video's
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
-                          <Play className="w-4 h-4 mr-2" />
-                          Bekijk Role-Plays
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <TrendingUp className="w-4 h-4 mr-2" />
-                          Analytics
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            const allTech = getAllTechnieken();
-                            const fullTech = allTech.find(t => t.nummer === techniek.code);
-                            if (fullTech) {
-                              setSelectedTechnique(fullTech);
-                              setIsEditMode(false);
-                              setDetailsDialogOpen(true);
-                            }
-                          }}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Bekijk details
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => navigate?.("videos")}>
+                            <Video className="w-4 h-4 mr-2" />
+                            Bekijk Video's
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
+                            <Play className="w-4 h-4 mr-2" />
+                            Bekijk Role-Plays
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            Analytics
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              const allTech = getAllTechnieken();
+                              const fullTech = allTech.find(t => t.nummer === techniek.code);
+                              if (fullTech) {
+                                setSelectedTechnique(fullTech);
+                                setIsEditMode(false);
+                                setDetailsDialogOpen(true);
+                              }
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Bekijk details
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
 
                   {/* Title */}
