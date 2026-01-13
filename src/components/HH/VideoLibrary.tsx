@@ -1,13 +1,10 @@
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
-import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { EPICSalesFlow } from "./EPICSalesFlow";
-import hugoVideoPlaceholder from "figma:asset/110ec621be27a3e45bb05b418b6d4504c1aa0208.png";
 import { Play, Pause, Volume2, Maximize, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
-import { EPIC_TECHNIQUES, getTechniquesByPhase } from "../../data/epicTechniques";
+import { useState, useMemo } from "react";
+import { getTechniekenByFase, getFaseNaam } from "../../data/technieken-service";
 
 interface VideoLibraryProps {
   navigate?: (page: string) => void;
@@ -18,65 +15,74 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTechnique, setCurrentTechnique] = useState("2.1.3");
 
-  // E.P.I.C Sales Flow data using real EPIC techniques
-  const scenarioFlowData = [
-    {
-      id: 0,
-      name: "Voorbereiding",
-      color: "#6B7A92",
-      themas: [],
-      uitleg: "Start hier om een sterke basis te leggen voor het gesprek.",
-      steps: getTechniquesByPhase("1").map((tech, idx) => ({
-        id: tech.detector_id,
-        name: tech.naam,
-        status: "completed" as const,
-        duration: `${8 + idx * 2} min`,
-        nummer: tech.nummer,
-      })),
-    },
-    {
-      id: 1,
-      name: "Ontdekkingsfase",
-      color: "#6B7A92",
-      themas: ["Bron", "Motivatie", "Ervaring", "Verwachtingen", "Alternatieven", "Budget", "Timing", "Beslissingscriteria"],
-      uitleg: "Hier breng je systematisch alle klantnoden in kaart.",
-      steps: getTechniquesByPhase("2").map((tech, idx) => ({
-        id: tech.detector_id,
-        name: tech.naam,
-        status: (idx === 0 || idx === 1 ? "completed" : idx === 2 ? "current" : "upcoming") as const,
-        duration: `${7 + idx * 2} min`,
-        nummer: tech.nummer,
-      })),
-    },
-    {
-      id: 2,
-      name: "Aanbevelingsfase",
-      color: "#6B7A92",
-      themas: ["USP's"],
-      uitleg: "Nu verbind je wat je geleerd hebt aan jouw oplossing.",
-      steps: getTechniquesByPhase("3").map((tech, idx) => ({
-        id: tech.detector_id,
-        name: tech.naam,
-        status: "upcoming" as const,
-        duration: `${8 + idx * 2} min`,
-        nummer: tech.nummer,
-      })),
-    },
-    {
-      id: 3,
-      name: "Beslissingsfase",
-      color: "#6B7A92",
-      themas: ["beslissing"],
-      uitleg: "Stuur richting een definitieve beslissing.",
-      steps: getTechniquesByPhase("4").map((tech, idx) => ({
-        id: tech.detector_id,
-        name: tech.naam,
-        status: "locked" as const,
-        duration: `${9 + idx * 2} min`,
-        nummer: tech.nummer,
-      })),
-    },
-  ];
+  // E.P.I.C Sales Flow data using SSOT technieken-service
+  const scenarioFlowData = useMemo(() => {
+    type StepStatus = "completed" | "current" | "upcoming" | "locked";
+    
+    const fase1Technieken = getTechniekenByFase("1");
+    const fase2Technieken = getTechniekenByFase("2");
+    const fase3Technieken = getTechniekenByFase("3");
+    const fase4Technieken = getTechniekenByFase("4");
+
+    return [
+      {
+        id: 0,
+        name: getFaseNaam("1"),
+        color: "#6B7A92",
+        themas: [] as string[],
+        uitleg: "Start hier om een sterke basis te leggen voor het gesprek.",
+        steps: fase1Technieken.filter(t => !t.is_fase).map((tech, idx) => ({
+          id: tech.nummer,
+          name: tech.naam,
+          status: "completed" as StepStatus,
+          duration: `${8 + idx * 2} min`,
+          nummer: tech.nummer,
+        })),
+      },
+      {
+        id: 1,
+        name: getFaseNaam("2"),
+        color: "#6B7A92",
+        themas: ["Bron", "Motivatie", "Ervaring", "Verwachtingen", "Alternatieven", "Budget", "Timing", "Beslissingscriteria"],
+        uitleg: "Hier breng je systematisch alle klantnoden in kaart.",
+        steps: fase2Technieken.filter(t => !t.is_fase).map((tech, idx) => ({
+          id: tech.nummer,
+          name: tech.naam,
+          status: (idx === 0 || idx === 1 ? "completed" : idx === 2 ? "current" : "upcoming") as StepStatus,
+          duration: `${7 + idx * 2} min`,
+          nummer: tech.nummer,
+        })),
+      },
+      {
+        id: 2,
+        name: getFaseNaam("3"),
+        color: "#6B7A92",
+        themas: ["USP's"],
+        uitleg: "Nu verbind je wat je geleerd hebt aan jouw oplossing.",
+        steps: fase3Technieken.filter(t => !t.is_fase).map((tech, idx) => ({
+          id: tech.nummer,
+          name: tech.naam,
+          status: "upcoming" as StepStatus,
+          duration: `${8 + idx * 2} min`,
+          nummer: tech.nummer,
+        })),
+      },
+      {
+        id: 3,
+        name: getFaseNaam("4"),
+        color: "#6B7A92",
+        themas: ["beslissing"],
+        uitleg: "Stuur richting een definitieve beslissing.",
+        steps: fase4Technieken.filter(t => !t.is_fase).map((tech, idx) => ({
+          id: tech.nummer,
+          name: tech.naam,
+          status: "upcoming" as StepStatus,
+          duration: `${9 + idx * 2} min`,
+          nummer: tech.nummer,
+        })),
+      },
+    ];
+  }, []);
 
   // Get current technique data
   const currentTechniqueData = scenarioFlowData
@@ -122,11 +128,12 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
                   className="w-full relative overflow-hidden"
                   style={{ aspectRatio: "16/9" }}
                 >
-                  <ImageWithFallback
-                    src={hugoVideoPlaceholder}
-                    alt="Hugo Herbots Video"
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="w-full h-full bg-gradient-to-br from-hh-primary/20 to-hh-ink flex items-center justify-center">
+                    <div className="text-center text-white/60">
+                      <Play className="w-16 h-16 mx-auto mb-2" />
+                      <p className="text-sm">Video Player</p>
+                    </div>
+                  </div>
 
                   {/* Play/Pause Overlay */}
                   {!isPlaying && (
@@ -210,16 +217,6 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
               phases={scenarioFlowData}
               currentPhaseId={2}
               currentStepId={currentTechnique}
-              onStepClick={(stepId) => {
-                // Find if step is unlocked
-                const step = scenarioFlowData
-                  .flatMap(p => p.steps)
-                  .find(s => s.nummer === stepId);
-                if (step && step.status !== "locked") {
-                  setCurrentTechnique(stepId);
-                  setIsPlaying(false);
-                }
-              }}
             />
           </div>
         </div>

@@ -285,7 +285,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </Button>
           </Card>
 
-          {/* Chat met Hugo a.i. */}
+          {/* Talk to Hugo AI */}
           <Card 
             className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all cursor-pointer group active:scale-[0.98]"
             onClick={() => navigate?.("coaching")}
@@ -294,7 +294,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               <div className="flex items-center gap-2 mb-2">
                 <MessageSquare className="w-5 h-5 text-hh-primary" />
                 <h3 className="text-[18px] leading-[24px] text-hh-text">
-                  Chat met Hugo a.i.
+                  Talk to Hugo AI
                 </h3>
               </div>
               <p className="text-[13px] leading-[18px] sm:text-[14px] sm:leading-[20px] text-hh-muted">
@@ -322,7 +322,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               }}
             >
               <MessageSquare className="w-4 h-4" />
-              Start chat
+              Talk to Hugo AI
               <ArrowRight className="w-4 h-4 ml-auto" />
             </Button>
           </Card>

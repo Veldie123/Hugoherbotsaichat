@@ -34,7 +34,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useState } from "react";
-import hugoLivePhoto from "figma:asset/9f21bc9eaae81b79a083fcd342b14f53acdad581.png";
 
 interface ChatMessage {
   id: string;
@@ -250,11 +249,11 @@ export function LiveCoaching({
                     style={{ aspectRatio: "16/9" }}
                   >
                     {/* Hugo Live Photo Background */}
-                    <img
-                      src={hugoLivePhoto}
-                      alt="Hugo Herbots Live Coaching"
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-hh-primary/30 to-hh-ink flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full bg-hh-primary/50 flex items-center justify-center text-white text-4xl font-semibold">
+                        HH
+                      </div>
+                    </div>
 
                     {/* Subtle overlay for badges visibility */}
                     <div className="absolute inset-0 bg-black/10" />
@@ -329,7 +328,7 @@ export function LiveCoaching({
                 <Card className="rounded-[16px] shadow-hh-md border-hh-border overflow-hidden flex flex-col h-full">
                   <Tabs
                     value={activeTab}
-                    onValueChange={(v) => setActiveTab(v as "chat" | "polls")}
+                    onValueChange={(v: string) => setActiveTab(v as "chat" | "polls")}
                     className="flex flex-col h-full"
                   >
                     {/* Tabs Header */}
