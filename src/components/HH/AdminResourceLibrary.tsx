@@ -238,7 +238,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Totaal Resources</p>
-            <p className="text-[28px] leading-[36px] text-hh-success font-semibold">
+            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
               {stats.totalResources}
             </p>
           </Card>
@@ -253,7 +253,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Totaal Downloads</p>
-            <p className="text-[28px] leading-[36px] text-hh-success font-semibold">
+            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
               {stats.totalDownloads}
             </p>
           </Card>
@@ -268,7 +268,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Featured Resources</p>
-            <p className="text-[28px] leading-[36px] text-hh-success font-semibold">
+            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
               {stats.featuredResources}
             </p>
           </Card>
@@ -283,7 +283,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Nieuw Deze Maand</p>
-            <p className="text-[28px] leading-[36px] text-hh-success font-semibold">
+            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
               {stats.newThisMonth}
             </p>
           </Card>
@@ -424,7 +424,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <Download className="w-3.5 h-3.5 text-hh-muted" />
-                        <span className="text-[13px] text-hh-success font-semibold">
+                        <span className="text-[13px] text-hh-text font-medium">
                           {resource.downloads}
                         </span>
                       </div>

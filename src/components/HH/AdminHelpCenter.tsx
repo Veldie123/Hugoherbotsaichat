@@ -255,7 +255,7 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Totaal Artikelen</p>
-            <p className="text-[28px] leading-[36px] text-hh-success font-semibold">
+            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
               {stats.totalArticles}
             </p>
           </Card>
@@ -270,7 +270,7 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Gepubliceerd</p>
-            <p className="text-[28px] leading-[36px] text-hh-success font-semibold">
+            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
               {stats.publishedArticles}
             </p>
           </Card>
@@ -285,7 +285,7 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Totaal Views</p>
-            <p className="text-[28px] leading-[36px] text-hh-success font-semibold">
+            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
               {stats.totalViews}
             </p>
           </Card>
@@ -300,7 +300,7 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Helpful Rating</p>
-            <p className="text-[28px] leading-[36px] text-hh-success font-semibold">
+            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
               {stats.avgHelpfulRating}%
             </p>
           </Card>
@@ -438,7 +438,7 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <Eye className="w-3.5 h-3.5 text-hh-muted" />
-                        <span className="text-[13px] text-hh-success font-semibold">
+                        <span className="text-[13px] text-hh-text font-medium">
                           {article.views}
                         </span>
                       </div>
@@ -448,13 +448,13 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1">
                             <ThumbsUp className="w-3.5 h-3.5 text-hh-success" />
-                            <span className="text-[12px] text-hh-success font-semibold">
+                            <span className="text-[12px] text-hh-text font-medium">
                               {article.helpful}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <ThumbsDown className="w-3.5 h-3.5 text-hh-error" />
-                            <span className="text-[12px] text-hh-error font-semibold">
+                            <span className="text-[12px] text-hh-text font-medium">
                               {article.notHelpful}
                             </span>
                           </div>
