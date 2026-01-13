@@ -379,7 +379,7 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
               <table className="w-full">
                 <thead className="bg-hh-ui-50">
                   <tr>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium w-12">
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold w-12">
                       {selectionMode && (
                         <CustomCheckbox
                           checked={selectedIds.length === filteredTechnieken.length && filteredTechnieken.length > 0}
@@ -389,7 +389,7 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                       )}
                     </th>
                     <th 
-                      className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
                       onClick={() => handleSort("code")}
                     >
                       <div className="flex items-center gap-1.5">
@@ -398,7 +398,7 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                       </div>
                     </th>
                     <th 
-                      className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
                       onClick={() => handleSort("name")}
                     >
                       <div className="flex items-center gap-1.5">
@@ -407,7 +407,7 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                       </div>
                     </th>
                     <th 
-                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
                       onClick={() => handleSort("videos")}
                     >
                       <div className="flex items-center justify-end gap-1.5">
@@ -416,7 +416,7 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                       </div>
                     </th>
                     <th 
-                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
                       onClick={() => handleSort("roleplays")}
                     >
                       <div className="flex items-center justify-end gap-1.5">
@@ -425,7 +425,7 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                       </div>
                     </th>
                     <th 
-                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
                       onClick={() => handleSort("score")}
                     >
                       <div className="flex items-center justify-end gap-1.5">
@@ -433,13 +433,13 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                         <SortIcon column="score" />
                       </div>
                     </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium">
+                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Completion
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium">
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Status
                     </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium">
+                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Acties
                     </th>
                   </tr>
@@ -651,11 +651,8 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
           technique={{
             id: selectedTechnique.nummer,
             number: selectedTechnique.nummer,
-            name: selectedTechnique.naam,
-            description: selectedTechnique.omschrijving || "",
-            examples: selectedTechnique.voorbeelden || [],
-            tips: selectedTechnique.tips || [],
-            phase: selectedTechnique.fase || "1",
+            naam: selectedTechnique.naam,
+            fase: selectedTechnique.fase || "1",
           }}
           isEditable={true}
           onSave={(updatedTechnique) => {

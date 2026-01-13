@@ -350,25 +350,25 @@ export function AdminBilling({ navigate }: AdminBillingProps) {
               <table className="w-full">
                 <thead className="bg-hh-ui-50">
                   <tr>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer" onClick={() => handleSort("id")}>
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer" onClick={() => handleSort("id")}>
                       Factuur # {getSortIcon("id")}
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer" onClick={() => handleSort("organization")}>
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer" onClick={() => handleSort("organization")}>
                       Organisatie {getSortIcon("organization")}
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium">
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Plan
                     </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer" onClick={() => handleSort("amount")}>
+                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer" onClick={() => handleSort("amount")}>
                       Bedrag {getSortIcon("amount")}
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer" onClick={() => handleSort("date")}>
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer" onClick={() => handleSort("date")}>
                       Datum {getSortIcon("date")}
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium">
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Status
                     </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium">
+                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Acties
                     </th>
                   </tr>

@@ -459,19 +459,19 @@ export function AdminDashboard({ navigate }: AdminDashboardProps) {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-hh-border">
-                  <th className="text-left py-3 px-2 text-[13px] leading-[18px] text-hh-muted font-medium">
+                  <th className="text-left py-3 px-2 text-[13px] leading-[18px] text-hh-text font-semibold">
                     Type
                   </th>
-                  <th className="text-left py-3 px-2 text-[13px] leading-[18px] text-hh-muted font-medium">
+                  <th className="text-left py-3 px-2 text-[13px] leading-[18px] text-hh-text font-semibold">
                     Titel
                   </th>
-                  <th className="text-right py-3 px-2 text-[13px] leading-[18px] text-hh-muted font-medium">
+                  <th className="text-right py-3 px-2 text-[13px] leading-[18px] text-hh-text font-semibold">
                     Views
                   </th>
-                  <th className="text-right py-3 px-2 text-[13px] leading-[18px] text-hh-muted font-medium">
+                  <th className="text-right py-3 px-2 text-[13px] leading-[18px] text-hh-text font-semibold">
                     Completion
                   </th>
-                  <th className="text-right py-3 px-2 text-[13px] leading-[18px] text-hh-muted font-medium">
+                  <th className="text-right py-3 px-2 text-[13px] leading-[18px] text-hh-text font-semibold">
                     Rating
                   </th>
                 </tr>

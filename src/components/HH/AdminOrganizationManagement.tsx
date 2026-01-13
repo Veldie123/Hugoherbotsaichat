@@ -385,25 +385,25 @@ export function AdminOrganizationManagement({ navigate }: AdminOrganizationManag
               <table className="w-full">
                 <thead className="bg-hh-ui-50">
                   <tr>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer" onClick={() => handleSort("name")}>
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer" onClick={() => handleSort("name")}>
                       Organisatie {getSortIcon("name")}
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer" onClick={() => handleSort("plan")}>
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer" onClick={() => handleSort("plan")}>
                       Plan {getSortIcon("plan")}
                     </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer" onClick={() => handleSort("users")}>
+                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer" onClick={() => handleSort("users")}>
                       Gebruikers {getSortIcon("users")}
                     </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer" onClick={() => handleSort("sessions")}>
+                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer" onClick={() => handleSort("sessions")}>
                       Sessies {getSortIcon("sessions")}
                     </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium cursor-pointer" onClick={() => handleSort("mrr")}>
+                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer" onClick={() => handleSort("mrr")}>
                       MRR {getSortIcon("mrr")}
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium">
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Status
                     </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-muted font-medium">
+                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Acties
                     </th>
                   </tr>
