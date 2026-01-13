@@ -268,9 +268,9 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
         {/* Search & Filters Card */}
         <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
           <div className="flex flex-col gap-4">
-            {/* Top Row: Search + View Toggle */}
+            {/* Top Row: Search + Type Filter + View Toggle */}
             <div className="flex gap-3 items-center">
-              {/* Search - Full width */}
+              {/* Search - 50% width */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
                 <Input
@@ -279,6 +279,21 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+              </div>
+              
+              {/* Type Filter - 50% width */}
+              <div className="flex-1">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Alle Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Types</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
+                    <SelectItem value="webinar">Webinar</SelectItem>
+                    <SelectItem value="hugo-ai">Hugo AI Chat</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               {/* View Toggle - Right Side */}
@@ -301,7 +316,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                   className={`${
                     viewMode === "grid" 
                       ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
-                      : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
+                      : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-100"
                   }`}
                   onClick={() => setViewMode("grid")}
                 >
@@ -310,12 +325,21 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               </div>
             </div>
 
-            {/* Fase Tabs + Type Filter Row */}
+            {/* Fase Tabs Row */}
             <div className="flex gap-2 items-center overflow-x-auto pb-1">
-              {/* Fase 1 & 2 buttons */}
+              <button
+                onClick={() => setActiveFase(activeFase === "fase-0" ? "all" : "fase-0")}
+                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
+                  activeFase === "fase-0"
+                    ? "bg-hh-ink text-white"
+                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
+                }`}
+              >
+                Fase 0 ({technieken["fase-0"]?.length || 0})
+              </button>
               <button
                 onClick={() => setActiveFase(activeFase === "fase-1" ? "all" : "fase-1")}
-                className={`flex-1 min-w-[100px] py-2.5 px-4 rounded-full text-[14px] font-medium transition-all ${
+                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
                   activeFase === "fase-1"
                     ? "bg-hh-ink text-white"
                     : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
@@ -325,7 +349,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               </button>
               <button
                 onClick={() => setActiveFase(activeFase === "fase-2" ? "all" : "fase-2")}
-                className={`flex-1 min-w-[100px] py-2.5 px-4 rounded-full text-[14px] font-medium transition-all ${
+                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
                   activeFase === "fase-2"
                     ? "bg-hh-ink text-white"
                     : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
@@ -333,14 +357,9 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               >
                 Fase 2 ({technieken["fase-2"].length})
               </button>
-              
-              {/* Divider */}
-              <div className="w-px h-8 bg-hh-border flex-shrink-0" />
-              
-              {/* Fase 3 & 4 + Type Filter */}
               <button
                 onClick={() => setActiveFase(activeFase === "fase-3" ? "all" : "fase-3")}
-                className={`flex-1 min-w-[100px] py-2.5 px-4 rounded-full text-[14px] font-medium transition-all ${
+                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
                   activeFase === "fase-3"
                     ? "bg-hh-ink text-white"
                     : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
@@ -350,7 +369,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               </button>
               <button
                 onClick={() => setActiveFase(activeFase === "fase-4" ? "all" : "fase-4")}
-                className={`flex-1 min-w-[100px] py-2.5 px-4 rounded-full text-[14px] font-medium transition-all ${
+                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
                   activeFase === "fase-4"
                     ? "bg-hh-ink text-white"
                     : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
@@ -358,19 +377,6 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               >
                 Fase 4 ({technieken["fase-4"].length})
               </button>
-              
-              {/* Type Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px] flex-shrink-0">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle Types</SelectItem>
-                  <SelectItem value="video">Video</SelectItem>
-                  <SelectItem value="webinar">Webinar</SelectItem>
-                  <SelectItem value="hugo-ai">Hugo AI Chat</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </Card>
