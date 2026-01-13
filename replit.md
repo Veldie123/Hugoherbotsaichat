@@ -144,19 +144,32 @@ src/
 - **hh-muted**: Secondary text, descriptions
 - **hh-text**: Primary text content
 
-## Technieken SSOT (Single Source of Truth)
+## SSOT Architecture (Single Source of Truth)
+
+### Technieken SSOT
 - **Source File**: `src/data/technieken_index.json` - Contains all Hugo's verkooptechnieken
 - **Service**: `src/data/technieken-service.ts` - TypeScript wrapper with typed helpers
-- **Usage**: All technique references across the app must load from this SSOT:
-  - E.P.I.C Technieken (TechniqueLibrary.tsx)
-  - Videos
-  - Webinars  
-  - Gespreksanalyse
-  - Hugo a.i. chat
-  - Dashboard action cards
+- **Used by**: AdminTechniqueManagement.tsx, TechniqueLibrary.tsx
 - **Key Functions**:
   - `getAllTechnieken()` - Get all techniques
   - `getTechniekByNummer(nummer)` - Get by nummer (e.g., "2.1.1")
   - `getTechniekenByFase(fase)` - Get techniques for a specific fase
   - `getFaseNaam(fase)` - Get Dutch fase name
   - `searchTechnieken(query)` - Search by naam, nummer, tags, themas
+
+### Videos SSOT
+- **Source File**: `src/data/videos-data.ts` - Contains all video content
+- **Exports**: `videos` array and `VideoItem` interface
+- **Used by**: AdminVideoManagement.tsx, VideoLibrary.tsx
+- **Fields**: id, title, techniqueNumber, fase, niveau, duration, views, completion, status, thumbnail, uploadDate
+
+### Live Sessions (Webinars) SSOT
+- **Source File**: `src/data/live-sessions-data.ts` - Contains all webinar/live session data
+- **Exports**: `liveSessions` array and `LiveSession` interface
+- **Used by**: AdminLiveSessions.tsx, LiveCoaching.tsx
+- **Fields**: id, techniqueNumber, title, fase, date, time, duration, status, attendees, maxAttendees, platform, recording, description
+
+### SSOT Principle
+- Admin View and User View MUST import from the SAME data source
+- When data changes in the shared source, both views update automatically
+- Never hardcode data arrays directly in component files
