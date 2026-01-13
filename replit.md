@@ -43,7 +43,18 @@ src/
 - Vite is configured to allow all hosts for Replit proxy compatibility
 - Uses path aliases (@/ maps to src/)
 
+## UI Consistency Standards
+- **CustomCheckbox**: Shared component at `src/components/ui/custom-checkbox.tsx` with border-2 styling, purple-600 when checked
+- **Table headers**: Use `text-hh-text font-semibold` for consistent styling
+- **KPI values**: Use `text-hh-text` (black) instead of green
+- **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
+
 ## Recent Changes
+- 2026-01-13: UI Consistency Updates
+  - Standardized table header styling across AdminTechniqueManagement, AdminDashboard, AdminBilling, AdminOrganizationManagement
+  - Fixed TechniqueDetailsDialog type interface (naam instead of name property)
+  - Unified CustomCheckbox usage across all admin pages
+  - Standardized KPI value colors and badge patterns
 - 2026-01-13: Initial Replit setup
   - Configured Vite for Replit (port 5000, allowedHosts)
   - Added TypeScript configuration
