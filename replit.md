@@ -50,6 +50,12 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-13: User View Color Scheme Refinement
+  - Established hh-ink (dark navy #1E2A3B) as dominant color for all User Views
+  - hh-primary (#6B7A92) as secondary color for accents
+  - Updated TechniqueLibrary: view toggle, code badges, sort icons, table icons
+  - Updated VideoLibrary: main action button
+  - Updated LiveCoaching: tabs, raise hand button, poll interactions
 - 2026-01-13: Dashboard Refactor
   - Added 4 KPI cards (Video's bekeken, Live sessies, Analyses, AI Chats)
   - Renamed Digital Coaching → Video, Live Coaching → Webinar
@@ -72,8 +78,18 @@ src/
   - Created missing component stubs (Help, Coaching, RolePlayOverview, Analysis)
 
 ## User View vs Admin View Design Pattern
-- **Admin View**: Purple/green color scheme, checkboxes for selection, edit/delete buttons, "Nieuwe X" buttons
-- **User View**: Steel blue (hh-primary) color scheme, no checkboxes, read-only detail dialogs, action buttons for viewing/playing content
+- **Admin View**: Purple (purple-600) as dominant + green (hh-success) as accent, checkboxes for selection, edit/delete buttons, "Nieuwe X" buttons
+- **User View**: Dark navy blue (hh-ink: #1E2A3B) as dominant + steel blue (hh-primary: #6B7A92) as secondary
+  - Dominant actions (view toggle, code badges, active sort icons): hh-ink
+  - Secondary accents (icons, subtle backgrounds): hh-primary
+  - No checkboxes, read-only detail dialogs, action buttons for viewing/playing content
+
+## Color Tokens (User View)
+- **hh-ink** (#1E2A3B): Dominant - buttons, active states, badges, main icons
+- **hh-primary** (#6B7A92): Secondary - supporting icons, subtle backgrounds, secondary info
+- **hh-success**: Positive metrics, active status
+- **hh-muted**: Secondary text, descriptions
+- **hh-text**: Primary text content
 
 ## Technieken SSOT (Single Source of Truth)
 - **Source File**: `src/data/technieken_index.json` - Contains all Hugo's verkooptechnieken

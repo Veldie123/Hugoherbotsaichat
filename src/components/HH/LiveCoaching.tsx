@@ -336,14 +336,14 @@ export function LiveCoaching({
                       <TabsList className="w-full bg-hh-ui-50">
                         <TabsTrigger
                           value="chat"
-                          className="flex-1 data-[state=active]:bg-hh-primary data-[state=active]:text-white"
+                          className="flex-1 data-[state=active]:bg-hh-ink data-[state=active]:text-white"
                         >
                           <MessageCircle className="w-4 h-4 mr-2" />
                           Chat
                         </TabsTrigger>
                         <TabsTrigger
                           value="polls"
-                          className="flex-1 data-[state=active]:bg-hh-primary data-[state=active]:text-white"
+                          className="flex-1 data-[state=active]:bg-hh-ink data-[state=active]:text-white"
                         >
                           <ThumbsUp className="w-4 h-4 mr-2" />
                           Polls
@@ -363,7 +363,7 @@ export function LiveCoaching({
                           variant={handRaised ? "default" : "outline"}
                           className={`w-full gap-2 ${
                             handRaised
-                              ? "bg-hh-primary text-white"
+                              ? "bg-hh-ink text-white hover:bg-hh-ink/90"
                               : "border-hh-border"
                           }`}
                         >
@@ -478,7 +478,7 @@ export function LiveCoaching({
                               return (
                                 <button
                                   key={idx}
-                                  className="w-full text-left p-3 rounded-lg border border-hh-border hover:border-hh-primary transition-colors relative overflow-hidden"
+                                  className="w-full text-left p-3 rounded-lg border border-hh-border hover:border-hh-ink transition-colors relative overflow-hidden"
                                 >
                                   <div
                                     className="absolute inset-0 bg-hh-primary/5"
@@ -492,7 +492,7 @@ export function LiveCoaching({
                                       <span className="text-hh-muted text-[14px] leading-[20px]">
                                         {option.votes}
                                       </span>
-                                      <span className="text-hh-primary">
+                                      <span className="text-hh-ink font-medium">
                                         {percentage}%
                                       </span>
                                     </div>

@@ -110,7 +110,7 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
             <Button
               size="lg"
               onClick={() => setIsPlaying(!isPlaying)}
-              className="flex-shrink-0 gap-2"
+              className="flex-shrink-0 gap-2 bg-hh-ink hover:bg-hh-ink/90"
             >
               <Play className="w-4 h-4" />
               {isPlaying ? "Pauzeer video" : "Start video"}
