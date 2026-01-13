@@ -50,8 +50,18 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
-- 2026-01-13: MAJOR User View Redesign (Admin Layout Pattern)
-  - Complete redesign of ALL User View pages to match Admin layout structure
+- 2026-01-13: COMPLETE User View Redesign (Admin Layout Pattern) - Phase 2
+  - Redesigned remaining sidebar pages to match Admin layout structure
+  - Components redesigned in Phase 2:
+    - **TeamSessions.tsx**: Team overview with member stats, avg score, sessions (currentPage="team")
+    - **Analytics.tsx**: Analytics & voortgang with skills breakdown, scenario performance, weekly trends
+    - **Library.tsx**: Scenario bibliotheek with sortable table, Start button actions
+    - **Help.tsx**: Comprehensive Help Center with 12 FAQs, categories, contact support
+    - **Resources.tsx**: Downloads page with 4 KPI cards, sortable table, type filters
+  - All archived to *_V0.tsx versions
+  - Fixed Library.tsx: removed admin dropdown menus, replaced with simple Start button
+- 2026-01-13: MAJOR User View Redesign (Admin Layout Pattern) - Phase 1
+  - Complete redesign of main User View pages to match Admin layout structure
   - Archived original components as *_V0.tsx (TechniqueLibrary_V0, VideoLibrary_V0, etc.)
   - New components follow Admin pattern: 4 KPI cards → Search/Filter bar → List/Grid toggle → Data table/cards
   - All use SSOT (technieken-service) for data consistency
