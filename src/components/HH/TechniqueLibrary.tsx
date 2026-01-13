@@ -443,6 +443,11 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                                     nummer: fullTech.nummer,
                                     naam: fullTech.naam,
                                     fase: fullTech.fase,
+                                    tags: fullTech.tags,
+                                    doel: fullTech.doel,
+                                    hoe: fullTech.hoe,
+                                    stappenplan: fullTech.stappenplan,
+                                    voorbeeld: fullTech.voorbeeld,
                                   });
                                   setDetailsDialogOpen(true);
                                 }
@@ -474,7 +479,27 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
         {viewMode === "grid" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTechnieken.map((techniek) => (
-              <Card key={`${techniek.code}-${techniek.id}`} className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md hover:border-hh-ink/30 transition-all">
+              <Card 
+                key={`${techniek.code}-${techniek.id}`} 
+                className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md hover:border-hh-ink/30 transition-all cursor-pointer"
+                onClick={() => {
+                  const allTech = getAllTechnieken();
+                  const fullTech = allTech.find(t => t.nummer === techniek.code);
+                  if (fullTech) {
+                    setSelectedTechnique({
+                      nummer: fullTech.nummer,
+                      naam: fullTech.naam,
+                      fase: fullTech.fase,
+                      tags: fullTech.tags,
+                      doel: fullTech.doel,
+                      hoe: fullTech.hoe,
+                      stappenplan: fullTech.stappenplan,
+                      voorbeeld: fullTech.voorbeeld,
+                    });
+                    setDetailsDialogOpen(true);
+                  }
+                }}
+              >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <Badge
@@ -603,6 +628,11 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             number: selectedTechnique.nummer,
             naam: selectedTechnique.naam,
             fase: selectedTechnique.fase || "1",
+            tags: selectedTechnique.tags,
+            doel: selectedTechnique.doel,
+            hoe: selectedTechnique.hoe,
+            stappenplan: selectedTechnique.stappenplan,
+            voorbeeld: selectedTechnique.voorbeeld,
           }}
           isEditable={false}
         />

@@ -25,6 +25,7 @@ interface TechniqueDetailsDialogProps {
     doel?: string;
     hoe?: string;
     stappenplan?: string[];
+    voorbeeld?: string[];
   } | null;
   onSave?: (updatedTechnique: any) => void;
   isEditable?: boolean;
@@ -275,6 +276,26 @@ export function TechniqueDetailsDialog({
                   </li>
                 ))}
               </ol>
+            </div>
+          )}
+
+          {/* Voorbeelden Section */}
+          {displayData.voorbeeld && displayData.voorbeeld.length > 0 && (
+            <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+              <h4 className="text-[16px] font-semibold text-hh-ink mb-3">
+                Voorbeelden
+              </h4>
+              <ul className="space-y-2">
+                {displayData.voorbeeld.map((voorbeeld: string, index: number) => (
+                  <li
+                    key={index}
+                    className="flex items-start gap-3 text-[14px] leading-[22px] text-hh-text"
+                  >
+                    <span className="text-green-600 shrink-0">•</span>
+                    <span>{voorbeeld}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>

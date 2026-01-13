@@ -40,6 +40,7 @@ import {
 import { getTechniquesByPhase } from "../../data/epicTechniques";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
 import technieken_index from "../../data/technieken_index";
+import { getAllTechnieken } from "../../data/technieken-service";
 
 interface AdminTechniqueManagementProps {
   navigate?: (page: string) => void;
@@ -527,12 +528,19 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
-                                // Find full technique details from technieken_index
-                                const fullTech = Object.values(technieken_index.technieken).find(
-                                  (t: any) => t.nummer === techniek.code
-                                );
+                                const allTech = getAllTechnieken();
+                                const fullTech = allTech.find(t => t.nummer === techniek.code);
                                 if (fullTech) {
-                                  setSelectedTechnique(fullTech);
+                                  setSelectedTechnique({
+                                    nummer: fullTech.nummer,
+                                    naam: fullTech.naam,
+                                    fase: fullTech.fase,
+                                    tags: fullTech.tags,
+                                    doel: fullTech.doel,
+                                    hoe: fullTech.hoe,
+                                    stappenplan: fullTech.stappenplan,
+                                    voorbeeld: fullTech.voorbeeld,
+                                  });
                                   setIsEditMode(false);
                                   setDetailsDialogOpen(true);
                                 }
@@ -556,7 +564,27 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
         {viewMode === "grid" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTechnieken.map((techniek) => (
-              <Card key={`${techniek.code}-${techniek.id}`} className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md transition-shadow">
+              <Card 
+                key={`${techniek.code}-${techniek.id}`} 
+                className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md transition-shadow cursor-pointer"
+                onClick={() => {
+                  const allTech = getAllTechnieken();
+                  const fullTech = allTech.find(t => t.nummer === techniek.code);
+                  if (fullTech) {
+                    setSelectedTechnique({
+                      nummer: fullTech.nummer,
+                      naam: fullTech.naam,
+                      fase: fullTech.fase,
+                      tags: fullTech.tags,
+                      doel: fullTech.doel,
+                      hoe: fullTech.hoe,
+                      stappenplan: fullTech.stappenplan,
+                      voorbeeld: fullTech.voorbeeld,
+                    });
+                    setDetailsDialogOpen(true);
+                  }
+                }}
+              >
                 <div className="space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between">
@@ -693,6 +721,11 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
             number: selectedTechnique.nummer,
             naam: selectedTechnique.naam,
             fase: selectedTechnique.fase || "1",
+            tags: selectedTechnique.tags,
+            doel: selectedTechnique.doel,
+            hoe: selectedTechnique.hoe,
+            stappenplan: selectedTechnique.stappenplan,
+            voorbeeld: selectedTechnique.voorbeeld,
           }}
           isEditable={true}
           onSave={(updatedTechnique) => {
