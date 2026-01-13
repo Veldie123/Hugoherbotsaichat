@@ -50,6 +50,13 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-13: E.P.I.C Card Click to Open Details Dialog
+  - Cards in grid view are now clickable to open TechniqueDetailsDialog
+  - Dialog shows ALL data from technieken_index.json (nummer, naam, fase, tags, doel, hoe, stappenplan, voorbeeld)
+  - Added "Voorbeelden" section with green styling to TechniqueDetailsDialog
+  - Admin view: dialog is editable (isEditable=true)
+  - User view: dialog is read-only (isEditable=false)
+  - Applied to both TechniqueLibrary.tsx and AdminTechniqueManagement.tsx
 - 2026-01-13: Content Data Consolidation + E.P.I.C Grid Navigation
   - Created `src/data/content-items.ts` as shared data source for all content (videos, scenarios, live, documents)
   - Library.tsx and AdminContentLibrary.tsx now import from same source
