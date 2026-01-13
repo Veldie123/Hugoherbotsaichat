@@ -268,10 +268,10 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
         {/* Search & Filters Card */}
         <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
           <div className="flex flex-col gap-4">
-            {/* Top Row: Search + Type Filter + View Toggle */}
-            <div className="flex gap-3 items-center">
-              {/* Search - extends to align with end of Fase 2 (~60% width) */}
-              <div className="w-[60%] relative">
+            {/* Top Row: Search + Type Filter + View Toggle - matches fase grid */}
+            <div className="flex gap-2 items-center">
+              {/* Search - spans width of Fase 0 + Fase 1 + Fase 2 (3 units) */}
+              <div className="flex-[3] min-w-[240px] relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
                 <Input
                   placeholder="Zoek technieken..."
@@ -281,8 +281,8 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                 />
               </div>
               
-              {/* Type Filter - aligns with Fase 3 */}
-              <div className="flex-1">
+              {/* Type Filter - spans width of Fase 3 + Fase 4 (2 units) */}
+              <div className="flex-[2] min-w-[160px]">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Alle Types" />
