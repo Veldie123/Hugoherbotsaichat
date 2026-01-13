@@ -36,7 +36,9 @@ import {
   TrendingUp,
   Calendar,
   Star,
+  Check,
 } from "lucide-react";
+import { CustomCheckbox } from "../ui/custom-checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +58,16 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+
+  const selectionMode = selectedIds.length > 0;
+
+  const toggleSelectId = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
   const [formData, setFormData] = useState({
     title: "",
@@ -341,6 +353,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
             <table className="w-full">
               <thead className="bg-hh-ui-50 border-b border-hh-border">
                 <tr>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[40px]"></th>
                   <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                     Titel & Beschrijving
                   </th>
@@ -368,7 +381,19 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
                     className={`border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors ${
                       index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                     }`}
+                    onMouseEnter={() => setHoveredRow(resource.id)}
+                    onMouseLeave={() => setHoveredRow(null)}
                   >
+                    <td className="px-4 py-3 w-[40px]">
+                      {(hoveredRow === resource.id || selectionMode) ? (
+                        <CustomCheckbox
+                          checked={selectedIds.includes(resource.id)}
+                          onChange={() => toggleSelectId(resource.id)}
+                        />
+                      ) : (
+                        <div className="w-5 h-5" />
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-start gap-2">
                         {resource.featured && (

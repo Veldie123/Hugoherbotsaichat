@@ -60,6 +60,7 @@ import {
   Settings,
 } from "lucide-react";
 import { SessionDebugPanel } from "./SessionDebugPanel";
+import { CustomCheckbox } from "../ui/custom-checkbox";
 
 interface AdminSessionsProps {
   navigate?: (page: string) => void;
@@ -703,9 +704,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                 <tr>
                   {selectionMode && (
                     <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[40px]">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
+                      <CustomCheckbox
                         checked={selectedIds.length === filteredSessions.length && filteredSessions.length > 0}
                         onChange={toggleSelectAll}
                       />
@@ -790,9 +789,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                   >
                     {selectionMode && (
                       <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 rounded border-2 border-hh-border/40 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer bg-transparent checked:bg-purple-600 checked:border-purple-600"
+                        <CustomCheckbox
                           checked={selectedIds.includes(session.id)}
                           onChange={() => toggleSelection(session.id)}
                         />
