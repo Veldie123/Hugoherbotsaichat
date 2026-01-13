@@ -3,7 +3,6 @@ import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
-import { EPICProgressKPI } from "./EPICProgressKPI";
 import { EmptyState } from "./EmptyState";
 import {
   Play,
@@ -84,66 +83,6 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
           </div>
         </div>
 
-        {/* EPIC Flow Progress - KPI Cards */}
-        <EPICProgressKPI
-          phases={[
-            {
-              phaseNumber: 0,
-              phaseName: "Voorbereiding",
-              completion: 85,
-              videosWatched: 4,
-              totalVideos: 4,
-              liveSessions: 2,
-              analyses: 3,
-              aiChats: 5,
-              trend: "up",
-            },
-            {
-              phaseNumber: 1,
-              phaseName: "Openingsfase",
-              completion: 75,
-              videosWatched: 3,
-              totalVideos: 4,
-              liveSessions: 1,
-              analyses: 5,
-              aiChats: 8,
-              trend: "up",
-            },
-            {
-              phaseNumber: 2,
-              phaseName: "Ontdekkingsfase",
-              completion: 42,
-              videosWatched: 3,
-              totalVideos: 8,
-              liveSessions: 1,
-              analyses: 2,
-              aiChats: 4,
-              trend: "up",
-            },
-            {
-              phaseNumber: 3,
-              phaseName: "Aanbevelingsfase",
-              completion: 15,
-              videosWatched: 1,
-              totalVideos: 5,
-              liveSessions: 0,
-              analyses: 1,
-              aiChats: 2,
-              trend: "neutral",
-            },
-            {
-              phaseNumber: 4,
-              phaseName: "Beslissingsfase",
-              completion: 0,
-              videosWatched: 0,
-              totalVideos: 7,
-              liveSessions: 0,
-              analyses: 0,
-              aiChats: 0,
-              trend: "neutral",
-            },
-          ]}
-        />
 
         {/* 4 KPI Cards - User Statistics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
