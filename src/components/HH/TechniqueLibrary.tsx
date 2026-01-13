@@ -37,7 +37,12 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { useState, useMemo } from "react";
-import { EPIC_TECHNIQUES, EpicTechnique } from "../../data/epicTechniques";
+import { 
+  getAllTechnieken, 
+  Techniek,
+  getFaseNaam,
+  getTechniekCount
+} from "../../data/technieken-service";
 
 interface TechniqueLibraryProps {
   navigate?: (page: string) => void;
@@ -70,7 +75,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
   const [selectedTechnique, setSelectedTechnique] = useState<TechniqueItem | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
-  // Memoize technique data to prevent random regeneration on every render
+  // Memoize technique data from SSOT - prevent regeneration on every render
   const technieken = useMemo(() => {
     // Deterministic seed function based on string
     const seedFromString = (str: string): number => {
@@ -82,14 +87,14 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
       return Math.abs(hash);
     };
 
-    // Helper function to convert EpicTechnique to TechniqueItem with deterministic values
-    const toTechniqueItem = (t: EpicTechnique, index: number, faseLabel: string): TechniqueItem => {
+    // Helper function to convert Techniek to TechniqueItem with deterministic values
+    const toTechniqueItem = (t: Techniek, index: number): TechniqueItem => {
       const seed = seedFromString(t.nummer + t.naam);
       return {
         id: index,
         code: t.nummer,
         name: t.naam,
-        fase: faseLabel,
+        fase: getFaseNaam(t.fase),
         videos: (seed % 5) + 1,
         roleplays: (seed % 400) + 100,
         avgScore: (seed % 20) + 70,
@@ -98,18 +103,23 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
       };
     };
 
-    // Filter EPIC_TECHNIQUES by fase
-    const fase1Techniques = EPIC_TECHNIQUES.filter(t => t.fase === "1");
-    const fase2Techniques = EPIC_TECHNIQUES.filter(t => t.fase === "2");
-    const fase3Techniques = EPIC_TECHNIQUES.filter(t => t.fase === "3");
-    const fase4Techniques = EPIC_TECHNIQUES.filter(t => t.fase === "4");
+    // Load all technieken from SSOT and filter by fase (excluding fase headers)
+    const allTechnieken = getAllTechnieken().filter(t => !t.is_fase);
+    
+    const fase0Techniques = allTechnieken.filter(t => t.fase === "0");
+    const fase1Techniques = allTechnieken.filter(t => t.fase === "1");
+    const fase2Techniques = allTechnieken.filter(t => t.fase === "2");
+    const fase3Techniques = allTechnieken.filter(t => t.fase === "3");
+    const fase4Techniques = allTechnieken.filter(t => t.fase === "4");
 
-    return {
-      "fase-1": fase1Techniques.map((t, i) => toTechniqueItem(t, i + 1, "Voorbereiding")),
-      "fase-2": fase2Techniques.map((t, i) => toTechniqueItem(t, i + 10, "Ontdekkingsfase")),
-      "fase-3": fase3Techniques.map((t, i) => toTechniqueItem(t, i + 20, "Aanbevelingsfase")),
-      "fase-4": fase4Techniques.map((t, i) => toTechniqueItem(t, i + 30, "Beslissingsfase")),
+    const result: Record<string, TechniqueItem[]> = {
+      "fase-0": fase0Techniques.map((t, i) => toTechniqueItem(t, i + 1)),
+      "fase-1": fase1Techniques.map((t, i) => toTechniqueItem(t, i + 10)),
+      "fase-2": fase2Techniques.map((t, i) => toTechniqueItem(t, i + 20)),
+      "fase-3": fase3Techniques.map((t, i) => toTechniqueItem(t, i + 50)),
+      "fase-4": fase4Techniques.map((t, i) => toTechniqueItem(t, i + 70)),
     };
+    return result;
   }, []);
 
   // Filter by fase
@@ -120,7 +130,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
   // Filter by status
   const statusFiltered = statusFilter === "all" 
     ? faseFilter 
-    : faseFilter.filter(t => t.status.toLowerCase() === statusFilter);
+    : faseFilter.filter((t: TechniqueItem) => t.status.toLowerCase() === statusFilter);
 
   // Sort
   const handleSort = (field: SortField) => {
@@ -292,12 +302,13 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             
             {/* Filters */}
             <Select value={activeFase} onValueChange={setActiveFase}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Alle Fases" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Fases</SelectItem>
-                <SelectItem value="fase-1">Fase 1 - Voorbereiding</SelectItem>
+                <SelectItem value="fase-0">Fase 0 - Pre-contactfase</SelectItem>
+                <SelectItem value="fase-1">Fase 1 - Openingsfase</SelectItem>
                 <SelectItem value="fase-2">Fase 2 - Ontdekkingsfase</SelectItem>
                 <SelectItem value="fase-3">Fase 3 - Aanbevelingsfase</SelectItem>
                 <SelectItem value="fase-4">Fase 4 - Beslissingsfase</SelectItem>

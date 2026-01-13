@@ -74,3 +74,20 @@ src/
 ## User View vs Admin View Design Pattern
 - **Admin View**: Purple/green color scheme, checkboxes for selection, edit/delete buttons, "Nieuwe X" buttons
 - **User View**: Steel blue (hh-primary) color scheme, no checkboxes, read-only detail dialogs, action buttons for viewing/playing content
+
+## Technieken SSOT (Single Source of Truth)
+- **Source File**: `src/data/technieken_index.json` - Contains all Hugo's verkooptechnieken
+- **Service**: `src/data/technieken-service.ts` - TypeScript wrapper with typed helpers
+- **Usage**: All technique references across the app must load from this SSOT:
+  - E.P.I.C Technieken (TechniqueLibrary.tsx)
+  - Videos
+  - Webinars  
+  - Gespreksanalyse
+  - Hugo a.i. chat
+  - Dashboard action cards
+- **Key Functions**:
+  - `getAllTechnieken()` - Get all techniques
+  - `getTechniekByNummer(nummer)` - Get by nummer (e.g., "2.1.1")
+  - `getTechniekenByFase(fase)` - Get techniques for a specific fase
+  - `getFaseNaam(fase)` - Get Dutch fase name
+  - `searchTechnieken(query)` - Search by naam, nummer, tags, themas

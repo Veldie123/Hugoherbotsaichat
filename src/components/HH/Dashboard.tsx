@@ -26,6 +26,7 @@ import {
   FileSearch,
 } from "lucide-react";
 import { getDailyQuote } from "../../data/hugoQuotes";
+import { getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
 
 interface DashboardProps {
   hasData?: boolean;
@@ -34,6 +35,10 @@ interface DashboardProps {
 }
 
 export function Dashboard({ hasData = true, navigate, isAdmin = false }: DashboardProps) {
+  // Load current technique from SSOT
+  const currentTechnique = getTechniekByNummer("2.1.1");
+  const currentFaseNaam = currentTechnique ? getFaseNaam(currentTechnique.fase) : "";
+
   if (!hasData) {
     return (
       <AppLayout currentPage="dashboard" navigate={navigate} isAdmin={isAdmin}>
@@ -170,8 +175,8 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
 
           <Card className="p-4 sm:p-5 rounded-[16px] border-hh-border">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <FileSearch className="w-5 h-5 text-blue-500" />
+              <div className="w-10 h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
+                <FileSearch className="w-5 h-5 text-hh-primary" />
               </div>
               <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
                 +2
@@ -183,8 +188,8 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
 
           <Card className="p-4 sm:p-5 rounded-[16px] border-hh-border">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-hh-primary" />
               </div>
               <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
                 +5
@@ -219,10 +224,10 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
                 Huidige topic
               </div>
               <div className="text-[17px] leading-[23px] sm:text-[18px] sm:leading-[24px] text-hh-text font-medium mb-1">
-                2.1.1 Feitgerichte vragen
+                {currentTechnique ? `${currentTechnique.nummer} ${currentTechnique.naam}` : "Geen techniek geselecteerd"}
               </div>
               <div className="text-[12px] leading-[16px] sm:text-[13px] sm:leading-[18px] text-hh-muted">
-                Fase 2 • Ontdekkingsfase • 18 min
+                {currentTechnique ? `Fase ${currentTechnique.fase} • ${currentFaseNaam} • 18 min` : ""}
               </div>
             </div>
 
@@ -282,12 +287,12 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
 
           {/* Chat met Hugo a.i. */}
           <Card 
-            className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-green-500/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all cursor-pointer group active:scale-[0.98]"
+            className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all cursor-pointer group active:scale-[0.98]"
             onClick={() => navigate?.("coaching")}
           >
             <div className="mb-4 sm:mb-5">
               <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="w-5 h-5 text-green-500" />
+                <MessageSquare className="w-5 h-5 text-hh-primary" />
                 <h3 className="text-[18px] leading-[24px] text-hh-text">
                   Chat met Hugo a.i.
                 </h3>
@@ -297,7 +302,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               </p>
             </div>
 
-            <div className="mb-5 sm:mb-6 p-4 rounded-lg bg-green-500/5 border border-green-500/20">
+            <div className="mb-5 sm:mb-6 p-4 rounded-lg bg-hh-primary/5 border border-hh-primary/20">
               <div className="text-[12px] leading-[16px] sm:text-[13px] sm:leading-[18px] text-hh-muted mb-1.5">
                 Laatste sessie
               </div>
@@ -310,7 +315,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </div>
 
             <Button
-              className="w-full h-12 sm:h-11 gap-2 text-[15px] sm:text-[16px] bg-green-500 hover:bg-green-600"
+              className="w-full h-12 sm:h-11 gap-2 text-[15px] sm:text-[16px]"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 navigate?.("coaching");
@@ -324,12 +329,12 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
 
           {/* Gespreksanalyse */}
           <Card 
-            className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-blue-500/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all cursor-pointer group active:scale-[0.98]"
+            className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all cursor-pointer group active:scale-[0.98]"
             onClick={() => navigate?.("analysis")}
           >
             <div className="mb-4 sm:mb-5">
               <div className="flex items-center gap-2 mb-2">
-                <FileSearch className="w-5 h-5 text-blue-500" />
+                <FileSearch className="w-5 h-5 text-hh-primary" />
                 <h3 className="text-[18px] leading-[24px] text-hh-text">
                   Gespreksanalyse
                 </h3>
@@ -339,7 +344,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               </p>
             </div>
 
-            <div className="mb-5 sm:mb-6 p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
+            <div className="mb-5 sm:mb-6 p-4 rounded-lg bg-hh-primary/5 border border-hh-primary/20">
               <div className="text-[12px] leading-[16px] sm:text-[13px] sm:leading-[18px] text-hh-muted mb-1.5">
                 Laatste analyse
               </div>
@@ -353,7 +358,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
 
             <Button
               variant="outline"
-              className="w-full h-12 sm:h-11 gap-2 text-[15px] sm:text-[16px] border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+              className="w-full h-12 sm:h-11 gap-2 text-[15px] sm:text-[16px] border-hh-primary/30 text-hh-primary hover:bg-hh-primary/10"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 navigate?.("analysis");
