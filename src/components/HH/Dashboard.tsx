@@ -285,14 +285,14 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </Button>
           </Card>
 
-          {/* Talk to Hugo AI */}
+          {/* Talk to Hugo AI - Core platform feature with dominant dark blue styling */}
           <Card 
-            className="p-5 sm:p-6 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all cursor-pointer group active:scale-[0.98]"
+            className="p-5 sm:p-6 rounded-[16px] border-hh-ink/20 hover:border-hh-ink/40 hover:shadow-lg bg-gradient-to-br from-hh-ink/5 to-transparent transition-all cursor-pointer group active:scale-[0.98]"
             onClick={() => navigate?.("coaching")}
           >
             <div className="mb-4 sm:mb-5">
               <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="w-5 h-5 text-hh-primary" />
+                <MessageSquare className="w-5 h-5 text-hh-ink" />
                 <h3 className="text-[18px] leading-[24px] text-hh-text">
                   Talk to Hugo AI
                 </h3>
@@ -302,7 +302,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               </p>
             </div>
 
-            <div className="mb-5 sm:mb-6 p-4 rounded-lg bg-hh-primary/5 border border-hh-primary/20">
+            <div className="mb-5 sm:mb-6 p-4 rounded-lg bg-hh-ink/5 border border-hh-ink/20">
               <div className="text-[12px] leading-[16px] sm:text-[13px] sm:leading-[18px] text-hh-muted mb-1.5">
                 Laatste sessie
               </div>
@@ -315,7 +315,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </div>
 
             <Button
-              className="w-full h-12 sm:h-11 gap-2 text-[15px] sm:text-[16px]"
+              className="w-full h-12 sm:h-11 gap-2 text-[15px] sm:text-[16px] bg-hh-ink hover:bg-hh-ink/90 text-white"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 navigate?.("coaching");

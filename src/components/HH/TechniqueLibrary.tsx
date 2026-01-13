@@ -175,8 +175,8 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
       return <ArrowUpDown className="w-3 h-3 text-hh-muted" />;
     }
     return sortOrder === "asc" 
-      ? <ArrowUp className="w-3 h-3 text-hh-primary" />
-      : <ArrowDown className="w-3 h-3 text-hh-primary" />;
+      ? <ArrowUp className="w-3 h-3 text-hh-ink" />
+      : <ArrowDown className="w-3 h-3 text-hh-ink" />;
   };
 
   const viewTechniqueDetails = (tech: TechniqueItem) => {
@@ -243,8 +243,8 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
               </div>
               <Badge
                 variant="outline"
@@ -326,14 +326,14 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               </SelectContent>
             </Select>
             
-            {/* View Toggle - Steel Blue for user view */}
+            {/* View Toggle - Dark blue (hh-ink) for user view dominant actions */}
             <div className="flex gap-1">
               <Button
                 variant="ghost"
                 size="sm"
                 className={`${
                   viewMode === "list" 
-                    ? "bg-hh-primary text-white hover:bg-hh-primary/90" 
+                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
                     : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
                 }`}
                 onClick={() => setViewMode("list")}
@@ -345,7 +345,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                 size="sm"
                 className={`${
                   viewMode === "grid" 
-                    ? "bg-hh-primary text-white hover:bg-hh-primary/90" 
+                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
                     : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
                 }`}
                 onClick={() => setViewMode("grid")}
@@ -431,7 +431,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       <td className="py-3 px-4">
                         <Badge
                           variant="outline"
-                          className="text-[11px] font-mono bg-hh-primary/10 text-hh-primary border-hh-primary/20"
+                          className="text-[11px] font-mono bg-hh-ink/10 text-hh-ink border-hh-ink/20"
                         >
                           {techniek.code}
                         </Badge>
@@ -442,14 +442,14 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                         </p>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1 text-hh-muted">
-                          <Video className="w-3.5 h-3.5" />
+                        <div className="flex items-center justify-end gap-1 text-hh-text">
+                          <Video className="w-3.5 h-3.5 text-hh-primary" />
                           <span className="text-[14px]">{techniek.videos}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1 text-hh-muted">
-                          <Play className="w-3.5 h-3.5" />
+                        <div className="flex items-center justify-end gap-1 text-hh-text">
+                          <Play className="w-3.5 h-3.5 text-hh-ink" />
                           <span className="text-[14px]">{techniek.roleplays}</span>
                         </div>
                       </td>
@@ -514,13 +514,13 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             {filteredTechnieken.map((techniek) => (
               <Card
                 key={`${techniek.code}-${techniek.id}`}
-                className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:border-hh-primary/40 hover:shadow-md transition-all cursor-pointer"
+                className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:border-hh-ink/40 hover:shadow-md transition-all cursor-pointer"
                 onClick={() => viewTechniqueDetails(techniek)}
               >
                 <div className="flex items-start justify-between mb-3">
                   <Badge
                     variant="outline"
-                    className="text-[11px] font-mono bg-hh-primary/10 text-hh-primary border-hh-primary/20"
+                    className="text-[11px] font-mono bg-hh-ink/10 text-hh-ink border-hh-ink/20"
                   >
                     {techniek.code}
                   </Badge>
