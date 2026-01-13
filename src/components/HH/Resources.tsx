@@ -15,9 +15,10 @@ import {
 
 interface ResourcesProps {
   navigate?: (page: string) => void;
+  isAdmin?: boolean;
 }
 
-export function Resources({ navigate }: ResourcesProps) {
+export function Resources({ navigate, isAdmin }: ResourcesProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -134,8 +135,7 @@ export function Resources({ navigate }: ResourcesProps) {
     <AppLayout
       currentPage="resources"
       navigate={navigate}
-      pageTitle="Resources"
-      pageDescription="Download handige materialen en tools"
+      isAdmin={isAdmin}
     >
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Header */}

@@ -50,12 +50,22 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-13: MAJOR User View Redesign (Admin Layout Pattern)
+  - Complete redesign of ALL User View pages to match Admin layout structure
+  - Archived original components as *_V0.tsx (TechniqueLibrary_V0, VideoLibrary_V0, etc.)
+  - New components follow Admin pattern: 4 KPI cards → Search/Filter bar → List/Grid toggle → Data table/cards
+  - All use SSOT (technieken-service) for data consistency
+  - Components redesigned:
+    - **TechniqueLibrary.tsx**: E.P.I.C Technieken with sortable table, grid view, technique details dialog
+    - **VideoLibrary.tsx**: Video library with watch status, progress tracking, duration stats
+    - **LiveCoaching.tsx**: Webinar overview with registration, attendance stats (currentPage="live")
+    - **RolePlayOverview.tsx**: Scenario bibliotheek with favorites, difficulty levels, category filters
+    - **Analysis.tsx**: Gespreksanalyse with upload CTA, conversation records, technique usage tracking
+  - Color scheme: hh-ink (#1E2A3B) dominant, hh-primary (#6B7A92) secondary
+  - Admin features removed: no checkboxes, no edit/delete, no "Nieuwe X" buttons
 - 2026-01-13: User View Color Scheme Refinement
   - Established hh-ink (dark navy #1E2A3B) as dominant color for all User Views
   - hh-primary (#6B7A92) as secondary color for accents
-  - Updated TechniqueLibrary: view toggle, code badges, sort icons, table icons
-  - Updated VideoLibrary: main action button
-  - Updated LiveCoaching: tabs, raise hand button, poll interactions
 - 2026-01-13: Dashboard Refactor
   - Added 4 KPI cards (Video's bekeken, Live sessies, Analyses, AI Chats)
   - Renamed Digital Coaching → Video, Live Coaching → Webinar

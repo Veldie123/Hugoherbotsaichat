@@ -185,7 +185,7 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
     : 0;
 
   return (
-    <AppLayout currentPage="coaching" navigate={navigate} isAdmin={isAdmin}>
+    <AppLayout currentPage="live" navigate={navigate} isAdmin={isAdmin}>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">

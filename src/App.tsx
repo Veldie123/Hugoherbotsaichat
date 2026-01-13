@@ -218,7 +218,7 @@ export default function App() {
           {currentPage === "admin-config-review" && <AdminConfigReview navigate={navigate} />}
           {currentPage === "coaching" && <DigitalCoaching navigate={navigate} isAdmin={true} />}
           {currentPage === "talk-to-hugo" && <TalkToHugoAI navigate={navigate} isAdmin={true} />}
-          {currentPage === "analysis" && <ConversationAnalysis navigate={navigate} isAdmin={true} />}
+          {currentPage === "analysis" && <Analysis navigate={navigate} isAdmin={true} />}
           {currentPage === "analysis-results" && <AnalysisResults navigate={navigate} isAdmin={true} />}
         </>
       )}
