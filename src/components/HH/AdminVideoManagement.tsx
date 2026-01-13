@@ -58,50 +58,7 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import { getTechniqueByNumber } from "../../data/epicTechniques";
-
-// Custom Checkbox Component - Subtiel hol vierkantje met paars vinkje
-interface CustomCheckboxProps {
-  checked: boolean;
-  onChange: () => void;
-  onClick?: (e: React.MouseEvent) => void;
-}
-
-function CustomCheckbox({ checked, onChange, onClick }: CustomCheckboxProps) {
-  const handleClick = (e: React.MouseEvent) => {
-    onClick?.(e);
-    onChange();
-  };
-
-  return (
-    <div
-      className="relative w-4 h-4 cursor-pointer"
-      onClick={handleClick}
-    >
-      {/* Hidden native checkbox voor accessibility */}
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="sr-only"
-        tabIndex={-1}
-      />
-      
-      {/* Custom visual checkbox - Hol vierkantje met subtiele border */}
-      <div
-        className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${
-          checked
-            ? 'border-purple-600 bg-white'
-            : 'border-slate-300 bg-white hover:border-purple-400'
-        }`}
-      >
-        {/* Paars vinkje bij checked state */}
-        {checked && (
-          <Check className="w-3 h-3 text-purple-600" strokeWidth={2.5} />
-        )}
-      </div>
-    </div>
-  );
-}
+import { CustomCheckbox } from "../ui/custom-checkbox";
 
 interface AdminVideoManagementProps {
   navigate?: (page: string) => void;
