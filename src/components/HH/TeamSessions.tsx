@@ -1,11 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "./AppLayout";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 import {
   Select,
   SelectContent,
@@ -23,16 +21,19 @@ import {
 } from "../ui/table";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
-  Download,
-  Filter,
   Search,
   TrendingUp,
   TrendingDown,
   Users,
-  Calendar,
   Clock,
   BarChart3,
   Play,
+  List,
+  LayoutGrid,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Award,
 } from "lucide-react";
 
 interface TeamMember {
@@ -54,9 +55,12 @@ interface TeamSessionsProps {
 }
 
 export function TeamSessions({ navigate, isAdmin }: TeamSessionsProps) {
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("member");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"name" | "sessions" | "score" | "lastSession">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const teamMembers: TeamMember[] = [
     {
@@ -121,182 +125,448 @@ export function TeamSessions({ navigate, isAdmin }: TeamSessionsProps) {
     },
   ];
 
-  const teamStats = {
-    totalSessions: 51,
-    avgScore: 79,
-    activeMembers: 5,
-    topPerformer: "Sarah van Dijk",
+  const teamStats = useMemo(() => {
+    const totalSessions = teamMembers.reduce((sum, m) => sum + m.sessionsThisWeek, 0);
+    const avgScore = Math.round(teamMembers.reduce((sum, m) => sum + m.avgScore, 0) / teamMembers.length);
+    const activeMembers = teamMembers.filter(m => m.status === "active").length;
+    return {
+      totalMembers: teamMembers.length,
+      totalSessions,
+      avgScore,
+      activeMembers,
+    };
+  }, []);
+
+  const handleSort = (column: "name" | "sessions" | "score" | "lastSession") => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder(column === "name" ? "asc" : "desc");
+    }
+  };
+
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortBy !== column) {
+      return <ArrowUpDown className="w-3.5 h-3.5 text-hh-muted/40" />;
+    }
+    return sortOrder === "asc" ? (
+      <ArrowUp className="w-3.5 h-3.5 text-hh-ink" />
+    ) : (
+      <ArrowDown className="w-3.5 h-3.5 text-hh-ink" />
+    );
+  };
+
+  const filteredMembers = useMemo(() => {
+    return teamMembers.filter((member) => {
+      const matchesSearch = searchQuery === "" ||
+        member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.role.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRole = roleFilter === "all" || member.role.toLowerCase().includes(roleFilter.toLowerCase());
+      const matchesStatus = statusFilter === "all" || member.status === statusFilter;
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [searchQuery, roleFilter, statusFilter]);
+
+  const sortedMembers = useMemo(() => {
+    return [...filteredMembers].sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case "name":
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case "sessions":
+          comparison = a.sessionsThisWeek - b.sessionsThisWeek;
+          break;
+        case "score":
+          comparison = a.avgScore - b.avgScore;
+          break;
+        case "lastSession":
+          comparison = a.lastSession.localeCompare(b.lastSession);
+          break;
+      }
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+  }, [filteredMembers, sortBy, sortOrder]);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return (
+          <Badge className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px]">
+            Actief
+          </Badge>
+        );
+      case "new":
+        return (
+          <Badge className="bg-hh-warn/10 text-hh-warn border-hh-warn/20 text-[11px]">
+            Nieuw
+          </Badge>
+        );
+      case "inactive":
+        return (
+          <Badge className="bg-hh-muted/10 text-hh-muted border-hh-muted/20 text-[11px]">
+            Inactief
+          </Badge>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
     <AppLayout currentPage="team" navigate={navigate} isAdmin={isAdmin}>
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+      <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start justify-between">
           <div>
-            <h1 className="mb-2">Team Overzicht</h1>
-            <p className="text-hh-muted">
-              Volg de voortgang van je team — deze week {teamStats.totalSessions}{" "}
-              sessies afgerond
+            <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
+              Team Overzicht
+            </h1>
+            <p className="text-[16px] leading-[24px] text-hh-muted">
+              Bekijk de prestaties en voortgang van je teamleden
             </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <Button variant="outline" className="gap-2 w-full sm:w-auto">
-              <Download className="w-4 h-4" /> Exporteer data
-            </Button>
-            <Button className="gap-2 w-full sm:w-auto" onClick={() => setInviteModalOpen(true)}>
-              <Users className="w-4 h-4" /> Nodig teamlid uit
-            </Button>
           </div>
         </div>
 
-        {/* Team Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
-                <Play className="w-5 h-5 text-hh-primary" />
-              </div>
-              <div>
-                <p className="text-[14px] leading-[20px] text-hh-muted">
-                  Totaal sessies
-                </p>
-                <p className="text-[32px] leading-[40px] text-hh-text">
-                  {teamStats.totalSessions}
-                </p>
+        {/* KPI Cards - User View colors (hh-ink/hh-primary) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
               </div>
             </div>
-            <p className="text-[14px] leading-[20px] text-hh-muted">
-              Deze week
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Teamleden
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+              {teamStats.totalMembers}
             </p>
           </Card>
 
-          <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-hh-success/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-hh-success" />
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
+                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-hh-primary" />
               </div>
-              <div>
-                <p className="text-[14px] leading-[20px] text-hh-muted">
-                  Gemiddelde score
-                </p>
-                <p className="text-[32px] leading-[40px] text-hh-text">
-                  {teamStats.avgScore}%
-                </p>
-              </div>
+              <Badge
+                variant="outline"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+              >
+                +4%
+              </Badge>
             </div>
-            <p className="text-[14px] leading-[20px] text-hh-muted">
-              Team gemiddelde
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Gem. Score
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+              {teamStats.avgScore}%
             </p>
           </Card>
 
-          <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-hh-warn/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-hh-warn" />
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
               </div>
-              <div>
-                <p className="text-[14px] leading-[20px] text-hh-muted">
-                  Actieve leden
-                </p>
-                <p className="text-[32px] leading-[40px] text-hh-text">
-                  {teamStats.activeMembers}
-                </p>
-              </div>
+              <Badge
+                variant="outline"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+              >
+                +12%
+              </Badge>
             </div>
-            <p className="text-[14px] leading-[20px] text-hh-muted">
-              Van de 5 teamleden
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Totaal Sessies
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+              {teamStats.totalSessions}
             </p>
           </Card>
 
-          <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-hh-primary" />
-              </div>
-              <div>
-                <p className="text-[14px] leading-[20px] text-hh-muted">
-                  Top performer
-                </p>
-                <p className="text-[20px] leading-[28px] text-hh-text">
-                  {teamStats.topPerformer}
-                </p>
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
+                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-hh-primary" />
               </div>
             </div>
-            <p className="text-[14px] leading-[20px] text-hh-muted">
-              87% gemiddeld
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Actieve Leden
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+              {teamStats.activeMembers}
             </p>
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="md:col-span-2 relative">
+        {/* Search, View Toggle & Filters Card */}
+        <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
-                placeholder="Zoek teamlid..."
-                className="pl-10 bg-hh-ui-50"
+                placeholder="Zoek teamleden..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Select defaultValue="all">
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
+            
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-full lg:w-[180px]">
+                <SelectValue placeholder="Alle Rollen" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle status</SelectItem>
+                <SelectItem value="all">Alle Rollen</SelectItem>
+                <SelectItem value="sdr">SDR</SelectItem>
+                <SelectItem value="account">Account Executive</SelectItem>
+                <SelectItem value="senior">Senior Sales Rep</SelectItem>
+                <SelectItem value="junior">Junior Sales Rep</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full lg:w-[160px]">
+                <SelectValue placeholder="Alle Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Status</SelectItem>
                 <SelectItem value="active">Actief</SelectItem>
                 <SelectItem value="inactive">Inactief</SelectItem>
                 <SelectItem value="new">Nieuw</SelectItem>
               </SelectContent>
             </Select>
-            <Select defaultValue="week">
-              <SelectTrigger>
-                <SelectValue placeholder="Periode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Deze week</SelectItem>
-                <SelectItem value="month">Deze maand</SelectItem>
-                <SelectItem value="quarter">Dit kwartaal</SelectItem>
-                <SelectItem value="all">Alle tijd</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            {/* View Toggle - hh-ink colors */}
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`px-2.5 ${viewMode === "list" ? "bg-hh-ink/10 text-hh-ink" : "text-hh-muted hover:text-hh-ink"}`}
+                onClick={() => setViewMode("list")}
+              >
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`px-2.5 ${viewMode === "grid" ? "bg-hh-ink/10 text-hh-ink" : "text-hh-muted hover:text-hh-ink"}`}
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </Card>
 
-        {/* Team Table */}
-        <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
-          {/* Mobile: Card List */}
-          <div className="block lg:hidden divide-y divide-hh-border">
-            {teamMembers.map((member) => (
-              <div key={member.id} className="p-5 space-y-4 hover:bg-hh-ui-50/50 transition-colors">
-                {/* Header: Avatar + Name + Status */}
-                <div className="flex items-start gap-3">
-                  <Avatar className="w-12 h-12 flex-shrink-0">
-                    <AvatarFallback className="bg-hh-primary text-white text-[16px]">
+        {/* List View: Data Table */}
+        {viewMode === "list" && (
+          <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
+            {/* Mobile: Card List */}
+            <div className="block lg:hidden divide-y divide-hh-border">
+              {sortedMembers.map((member) => (
+                <div key={member.id} className="p-5 space-y-4 hover:bg-hh-ui-50/50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="w-12 h-12 flex-shrink-0">
+                      <AvatarFallback className="bg-hh-ink text-white text-[16px]">
+                        {member.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h4 className="text-[18px] leading-[26px] text-hh-text font-[700]">
+                          {member.name}
+                        </h4>
+                        {getStatusBadge(member.status)}
+                      </div>
+                      <p className="text-[14px] leading-[20px] text-hh-muted">
+                        {member.role}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-1">
+                      <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide">
+                        Sessies
+                      </p>
+                      <p className="text-[24px] leading-[32px] text-hh-text font-[700]">
+                        {member.sessionsThisWeek}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide">
+                        Score
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[24px] leading-[32px] text-hh-text font-[700]">
+                          {member.avgScore}%
+                        </span>
+                        <div
+                          className={`flex items-center gap-0.5 text-[13px] font-[600] ${
+                            member.delta > 0
+                              ? "text-hh-success"
+                              : "text-destructive"
+                          }`}
+                        >
+                          {member.delta > 0 ? (
+                            <TrendingUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <TrendingDown className="w-3.5 h-3.5" />
+                          )}
+                          {Math.abs(member.delta)}%
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-span-2 space-y-1.5 pt-2 border-t border-hh-border">
+                      <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide">
+                        Top techniek
+                      </p>
+                      <Badge variant="outline" className="text-[13px] px-3 py-1">
+                        {member.topTechnique}
+                      </Badge>
+                    </div>
+
+                    <div className="col-span-2 space-y-1">
+                      <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide">
+                        Laatst actief
+                      </p>
+                      <div className="flex items-center gap-1.5 text-[14px] leading-[20px] text-hh-text">
+                        <Clock className="w-3.5 h-3.5 text-hh-muted" />
+                        {member.lastSession}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: Table */}
+            <div className="hidden lg:block">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead 
+                      className="cursor-pointer select-none"
+                      onClick={() => handleSort("name")}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Teamlid
+                        <SortIcon column="name" />
+                      </div>
+                    </TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead 
+                      className="cursor-pointer select-none"
+                      onClick={() => handleSort("sessions")}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Sessies
+                        <SortIcon column="sessions" />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer select-none"
+                      onClick={() => handleSort("score")}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Score
+                        <SortIcon column="score" />
+                      </div>
+                    </TableHead>
+                    <TableHead>Top techniek</TableHead>
+                    <TableHead>Laatste sessie</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedMembers.map((member) => (
+                    <TableRow key={member.id} className="hover:bg-hh-ui-50/50">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarFallback className="bg-hh-ink text-white">
+                              {member.initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-[16px] leading-[24px] text-hh-text">
+                            {member.name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-[14px] leading-[20px] text-hh-muted">
+                          {member.role}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-[16px] leading-[24px] text-hh-text">
+                          {member.sessionsThisWeek}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[16px] leading-[24px] text-hh-text">
+                            {member.avgScore}%
+                          </span>
+                          <div
+                            className={`flex items-center gap-1 text-[12px] ${
+                              member.delta > 0
+                                ? "text-hh-success"
+                                : "text-destructive"
+                            }`}
+                          >
+                            {member.delta > 0 ? (
+                              <TrendingUp className="w-3 h-3" />
+                            ) : (
+                              <TrendingDown className="w-3 h-3" />
+                            )}
+                            {Math.abs(member.delta)}%
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[12px]">
+                          {member.topTechnique}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-[14px] leading-[20px] text-hh-muted">
+                          <Clock className="w-3 h-3" />
+                          {member.lastSession}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(member.status)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        )}
+
+        {/* Grid View: Member Cards */}
+        {viewMode === "grid" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedMembers.map((member) => (
+              <Card key={member.id} className="p-5 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md transition-shadow">
+                <div className="flex items-start gap-4 mb-4">
+                  <Avatar className="w-14 h-14">
+                    <AvatarFallback className="bg-hh-ink text-white text-[18px]">
                       {member.initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <h4 className="text-[18px] leading-[26px] text-hh-text font-[700]">
+                      <h3 className="text-[18px] leading-[26px] text-hh-text font-[600] truncate">
                         {member.name}
-                      </h4>
-                      <Badge
-                        className={
-                          member.status === "active"
-                            ? "bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px] px-2 py-0.5 flex-shrink-0"
-                            : member.status === "new"
-                            ? "bg-hh-warn/10 text-hh-warn border-hh-warn/20 text-[11px] px-2 py-0.5 flex-shrink-0"
-                            : "bg-hh-ui-100 text-hh-muted border-hh-border text-[11px] px-2 py-0.5 flex-shrink-0"
-                        }
-                      >
-                        {member.status === "active"
-                          ? "Actief"
-                          : member.status === "new"
-                          ? "Nieuw"
-                          : "Inactief"}
-                      </Badge>
+                      </h3>
+                      {getStatusBadge(member.status)}
                     </div>
                     <p className="text-[14px] leading-[20px] text-hh-muted">
                       {member.role}
@@ -304,21 +574,17 @@ export function TeamSessions({ navigate, isAdmin }: TeamSessionsProps) {
                   </div>
                 </div>
 
-                {/* Metrics Grid - 2 columns for better mobile layout */}
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  {/* Sessies */}
-                  <div className="space-y-1">
-                    <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide mb-1">
                       Sessies
                     </p>
                     <p className="text-[24px] leading-[32px] text-hh-text font-[700]">
                       {member.sessionsThisWeek}
                     </p>
                   </div>
-
-                  {/* Score */}
-                  <div className="space-y-1">
-                    <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide">
+                  <div>
+                    <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide mb-1">
                       Score
                     </p>
                     <div className="flex items-center gap-2">
@@ -341,126 +607,27 @@ export function TeamSessions({ navigate, isAdmin }: TeamSessionsProps) {
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Top Technique - Full width */}
-                  <div className="col-span-2 space-y-1.5 pt-2 border-t border-hh-border">
-                    <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide">
-                      Top techniek
-                    </p>
-                    <Badge variant="outline" className="text-[13px] px-3 py-1">
+                <div className="pt-4 border-t border-hh-border space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] text-hh-muted">Top techniek</span>
+                    <Badge variant="outline" className="text-[12px]">
                       {member.topTechnique}
                     </Badge>
                   </div>
-
-                  {/* Laatste sessie - Full width */}
-                  <div className="col-span-2 space-y-1">
-                    <p className="text-[12px] leading-[16px] text-hh-muted uppercase tracking-wide">
-                      Laatst actief
-                    </p>
-                    <div className="flex items-center gap-1.5 text-[14px] leading-[20px] text-hh-text">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] text-hh-muted">Laatst actief</span>
+                    <div className="flex items-center gap-1.5 text-[13px] text-hh-text">
                       <Clock className="w-3.5 h-3.5 text-hh-muted" />
                       {member.lastSession}
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
-
-          {/* Desktop: Table */}
-          <div className="hidden lg:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Teamlid</TableHead>
-                  <TableHead>Rol</TableHead>
-                  <TableHead>Sessies</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Top techniek</TableHead>
-                  <TableHead>Laatste sessie</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {teamMembers.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarFallback className="bg-hh-primary text-white">
-                            {member.initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-[16px] leading-[24px] text-hh-text">
-                          {member.name}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-[14px] leading-[20px] text-hh-muted">
-                        {member.role}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-[16px] leading-[24px] text-hh-text">
-                        {member.sessionsThisWeek}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[16px] leading-[24px] text-hh-text">
-                          {member.avgScore}%
-                        </span>
-                        <div
-                          className={`flex items-center gap-1 text-[12px] ${
-                            member.delta > 0
-                              ? "text-hh-success"
-                              : "text-destructive"
-                          }`}
-                        >
-                          {member.delta > 0 ? (
-                            <TrendingUp className="w-3 h-3" />
-                          ) : (
-                            <TrendingDown className="w-3 h-3" />
-                          )}
-                          {Math.abs(member.delta)}%
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-[12px]">
-                        {member.topTechnique}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-[14px] leading-[20px] text-hh-muted">
-                        <Clock className="w-3 h-3" />
-                        {member.lastSession}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          member.status === "active"
-                            ? "bg-hh-success/10 text-hh-success border-hh-success/20"
-                            : member.status === "new"
-                            ? "bg-hh-warn/10 text-hh-warn border-hh-warn/20"
-                            : "bg-hh-ui-100 text-hh-muted border-hh-border"
-                        }
-                      >
-                        {member.status === "active"
-                          ? "Actief"
-                          : member.status === "new"
-                          ? "Nieuw"
-                          : "Inactief"}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
+        )}
 
         {/* Hugo's Team Tip */}
         <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-primary/20 bg-hh-primary/5">
@@ -479,69 +646,6 @@ export function TeamSessions({ navigate, isAdmin }: TeamSessionsProps) {
           </div>
         </Card>
       </div>
-
-      {/* Invite Modal */}
-      <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Nodig een teamlid uit</DialogTitle>
-            <DialogDescription>
-              Voeg een nieuw teamlid toe aan je team door hun e-mailadres in te
-              voeren en een rol te selecteren.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                E-mail
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                className="col-span-3"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="role" className="text-right">
-                Rol
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={inviteRole}
-                  onValueChange={(value) => setInviteRole(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer een rol" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="member">Teamlid</SelectItem>
-                    <SelectItem value="admin">Beheerder</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogHeader>
-            <DialogTitle>Bevestiging</DialogTitle>
-            <DialogDescription>
-              We zullen een uitnodigingslink naar {inviteEmail} sturen met de
-              geselecteerde rol.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setInviteModalOpen(false)}
-            >
-              Annuleren
-            </Button>
-            <Button size="sm">Uitnodigen</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </AppLayout>
   );
 }

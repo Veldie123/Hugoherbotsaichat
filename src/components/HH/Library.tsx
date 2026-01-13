@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
-import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import {
   Select,
@@ -11,39 +12,25 @@ import {
   SelectValue,
 } from "../ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "../ui/sheet";
-import { EPICSalesFlow } from "./EPICSalesFlow";
-import {
   Search,
-  Filter,
-  TrendingUp,
+  List,
+  LayoutGrid,
+  Play,
+  Star,
   Clock,
   Users,
-  Star,
-  Plus,
-  Play,
-  Trash2,
-  X,
-  BookOpen,
-  Grid3x3,
-  List,
+  TrendingUp,
+  ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  ArrowUpDown,
+  BookOpen,
 } from "lucide-react";
-import { useState } from "react";
 
 type ScenarioCategory = "all" | "discovery" | "objections" | "closing" | "custom";
 type ScenarioLevel = "all" | "beginner" | "intermediate" | "advanced";
 type ViewMode = "grid" | "list";
-type SortField = "title" | "category" | "level" | "duration" | "completions" | "avgScore";
-type SortDirection = "asc" | "desc" | null;
+type SortField = "title" | "category" | "level" | "completions" | "avgScore";
+type SortDirection = "asc" | "desc";
 
 interface Scenario {
   id: string;
@@ -56,7 +43,7 @@ interface Scenario {
   completions: number;
   avgScore: number;
   isCustom?: boolean;
-  isFeatured?: boolean;
+  isFavorite?: boolean;
 }
 
 interface LibraryProps {
@@ -69,8 +56,8 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
   const [category, setCategory] = useState<ScenarioCategory>("all");
   const [level, setLevel] = useState<ScenarioLevel>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [sortField, setSortField] = useState<SortField>("completions");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const scenarios: Scenario[] = [
     {
@@ -83,7 +70,7 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
       techniques: ["E.P.I.C", "Discovery", "Active Listening"],
       completions: 1247,
       avgScore: 78,
-      isFeatured: true,
+      isFavorite: true,
     },
     {
       id: "2",
@@ -95,7 +82,7 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
       techniques: ["Objection Handling", "Value Selling", "Urgency"],
       completions: 892,
       avgScore: 72,
-      isFeatured: true,
+      isFavorite: true,
     },
     {
       id: "3",
@@ -107,6 +94,7 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
       techniques: ["Discovery", "Value Proposition", "Next Steps"],
       completions: 2134,
       avgScore: 81,
+      isFavorite: false,
     },
     {
       id: "4",
@@ -118,6 +106,7 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
       techniques: ["Closing", "Decision Making", "Next Steps"],
       completions: 564,
       avgScore: 69,
+      isFavorite: false,
     },
     {
       id: "5",
@@ -129,6 +118,7 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
       techniques: ["Objection Handling", "Challenger", "Differentiation"],
       completions: 1056,
       avgScore: 75,
+      isFavorite: true,
     },
     {
       id: "6",
@@ -140,7 +130,7 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
       techniques: ["Discovery", "Stakeholder Management", "E.P.I.C"],
       completions: 412,
       avgScore: 67,
-      isFeatured: true,
+      isFavorite: false,
     },
   ];
 
@@ -148,7 +138,8 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
     const matchesSearch =
       searchQuery === "" ||
       scenario.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      scenario.description.toLowerCase().includes(searchQuery.toLowerCase());
+      scenario.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      scenario.techniques.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesCategory =
       category === "all" || scenario.category.toLowerCase() === category;
@@ -159,112 +150,158 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
     return matchesSearch && matchesCategory && matchesLevel;
   });
 
-  // Sort scenarios
   const sortedScenarios = [...filteredScenarios].sort((a, b) => {
-    if (!sortField || !sortDirection) return 0;
-
-    let aValue: any = a[sortField];
-    let bValue: any = b[sortField];
-
-    // Handle duration comparison (convert to minutes)
-    if (sortField === "duration") {
-      const getDurationMinutes = (dur: string) => {
-        const match = dur.match(/(\d+)-(\d+)/);
-        if (match) {
-          return (parseInt(match[1]) + parseInt(match[2])) / 2;
-        }
-        return 0;
-      };
-      aValue = getDurationMinutes(a.duration);
-      bValue = getDurationMinutes(b.duration);
+    let comparison = 0;
+    switch (sortField) {
+      case "title":
+        comparison = a.title.localeCompare(b.title);
+        break;
+      case "category":
+        comparison = a.category.localeCompare(b.category);
+        break;
+      case "level":
+        comparison = a.level.localeCompare(b.level);
+        break;
+      case "completions":
+        comparison = a.completions - b.completions;
+        break;
+      case "avgScore":
+        comparison = a.avgScore - b.avgScore;
+        break;
     }
-
-    // String comparison
-    if (typeof aValue === "string") {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
-    }
-
-    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    return 0;
+    return sortDirection === "asc" ? comparison : -comparison;
   });
-
-  const featuredScenarios = sortedScenarios.filter((s) => s.isFeatured);
-  const regularScenarios = sortedScenarios.filter((s) => !s.isFeatured);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      // Cycle through: asc -> desc -> null
-      if (sortDirection === "asc") {
-        setSortDirection("desc");
-      } else if (sortDirection === "desc") {
-        setSortDirection(null);
-        setSortField(null);
-      }
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection("asc");
+      setSortDirection(field === "title" || field === "category" || field === "level" ? "asc" : "desc");
     }
   };
 
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortField !== column) {
+      return <ArrowUpDown className="w-3.5 h-3.5 text-hh-muted/40" />;
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="w-3.5 h-3.5 text-hh-ink" />
+    ) : (
+      <ArrowDown className="w-3.5 h-3.5 text-hh-ink" />
+    );
+  };
+
+  const totalScenarios = scenarios.length;
+  const yourCompletions = scenarios.reduce((sum, s) => sum + Math.floor(s.completions / 100), 0);
+  const avgScore = Math.round(scenarios.reduce((sum, s) => sum + s.avgScore, 0) / scenarios.length);
+  const favoritesCount = scenarios.filter(s => s.isFavorite).length;
+
   return (
     <AppLayout currentPage="library" navigate={navigate} isAdmin={isAdmin}>
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-6 space-y-6">
+        <div className="flex items-start justify-between">
           <div>
-            <h1 className="mb-2 text-[32px] leading-[40px] sm:text-[40px] sm:leading-[48px] lg:text-[48px] lg:leading-[56px] font-normal">
-              Scenario bibliotheek
+            <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
+              Scenario Bibliotheek
             </h1>
-            <p className="text-[14px] leading-[22px] sm:text-[16px] sm:leading-[24px] text-hh-muted">
+            <p className="text-[16px] leading-[24px] text-hh-muted">
               {filteredScenarios.length} scenario's — van discovery tot closing
             </p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            {/* View toggle */}
-            <div className="flex items-center gap-1 p-1 bg-hh-ui-100 rounded-lg">
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-                className="h-8 w-8 p-0"
-              >
-                <Grid3x3 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                className="h-8 w-8 p-0"
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
-            <Button 
-              className="gap-2 flex-1 sm:flex-initial"
-              onClick={() => navigate?.("builder")}
-            >
-              <Plus className="w-4 h-4" /> Maak custom scenario
-            </Button>
-          </div>
         </div>
 
-        {/* Search & Filters - Desktop */}
-        <Card className="hidden sm:block p-4 sm:p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="md:col-span-2 relative">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
+                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
+              </div>
+              <Badge
+                variant="outline"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+              >
+                +3
+              </Badge>
+            </div>
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Totaal Scenario's
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+              {totalScenarios}
+            </p>
+          </Card>
+
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 text-hh-primary" />
+              </div>
+              <Badge
+                variant="outline"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+              >
+                +8
+              </Badge>
+            </div>
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Jouw Voltooiingen
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+              {yourCompletions}
+            </p>
+          </Card>
+
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-success/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-hh-success" />
+              </div>
+              <Badge
+                variant="outline"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+              >
+                +4%
+              </Badge>
+            </div>
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Gem. Score
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+              {avgScore}%
+            </p>
+          </Card>
+
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+              </div>
+            </div>
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Favorieten
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+              {favoritesCount}
+            </p>
+          </Card>
+        </div>
+
+        <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
                 placeholder="Zoek scenario's..."
-                className="pl-10 bg-hh-ui-50"
+                className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            
             <Select value={category} onValueChange={(v) => setCategory(v as ScenarioCategory)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Categorie" />
+              <SelectTrigger className="w-full lg:w-[180px]">
+                <SelectValue placeholder="Alle categorieën" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle categorieën</SelectItem>
@@ -274,9 +311,10 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
                 <SelectItem value="custom">Custom</SelectItem>
               </SelectContent>
             </Select>
+            
             <Select value={level} onValueChange={(v) => setLevel(v as ScenarioLevel)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Niveau" />
+              <SelectTrigger className="w-full lg:w-[180px]">
+                <SelectValue placeholder="Alle niveaus" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle niveaus</SelectItem>
@@ -285,236 +323,236 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
                 <SelectItem value="advanced">Advanced</SelectItem>
               </SelectContent>
             </Select>
+            
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`${
+                  viewMode === "list" 
+                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
+                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
+                }`}
+                onClick={() => setViewMode("list")}
+              >
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`${
+                  viewMode === "grid" 
+                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
+                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
+                }`}
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </Card>
 
-        {/* Search & Filters - Mobile Drawer */}
-        <div className="sm:hidden space-y-3">
-          {/* Search bar always visible */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
-            <Input
-              placeholder="Zoek scenario's..."
-              className="pl-10 bg-white"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        {sortedScenarios.filter(s => s.isFavorite).length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-amber-500" />
+              <h2 className="text-[18px] leading-[24px] text-hh-text font-semibold">
+                Aanbevolen door Hugo
+              </h2>
+            </div>
           </div>
-          
-          {/* Filter button triggers drawer */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="w-full gap-2">
-                <Filter className="w-4 h-4" />
-                Filters
-                {(category !== "all" || level !== "all") && (
-                  <Badge variant="secondary" className="ml-auto">
-                    {[category !== "all" ? 1 : 0, level !== "all" ? 1 : 0].reduce((a, b) => a + b, 0)}
-                  </Badge>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[80vh] bg-white">
-              <SheetHeader>
-                <SheetTitle className="text-[24px] leading-[32px]">Filters</SheetTitle>
-                <SheetDescription className="text-[14px] leading-[20px]">
-                  Verfijn je zoekresultaten
-                </SheetDescription>
-              </SheetHeader>
-              
-              <div className="mt-6 space-y-6">
-                {/* Category filter */}
-                <div className="space-y-3">
-                  <label className="text-[16px] leading-[24px] font-[600] text-hh-text">
-                    Categorie
-                  </label>
-                  <Select value={category} onValueChange={(v) => setCategory(v as ScenarioCategory)}>
-                    <SelectTrigger className="bg-hh-ui-50">
-                      <SelectValue placeholder="Categorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Alle categorieën</SelectItem>
-                      <SelectItem value="discovery">Discovery</SelectItem>
-                      <SelectItem value="objections">Objections</SelectItem>
-                      <SelectItem value="closing">Closing</SelectItem>
-                      <SelectItem value="custom">Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+        )}
 
-                {/* Level filter */}
-                <div className="space-y-3">
-                  <label className="text-[16px] leading-[24px] font-[600] text-hh-text">
-                    Niveau
-                  </label>
-                  <Select value={level} onValueChange={(v) => setLevel(v as ScenarioLevel)}>
-                    <SelectTrigger className="bg-hh-ui-50">
-                      <SelectValue placeholder="Niveau" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Alle niveaus</SelectItem>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+        {viewMode === "grid" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedScenarios.map((scenario) => (
+              <Card
+                key={scenario.id}
+                className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden hover:shadow-hh-md hover:border-hh-ink/30 transition-all cursor-pointer"
+              >
+                <div className="p-5 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <Badge
+                      variant="outline"
+                      className="text-[11px] bg-hh-ink/10 text-hh-ink border-hh-ink/20"
+                    >
+                      {scenario.category}
+                    </Badge>
+                    {scenario.isFavorite && (
+                      <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                    )}
+                  </div>
 
-                {/* Active filters summary */}
-                {(category !== "all" || level !== "all") && (
-                  <div className="pt-4 border-t border-hh-border">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[14px] leading-[20px] text-hh-muted">
-                        Actieve filters
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setCategory("all");
-                          setLevel("all");
-                        }}
-                        className="text-[14px] h-8"
+                  <div>
+                    <h3 className="text-[18px] leading-[24px] text-hh-text font-semibold mb-2">
+                      {scenario.title}
+                    </h3>
+                    <p className="text-[14px] leading-[20px] text-hh-muted line-clamp-2">
+                      {scenario.description}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {scenario.techniques.map((tech, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="outline"
+                        className="text-[11px] bg-hh-ui-50 text-hh-muted border-hh-border"
                       >
-                        Reset alles
-                      </Button>
+                        {tech}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[13px] text-hh-muted pt-3 border-t border-hh-border">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4" />
+                      <span>{scenario.duration}</span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {category !== "all" && (
-                        <Badge variant="secondary" className="gap-2">
-                          {category}
-                          <button onClick={() => setCategory("all")}>
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      )}
-                      {level !== "all" && (
-                        <Badge variant="secondary" className="gap-2">
-                          {level}
-                          <button onClick={() => setLevel("all")}>
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      )}
+                    <div className="flex items-center gap-1.5">
+                      <Users className="w-4 h-4" />
+                      <span>{scenario.completions.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <TrendingUp className="w-4 h-4" />
+                      <span>{scenario.avgScore}% avg</span>
                     </div>
                   </div>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
 
-        {/* Grid View */}
-        {viewMode === "grid" && (
-          <>
-            {/* Featured Scenarios */}
-            {featuredScenarios.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Star className="w-5 h-5 text-hh-warn" />
-                  <h3 className="text-[20px] leading-[28px] text-hh-text">
-                    Aanbevolen door Hugo
-                  </h3>
+                  <Button
+                    className="w-full bg-hh-ink hover:bg-hh-ink/90 text-white"
+                    onClick={() => navigate?.("roleplay")}
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Start Scenario
+                  </Button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {featuredScenarios.map((scenario) => (
-                    <ScenarioCard key={scenario.id} scenario={scenario} navigate={navigate} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* All Scenarios */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-hh-primary" />
-                <h3 className="text-[18px] leading-[26px] sm:text-[20px] sm:leading-[28px] text-hh-text">
-                  Alle scenario's
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {regularScenarios.map((scenario) => (
-                  <ScenarioCard key={scenario.id} scenario={scenario} navigate={navigate} />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* List View */}
-        {viewMode === "list" && filteredScenarios.length > 0 && (
-          <div className="space-y-4">
-            <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
-              {/* Table Header */}
-              <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-hh-ui-50 border-b border-hh-border text-[14px] text-hh-muted">
-                <button
-                  onClick={() => handleSort("title")}
-                  className="col-span-4 flex items-center gap-2 hover:text-hh-text transition-colors text-left"
-                >
-                  <span>Naam</span>
-                  {sortField === "title" && sortDirection === "asc" && <ArrowUp className="w-3 h-3" />}
-                  {sortField === "title" && sortDirection === "desc" && <ArrowDown className="w-3 h-3" />}
-                  {sortField !== "title" && <ArrowUpDown className="w-3 h-3 opacity-50" />}
-                </button>
-                <button
-                  onClick={() => handleSort("category")}
-                  className="col-span-2 flex items-center gap-2 hover:text-hh-text transition-colors text-left"
-                >
-                  <span>Categorie</span>
-                  {sortField === "category" && sortDirection === "asc" && <ArrowUp className="w-3 h-3" />}
-                  {sortField === "category" && sortDirection === "desc" && <ArrowDown className="w-3 h-3" />}
-                  {sortField !== "category" && <ArrowUpDown className="w-3 h-3 opacity-50" />}
-                </button>
-                <button
-                  onClick={() => handleSort("level")}
-                  className="col-span-2 flex items-center gap-2 hover:text-hh-text transition-colors text-left"
-                >
-                  <span>Niveau</span>
-                  {sortField === "level" && sortDirection === "asc" && <ArrowUp className="w-3 h-3" />}
-                  {sortField === "level" && sortDirection === "desc" && <ArrowDown className="w-3 h-3" />}
-                  {sortField !== "level" && <ArrowUpDown className="w-3 h-3 opacity-50" />}
-                </button>
-                <button
-                  onClick={() => handleSort("duration")}
-                  className="col-span-1 flex items-center gap-2 hover:text-hh-text transition-colors text-left"
-                >
-                  <span>Duur</span>
-                  {sortField === "duration" && sortDirection === "asc" && <ArrowUp className="w-3 h-3" />}
-                  {sortField === "duration" && sortDirection === "desc" && <ArrowDown className="w-3 h-3" />}
-                  {sortField !== "duration" && <ArrowUpDown className="w-3 h-3 opacity-50" />}
-                </button>
-                <button
-                  onClick={() => handleSort("completions")}
-                  className="col-span-1 flex items-center gap-2 hover:text-hh-text transition-colors text-left"
-                >
-                  <span>Tries</span>
-                  {sortField === "completions" && sortDirection === "asc" && <ArrowUp className="w-3 h-3" />}
-                  {sortField === "completions" && sortDirection === "desc" && <ArrowDown className="w-3 h-3" />}
-                  {sortField !== "completions" && <ArrowUpDown className="w-3 h-3 opacity-50" />}
-                </button>
-                <button
-                  onClick={() => handleSort("avgScore")}
-                  className="col-span-1 flex items-center gap-2 hover:text-hh-text transition-colors text-left"
-                >
-                  <span>Score</span>
-                  {sortField === "avgScore" && sortDirection === "asc" && <ArrowUp className="w-3 h-3" />}
-                  {sortField === "avgScore" && sortDirection === "desc" && <ArrowDown className="w-3 h-3" />}
-                  {sortField !== "avgScore" && <ArrowUpDown className="w-3 h-3 opacity-50" />}
-                </button>
-                <div className="col-span-1"></div>
-              </div>
-
-              {/* Table Body */}
-              <div className="divide-y divide-hh-border">
-                {sortedScenarios.map((scenario) => (
-                  <ScenarioListRow key={scenario.id} scenario={scenario} navigate={navigate} />
-                ))}
-              </div>
-            </Card>
+              </Card>
+            ))}
           </div>
         )}
 
-        {/* Empty state */}
+        {viewMode === "list" && (
+          <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-hh-ui-50">
+                  <tr>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      onClick={() => handleSort("title")}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Scenario
+                        <SortIcon column="title" />
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      onClick={() => handleSort("category")}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Categorie
+                        <SortIcon column="category" />
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      onClick={() => handleSort("level")}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Niveau
+                        <SortIcon column="level" />
+                      </div>
+                    </th>
+                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
+                      Duur
+                    </th>
+                    <th 
+                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      onClick={() => handleSort("completions")}
+                    >
+                      <div className="flex items-center justify-end gap-1.5">
+                        Gespeeld
+                        <SortIcon column="completions" />
+                      </div>
+                    </th>
+                    <th 
+                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      onClick={() => handleSort("avgScore")}
+                    >
+                      <div className="flex items-center justify-end gap-1.5">
+                        Gem. Score
+                        <SortIcon column="avgScore" />
+                      </div>
+                    </th>
+                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
+                      Acties
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedScenarios.map((scenario, index) => (
+                    <tr
+                      key={scenario.id}
+                      className={`border-t border-hh-border hover:bg-hh-ui-50 transition-colors cursor-pointer ${
+                        index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
+                      }`}
+                    >
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          {scenario.isFavorite && <Star className="w-4 h-4 text-amber-500 fill-amber-500" />}
+                          <p className="text-[14px] leading-[20px] text-hh-text font-medium">
+                            {scenario.title}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge
+                          variant="outline"
+                          className="text-[11px] bg-hh-ink/10 text-hh-ink border-hh-ink/20"
+                        >
+                          {scenario.category}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge
+                          variant="outline"
+                          className="text-[11px] bg-hh-primary/10 text-hh-primary border-hh-primary/20"
+                        >
+                          {scenario.level}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-[14px] text-hh-muted">
+                        {scenario.duration}
+                      </td>
+                      <td className="py-3 px-4 text-right text-[14px] text-hh-text">
+                        {scenario.completions.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <span className="text-[14px] leading-[20px] text-hh-success font-medium">
+                          {scenario.avgScore}%
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Button
+                          size="sm"
+                          className="bg-hh-ink hover:bg-hh-ink/90 text-white gap-1.5"
+                          onClick={() => navigate?.("roleplay")}
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                          Start
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
         {filteredScenarios.length === 0 && (
           <Card className="p-12 rounded-[16px] shadow-hh-sm border-hh-border text-center">
             <Search className="w-12 h-12 text-hh-muted mx-auto mb-4" />
@@ -522,230 +560,21 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
               Geen matches
             </h3>
             <p className="text-[16px] leading-[24px] text-hh-muted mb-6">
-              Reset filters of bouw je eigen scenario — precies op jouw situatie
+              Probeer andere zoektermen of pas de filters aan
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setCategory("all");
-                  setLevel("all");
-                  setSearchQuery("");
-                }}
-              >
-                Reset filters
-              </Button>
-              <Button onClick={() => navigate?.("builder")}>
-                Maak custom scenario
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCategory("all");
+                setLevel("all");
+                setSearchQuery("");
+              }}
+            >
+              Reset filters
+            </Button>
           </Card>
         )}
       </div>
     </AppLayout>
-  );
-}
-
-function ScenarioCard({ scenario, navigate }: { scenario: Scenario; navigate?: (page: string) => void }) {
-  return (
-    <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md transition-all group cursor-pointer">
-      <div className="flex items-start justify-between mb-3">
-        <Badge variant="outline" className="text-[12px]">
-          {scenario.category}
-        </Badge>
-        {scenario.isFeatured && (
-          <Star className="w-4 h-4 text-hh-warn fill-hh-warn" />
-        )}
-      </div>
-
-      <h3 className="text-[18px] leading-[26px] text-hh-text mb-2">
-        {scenario.title}
-      </h3>
-
-      <p className="text-[14px] leading-[20px] text-hh-muted mb-4">
-        {scenario.description}
-      </p>
-
-      {/* Techniques */}
-      <div className="flex flex-wrap gap-1 mb-4">
-        {scenario.techniques.map((tech, idx) => (
-          <Badge
-            key={idx}
-            variant="secondary"
-            className="text-[10px] bg-hh-ui-100"
-          >
-            {tech}
-          </Badge>
-        ))}
-      </div>
-
-      {/* Stats */}
-      <div className="flex items-center gap-4 mb-4 text-[14px] leading-[20px] text-hh-muted">
-        <div className="flex items-center gap-1">
-          <Clock className="w-3 h-3" />
-          <span>{scenario.duration}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Users className="w-3 h-3" />
-          <span>{scenario.completions}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <TrendingUp className="w-3 h-3" />
-          <span>{scenario.avgScore}% avg</span>
-        </div>
-      </div>
-
-      {/* Level badge */}
-      <div className="flex items-center justify-between">
-        <Badge
-          className={
-            scenario.level === "Beginner"
-              ? "bg-hh-success/10 text-hh-success border-hh-success/20"
-              : scenario.level === "Intermediate"
-              ? "bg-hh-warn/10 text-hh-warn border-hh-warn/20"
-              : "bg-destructive/10 text-destructive border-destructive/20"
-          }
-        >
-          {scenario.level}
-        </Badge>
-        <Button 
-          size="sm" 
-          className="gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={() => navigate?.("roleplays")}
-        >
-          <Play className="w-3 h-3" /> Start
-        </Button>
-      </div>
-    </Card>
-  );
-}
-
-function ScenarioListRow({ scenario, navigate }: { scenario: Scenario; navigate?: (page: string) => void }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 p-4 hover:bg-hh-ui-50 transition-colors group cursor-pointer">
-      {/* Mobile layout */}
-      <div className="md:hidden space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-[16px] leading-[24px] text-hh-text">
-                {scenario.title}
-              </h3>
-              {scenario.isFeatured && (
-                <Star className="w-3 h-3 text-hh-warn fill-hh-warn flex-shrink-0" />
-              )}
-            </div>
-            <p className="text-[14px] leading-[20px] text-hh-muted line-clamp-2">
-              {scenario.description}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className="text-[12px]">
-            {scenario.category}
-          </Badge>
-          <Badge
-            className={
-              scenario.level === "Beginner"
-                ? "bg-hh-success/10 text-hh-success border-hh-success/20 text-[12px]"
-                : scenario.level === "Intermediate"
-                ? "bg-hh-warn/10 text-hh-warn border-hh-warn/20 text-[12px]"
-                : "bg-destructive/10 text-destructive border-destructive/20 text-[12px]"
-            }
-          >
-            {scenario.level}
-          </Badge>
-        </div>
-        <div className="flex items-center justify-between text-[14px] text-hh-muted">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>{scenario.duration}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              <span>{scenario.completions}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              <span>{scenario.avgScore}%</span>
-            </div>
-          </div>
-          <Button 
-            size="sm" 
-            className="gap-2 h-8"
-            onClick={() => navigate?.("roleplays")}
-          >
-            <Play className="w-3 h-3" /> Start
-          </Button>
-        </div>
-      </div>
-
-      {/* Desktop layout */}
-      <div className="hidden md:contents">
-        {/* Title */}
-        <div className="col-span-4 flex items-center gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-[16px] leading-[24px] text-hh-text truncate">
-              {scenario.title}
-            </h3>
-            <p className="text-[14px] leading-[20px] text-hh-muted truncate">
-              {scenario.description}
-            </p>
-          </div>
-          {scenario.isFeatured && (
-            <Star className="w-3 h-3 text-hh-warn fill-hh-warn flex-shrink-0" />
-          )}
-        </div>
-
-        {/* Category */}
-        <div className="col-span-2 flex items-center">
-          <Badge variant="outline" className="text-[12px]">
-            {scenario.category}
-          </Badge>
-        </div>
-
-        {/* Level */}
-        <div className="col-span-2 flex items-center">
-          <Badge
-            className={
-              scenario.level === "Beginner"
-                ? "bg-hh-success/10 text-hh-success border-hh-success/20 text-[12px]"
-                : scenario.level === "Intermediate"
-                ? "bg-hh-warn/10 text-hh-warn border-hh-warn/20 text-[12px]"
-                : "bg-destructive/10 text-destructive border-destructive/20 text-[12px]"
-            }
-          >
-            {scenario.level}
-          </Badge>
-        </div>
-
-        {/* Duration */}
-        <div className="col-span-1 flex items-center text-[14px] text-hh-muted">
-          {scenario.duration}
-        </div>
-
-        {/* Completions */}
-        <div className="col-span-1 flex items-center text-[14px] text-hh-muted">
-          {scenario.completions}
-        </div>
-
-        {/* Avg Score */}
-        <div className="col-span-1 flex items-center text-[14px] text-hh-muted">
-          {scenario.avgScore}%
-        </div>
-
-        {/* Action */}
-        <div className="col-span-1 flex items-center justify-end">
-          <Button 
-            size="sm" 
-            className="gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => navigate?.("roleplays")}
-          >
-            <Play className="w-3 h-3" />
-          </Button>
-        </div>
-      </div>
-    </div>
   );
 }
