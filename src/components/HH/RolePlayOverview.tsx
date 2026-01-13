@@ -325,15 +325,6 @@ export function RolePlayOverview({ navigate, isAdmin }: RolePlayOverviewProps) {
           </div>
         </Card>
 
-        {/* Recommended Section */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Star className="w-5 h-5 text-amber-500" />
-            <h2 className="text-[18px] leading-[24px] text-hh-text font-semibold">
-              Aanbevolen door Hugo
-            </h2>
-          </div>
-        </div>
 
         {/* Grid View (Default) */}
         {viewMode === "grid" && (
@@ -390,6 +381,26 @@ export function RolePlayOverview({ navigate, isAdmin }: RolePlayOverviewProps) {
                       <TrendingUp className="w-4 h-4" />
                       <span>{scenario.avgScore}% avg</span>
                     </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Bekijk details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
+                          <Play className="w-4 h-4 mr-2" />
+                          Start oefening
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </Card>
@@ -496,17 +507,13 @@ export function RolePlayOverview({ navigate, isAdmin }: RolePlayOverviewProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
-                              <Play className="w-4 h-4 mr-2" />
-                              Start scenario
-                            </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Eye className="w-4 h-4 mr-2" />
                               Bekijk details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Star className="w-4 h-4 mr-2" />
-                              {scenario.isFavorite ? "Verwijder favoriet" : "Toevoegen aan favorieten"}
+                            <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
+                              <Play className="w-4 h-4 mr-2" />
+                              Start oefening
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

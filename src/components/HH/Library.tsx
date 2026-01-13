@@ -12,6 +12,12 @@ import {
   SelectValue,
 } from "../ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import {
   Search,
   List,
   LayoutGrid,
@@ -24,6 +30,8 @@ import {
   ArrowUp,
   ArrowDown,
   BookOpen,
+  MoreVertical,
+  Eye,
 } from "lucide-react";
 
 type ScenarioCategory = "all" | "discovery" | "objections" | "closing" | "custom";
@@ -353,16 +361,6 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
           </div>
         </Card>
 
-        {sortedScenarios.filter(s => s.isFavorite).length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-amber-500" />
-              <h2 className="text-[18px] leading-[24px] text-hh-text font-semibold">
-                Aanbevolen door Hugo
-              </h2>
-            </div>
-          </div>
-        )}
 
         {viewMode === "grid" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -420,13 +418,25 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
                     </div>
                   </div>
 
-                  <Button
-                    className="w-full bg-hh-ink hover:bg-hh-ink/90 text-white"
-                    onClick={() => navigate?.("roleplay")}
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Start Scenario
-                  </Button>
+                  <div className="flex justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Bekijk details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
+                          <Play className="w-4 h-4 mr-2" />
+                          Start oefening
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -536,14 +546,23 @@ export function Library({ navigate, isAdmin }: LibraryProps) {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <Button
-                          size="sm"
-                          className="bg-hh-ink hover:bg-hh-ink/90 text-white gap-1.5"
-                          onClick={() => navigate?.("roleplay")}
-                        >
-                          <Play className="w-3.5 h-3.5" />
-                          Start
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="w-4 h-4 mr-2" />
+                              Bekijk details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
+                              <Play className="w-4 h-4 mr-2" />
+                              Start oefening
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   ))}
