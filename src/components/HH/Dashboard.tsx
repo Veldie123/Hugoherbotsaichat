@@ -98,218 +98,193 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
 
   return (
     <AppLayout currentPage="dashboard" navigate={navigate} isAdmin={isAdmin}>
-      <div className="p-4 sm:p-5 lg:p-6 space-y-6">
-        {/* Header - Clean & Minimal */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="p-4 sm:p-5 lg:p-6 space-y-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h1 className="mb-1 text-[28px] leading-[36px] sm:text-[36px] sm:leading-[44px] font-normal">
-              E.P.I.C sales flow progressie
+            <h1 className="mb-1 text-[28px] leading-[36px] sm:text-[32px] sm:leading-[40px] font-semibold text-hh-text">
+              Welkom terug, Jan
             </h1>
             <p className="text-[14px] leading-[20px] text-hh-muted">
               Weer een dag om te groeien — laten we werk maken van je sales skills.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[20px]">🔥</span>
-            <div>
-              <div className="text-[20px] leading-[24px] font-medium text-hh-text">
-                7 dagen streak
-              </div>
-            </div>
+            <span className="text-[18px]">🔥</span>
+            <span className="text-[16px] font-medium text-hh-text">7 dagen streak</span>
           </div>
         </div>
 
         {/* Epic Sales Flow Progress Card */}
         <EpicSalesFlowProgress />
 
-        {/* 4 Action Cards - uniform height */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 4 Action Cards - horizontal layout */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Video */}
           <Card 
-            className="p-4 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
+            className="p-3 rounded-[12px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("videos")}
           >
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-full bg-hh-primary/10 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-hh-primary/10 flex items-center justify-center">
                   <Video className="w-4 h-4 text-hh-primary" />
                 </div>
                 <div>
-                  <h3 className="text-[16px] leading-[20px] text-hh-text font-medium">Video</h3>
-                  <p className="text-[12px] text-hh-muted">11 bekeken</p>
+                  <h3 className="text-[14px] leading-[18px] text-hh-text font-medium">Video</h3>
+                  <p className="text-[11px] text-hh-muted">11 bekeken</p>
                 </div>
               </div>
               <CardKPI value="56%" label="voltooid" />
             </div>
 
-            {/* Huidige topic */}
-            <div className="mb-3 p-3 rounded-lg bg-hh-ui-50/50 border border-hh-border">
-              <div className="text-[11px] text-hh-muted mb-1">Huidige topic</div>
-              <div className="text-[15px] text-hh-text font-medium mb-0.5">
+            <div className="mb-2 p-2 rounded-lg bg-hh-ui-50/50 border border-hh-border">
+              <div className="text-[10px] text-hh-muted mb-0.5">Huidige topic</div>
+              <div className="text-[13px] text-hh-text font-medium leading-tight truncate">
                 {currentTechnique ? `${currentTechnique.nummer} ${currentTechnique.naam}` : "Geen techniek"}
               </div>
-              <div className="text-[11px] text-hh-muted">
-                {currentTechnique ? `Fase ${currentTechnique.fase} • ${currentFaseNaam} • 18 min` : ""}
+              <div className="text-[10px] text-hh-muted">
+                {currentTechnique ? `Fase ${currentTechnique.fase} • 18 min` : ""}
               </div>
             </div>
 
             <Button
-              className="w-full h-10 gap-2 text-[14px]"
+              className="w-full h-9 gap-1.5 text-[13px]"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 navigate?.("videos");
               }}
             >
-              <Play className="w-3.5 h-3.5" />
-              Bekijk video's
-              <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+              <Play className="w-3 h-3" />
+              Video's
+              <ArrowRight className="w-3 h-3 ml-auto" />
             </Button>
           </Card>
 
-          {/* Webinar - simple KPI */}
+          {/* Webinar */}
           <Card 
-            className="p-4 rounded-[16px] border-hh-border hover:border-destructive/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
+            className="p-3 rounded-[12px] border-hh-border hover:border-destructive/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("live")}
           >
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
                   <Radio className="w-4 h-4 text-destructive" />
                 </div>
                 <div>
-                  <h3 className="text-[16px] leading-[20px] text-hh-text font-medium">Webinar</h3>
-                  <p className="text-[12px] text-hh-muted">4 bijgewoond</p>
+                  <h3 className="text-[14px] leading-[18px] text-hh-text font-medium">Webinar</h3>
+                  <p className="text-[11px] text-hh-muted">4 bijgewoond</p>
                 </div>
               </div>
               <CardKPI value="4/12" label="sessies" />
             </div>
             
-            {/* Eerstvolgende sessie */}
-            <div className="mb-3 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-              <div className="text-[11px] text-hh-muted mb-1">Eerstvolgende sessie</div>
-              <div className="text-[15px] text-hh-text font-medium mb-0.5">
-                Live Q&A: Discovery Technieken
+            <div className="mb-2 p-2 rounded-lg bg-destructive/5 border border-destructive/20">
+              <div className="text-[10px] text-hh-muted mb-0.5">Volgende sessie</div>
+              <div className="text-[13px] text-hh-text font-medium leading-tight truncate">
+                Live Q&A: Discovery
               </div>
-              <div className="text-[11px] text-hh-muted">
-                Woensdag 22 jan • 14:00 - 15:00
+              <div className="text-[10px] text-hh-muted">
+                Wo 22 jan • 14:00
               </div>
             </div>
 
             <Button
               variant="outline"
-              className="w-full h-10 text-[14px] border-destructive/30 text-destructive hover:bg-destructive/10"
+              className="w-full h-9 text-[13px] border-destructive/30 text-destructive hover:bg-destructive/10"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 navigate?.("live");
               }}
             >
-              Bekijk live sessies
-              <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+              Sessies
+              <ArrowRight className="w-3 h-3 ml-auto" />
             </Button>
           </Card>
 
-          {/* Talk to Hugo AI - with mini progress KPI */}
+          {/* Hugo AI */}
           <Card 
-            className="p-4 rounded-[16px] border-hh-ink/20 hover:border-hh-ink/40 hover:shadow-lg bg-gradient-to-br from-hh-ink/5 to-transparent transition-all cursor-pointer active:scale-[0.99]"
+            className="p-3 rounded-[12px] border-hh-ink/20 hover:border-hh-ink/40 hover:shadow-lg bg-gradient-to-br from-hh-ink/5 to-transparent transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("talk-to-hugo")}
           >
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-full bg-hh-ink/10 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-hh-ink/10 flex items-center justify-center">
                   <MessageSquare className="w-4 h-4 text-hh-ink" />
                 </div>
                 <div>
-                  <h3 className="text-[16px] leading-[20px] text-hh-text font-medium">Hugo AI</h3>
-                  <p className="text-[12px] text-hh-muted">19 chats</p>
+                  <h3 className="text-[14px] leading-[18px] text-hh-text font-medium">Hugo AI</h3>
+                  <p className="text-[11px] text-hh-muted">19 chats</p>
                 </div>
               </div>
               <CardKPI value="68%" label="voltooid" />
             </div>
 
-            {/* Huidige topic */}
-            <div className="mb-3 p-3 rounded-lg bg-hh-ink/5 border border-hh-ink/20">
-              <div className="text-[11px] text-hh-muted mb-1">Huidige topic</div>
-              <div className="text-[15px] text-hh-text font-medium mb-0.5">
+            <div className="mb-2 p-2 rounded-lg bg-hh-ink/5 border border-hh-ink/20">
+              <div className="text-[10px] text-hh-muted mb-0.5">Huidige topic</div>
+              <div className="text-[13px] text-hh-text font-medium leading-tight truncate">
                 {currentTechnique ? `${currentTechnique.nummer} ${currentTechnique.naam}` : "Geen techniek"}
               </div>
-              <div className="text-[11px] text-hh-muted">
-                {currentTechnique ? `Fase ${currentTechnique.fase} • ${currentFaseNaam}` : ""}
+              <div className="text-[10px] text-hh-muted">
+                {currentTechnique ? `Fase ${currentTechnique.fase}` : ""}
               </div>
             </div>
 
             <Button
-              className="w-full h-10 gap-2 text-[14px] bg-hh-ink hover:bg-hh-ink/90 text-white"
+              className="w-full h-9 gap-1.5 text-[13px] bg-hh-ink hover:bg-hh-ink/90 text-white"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 navigate?.("talk-to-hugo");
               }}
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Talk to Hugo AI
-              <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+              <MessageSquare className="w-3 h-3" />
+              Hugo AI
+              <ArrowRight className="w-3 h-3 ml-auto" />
             </Button>
           </Card>
 
-          {/* Gespreksanalyse - simple KPI */}
+          {/* Analyse */}
           <Card 
-            className="p-4 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
+            className="p-3 rounded-[12px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("analysis")}
           >
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-full bg-hh-primary/10 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-hh-primary/10 flex items-center justify-center">
                   <FileSearch className="w-4 h-4 text-hh-primary" />
                 </div>
                 <div>
-                  <h3 className="text-[16px] leading-[20px] text-hh-text font-medium">Analyse</h3>
-                  <p className="text-[12px] text-hh-muted">11 analyses</p>
+                  <h3 className="text-[14px] leading-[18px] text-hh-text font-medium">Analyse</h3>
+                  <p className="text-[11px] text-hh-muted">11 analyses</p>
                 </div>
               </div>
               <CardKPI value="76%" label="gem. score" />
             </div>
             
-            {/* Laatste analyse */}
-            <div className="mb-3 p-3 rounded-lg bg-hh-primary/5 border border-hh-primary/20">
-              <div className="text-[11px] text-hh-muted mb-1">Laatste analyse</div>
-              <div className="text-[15px] text-hh-text font-medium mb-0.5">
-                Discovery call - Acme Inc
+            <div className="mb-2 p-2 rounded-lg bg-hh-primary/5 border border-hh-primary/20">
+              <div className="text-[10px] text-hh-muted mb-0.5">Laatste analyse</div>
+              <div className="text-[13px] text-hh-text font-medium leading-tight truncate">
+                Discovery call - Acme
               </div>
-              <div className="text-[11px] text-hh-muted">
+              <div className="text-[10px] text-hh-muted">
                 Score: 76% • Gisteren
               </div>
             </div>
 
             <Button
               variant="outline"
-              className="w-full h-10 gap-2 text-[14px] border-hh-primary/30 text-hh-primary hover:bg-hh-primary/10"
+              className="w-full h-9 gap-1.5 text-[13px] border-hh-primary/30 text-hh-primary hover:bg-hh-primary/10"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 navigate?.("analysis");
               }}
             >
-              <FileSearch className="w-3.5 h-3.5" />
-              Bekijk analyses
-              <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+              <FileSearch className="w-3 h-3" />
+              Analyses
+              <ArrowRight className="w-3 h-3 ml-auto" />
             </Button>
           </Card>
         </div>
-
-        {/* Hugo's Tip - Minimal */}
-        <Card className="p-5 rounded-[16px] border-hh-primary/20 bg-hh-primary/5">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-full bg-hh-primary text-white flex items-center justify-center flex-shrink-0 text-[13px] font-semibold">
-              HH
-            </div>
-            <div>
-              <div className="text-[14px] leading-[18px] text-hh-text font-medium mb-1.5">
-                Hugo's woord van de dag
-              </div>
-              <p className="text-[16px] leading-[24px] text-hh-text italic font-normal">
-                "{getDailyQuote().text}"
-              </p>
-            </div>
-          </div>
-        </Card>
       </div>
     </AppLayout>
   );
