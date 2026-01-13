@@ -1,8 +1,7 @@
-import { useState, useMemo } from "react";
 import { AppLayout } from "./AppLayout";
-import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
   Select,
@@ -12,6 +11,12 @@ import {
   SelectValue,
 } from "../ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,23 +24,24 @@ import {
 } from "../ui/dropdown-menu";
 import {
   Search,
-  List,
-  LayoutGrid,
+  Award,
   Video,
   Play,
-  Award,
   TrendingUp,
+  List,
+  LayoutGrid,
   MoreVertical,
   Eye,
-  ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
-import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
+import { useState, useMemo } from "react";
 import { 
   getAllTechnieken, 
+  Techniek,
   getFaseNaam,
-  Techniek 
+  getTechniekCount
 } from "../../data/technieken-service";
 
 interface TechniqueLibraryProps {
@@ -43,37 +49,35 @@ interface TechniqueLibraryProps {
   isAdmin?: boolean;
 }
 
+type ViewMode = "list" | "grid";
+type SortField = "code" | "name" | "videos" | "roleplays" | "score";
+type SortOrder = "asc" | "desc";
+
+interface TechniqueItem {
+  id: number;
+  code: string;
+  name: string;
+  fase: string;
+  videos: number;
+  roleplays: number;
+  avgScore: number;
+  completion: number;
+  status: string;
+}
+
 export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFase, setActiveFase] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [sortBy, setSortBy] = useState<"code" | "name" | "videos" | "roleplays" | "score">("code");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [selectedTechnique, setSelectedTechnique] = useState<any>(null);
+  const [activeFase, setActiveFase] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [sortField, setSortField] = useState<SortField>("code");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [selectedTechnique, setSelectedTechnique] = useState<TechniqueItem | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
-  const handleSort = (column: "code" | "name" | "videos" | "roleplays" | "score") => {
-    if (sortBy === column) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(column);
-      setSortOrder(column === "code" || column === "name" ? "asc" : "desc");
-    }
-  };
-
-  const SortIcon = ({ column }: { column: string }) => {
-    if (sortBy !== column) {
-      return <ArrowUpDown className="w-3.5 h-3.5 text-hh-muted/40" />;
-    }
-    return sortOrder === "asc" ? (
-      <ArrowUp className="w-3.5 h-3.5 text-hh-ink" />
-    ) : (
-      <ArrowDown className="w-3.5 h-3.5 text-hh-ink" />
-    );
-  };
-
+  // Memoize technique data from SSOT - prevent regeneration on every render
   const technieken = useMemo(() => {
+    // Deterministic seed function based on string
     const seedFromString = (str: string): number => {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
@@ -83,39 +87,64 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
       return Math.abs(hash);
     };
 
-    const allTechnieken = getAllTechnieken().filter(t => !t.is_fase);
-    
-    const toTechniqueItem = (t: Techniek, baseId: number, index: number) => {
+    // Helper function to convert Techniek to TechniqueItem with deterministic values
+    const toTechniqueItem = (t: Techniek, index: number): TechniqueItem => {
       const seed = seedFromString(t.nummer + t.naam);
       return {
-        id: baseId + index,
+        id: index,
         code: t.nummer,
         name: t.naam,
-        fase: t.fase,
+        fase: getFaseNaam(t.fase),
         videos: (seed % 5) + 1,
         roleplays: (seed % 400) + 100,
         avgScore: (seed % 20) + 70,
         completion: (seed % 40) + 60,
-        status: "Actief" as const,
+        status: "Actief",
       };
     };
 
-    return {
-      "fase-0": allTechnieken.filter(t => t.fase === "0").map((t, i) => toTechniqueItem(t, 1, i)),
-      "fase-1": allTechnieken.filter(t => t.fase === "1").map((t, i) => toTechniqueItem(t, 10, i)),
-      "fase-2": allTechnieken.filter(t => t.fase === "2").map((t, i) => toTechniqueItem(t, 20, i)),
-      "fase-3": allTechnieken.filter(t => t.fase === "3").map((t, i) => toTechniqueItem(t, 50, i)),
-      "fase-4": allTechnieken.filter(t => t.fase === "4").map((t, i) => toTechniqueItem(t, 70, i)),
+    // Load all technieken from SSOT and filter by fase (excluding fase headers)
+    const allTechnieken = getAllTechnieken().filter(t => !t.is_fase);
+    
+    const fase0Techniques = allTechnieken.filter(t => t.fase === "0");
+    const fase1Techniques = allTechnieken.filter(t => t.fase === "1");
+    const fase2Techniques = allTechnieken.filter(t => t.fase === "2");
+    const fase3Techniques = allTechnieken.filter(t => t.fase === "3");
+    const fase4Techniques = allTechnieken.filter(t => t.fase === "4");
+
+    const result: Record<string, TechniqueItem[]> = {
+      "fase-0": fase0Techniques.map((t, i) => toTechniqueItem(t, i + 1)),
+      "fase-1": fase1Techniques.map((t, i) => toTechniqueItem(t, i + 10)),
+      "fase-2": fase2Techniques.map((t, i) => toTechniqueItem(t, i + 20)),
+      "fase-3": fase3Techniques.map((t, i) => toTechniqueItem(t, i + 50)),
+      "fase-4": fase4Techniques.map((t, i) => toTechniqueItem(t, i + 70)),
     };
+    return result;
   }, []);
 
-  const currentTechnieken = activeFase === "all" 
+  // Filter by fase
+  const faseFilter = activeFase === "all" 
     ? Object.values(technieken).flat() 
-    : technieken[activeFase as keyof typeof technieken] || [];
+    : technieken[activeFase] || [];
 
-  const sortedTechnieken = [...currentTechnieken].sort((a, b) => {
+  // Filter by status
+  const statusFiltered = statusFilter === "all" 
+    ? faseFilter 
+    : faseFilter.filter((t: TechniqueItem) => t.status.toLowerCase() === statusFilter);
+
+  // Sort
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const sortedTechnieken = [...statusFiltered].sort((a, b) => {
     let comparison = 0;
-    switch (sortBy) {
+    switch (sortField) {
       case "code":
         comparison = a.code.localeCompare(b.code);
         break;
@@ -135,39 +164,47 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
     return sortOrder === "asc" ? comparison : -comparison;
   });
 
+  // Filter by search
   const filteredTechnieken = sortedTechnieken.filter((tech) =>
     tech.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tech.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalCount = Object.values(technieken).reduce((sum, arr) => sum + arr.length, 0);
-  const totalVideos = Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.videos, 0), 0);
-  const totalRoleplays = Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.roleplays, 0), 0);
-  const avgScore = Math.round(
-    Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.avgScore, 0), 0) / totalCount
-  );
+  const SortIcon = ({ column }: { column: SortField }) => {
+    if (sortField !== column) {
+      return <ArrowUpDown className="w-3 h-3 text-hh-muted" />;
+    }
+    return sortOrder === "asc" 
+      ? <ArrowUp className="w-3 h-3 text-hh-ink" />
+      : <ArrowDown className="w-3 h-3 text-hh-ink" />;
+  };
+
+  const viewTechniqueDetails = (tech: TechniqueItem) => {
+    setSelectedTechnique(tech);
+    setDetailsDialogOpen(true);
+  };
 
   return (
     <AppLayout currentPage="library" navigate={navigate} isAdmin={isAdmin}>
-      <div className="p-6 space-y-6">
-        {/* Header - No button for User View */}
+      <div className="p-4 sm:p-6 space-y-6">
+        {/* Header - No "Nieuwe Techniek" button for users */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
+            <h1 className="text-[28px] sm:text-[32px] leading-[36px] sm:leading-[40px] text-hh-text mb-2">
               E.P.I.C Technieken
             </h1>
-            <p className="text-[16px] leading-[24px] text-hh-muted">
-              25 verkooptechnieken verdeeld over 4 fases
+            <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-hh-muted">
+              25 EPIC technieken verdeeld over 4 fases
             </p>
           </div>
         </div>
 
-        {/* KPI Cards - User View colors (hh-ink/hh-primary) */}
+        {/* 4 KPI Cards - Steel Blue color scheme for user view */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
-                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
+                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-hh-primary" />
               </div>
               <Badge
                 variant="outline"
@@ -180,7 +217,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               Totaal Technieken
             </p>
             <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
-              {totalCount}
+              {Object.values(technieken).reduce((sum, arr) => sum + arr.length, 0)}
             </p>
           </Card>
 
@@ -200,7 +237,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               Totaal Video's
             </p>
             <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
-              {totalVideos}
+              {Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.videos, 0), 0)}
             </p>
           </Card>
 
@@ -220,7 +257,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               Totaal Role-Plays
             </p>
             <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
-              {totalRoleplays}
+              {Object.values(technieken).reduce((sum, arr) => sum + arr.reduce((s, t) => s + t.roleplays, 0), 0)}
             </p>
           </Card>
 
@@ -237,10 +274,14 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               </Badge>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
-              Jouw Gem. Score
+              Gem. Score
             </p>
             <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
-              {avgScore}%
+              {Math.round(
+                Object.values(technieken).reduce((sum, arr) =>
+                  sum + arr.reduce((s, t) => s + t.avgScore, 0), 0
+                ) / Object.values(technieken).reduce((sum, arr) => sum + arr.length, 0)
+              )}%
             </p>
           </Card>
         </div>
@@ -248,6 +289,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
         {/* Search, View Toggle & Filters Card */}
         <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
           <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
@@ -258,13 +300,14 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               />
             </div>
             
+            {/* Filters */}
             <Select value={activeFase} onValueChange={setActiveFase}>
-              <SelectTrigger className="w-full lg:w-[220px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Alle Fases" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Fases</SelectItem>
-                <SelectItem value="fase-0">Fase 0 - Voorbereiding</SelectItem>
+                <SelectItem value="fase-0">Fase 0 - Pre-contactfase</SelectItem>
                 <SelectItem value="fase-1">Fase 1 - Openingsfase</SelectItem>
                 <SelectItem value="fase-2">Fase 2 - Ontdekkingsfase</SelectItem>
                 <SelectItem value="fase-3">Fase 3 - Aanbevelingsfase</SelectItem>
@@ -273,7 +316,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             </Select>
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full lg:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[150px]">
                 <SelectValue placeholder="Alle Status" />
               </SelectTrigger>
               <SelectContent>
@@ -283,7 +326,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
               </SelectContent>
             </Select>
             
-            {/* View Toggle - hh-ink colors */}
+            {/* View Toggle - Dark blue (hh-ink) for user view dominant actions */}
             <div className="flex gap-1">
               <Button
                 variant="ghost"
@@ -313,7 +356,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
           </div>
         </Card>
 
-        {/* List View - Table (No checkboxes for User View) */}
+        {/* List View - Table (No checkboxes for user view) */}
         {viewMode === "list" && (
           <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
             <div className="overflow-x-auto">
@@ -361,12 +404,12 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       onClick={() => handleSort("score")}
                     >
                       <div className="flex items-center justify-end gap-1.5">
-                        Jouw Score
+                        Avg Score
                         <SortIcon column="score" />
                       </div>
                     </th>
                     <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Voortgang
+                      Completion
                     </th>
                     <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
                       Status
@@ -383,6 +426,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       className={`border-t border-hh-border hover:bg-hh-ui-50 transition-colors cursor-pointer ${
                         index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                       }`}
+                      onClick={() => viewTechniqueDetails(techniek)}
                     >
                       <td className="py-3 px-4">
                         <Badge
@@ -398,24 +442,24 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                         </p>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1 text-[14px] leading-[20px] text-hh-text">
+                        <div className="flex items-center justify-end gap-1 text-hh-text">
                           <Video className="w-3.5 h-3.5 text-hh-primary" />
-                          {techniek.videos}
+                          <span className="text-[14px]">{techniek.videos}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1 text-[14px] leading-[20px] text-hh-text">
+                        <div className="flex items-center justify-end gap-1 text-hh-text">
                           <Play className="w-3.5 h-3.5 text-hh-ink" />
-                          {techniek.roleplays}
+                          <span className="text-[14px]">{techniek.roleplays}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <span className="text-[14px] leading-[20px] text-hh-success font-medium">
+                        <span className="text-[14px] text-hh-success font-medium">
                           {techniek.avgScore}%
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <span className="text-[14px] leading-[20px] text-hh-text">
+                        <span className="text-[14px] text-hh-text">
                           {techniek.completion}%
                         </span>
                       </td>
@@ -426,34 +470,30 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <DropdownMenuTrigger asChild onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                const allTech = getAllTechnieken();
-                                const fullTech = allTech.find(t => t.nummer === techniek.code);
-                                if (fullTech) {
-                                  setSelectedTechnique({
-                                    nummer: fullTech.nummer,
-                                    naam: fullTech.naam,
-                                    fase: fullTech.fase,
-                                  });
-                                  setDetailsDialogOpen(true);
-                                }
-                              }}
-                            >
+                            <DropdownMenuItem onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              viewTechniqueDetails(techniek);
+                            }}>
                               <Eye className="w-4 h-4 mr-2" />
                               Bekijk details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate?.("videos")}>
+                            <DropdownMenuItem onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              navigate?.("videos");
+                            }}>
                               <Video className="w-4 h-4 mr-2" />
                               Bekijk Video's
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
+                            <DropdownMenuItem onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              navigate?.("coaching");
+                            }}>
                               <Play className="w-4 h-4 mr-2" />
                               Speel Rollenspel
                             </DropdownMenuItem>
@@ -468,84 +508,52 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
           </Card>
         )}
 
-        {/* Card View - Grid */}
+        {/* Grid View */}
         {viewMode === "grid" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTechnieken.map((techniek) => (
-              <Card key={`${techniek.code}-${techniek.id}`} className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md hover:border-hh-ink/30 transition-all">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between">
-                    <Badge
-                      variant="outline"
-                      className="text-[11px] font-mono bg-hh-ink/10 text-hh-ink border-hh-ink/20"
-                    >
-                      {techniek.code}
-                    </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            const allTech = getAllTechnieken();
-                            const fullTech = allTech.find(t => t.nummer === techniek.code);
-                            if (fullTech) {
-                              setSelectedTechnique({
-                                nummer: fullTech.nummer,
-                                naam: fullTech.naam,
-                                fase: fullTech.fase,
-                              });
-                              setDetailsDialogOpen(true);
-                            }
-                          }}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Bekijk details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate?.("videos")}>
-                          <Video className="w-4 h-4 mr-2" />
-                          Bekijk Video's
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate?.("roleplay")}>
-                          <Play className="w-4 h-4 mr-2" />
-                          Speel Rollenspel
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <h3 className="text-[14px] leading-[20px] text-hh-text font-medium">
-                    {techniek.name}
-                  </h3>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center gap-1.5 text-[13px] text-hh-muted">
-                      <Video className="w-3.5 h-3.5 text-hh-primary" />
-                      <span>{techniek.videos} video's</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[13px] text-hh-muted">
-                      <Play className="w-3.5 h-3.5 text-hh-ink" />
-                      <span>{techniek.roleplays}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 pt-2 border-t border-hh-border">
-                    <div className="flex justify-between text-[12px]">
-                      <span className="text-hh-muted">Jouw Score</span>
-                      <span className="text-hh-success font-medium">{techniek.avgScore}%</span>
-                    </div>
-                    <div className="flex justify-between text-[12px]">
-                      <span className="text-hh-muted">Voortgang</span>
-                      <span className="text-hh-text">{techniek.completion}%</span>
-                    </div>
-                  </div>
-
-                  <Badge className="w-full justify-center bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
+              <Card
+                key={`${techniek.code}-${techniek.id}`}
+                className="p-4 rounded-[16px] shadow-hh-sm border-hh-border hover:border-hh-ink/40 hover:shadow-md transition-all cursor-pointer"
+                onClick={() => viewTechniqueDetails(techniek)}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <Badge
+                    variant="outline"
+                    className="text-[11px] font-mono bg-hh-ink/10 text-hh-ink border-hh-ink/20"
+                  >
+                    {techniek.code}
+                  </Badge>
+                  <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
                     {techniek.status}
                   </Badge>
+                </div>
+
+                <h4 className="text-[16px] leading-[22px] text-hh-text font-medium mb-2">
+                  {techniek.name}
+                </h4>
+                <p className="text-[13px] text-hh-muted mb-3">{techniek.fase}</p>
+
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="flex items-center gap-1 text-hh-muted text-[13px]">
+                    <Video className="w-3.5 h-3.5" />
+                    <span>{techniek.videos}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-hh-muted text-[13px]">
+                    <Play className="w-3.5 h-3.5" />
+                    <span>{techniek.roleplays}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-hh-border">
+                  <div className="flex justify-between text-[12px]">
+                    <span className="text-hh-muted">Avg Score</span>
+                    <span className="text-hh-success font-medium">{techniek.avgScore}%</span>
+                  </div>
+                  <div className="flex justify-between text-[12px]">
+                    <span className="text-hh-muted">Completion</span>
+                    <span className="text-hh-text">{techniek.completion}%</span>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -553,19 +561,70 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
         )}
       </div>
 
-      {/* Technique Details Dialog - Read Only */}
+      {/* Technique Details Dialog - Read Only for users */}
       {selectedTechnique && (
-        <TechniqueDetailsDialog
-          open={detailsDialogOpen}
-          onOpenChange={setDetailsDialogOpen}
-          technique={{
-            id: selectedTechnique.nummer,
-            number: selectedTechnique.nummer,
-            naam: selectedTechnique.naam,
-            fase: selectedTechnique.fase || "1",
-          }}
-          isEditable={false}
-        />
+        <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className="text-[11px] font-mono bg-hh-primary/10 text-hh-primary border-hh-primary/20"
+                >
+                  {selectedTechnique.code}
+                </Badge>
+                {selectedTechnique.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-hh-muted">
+                  <Video className="w-4 h-4" />
+                  <span className="text-[14px]">{selectedTechnique.videos} video's</span>
+                </div>
+                <div className="flex items-center gap-2 text-hh-muted">
+                  <Play className="w-4 h-4" />
+                  <span className="text-[14px]">{selectedTechnique.roleplays} role-plays</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 rounded-lg bg-hh-ui-50">
+                  <p className="text-[12px] text-hh-muted mb-1">Avg Score</p>
+                  <p className="text-[20px] text-hh-success font-medium">{selectedTechnique.avgScore}%</p>
+                </div>
+                <div className="p-3 rounded-lg bg-hh-ui-50">
+                  <p className="text-[12px] text-hh-muted mb-1">Completion</p>
+                  <p className="text-[20px] text-hh-text font-medium">{selectedTechnique.completion}%</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4 border-t border-hh-border">
+                <Button
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    setDetailsDialogOpen(false);
+                    navigate?.("videos");
+                  }}
+                >
+                  <Video className="w-4 h-4" />
+                  Bekijk Video's
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    setDetailsDialogOpen(false);
+                    navigate?.("coaching");
+                  }}
+                >
+                  <Play className="w-4 h-4" />
+                  Speel Rollenspel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </AppLayout>
   );
