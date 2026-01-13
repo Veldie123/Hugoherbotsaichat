@@ -14,9 +14,8 @@ import {
 import { getDailyQuote } from "../../data/hugoQuotes";
 import { getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
 
-// Fase progress bar component - shows completion across 5 phases
-const FaseProgressBar = ({ progress }: { progress: number[] }) => {
-  const faseLabels = ["0", "1", "2", "3", "4"];
+// Mini progress KPI - compact 5-segment bar for card corner
+const MiniProgressKPI = ({ progress, label }: { progress: number[]; label: string }) => {
   const faseColors = [
     "bg-emerald-500", // Fase 0
     "bg-emerald-500", // Fase 1  
@@ -26,21 +25,29 @@ const FaseProgressBar = ({ progress }: { progress: number[] }) => {
   ];
   
   return (
-    <div className="flex gap-1 items-end">
-      {progress.map((value, index) => (
-        <div key={index} className="flex-1 flex flex-col items-center gap-1">
-          <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex gap-0.5">
+        {progress.map((value, index) => (
+          <div key={index} className="w-4 h-1.5 rounded-full bg-slate-100 overflow-hidden">
             <div 
               className={`h-full rounded-full transition-all ${value > 0 ? faseColors[index] : 'bg-slate-200'}`}
               style={{ width: `${value}%` }}
             />
           </div>
-          <span className="text-[10px] text-hh-muted">{faseLabels[index]}</span>
-        </div>
-      ))}
+        ))}
+      </div>
+      <span className="text-[10px] text-hh-muted">{label}</span>
     </div>
   );
 };
+
+// Simple KPI for cards without progress bars
+const SimpleKPI = ({ value, label }: { value: string; label: string }) => (
+  <div className="flex flex-col items-end gap-0.5">
+    <span className="text-[13px] font-medium text-hh-text">{value}</span>
+    <span className="text-[10px] text-hh-muted">{label}</span>
+  </div>
+);
 
 interface DashboardProps {
   hasData?: boolean;
@@ -99,9 +106,9 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
         </div>
 
 
-        {/* 4 Action Cards */}
+        {/* 4 Action Cards - uniform height */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Video - with progress bar + huidige topic */}
+          {/* Video - with mini progress KPI */}
           <Card 
             className="p-4 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("videos")}
@@ -116,11 +123,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
                   <p className="text-[12px] text-hh-muted">11 bekeken</p>
                 </div>
               </div>
-              <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[10px]">+3</Badge>
-            </div>
-            
-            <div className="mb-3">
-              <FaseProgressBar progress={[100, 100, 60, 20, 0]} />
+              <MiniProgressKPI progress={[100, 100, 60, 20, 0]} label="56%" />
             </div>
 
             {/* Huidige topic */}
@@ -147,7 +150,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </Button>
           </Card>
 
-          {/* Webinar - eerstvolgende sessie only, no progress bar */}
+          {/* Webinar - simple KPI */}
           <Card 
             className="p-4 rounded-[16px] border-hh-border hover:border-destructive/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("live")}
@@ -162,7 +165,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
                   <p className="text-[12px] text-hh-muted">4 bijgewoond</p>
                 </div>
               </div>
-              <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[10px]">+1</Badge>
+              <SimpleKPI value="4/12" label="sessies" />
             </div>
             
             {/* Eerstvolgende sessie */}
@@ -189,7 +192,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </Button>
           </Card>
 
-          {/* Talk to Hugo AI - with progress bar + huidige topic */}
+          {/* Talk to Hugo AI - with mini progress KPI */}
           <Card 
             className="p-4 rounded-[16px] border-hh-ink/20 hover:border-hh-ink/40 hover:shadow-lg bg-gradient-to-br from-hh-ink/5 to-transparent transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("talk-to-hugo")}
@@ -204,11 +207,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
                   <p className="text-[12px] text-hh-muted">19 chats</p>
                 </div>
               </div>
-              <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[10px]">+5</Badge>
-            </div>
-            
-            <div className="mb-3">
-              <FaseProgressBar progress={[100, 100, 80, 50, 10]} />
+              <MiniProgressKPI progress={[100, 100, 80, 50, 10]} label="68%" />
             </div>
 
             {/* Huidige topic */}
@@ -235,7 +234,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </Button>
           </Card>
 
-          {/* Gespreksanalyse - stats only, no progress bar */}
+          {/* Gespreksanalyse - simple KPI */}
           <Card 
             className="p-4 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99]"
             onClick={() => navigate?.("analysis")}
@@ -250,7 +249,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
                   <p className="text-[12px] text-hh-muted">11 analyses</p>
                 </div>
               </div>
-              <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[10px]">+2</Badge>
+              <SimpleKPI value="76%" label="gem. score" />
             </div>
             
             {/* Laatste analyse */}
