@@ -215,7 +215,7 @@ export function Help({ navigate, isAdmin }: HelpProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               FAQ Artikelen
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {faqCount}
             </p>
           </Card>
@@ -229,7 +229,7 @@ export function Help({ navigate, isAdmin }: HelpProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Video Tutorials
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {videoTutorialsCount}
             </p>
           </Card>
@@ -243,7 +243,7 @@ export function Help({ navigate, isAdmin }: HelpProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Documentatie
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {documentationCount}
             </p>
           </Card>
@@ -257,7 +257,7 @@ export function Help({ navigate, isAdmin }: HelpProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Contact Opties
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {contactOptionsCount}
             </p>
           </Card>

@@ -251,7 +251,7 @@ export function Resources({ navigate, isAdmin }: ResourcesProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Resources
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {totalResources}
             </p>
           </Card>
@@ -271,7 +271,7 @@ export function Resources({ navigate, isAdmin }: ResourcesProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Downloads deze maand
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {totalDownloads.toLocaleString()}
             </p>
           </Card>
@@ -285,7 +285,7 @@ export function Resources({ navigate, isAdmin }: ResourcesProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Categorieën
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {categories.length}
             </p>
           </Card>
@@ -299,7 +299,7 @@ export function Resources({ navigate, isAdmin }: ResourcesProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Featured Items
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {featuredCount}
             </p>
           </Card>

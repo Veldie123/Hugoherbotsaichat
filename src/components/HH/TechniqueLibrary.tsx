@@ -181,7 +181,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Technieken
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {totalCount}
             </p>
           </Card>
@@ -201,7 +201,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Video's
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {totalVideos}
             </p>
           </Card>
@@ -221,7 +221,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Role-Plays
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {totalRoleplays}
             </p>
           </Card>
@@ -241,7 +241,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Jouw Gem. Score
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {avgScore}%
             </p>
           </Card>

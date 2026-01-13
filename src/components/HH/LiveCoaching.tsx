@@ -216,7 +216,7 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Gepland
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {upcomingSessions.length}
             </p>
           </Card>
@@ -230,7 +230,7 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Ingeschreven
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {registeredSessions.length}
             </p>
           </Card>
@@ -244,7 +244,7 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Gem. Deelnemers
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {avgAttendees}
             </p>
           </Card>
@@ -264,7 +264,7 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Bijgewoond
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {completedSessions.length}
             </p>
           </Card>

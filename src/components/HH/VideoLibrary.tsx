@@ -187,7 +187,7 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Video's
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {videos.length}
             </p>
           </Card>
@@ -207,7 +207,7 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Bekeken
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {watchedCount}
             </p>
           </Card>
@@ -221,7 +221,7 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totale Duur
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {Math.floor(totalDuration / 60)}u {totalDuration % 60}m
             </p>
           </Card>
@@ -241,7 +241,7 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Gem. Voortgang
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
               {avgCompletion}%
             </p>
           </Card>
