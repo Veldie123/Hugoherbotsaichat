@@ -50,6 +50,18 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-13: TalkToHugoAI Chat Interface Redesign
+  - Created new TalkToHugoAI.tsx based on AdminChatExpertMode but for User View
+  - Archived original as TalkToHugoAI_V0.tsx
+  - Removed admin-only features:
+    - "Start Opname" / "Stop Opname" recording buttons
+    - "V2 Roleplay - Explore" title and "Training AI Model" subtitle
+    - Debug panel (Klant Signaal, Persona, Context, Customer Dynamics, AI Beslissingen)
+    - Yellow warning "Selecteer eerst een techniek uit de sidebar..."
+    - "Bewerken" button in technique details dialog
+  - Changed colors from purple to hh-ink/hh-primary
+  - Uses AppLayout with currentPage="talk-to-hugo"
+  - Added isUserView prop to EPICSidebar to hide admin header
 - 2026-01-13: COMPLETE User View Redesign (Admin Layout Pattern) - Phase 2
   - Redesigned remaining sidebar pages to match Admin layout structure
   - Components redesigned in Phase 2:
