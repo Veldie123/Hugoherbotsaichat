@@ -122,7 +122,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
         roleplay: "coaching",
         users: "team",
         analytics: "analytics",
-        techniques: "library", // For now, map to library (could create separate techniques page)
+        techniques: "techniques",
         content: "library",
         help: "help",
         resources: "resources",
@@ -142,7 +142,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
       roleplay: "coaching",
       users: "team",
       analytics: "analytics",
-      techniques: "library",
+      techniques: "techniques",
       content: "library",
       help: "help",
       resources: "resources",
