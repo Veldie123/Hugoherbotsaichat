@@ -48,7 +48,7 @@ import { TechniqueLibrary } from "./components/HH/TechniqueLibrary";
 import { HugoAIOverview } from "./components/HH/HugoAIOverview";
 import { auth } from "./utils/supabase/client";
 
-type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "preview" | "onboarding" | "dashboard" | "coaching" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "roleplaychat" | "roleplays-chat" | "overviewprogress" | "library" | "sessions" | "builder" | "videos" | "live" | "team" | "analytics" | "settings" | "analysis" | "analysis-results" | "help" | "resources" | "techniques" | "admin-dashboard" | "admin-videos" | "admin-live" | "admin-uploads" | "admin-users" | "admin-techniques" | "admin-sessions" | "admin-chat-expert" | "admin-content" | "admin-analytics" | "admin-settings" | "admin-help" | "admin-resources" | "admin-notifications" | "admin-config-review";
+type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "preview" | "onboarding" | "dashboard" | "coaching" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "roleplaychat" | "roleplays-chat" | "overviewprogress" | "library" | "sessions" | "builder" | "videos" | "live" | "team" | "analytics" | "settings" | "analysis" | "analysis-results" | "upload-analysis" | "help" | "resources" | "techniques" | "admin-dashboard" | "admin-videos" | "admin-live" | "admin-uploads" | "admin-users" | "admin-techniques" | "admin-sessions" | "admin-chat-expert" | "admin-content" | "admin-analytics" | "admin-settings" | "admin-help" | "admin-resources" | "admin-notifications" | "admin-config-review";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page | null>(null); // Start with null = loading
@@ -222,6 +222,7 @@ export default function App() {
           {currentPage === "talk-to-hugo" && <TalkToHugoAI navigate={navigate} isAdmin={true} />}
           {currentPage === "analysis" && <Analysis navigate={navigate} isAdmin={true} />}
           {currentPage === "analysis-results" && <AnalysisResults navigate={navigate} isAdmin={true} />}
+          {currentPage === "upload-analysis" && <ConversationAnalysis navigate={navigate} isAdmin={true} />}
         </>
       )}
     </UserProvider>

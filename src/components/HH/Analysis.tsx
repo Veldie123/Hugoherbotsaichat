@@ -227,10 +227,10 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
           </div>
           <Button 
             className="gap-2 bg-hh-ink hover:bg-hh-ink/90 text-white"
-            onClick={() => navigate?.("analysis-results")}
+            onClick={() => navigate?.("upload-analysis")}
           >
             <Upload className="w-4 h-4" />
-            Upload gesprek
+            Analyseer gesprek
           </Button>
         </div>
 
