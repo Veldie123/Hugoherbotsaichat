@@ -84,7 +84,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
     { id: "admin-techniques", label: "E.P.I.C technieken", icon: Target },
     { id: "admin-videos", label: "Video's", icon: Video },
     { id: "admin-live", label: "Webinars", icon: Radio },
-    { id: "admin-uploads", label: "Uploads", icon: Upload },
+    { id: "admin-uploads", label: "Gespreksanalyse", icon: Upload },
     { id: "admin-sessions", label: "Hugo a.i.", icon: MessageSquare },
   ];
 
