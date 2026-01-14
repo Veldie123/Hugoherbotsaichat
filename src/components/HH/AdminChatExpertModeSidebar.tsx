@@ -82,15 +82,34 @@ export function EPICSidebar({
           </div>
         )}
 
-        {/* Overall Progress */}
+        {/* Epic Sales Flow Progress */}
         <div className="pb-4 border-b border-hh-border">
-          <div className="text-[12px] leading-[16px] text-hh-muted mb-1.5">
-            Totale voortgang
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-[14px] font-semibold text-hh-text">Epic Sales Flow</h3>
+            <span className="text-[11px] text-hh-muted">4/12 onderwerpen • 33%</span>
           </div>
-          <div className="h-2 bg-hh-ui-200 rounded-full overflow-hidden">
-            <div className="h-full bg-red-600 rounded-full w-[9%]" />
+          <div className="flex gap-0.5">
+            {[
+              { label: "Voorber.", color: "bg-emerald-500", width: "100%" },
+              { label: "Opening", color: "bg-emerald-500", width: "100%" },
+              { label: "Ontdekking", color: "bg-blue-400", width: "60%" },
+              { label: "Voorstel", color: "bg-slate-200", width: "0%" },
+              { label: "Afsluiting", color: "bg-slate-200", width: "0%" },
+            ].map((fase, index) => (
+              <div key={index} className="flex-1 flex flex-col gap-1">
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full ${fase.color}`}
+                    style={{ width: fase.width }}
+                  />
+                </div>
+                <div className="text-center">
+                  <span className="text-[9px] text-hh-muted leading-tight block">{index === 0 ? "-1" : index}</span>
+                  <span className="text-[9px] text-hh-muted leading-tight block">{fase.label}</span>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="text-[11px] leading-[14px] text-hh-muted mt-1">2 / 25 technieken</div>
         </div>
 
         {/* ========== FASES SECTION (COLLAPSIBLE) ========== */}
