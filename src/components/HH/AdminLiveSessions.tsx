@@ -1223,9 +1223,9 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
 
       {/* Calendar Modal - Compact Side-by-Side Layout */}
       <Dialog open={showCalendarModal} onOpenChange={setShowCalendarModal}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-hh-border">
+          <div className="flex items-center justify-between p-4 border-b border-hh-border bg-white">
             <div>
               <DialogTitle className="text-[18px]">Kalender Overzicht</DialogTitle>
               <DialogDescription className="text-[12px] text-hh-muted">
@@ -1246,9 +1246,9 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
           </div>
 
           {/* Split Layout: Calendar + Sessions */}
-          <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col sm:flex-row flex-1 overflow-hidden bg-white">
             {/* Left: Compact Calendar */}
-            <div className="flex-1 p-4 border-b sm:border-b-0 sm:border-r border-hh-border overflow-y-auto">
+            <div className="flex-1 p-4 border-b sm:border-b-0 sm:border-r border-hh-border overflow-y-auto bg-white min-w-[300px]">
               {/* Weekday headers */}
               <div className="grid grid-cols-7 gap-1 mb-1">
                 {["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"].map((day) => (
