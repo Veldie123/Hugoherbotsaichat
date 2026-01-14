@@ -1221,163 +1221,161 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Calendar Modal - Compact Side-by-Side Layout */}
+      {/* Calendar Modal - Clean Layout */}
       <Dialog open={showCalendarModal} onOpenChange={setShowCalendarModal}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col bg-white">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-hh-border bg-white">
+        <DialogContent className="sm:max-w-[720px] p-0 gap-0 bg-white">
+          {/* Header with month navigation */}
+          <div className="flex items-center justify-between p-5 border-b border-hh-border">
             <div>
-              <DialogTitle className="text-[18px]">Kalender Overzicht</DialogTitle>
-              <DialogDescription className="text-[12px] text-hh-muted">
-                Bekijk alle sessies in één oogopslag
+              <DialogTitle className="text-xl font-semibold">Kalender Overzicht</DialogTitle>
+              <DialogDescription className="text-sm text-hh-muted mt-1">
+                Bekijk alle geplande sessies
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={prevMonth} className="h-8 w-8 p-0">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={prevMonth} className="h-9 w-9">
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())} className="h-8 px-3 text-[12px] font-medium">
-                {monthName}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={nextMonth} className="h-8 w-8 p-0">
+              <span className="text-sm font-medium min-w-[120px] text-center">{monthName}</span>
+              <Button variant="outline" size="icon" onClick={nextMonth} className="h-9 w-9">
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
 
-          {/* Split Layout: Calendar + Sessions */}
-          <div className="flex flex-col sm:flex-row flex-1 overflow-hidden bg-white">
-            {/* Left: Compact Calendar */}
-            <div className="flex-1 p-4 border-b sm:border-b-0 sm:border-r border-hh-border overflow-y-auto bg-white min-w-[300px]">
-              {/* Weekday headers */}
-              <div className="grid grid-cols-7 gap-1 mb-1">
-                {["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"].map((day) => (
-                  <div key={day} className="text-center text-[10px] font-semibold text-hh-muted py-1">
-                    {day}
-                  </div>
-                ))}
-              </div>
-
-              {/* Calendar days - Compact */}
-              <div className="grid grid-cols-7 gap-1">
-                {/* Empty cells */}
-                {Array.from({ length: startingDayOfWeek }).map((_, i) => (
-                  <div key={`empty-${i}`} className="h-12" />
-                ))}
-
-                {/* Days */}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const day = i + 1;
-                  const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-                  const sessionsOnDay = getSessionsForDate(date);
-                  const isToday = date.toDateString() === new Date().toDateString();
-
-                  return (
-                    <div
-                      key={day}
-                      onClick={() => {
-                        if (sessionsOnDay.length > 0) {
-                          setSelectedSession(sessionsOnDay[0]);
-                          setShowCalendarModal(false);
-                          setIsEditDialogOpen(true);
-                        }
-                      }}
-                      className={`h-12 rounded-md p-1 flex flex-col items-center ${
-                        isToday
-                          ? "bg-purple-600/10 ring-1 ring-purple-600/30"
-                          : sessionsOnDay.length > 0
-                          ? "bg-hh-ui-50 hover:bg-hh-ui-100 cursor-pointer"
-                          : "hover:bg-hh-ui-50/50"
-                      } transition-all`}
-                    >
-                      <span className={`text-[12px] font-medium ${isToday ? "text-purple-600" : "text-hh-text"}`}>
-                        {day}
-                      </span>
-                      {/* Session dots */}
-                      {sessionsOnDay.length > 0 && (
-                        <div className="flex items-center gap-0.5 mt-0.5">
-                          {sessionsOnDay.slice(0, 3).map((session) => (
-                            <div
-                              key={session.id}
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                session.status === "scheduled" ? "bg-amber-500"
-                                : session.status === "live" ? "bg-red-500"
-                                : "bg-emerald-500"
-                              }`}
-                            />
-                          ))}
-                          {sessionsOnDay.length > 3 && (
-                            <span className="text-[8px] text-hh-muted ml-0.5">+{sessionsOnDay.length - 3}</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Legend */}
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-hh-border text-[10px] text-hh-muted">
-                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /> Gepland</div>
-                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /> Live</div>
-                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Afgelopen</div>
-              </div>
+          {/* Calendar Grid */}
+          <div className="p-5">
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-2 mb-3">
+              {["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"].map((day) => (
+                <div key={day} className="text-center text-xs font-semibold text-hh-muted py-2">
+                  {day}
+                </div>
+              ))}
             </div>
 
-            {/* Right: Sessions List */}
-            <div className="w-full sm:w-[320px] flex flex-col max-h-[400px]">
-              <div className="p-3 border-b border-hh-border bg-hh-ui-50/50">
-                <h3 className="text-[13px] font-semibold text-hh-text">
-                  Sessies in {monthName} ({filteredSessions.length})
-                </h3>
-              </div>
-              <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-                {filteredSessions.length === 0 ? (
-                  <div className="p-4 text-center text-[12px] text-hh-muted">
-                    Geen sessies deze maand
-                  </div>
-                ) : (
-                  filteredSessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-hh-ui-50 cursor-pointer transition-colors"
-                      onClick={() => {
-                        setSelectedSession(session);
+            {/* Calendar days */}
+            <div className="grid grid-cols-7 gap-2">
+              {/* Empty cells for days before month starts */}
+              {Array.from({ length: startingDayOfWeek }).map((_, i) => (
+                <div key={`empty-${i}`} className="h-14" />
+              ))}
+
+              {/* Days of month */}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const day = i + 1;
+                const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                const sessionsOnDay = getSessionsForDate(date);
+                const isToday = date.toDateString() === new Date().toDateString();
+                const hasSession = sessionsOnDay.length > 0;
+
+                return (
+                  <div
+                    key={day}
+                    onClick={() => {
+                      if (hasSession) {
+                        setSelectedSession(sessionsOnDay[0]);
                         setShowCalendarModal(false);
                         setIsEditDialogOpen(true);
-                      }}
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-purple-600/10 flex flex-col items-center justify-center flex-shrink-0">
-                        <span className="text-[8px] text-purple-600 font-medium uppercase leading-none">
-                          {new Date(session.date).toLocaleDateString("nl-NL", { month: "short" })}
-                        </span>
-                        <span className="text-[14px] font-bold text-purple-600 leading-none">
-                          {new Date(session.date).getDate()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[12px] font-medium text-hh-text truncate">{session.title}</span>
-                          <Badge
-                            variant="outline"
-                            className={`text-[9px] px-1.5 py-0 h-4 ${
-                              session.status === "scheduled" ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                              : session.status === "live" ? "bg-red-500/10 text-red-600 border-red-500/20"
-                              : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      }
+                    }}
+                    className={`h-14 rounded-lg flex flex-col items-center justify-center relative transition-all ${
+                      isToday
+                        ? "bg-purple-100 ring-2 ring-purple-500"
+                        : hasSession
+                        ? "bg-purple-50 hover:bg-purple-100 cursor-pointer"
+                        : "bg-gray-50 hover:bg-gray-100"
+                    }`}
+                  >
+                    <span className={`text-sm font-medium ${isToday ? "text-purple-700" : hasSession ? "text-purple-600" : "text-gray-700"}`}>
+                      {day}
+                    </span>
+                    {hasSession && (
+                      <div className="flex items-center gap-1 mt-1">
+                        {sessionsOnDay.slice(0, 3).map((session) => (
+                          <div
+                            key={session.id}
+                            className={`w-2 h-2 rounded-full ${
+                              session.status === "scheduled" ? "bg-amber-500"
+                              : session.status === "live" ? "bg-red-500"
+                              : "bg-emerald-500"
                             }`}
-                          >
-                            {session.status === "scheduled" ? "Gepland" : session.status === "live" ? "Live" : "Afgelopen"}
-                          </Badge>
-                        </div>
-                        <div className="text-[10px] text-hh-muted flex items-center gap-1.5">
-                          <Clock className="w-3 h-3" />
-                          {session.time} • {session.duration}
-                        </div>
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-6 mt-5 pt-4 border-t border-hh-border">
+              <div className="flex items-center gap-2 text-xs text-hh-muted">
+                <div className="w-3 h-3 rounded-full bg-amber-500" />
+                <span>Gepland</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-hh-muted">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <span>Live</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-hh-muted">
+                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                <span>Afgelopen</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Sessions for this month */}
+          <div className="border-t border-hh-border bg-gray-50 p-5">
+            <h3 className="text-sm font-semibold text-hh-text mb-3">
+              Sessies in {monthName} ({filteredSessions.length})
+            </h3>
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {filteredSessions.length === 0 ? (
+                <p className="text-sm text-hh-muted text-center py-4">Geen sessies deze maand</p>
+              ) : (
+                filteredSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className="flex items-center gap-3 p-3 bg-white rounded-lg border border-hh-border hover:border-purple-300 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setSelectedSession(session);
+                      setShowCalendarModal(false);
+                      setIsEditDialogOpen(true);
+                    }}
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-purple-100 flex flex-col items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] text-purple-600 font-medium uppercase">
+                        {new Date(session.date).toLocaleDateString("nl-NL", { month: "short" })}
+                      </span>
+                      <span className="text-lg font-bold text-purple-600">
+                        {new Date(session.date).getDate()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-hh-text truncate">{session.title}</span>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${
+                            session.status === "scheduled" ? "bg-amber-100 text-amber-700 border-amber-200"
+                            : session.status === "live" ? "bg-red-100 text-red-700 border-red-200"
+                            : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                          }`}
+                        >
+                          {session.status === "scheduled" ? "Gepland" : session.status === "live" ? "Live" : "Afgelopen"}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-hh-muted flex items-center gap-2 mt-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{session.time} • {session.duration}</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                    <ChevronRight className="w-5 h-5 text-hh-muted" />
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </DialogContent>
