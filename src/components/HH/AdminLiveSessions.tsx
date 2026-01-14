@@ -1221,44 +1221,44 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Calendar Modal - Clean Layout */}
+      {/* Calendar Modal - Compact Layout */}
       <Dialog open={showCalendarModal} onOpenChange={setShowCalendarModal}>
-        <DialogContent className="sm:max-w-[720px] p-0 gap-0 bg-white">
+        <DialogContent className="sm:max-w-[520px] p-0 gap-0 bg-white max-h-[85vh] overflow-hidden flex flex-col">
           {/* Header with month navigation */}
-          <div className="flex items-center justify-between p-5 border-b border-hh-border">
+          <div className="flex items-center justify-between p-4 border-b border-hh-border flex-shrink-0">
             <div>
-              <DialogTitle className="text-xl font-semibold">Kalender Overzicht</DialogTitle>
-              <DialogDescription className="text-sm text-hh-muted mt-1">
+              <DialogTitle className="text-lg font-semibold">Kalender Overzicht</DialogTitle>
+              <DialogDescription className="text-xs text-hh-muted">
                 Bekijk alle geplande sessies
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={prevMonth} className="h-9 w-9">
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="icon" onClick={prevMonth} className="h-8 w-8">
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <span className="text-sm font-medium min-w-[120px] text-center">{monthName}</span>
-              <Button variant="outline" size="icon" onClick={nextMonth} className="h-9 w-9">
+              <span className="text-sm font-medium min-w-[100px] text-center">{monthName}</span>
+              <Button variant="outline" size="icon" onClick={nextMonth} className="h-8 w-8">
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
 
           {/* Calendar Grid */}
-          <div className="p-5">
+          <div className="p-3 flex-shrink-0">
             {/* Weekday headers */}
-            <div className="grid grid-cols-7 gap-2 mb-3">
+            <div className="grid grid-cols-7 gap-1 mb-1">
               {["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"].map((day) => (
-                <div key={day} className="text-center text-xs font-semibold text-hh-muted py-2">
+                <div key={day} className="text-center text-[11px] font-semibold text-hh-muted py-1">
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Calendar days */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1">
               {/* Empty cells for days before month starts */}
               {Array.from({ length: startingDayOfWeek }).map((_, i) => (
-                <div key={`empty-${i}`} className="h-14" />
+                <div key={`empty-${i}`} className="h-9" />
               ))}
 
               {/* Days of month */}
@@ -1279,23 +1279,23 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
                         setIsEditDialogOpen(true);
                       }
                     }}
-                    className={`h-14 rounded-lg flex flex-col items-center justify-center relative transition-all ${
+                    className={`h-9 rounded-md flex flex-col items-center justify-center relative transition-all ${
                       isToday
-                        ? "bg-purple-100 ring-2 ring-purple-500"
+                        ? "bg-purple-100 ring-1 ring-purple-500"
                         : hasSession
                         ? "bg-purple-50 hover:bg-purple-100 cursor-pointer"
                         : "bg-gray-50 hover:bg-gray-100"
                     }`}
                   >
-                    <span className={`text-sm font-medium ${isToday ? "text-purple-700" : hasSession ? "text-purple-600" : "text-gray-700"}`}>
+                    <span className={`text-xs font-medium ${isToday ? "text-purple-700" : hasSession ? "text-purple-600" : "text-gray-600"}`}>
                       {day}
                     </span>
                     {hasSession && (
-                      <div className="flex items-center gap-1 mt-1">
-                        {sessionsOnDay.slice(0, 3).map((session) => (
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        {sessionsOnDay.slice(0, 2).map((session) => (
                           <div
                             key={session.id}
-                            className={`w-2 h-2 rounded-full ${
+                            className={`w-1.5 h-1.5 rounded-full ${
                               session.status === "scheduled" ? "bg-amber-500"
                               : session.status === "live" ? "bg-red-500"
                               : "bg-emerald-500"
@@ -1310,55 +1310,55 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-center gap-6 mt-5 pt-4 border-t border-hh-border">
-              <div className="flex items-center gap-2 text-xs text-hh-muted">
-                <div className="w-3 h-3 rounded-full bg-amber-500" />
+            <div className="flex items-center justify-center gap-4 mt-3 pt-2 border-t border-hh-border">
+              <div className="flex items-center gap-1.5 text-[10px] text-hh-muted">
+                <div className="w-2 h-2 rounded-full bg-amber-500" />
                 <span>Gepland</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-hh-muted">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
+              <div className="flex items-center gap-1.5 text-[10px] text-hh-muted">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
                 <span>Live</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-hh-muted">
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+              <div className="flex items-center gap-1.5 text-[10px] text-hh-muted">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span>Afgelopen</span>
               </div>
             </div>
           </div>
 
           {/* Sessions for this month */}
-          <div className="border-t border-hh-border bg-gray-50 p-5">
-            <h3 className="text-sm font-semibold text-hh-text mb-3">
+          <div className="border-t border-hh-border bg-gray-50 p-3 flex-1 overflow-hidden flex flex-col min-h-0">
+            <h3 className="text-xs font-semibold text-hh-text mb-2 flex-shrink-0">
               Sessies in {monthName} ({filteredSessions.length})
             </h3>
-            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+            <div className="space-y-1.5 overflow-y-auto flex-1">
               {filteredSessions.length === 0 ? (
-                <p className="text-sm text-hh-muted text-center py-4">Geen sessies deze maand</p>
+                <p className="text-xs text-hh-muted text-center py-3">Geen sessies deze maand</p>
               ) : (
                 filteredSessions.map((session) => (
                   <div
                     key={session.id}
-                    className="flex items-center gap-3 p-3 bg-white rounded-lg border border-hh-border hover:border-purple-300 cursor-pointer transition-colors"
+                    className="flex items-center gap-2 p-2 bg-white rounded-md border border-hh-border hover:border-purple-300 cursor-pointer transition-colors"
                     onClick={() => {
                       setSelectedSession(session);
                       setShowCalendarModal(false);
                       setIsEditDialogOpen(true);
                     }}
                   >
-                    <div className="w-12 h-12 rounded-lg bg-purple-100 flex flex-col items-center justify-center flex-shrink-0">
-                      <span className="text-[10px] text-purple-600 font-medium uppercase">
+                    <div className="w-10 h-10 rounded-md bg-purple-100 flex flex-col items-center justify-center flex-shrink-0">
+                      <span className="text-[8px] text-purple-600 font-medium uppercase">
                         {new Date(session.date).toLocaleDateString("nl-NL", { month: "short" })}
                       </span>
-                      <span className="text-lg font-bold text-purple-600">
+                      <span className="text-sm font-bold text-purple-600">
                         {new Date(session.date).getDate()}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-hh-text truncate">{session.title}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-hh-text truncate">{session.title}</span>
                         <Badge
                           variant="outline"
-                          className={`text-xs ${
+                          className={`text-[10px] px-1.5 py-0 ${
                             session.status === "scheduled" ? "bg-amber-100 text-amber-700 border-amber-200"
                             : session.status === "live" ? "bg-red-100 text-red-700 border-red-200"
                             : "bg-emerald-100 text-emerald-700 border-emerald-200"
@@ -1367,12 +1367,12 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
                           {session.status === "scheduled" ? "Gepland" : session.status === "live" ? "Live" : "Afgelopen"}
                         </Badge>
                       </div>
-                      <div className="text-xs text-hh-muted flex items-center gap-2 mt-1">
-                        <Clock className="w-3.5 h-3.5" />
+                      <div className="text-[10px] text-hh-muted flex items-center gap-1 mt-0.5">
+                        <Clock className="w-3 h-3" />
                         <span>{session.time} • {session.duration}</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-hh-muted" />
+                    <ChevronRight className="w-4 h-4 text-hh-muted flex-shrink-0" />
                   </div>
                 ))
               )}
