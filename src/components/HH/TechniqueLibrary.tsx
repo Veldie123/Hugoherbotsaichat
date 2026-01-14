@@ -731,6 +731,11 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
             tags: selectedTechnique.tags,
             doel: selectedTechnique.doel,
             hoe: selectedTechnique.hoe,
+            wat: selectedTechnique.wat,
+            waarom: selectedTechnique.waarom,
+            wanneer: selectedTechnique.wanneer,
+            verkoper_intentie: selectedTechnique.verkoper_intentie,
+            context_requirements: selectedTechnique.context_requirements,
             stappenplan: selectedTechnique.stappenplan,
             voorbeeld: selectedTechnique.voorbeeld,
           }}
