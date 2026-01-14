@@ -3,34 +3,20 @@ import { AppLayout } from "./AppLayout";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
-import { Card } from "../ui/card";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { StopRoleplayDialog } from "./StopRoleplayDialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
 import {
   Send,
   ChevronRight,
   ChevronDown,
   Check,
-  X,
-  Menu,
-  ChevronLeft,
-  Info,
   Lightbulb,
-  Target,
   MessageSquare,
   StopCircle,
 } from "lucide-react";
-import { getAllTechnieken } from "../../data/technieken-service";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
-import { cn } from "../ui/utils";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
 
 interface Message {
@@ -54,7 +40,6 @@ export function TalkToHugoAI({
   const [inputText, setInputText] = useState("");
   const [selectedTechnique, setSelectedTechnique] = useState<string>("");
   const [currentPhase, setCurrentPhase] = useState(1);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedPhases, setExpandedPhases] = useState<number[]>([1]);
   const [expandedParents, setExpandedParents] = useState<string[]>([]);
   const [expandedHoudingen, setExpandedHoudingen] = useState<string[]>([]);
@@ -98,13 +83,6 @@ export function TalkToHugoAI({
     recommended_technique_ids: [...(houding.recommended_technique_ids || [])],
   }));
 
-  const getTechniqueNameByNumber = (techniqueNumber: string): string => {
-    const technique = Object.values(technieken_index.technieken).find(
-      (t: any) => t.nummer === techniqueNumber
-    ) as any;
-    return technique ? technique.naam : techniqueNumber;
-  };
-
   const togglePhase = (phase: number) => {
     setExpandedPhases(prev =>
       prev.includes(phase) ? prev.filter(p => p !== phase) : [...prev, phase]
@@ -126,52 +104,50 @@ export function TalkToHugoAI({
   const openTechniqueDetails = (techniqueNumber: string) => {
     const technique = Object.values(technieken_index.technieken).find(
       (t: any) => t.nummer === techniqueNumber
-    );
+    ) as any;
     if (technique) {
       setSelectedTechniqueDetails(technique);
       setTechniqueDetailsPanelOpen(true);
     }
   };
 
-  const startTechniqueChat = (techniqueNumber: string, techniqueName: string) => {
-    const technique = Object.values(technieken_index.technieken).find(
-      (t: any) => t.nummer === techniqueNumber
-    ) as any;
-
-    if (!technique) return;
-
-    const systemMessage: Message = {
-      id: Date.now().toString(),
-      sender: "ai",
-      text: `Laten we de techniek "${techniqueName}" (${techniqueNumber}) oefenen. Ik zal de klant spelen en ik wil dat jij deze techniek toepast. Probeer de techniek correct uit te voeren zoals beschreven in de theorie.\n\nZodra je klaar bent, stuur je bericht en ik geef feedback met een ✓ (correct) of ✗ (verbeterpunt).`,
-      timestamp: new Date(),
-    };
-
-    setMessages([systemMessage]);
-    setSelectedTechnique(techniqueName);
-    
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+  const startTechniqueChat = (techniqueNumber: string) => {
+    setSelectedTechnique(techniqueNumber);
   };
 
-  const getFaseBadgeColor = (phase: number) => {
-    return "bg-hh-ink/10 text-hh-ink border-hh-ink/30";
+  const getFaseBadgeColor = (fase: number) => {
+    const colors: Record<number, string> = {
+      0: "bg-slate-100 text-slate-700 border-slate-200",
+      1: "bg-blue-100 text-blue-700 border-blue-200",
+      2: "bg-emerald-100 text-emerald-700 border-emerald-200",
+      3: "bg-amber-100 text-amber-700 border-amber-200",
+      4: "bg-red-100 text-red-700 border-red-200",
+    };
+    return colors[fase] || "bg-gray-100 text-gray-700 border-gray-200";
   };
 
   const getTopLevelTechniques = (phase: number) => {
-    return (techniquesByPhase[phase] || []).filter((t: any) => {
-      if (t.is_fase) return false;
-      return !t.parent || t.parent === phase.toString() || t.parent === `${phase}`;
+    const techniques = techniquesByPhase[phase] || [];
+    return techniques.filter((t: any) => {
+      const parts = t.nummer.split('.');
+      return parts.length === 2;
     });
   };
 
   const hasChildren = (technique: any, phase: number) => {
-    return (techniquesByPhase[phase] || []).some((t: any) => t.parent === technique.nummer);
+    const techniques = techniquesByPhase[phase] || [];
+    return techniques.some((t: any) => {
+      const parts = t.nummer.split('.');
+      return parts.length === 3 && t.nummer.startsWith(technique.nummer + '.');
+    });
   };
 
   const getChildTechniques = (parentNumber: string, phase: number) => {
-    return (techniquesByPhase[phase] || []).filter((t: any) => t.parent === parentNumber);
+    const techniques = techniquesByPhase[phase] || [];
+    return techniques.filter((t: any) => {
+      const parts = t.nummer.split('.');
+      return parts.length === 3 && t.nummer.startsWith(parentNumber + '.');
+    });
   };
 
   const handleSendMessage = () => {
@@ -186,7 +162,6 @@ export function TalkToHugoAI({
 
     setMessages([...messages, newMessage]);
     setInputText("");
-    setSelectedTechnique("");
 
     setTimeout(() => {
       const aiMessage: Message = {
@@ -245,138 +220,14 @@ export function TalkToHugoAI({
           </div>
         )}
 
-        <Dialog open={techniqueDetailsPanelOpen} onOpenChange={setTechniqueDetailsPanelOpen}>
-          <DialogContent className="max-w-[700px] max-h-[90vh] overflow-hidden p-0 flex flex-col">
-            <DialogHeader className="p-6 pb-0">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge className="bg-hh-ink text-white text-[12px] px-2 py-0.5">
-                      {selectedTechniqueDetails?.nummer}
-                    </Badge>
-                    <span className="text-[12px] text-hh-muted">
-                      Fase {selectedTechniqueDetails?.fase}
-                    </span>
-                  </div>
-                  <DialogTitle className="text-[24px] leading-[32px] font-bold text-hh-text">
-                    {selectedTechniqueDetails?.naam}
-                  </DialogTitle>
-                  {selectedTechniqueDetails?.tags && selectedTechniqueDetails.tags.length > 0 && (
-                    <div className="flex gap-2 mt-3">
-                      {selectedTechniqueDetails.tags.map((tag: string, idx: number) => (
-                        <Badge key={idx} variant="outline" className="text-[10px] px-2 py-0.5">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="overflow-y-auto px-6 pb-6 space-y-4 flex-1" style={{ maxHeight: 'calc(90vh - 180px)' }}>
-              {selectedTechniqueDetails?.doel && (
-                <div className="bg-hh-ink/10 p-4 rounded-lg border border-hh-ink/20">
-                  <div className="flex items-start gap-2 mb-2">
-                    <Target className="w-4 h-4 text-hh-ink mt-0.5 flex-shrink-0" />
-                    <h3 className="text-[13px] font-semibold text-hh-text">Doel</h3>
-                  </div>
-                  <p className="text-[13px] leading-[20px] text-hh-text">
-                    {selectedTechniqueDetails.doel}
-                  </p>
-                </div>
-              )}
-
-              {selectedTechniqueDetails?.wat && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Wat</h3>
-                  <p className="text-[13px] leading-[20px] text-hh-muted">
-                    {selectedTechniqueDetails.wat}
-                  </p>
-                </div>
-              )}
-
-              {selectedTechniqueDetails?.waarom && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Waarom</h3>
-                  <p className="text-[13px] leading-[20px] text-hh-muted">
-                    {selectedTechniqueDetails.waarom}
-                  </p>
-                </div>
-              )}
-
-              {selectedTechniqueDetails?.wanneer && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Wanneer</h3>
-                  <p className="text-[13px] leading-[20px] text-hh-muted">
-                    {selectedTechniqueDetails.wanneer}
-                  </p>
-                </div>
-              )}
-
-              {selectedTechniqueDetails?.hoe && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Hoe</h3>
-                  <p className="text-[13px] leading-[20px] text-hh-muted">
-                    {selectedTechniqueDetails.hoe}
-                  </p>
-                </div>
-              )}
-
-              {selectedTechniqueDetails?.stappenplan && selectedTechniqueDetails.stappenplan.length > 0 && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Stappenplan</h3>
-                  <ol className="space-y-2">
-                    {selectedTechniqueDetails.stappenplan.map((step: string, idx: number) => (
-                      <li key={idx} className="flex gap-3">
-                        <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-hh-ink/10 text-hh-ink text-[11px] font-semibold">
-                          {idx + 1}
-                        </span>
-                        <span className="text-[13px] leading-[20px] text-hh-muted pt-0.5">
-                          {step}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              {selectedTechniqueDetails?.voorbeeld && selectedTechniqueDetails.voorbeeld.length > 0 && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Voorbeelden</h3>
-                  <div className="space-y-2">
-                    {selectedTechniqueDetails.voorbeeld.map((ex: string, idx: number) => (
-                      <div key={idx} className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-                        <p className="text-[13px] leading-[20px] text-hh-text italic">
-                          "{ex}"
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="px-6 pb-6 pt-4 border-t border-hh-border bg-white sticky bottom-0">
-              <Button
-                onClick={() => setTechniqueDetailsPanelOpen(false)}
-                className="w-full"
-                variant="outline"
-              >
-                Sluiten
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         <div className="flex-1 flex flex-col bg-white">
           <div className="p-4 border-b border-hh-border">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h2 className="text-[18px] leading-[24px] font-bold text-hh-text">
-                  Talk to Hugo AI
+                  Hugo AI Coach
                 </h2>
-                <p className="text-[12px] text-hh-muted">Oefen verkooptechnieken met je AI coach</p>
+                <p className="text-[12px] text-hh-muted">Oefen je verkooptechnieken met AI</p>
               </div>
               <div className="flex items-center gap-2">
                 {messages.length > 0 && (
@@ -519,6 +370,16 @@ export function TalkToHugoAI({
               </div>
             )}
 
+            {difficultyLevel !== "expert" && !selectedTechnique && (
+              <div className="mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p className="text-[12px] text-amber-700 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4" />
+                  Selecteer eerst een techniek uit de sidebar door op het{" "}
+                  <MessageSquare className="w-3.5 h-3.5 inline" /> icoon te klikken
+                </p>
+              </div>
+            )}
+
             {difficultyLevel !== "expert" && selectedTechnique && (
               <div className="mb-3 p-3 bg-hh-ink/10 rounded-lg border border-hh-ink/20">
                 <p className="text-[12px] text-hh-ink flex items-center justify-between">
@@ -563,6 +424,13 @@ export function TalkToHugoAI({
         open={stopRoleplayDialogOpen}
         onOpenChange={setStopRoleplayDialogOpen}
         onConfirm={confirmStopRoleplay}
+      />
+
+      <TechniqueDetailsDialog
+        open={techniqueDetailsPanelOpen}
+        onOpenChange={setTechniqueDetailsPanelOpen}
+        technique={selectedTechniqueDetails}
+        isEditable={false}
       />
     </AppLayout>
   );
