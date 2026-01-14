@@ -409,9 +409,9 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       }}
                     >
                       <td className="py-3 px-4">
-                        <Badge className="bg-emerald-100 text-emerald-600 rounded-full px-2.5 py-1 text-[11px] font-mono font-medium">
+                        <span className="text-[14px] font-mono font-medium text-hh-ink">
                           {techniek.code}
-                        </Badge>
+                        </span>
                       </td>
                       <td className="py-3 px-4">
                         <p className="text-[14px] leading-[20px] text-hh-text font-medium">
@@ -527,9 +527,9 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                 <div className="space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between">
-                    <Badge className="bg-emerald-100 text-emerald-600 rounded-full px-2.5 py-1 text-[11px] font-mono font-medium">
+                    <span className="text-[14px] font-mono font-medium text-hh-ink">
                       {techniek.code}
-                    </Badge>
+                    </span>
                     <div onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
