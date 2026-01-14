@@ -596,28 +596,28 @@ export function AdminOrganizationManagement({ navigate }: AdminOrganizationManag
               <div className="grid grid-cols-4 gap-4">
                 <Card className="p-4 rounded-[12px] shadow-hh-sm border-hh-border text-center">
                   <Users className="w-5 h-5 text-blue-600 mx-auto mb-2" />
-                  <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+                  <p className="text-[24px] leading-[32px] text-hh-ink">
                     {selectedOrg.users}
                   </p>
                   <p className="text-[12px] leading-[16px] text-hh-muted">Gebruikers</p>
                 </Card>
                 <Card className="p-4 rounded-[12px] shadow-hh-sm border-hh-border text-center">
                   <CheckCircle2 className="w-5 h-5 text-hh-success mx-auto mb-2" />
-                  <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+                  <p className="text-[24px] leading-[32px] text-hh-ink">
                     {selectedOrg.activeUsers}
                   </p>
                   <p className="text-[12px] leading-[16px] text-hh-muted">Actief</p>
                 </Card>
                 <Card className="p-4 rounded-[12px] shadow-hh-sm border-hh-border text-center">
                   <TrendingUp className="w-5 h-5 text-hh-primary mx-auto mb-2" />
-                  <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+                  <p className="text-[24px] leading-[32px] text-hh-ink">
                     {selectedOrg.totalSessions}
                   </p>
                   <p className="text-[12px] leading-[16px] text-hh-muted">Sessies</p>
                 </Card>
                 <Card className="p-4 rounded-[12px] shadow-hh-sm border-hh-border text-center">
                   <DollarSign className="w-5 h-5 text-hh-success mx-auto mb-2" />
-                  <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+                  <p className="text-[24px] leading-[32px] text-hh-ink">
                     €{selectedOrg.mrr}
                   </p>
                   <p className="text-[12px] leading-[16px] text-hh-muted">MRR</p>

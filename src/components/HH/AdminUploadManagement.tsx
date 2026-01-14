@@ -346,7 +346,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             <p className="text-[13px] text-hh-muted mb-2">
               Totaal Analyses
             </p>
-            <p className="text-[28px] leading-[36px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.totalAnalyses}
             </p>
           </Card>
@@ -363,7 +363,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             <p className="text-[13px] text-hh-muted mb-2">
               Excellent Quality
             </p>
-            <p className="text-[28px] leading-[36px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.excellentQuality}
             </p>
           </Card>
@@ -380,7 +380,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             <p className="text-[13px] text-hh-muted mb-2">
               Gem. Score
             </p>
-            <p className="text-[28px] leading-[36px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.avgScore}%
             </p>
           </Card>
@@ -397,7 +397,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             <p className="text-[13px] text-hh-muted mb-2">
               Needs Improvement
             </p>
-            <p className="text-[28px] leading-[36px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.needsWork}
             </p>
           </Card>

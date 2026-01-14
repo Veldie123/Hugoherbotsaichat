@@ -198,7 +198,7 @@ export function RolePlayOverview({ navigate, isAdmin }: RolePlayOverviewProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Scenario's
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {scenarios.length}
             </p>
           </Card>
@@ -218,7 +218,7 @@ export function RolePlayOverview({ navigate, isAdmin }: RolePlayOverviewProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal gespeeld
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {totalPlays.toLocaleString()}
             </p>
           </Card>
@@ -238,7 +238,7 @@ export function RolePlayOverview({ navigate, isAdmin }: RolePlayOverviewProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Gem. Score
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {avgScore}%
             </p>
           </Card>
@@ -252,7 +252,7 @@ export function RolePlayOverview({ navigate, isAdmin }: RolePlayOverviewProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Favorieten
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {favorites}
             </p>
           </Card>

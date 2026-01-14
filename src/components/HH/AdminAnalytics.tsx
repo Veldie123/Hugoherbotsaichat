@@ -185,7 +185,7 @@ export function AdminAnalytics({ navigate }: AdminAnalyticsProps) {
                 <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1">
                   {metric.label}
                 </p>
-                <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-semibold">
+                <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
                   {metric.value}
                 </p>
               </Card>
@@ -338,7 +338,7 @@ export function AdminAnalytics({ navigate }: AdminAnalyticsProps) {
               <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
                 Total Users
               </p>
-              <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+              <p className="text-[24px] leading-[32px] text-hh-ink">
                 2,847
               </p>
               <p className="text-[12px] leading-[16px] text-hh-success mt-1">
@@ -349,7 +349,7 @@ export function AdminAnalytics({ navigate }: AdminAnalyticsProps) {
               <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
                 Total Sessies
               </p>
-              <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+              <p className="text-[24px] leading-[32px] text-hh-ink">
                 12,450
               </p>
               <p className="text-[12px] leading-[16px] text-hh-success mt-1">
@@ -360,7 +360,7 @@ export function AdminAnalytics({ navigate }: AdminAnalyticsProps) {
               <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
                 Total Video's
               </p>
-              <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+              <p className="text-[24px] leading-[32px] text-hh-ink">
                 127
               </p>
               <p className="text-[12px] leading-[16px] text-hh-success mt-1">
@@ -371,7 +371,7 @@ export function AdminAnalytics({ navigate }: AdminAnalyticsProps) {
               <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
                 Live Sessies
               </p>
-              <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+              <p className="text-[24px] leading-[32px] text-hh-ink">
                 24
               </p>
               <p className="text-[12px] leading-[16px] text-hh-success mt-1">

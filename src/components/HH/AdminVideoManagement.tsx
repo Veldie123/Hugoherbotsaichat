@@ -338,7 +338,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
             <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
               Drive
             </p>
-            <p className="text-[32px] leading-[40px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               107
             </p>
           </Card>
@@ -359,7 +359,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
             <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
               Greenscreen
             </p>
-            <p className="text-[32px] leading-[40px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               104
             </p>
           </Card>
@@ -380,7 +380,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
             <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
               Audio
             </p>
-            <p className="text-[32px] leading-[40px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               104
             </p>
           </Card>
@@ -401,7 +401,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
             <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
               Transcript
             </p>
-            <p className="text-[32px] leading-[40px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               104
             </p>
           </Card>
@@ -422,7 +422,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
             <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
               RAG
             </p>
-            <p className="text-[32px] leading-[40px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               104
             </p>
           </Card>
@@ -443,7 +443,7 @@ export function AdminVideoManagement({ navigate }: AdminVideoManagementProps) {
             <p className="text-[13px] leading-[18px] text-hh-muted mb-2">
               Mux
             </p>
-            <p className="text-[32px] leading-[40px] text-hh-ink font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               104
             </p>
           </Card>

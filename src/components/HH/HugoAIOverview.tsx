@@ -215,7 +215,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Total Sessies
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {sessions.length}
             </p>
           </Card>
@@ -235,7 +235,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Excellent Quality
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {sessions.filter(s => s.quality === "excellent").length}
             </p>
           </Card>
@@ -255,7 +255,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Gem. Score
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {Math.round(sessions.reduce((acc, s) => acc + s.score, 0) / sessions.length)}%
             </p>
           </Card>
@@ -275,7 +275,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Needs Improvement
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {sessions.filter(s => s.quality === "needs-improvement").length}
             </p>
           </Card>

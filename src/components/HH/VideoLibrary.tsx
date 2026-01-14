@@ -127,7 +127,7 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Video's
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {videos.length}
             </p>
           </Card>
@@ -147,7 +147,7 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totale Views
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {totalViews.toLocaleString()}
             </p>
           </Card>
@@ -161,7 +161,7 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totale Duur
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {Math.floor(totalDuration / 60)}u {totalDuration % 60}m
             </p>
           </Card>
@@ -181,7 +181,7 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Gem. Completion
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-text font-medium">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {avgCompletion}%
             </p>
           </Card>

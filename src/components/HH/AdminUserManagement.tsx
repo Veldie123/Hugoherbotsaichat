@@ -733,21 +733,21 @@ export function AdminUserManagement({ navigate }: AdminUserManagementProps) {
               <div className="grid grid-cols-4 gap-4">
                 <Card className="p-4 rounded-[12px] shadow-hh-sm border-hh-border text-center">
                   <Play className="w-5 h-5 text-hh-primary mx-auto mb-2" />
-                  <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+                  <p className="text-[24px] leading-[32px] text-hh-ink">
                     {selectedUser.sessions}
                   </p>
                   <p className="text-[12px] leading-[16px] text-hh-muted">Sessies</p>
                 </Card>
                 <Card className="p-4 rounded-[12px] shadow-hh-sm border-hh-border text-center">
                   <TrendingUp className="w-5 h-5 text-hh-success mx-auto mb-2" />
-                  <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+                  <p className="text-[24px] leading-[32px] text-hh-ink">
                     {selectedUser.avgScore}%
                   </p>
                   <p className="text-[12px] leading-[16px] text-hh-muted">Gem Score</p>
                 </Card>
                 <Card className="p-4 rounded-[12px] shadow-hh-sm border-hh-border text-center">
                   <span className="text-[20px] mx-auto mb-2 block">🔥</span>
-                  <p className="text-[24px] leading-[32px] text-hh-text font-semibold">
+                  <p className="text-[24px] leading-[32px] text-hh-ink">
                     {selectedUser.streak}
                   </p>
                   <p className="text-[12px] leading-[16px] text-hh-muted">Streak</p>

@@ -238,7 +238,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Totaal Resources</p>
-            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.totalResources}
             </p>
           </Card>
@@ -253,7 +253,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Totaal Downloads</p>
-            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.totalDownloads}
             </p>
           </Card>
@@ -268,7 +268,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Featured Resources</p>
-            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.featuredResources}
             </p>
           </Card>
@@ -283,7 +283,7 @@ export function AdminResourceLibrary({ navigate }: AdminResourceLibraryProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Nieuw Deze Maand</p>
-            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.newThisMonth}
             </p>
           </Card>

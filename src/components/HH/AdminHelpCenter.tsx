@@ -255,7 +255,7 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Totaal Artikelen</p>
-            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.totalArticles}
             </p>
           </Card>
@@ -270,7 +270,7 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Gepubliceerd</p>
-            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.publishedArticles}
             </p>
           </Card>
@@ -285,7 +285,7 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Totaal Views</p>
-            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.totalViews}
             </p>
           </Card>
@@ -300,7 +300,7 @@ export function AdminHelpCenter({ navigate }: AdminHelpCenterProps) {
               </Badge>
             </div>
             <p className="text-[13px] text-hh-muted mb-2">Helpful Rating</p>
-            <p className="text-[28px] leading-[36px] text-hh-text font-semibold">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
               {stats.avgHelpfulRating}%
             </p>
           </Card>
