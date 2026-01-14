@@ -371,19 +371,6 @@ export function TalkToHugoAI({
             )}
 
 
-            {difficultyLevel !== "expert" && selectedTechnique && (
-              <div className="mb-3 p-3 bg-hh-ink/10 rounded-lg border border-hh-ink/20">
-                <p className="text-[12px] text-hh-ink flex items-center justify-between">
-                  <span>✓ Geselecteerde techniek: {selectedTechnique}</span>
-                  <button
-                    onClick={() => setSelectedTechnique("")}
-                    className="text-[11px] text-hh-muted hover:text-hh-text underline"
-                  >
-                    Wijzig
-                  </button>
-                </p>
-              </div>
-            )}
             
             <div className="flex gap-2">
               <Input
