@@ -20,18 +20,3 @@ export const getFaseBadgeColors = (fase: string) => {
     default: return { bg: 'bg-hh-ui-100', text: 'text-hh-ink', border: 'border-hh-border' };
   }
 };
-
-export const getProgressBarColor = (fase: number, isCompleted: boolean, isInProgress: boolean) => {
-  if (!isCompleted && !isInProgress) return 'bg-slate-200';
-  if (isInProgress) {
-    switch (fase) {
-      case 0: return 'bg-slate-500';
-      case 1: return 'bg-emerald-500';
-      case 2: return 'bg-blue-500';
-      case 3: return 'bg-amber-500';
-      case 4: return 'bg-purple-500';
-      default: return 'bg-hh-primary';
-    }
-  }
-  return 'bg-emerald-500';
-};
