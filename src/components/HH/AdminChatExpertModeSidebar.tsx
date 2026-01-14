@@ -114,7 +114,7 @@ export function EPICSidebar({
                 Fases & bijhorende technieken
               </h4>
             </div>
-            <Badge className="bg-purple-100 text-purple-700 border-purple-300">
+            <Badge className={isUserView ? "bg-hh-ink/10 text-hh-ink border-hh-ink/20" : "bg-purple-100 text-purple-700 border-purple-300"}>
               5 fases
             </Badge>
           </button>
@@ -194,9 +194,13 @@ export function EPICSidebar({
                                 className={cn(
                                   "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
                                   selectedTechnique === technique.naam
-                                    ? "bg-purple-50 text-purple-800 border border-purple-300"
+                                    ? isUserView 
+                                      ? "bg-hh-ink/5 text-hh-ink border border-hh-ink/20"
+                                      : "bg-purple-50 text-purple-800 border border-purple-300"
                                     : isRecommended
-                                    ? "bg-purple-50/30 border border-purple-200"
+                                    ? isUserView
+                                      ? "bg-hh-ink/5 border border-hh-ink/10"
+                                      : "bg-purple-50/30 border border-purple-200"
                                     : "bg-white text-hh-text hover:bg-hh-ui-50"
                                 )}
                               >
@@ -215,10 +219,10 @@ export function EPICSidebar({
                                         e.preventDefault();
                                         startTechniqueChat(technique.nummer, technique.naam);
                                       }}
-                                      className="p-1 hover:bg-purple-100 rounded transition-colors flex-shrink-0"
+                                      className={cn("p-1 rounded transition-colors flex-shrink-0", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
                                       title="Start chat over deze techniek"
                                     >
-                                      <MessageSquare className="w-3.5 h-3.5 text-purple-600 hover:text-purple-700" />
+                                      <MessageSquare className={cn("w-3.5 h-3.5", isUserView ? "text-hh-ink hover:text-hh-ink" : "text-purple-600 hover:text-purple-700")} />
                                     </button>
                                     {difficultyLevel !== "gemiddeld" && (
                                       <button
@@ -255,9 +259,13 @@ export function EPICSidebar({
                                         className={cn(
                                           "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
                                           selectedTechnique === child.naam
-                                            ? "bg-purple-50 text-purple-800 border border-purple-300"
+                                            ? isUserView
+                                              ? "bg-hh-ink/5 text-hh-ink border border-hh-ink/20"
+                                              : "bg-purple-50 text-purple-800 border border-purple-300"
                                             : isChildRecommended
-                                            ? "bg-purple-50/30 border border-purple-200"
+                                            ? isUserView
+                                              ? "bg-hh-ink/5 border border-hh-ink/10"
+                                              : "bg-purple-50/30 border border-purple-200"
                                             : "bg-white text-hh-text hover:bg-hh-ui-50"
                                         )}
                                       >
@@ -276,10 +284,10 @@ export function EPICSidebar({
                                                 e.preventDefault();
                                                 startTechniqueChat(child.nummer, child.naam);
                                               }}
-                                              className="p-1 hover:bg-purple-100 rounded transition-colors flex-shrink-0"
+                                              className={cn("p-1 rounded transition-colors flex-shrink-0", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
                                               title="Start chat over deze techniek"
                                             >
-                                              <MessageSquare className="w-3.5 h-3.5 text-purple-600 hover:text-purple-700" />
+                                              <MessageSquare className={cn("w-3.5 h-3.5", isUserView ? "text-hh-ink hover:text-hh-ink" : "text-purple-600 hover:text-purple-700")} />
                                             </button>
                                             {difficultyLevel !== "gemiddeld" && (
                                               <button
@@ -335,7 +343,7 @@ export function EPICSidebar({
                 Houdingen van de klant & bijhorende technieken
               </h4>
             </div>
-            <Badge className="bg-purple-100 text-purple-700 border-purple-300">
+            <Badge className={isUserView ? "bg-hh-ink/10 text-hh-ink border-hh-ink/20" : "bg-purple-100 text-purple-700 border-purple-300"}>
               {klantHoudingen.length}
             </Badge>
           </button>
@@ -417,9 +425,13 @@ export function EPICSidebar({
                                   className={cn(
                                     "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
                                     selectedTechnique === technique.naam
-                                      ? "bg-purple-50 text-purple-800 border border-purple-300"
+                                      ? isUserView
+                                        ? "bg-hh-ink/5 text-hh-ink border border-hh-ink/20"
+                                        : "bg-purple-50 text-purple-800 border border-purple-300"
                                       : isRecommended
-                                      ? "bg-purple-50/30 border border-purple-200"
+                                      ? isUserView
+                                        ? "bg-hh-ink/5 border border-hh-ink/10"
+                                        : "bg-purple-50/30 border border-purple-200"
                                       : "bg-white text-hh-text hover:bg-hh-ui-50"
                                   )}
                                 >
@@ -438,10 +450,10 @@ export function EPICSidebar({
                                           e.preventDefault();
                                           startTechniqueChat(technique.nummer, technique.naam);
                                         }}
-                                        className="p-1 hover:bg-purple-100 rounded transition-colors flex-shrink-0"
+                                        className={cn("p-1 rounded transition-colors flex-shrink-0", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
                                         title="Start chat over deze techniek"
                                       >
-                                        <MessageSquare className="w-3.5 h-3.5 text-purple-600 hover:text-purple-700" />
+                                        <MessageSquare className={cn("w-3.5 h-3.5", isUserView ? "text-hh-ink hover:text-hh-ink" : "text-purple-600 hover:text-purple-700")} />
                                       </button>
                                       {difficultyLevel !== "gemiddeld" && (
                                         <button
