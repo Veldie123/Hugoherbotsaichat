@@ -135,8 +135,8 @@ export function LiveCoaching({ navigate, isAdmin }: LiveCoachingProps) {
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
-          <div className="max-w-[50%]">
-            <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
+          <div>
+            <h1 className="text-[32px] leading-[40px] text-hh-text mb-2 whitespace-nowrap">
               Live Coaching Sessies
             </h1>
             <p className="text-[16px] leading-[24px] text-hh-muted">
