@@ -321,9 +321,9 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
                     }`}
                   >
                     <td className="px-4 py-3">
-                      <span className="text-[14px] font-mono font-medium text-hh-ink">
+                      <Badge className="bg-emerald-100 text-emerald-600 rounded-full px-2.5 py-1 text-[11px] font-mono font-medium">
                         {video.techniqueNumber}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-[14px] text-hh-text font-medium">
