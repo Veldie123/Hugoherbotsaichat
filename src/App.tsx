@@ -217,7 +217,7 @@ export default function App() {
           {currentPage === "admin-notifications" && <AdminNotifications navigate={navigate} />}
           {currentPage === "admin-config-review" && <AdminConfigReview navigate={navigate} />}
           {currentPage === "coaching" && <DigitalCoaching navigate={navigate} isAdmin={true} />}
-          {currentPage === "talk-to-hugo" && <TalkToHugoAI navigate={navigate} isAdmin={false} />}
+          {currentPage === "talk-to-hugo" && <TalkToHugoAI navigate={navigate} isAdmin={true} />}
           {currentPage === "analysis" && <Analysis navigate={navigate} isAdmin={true} />}
           {currentPage === "analysis-results" && <AnalysisResults navigate={navigate} isAdmin={true} />}
         </>
