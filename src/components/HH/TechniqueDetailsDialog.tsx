@@ -141,26 +141,6 @@ export function TechniqueDetailsDialog({
             </div>
           </div>
 
-          {/* Fase */}
-          <div>
-            <label className="text-[13px] text-hh-muted mb-2 block">
-              Fase:
-            </label>
-            {isEditing ? (
-              <Input
-                value={displayData.fase}
-                onChange={(e) =>
-                  setEditedData({ ...editedData, fase: e.target.value })
-                }
-                placeholder="Fase nummer"
-              />
-            ) : (
-              <span className="text-[16px] text-hh-text font-medium">
-                {displayData.fase}
-              </span>
-            )}
-          </div>
-
           {/* Tags */}
           <div>
             <label className="text-[13px] text-hh-muted mb-2 block">
