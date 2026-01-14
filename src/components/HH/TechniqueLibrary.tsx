@@ -36,7 +36,6 @@ import {
 } from "lucide-react";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
 import { getAllTechnieken, getTechniekenByFase } from "../../data/technieken-service";
-import { getCodeBadgeColors } from "../../utils/phaseColors";
 
 interface TechniqueLibraryProps {
   navigate?: (page: string) => void;
@@ -410,7 +409,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       }}
                     >
                       <td className="py-3 px-4">
-                        <Badge variant="outline" className={`text-[11px] font-mono ${getCodeBadgeColors(techniek.code)}`}>
+                        <Badge className="bg-emerald-100 text-emerald-600 rounded-full px-2.5 py-1 text-[11px] font-mono font-medium">
                           {techniek.code}
                         </Badge>
                       </td>
@@ -528,7 +527,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                 <div className="space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between">
-                    <Badge variant="outline" className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold px-2.5 py-1">
+                    <Badge className="bg-emerald-100 text-emerald-600 rounded-full px-2.5 py-1 text-[11px] font-mono font-medium">
                       {techniek.code}
                     </Badge>
                     <div onClick={(e) => e.stopPropagation()}>
