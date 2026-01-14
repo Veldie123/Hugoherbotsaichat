@@ -1,0 +1,210 @@
+Onderstaand heb ik jouw input samengebracht tot een **strak, consistent en professioneel technisch overzicht**, opgesplitst in **Tech Stack Part 1 (AI Chat & Coaching Engine)** en **Tech Stack Part 2 (Video Platform & Webinars)**. Dit is geschikt voor **investors, partners, senior developers of enterprise klanten**.
+
+---
+
+## Tech Stack – Part 1
+
+## AI Chat, Coaching & Roleplay Engine (Hugo Training Platform)
+
+### Doel
+
+Een real-time AI coaching- en roleplayplatform dat verkoopgesprekken simuleert, evalueert en verbetert volgens de **EPIC-methodologie**, met sterke focus op **contextcontinuïteit**, **lage latency** en **AI-vrijheid zonder scripts**.
+
+---
+
+### Frontend
+
+| Technologie           | Functie                                   |
+| --------------------- | ----------------------------------------- |
+| React 18 + TypeScript | UI framework met type-safety              |
+| Vite 6                | Build tool & dev server                   |
+| Tailwind CSS v4       | Utility-first styling                     |
+| Radix UI / Shadcn     | Toegankelijke, consistente UI componenten |
+| Wouter                | Lightweight client-side routing           |
+| TanStack Query        | Server state management & caching         |
+| Framer Motion         | UI-animaties en micro-interacties         |
+
+---
+
+### Backend & Database
+
+| Technologie           | Functie                                     |
+| --------------------- | ------------------------------------------- |
+| Express.js (Node.js)  | API server                                  |
+| Neon (PostgreSQL)     | Serverless PostgreSQL                       |
+| Drizzle ORM           | Type-safe database queries                  |
+| Stateless session IDs | Schaalbare sessiebeheer zonder server state |
+
+---
+
+### AI & Coaching Engine
+
+| Technologie             | Functie                                         |
+| ----------------------- | ----------------------------------------------- |
+| OpenAI GPT-5.1          | AI klant-simulatie & coaching                   |
+| Structured JSON outputs | Gecontroleerde AI-responses                     |
+| RAG-systeem             | Injectie van Hugo’s eigen taal, stijl en kennis |
+| State machine           | Afdwingen van 4-fase EPIC-methodologie          |
+
+---
+
+### Live Coaching & Audio
+
+| Technologie   | Functie                            |
+| ------------- | ---------------------------------- |
+| Daily.co      | WebRTC video conferencing          |
+| LiveKit Cloud | Real-time voice AI (<1s latency)   |
+| ElevenLabs    | Text-to-Speech voor audio roleplay |
+| Whisper       | Speech-to-Text                     |
+| Mux           | Video hosting & streaming          |
+
+---
+
+### V2 Engine Architectuur – EPIC Training Flow
+
+1. **Context Gathering**
+   Sector, product en uitdagingen → opgeslagen in `conversationHistory`
+2. **Coach Chat / Roleplay**
+   3-lagen system prompt (Achtergrond, Situatie, Opdracht)
+3. **Roleplay**
+   Hugo speelt klant (persona + houding), real-time techniekdetectie
+4. **Feedback & Debrief**
+   Analyse, score en concrete verbeterpunten
+
+---
+
+### SSOT (Single Source of Truth) Configuratie
+
+Alle kennis en logica is **extern geconfigureerd**, niet hardcoded.
+
+* 54 EPIC sales technieken
+* Hugo persona & klantpersona’s
+* Detector patterns voor real-time evaluatie
+* Prompt-definities per fase
+
+Dit maakt het systeem **uitbreidbaar, testbaar en methodologie-vast**.
+
+---
+
+### AI Freedom Philosophy v4.0
+
+**Faciliteren, niet limiteren**
+
+* Geen scripts of vaste zinnen
+* Geen templates
+* Volledige context + rol + opdracht
+* AI genereert alles dynamisch (“Work your magic”)
+
+---
+
+## Tech Stack – Part 2
+
+## Video Platform, Webinars & Knowledge Engine
+
+### Doel
+
+Een schaalbaar video- en webinarplatform dat **coachingcontent automatisch analyseert, indexeert en hergebruikt** via RAG en semantische zoektechnologie.
+
+---
+
+### Frontend
+
+| Technologie           | Functie              |
+| --------------------- | -------------------- |
+| React 18 + TypeScript | UI framework         |
+| Vite 6                | Build & dev server   |
+| Tailwind CSS v4       | Styling              |
+| Radix UI / Shadcn     | UI componenten       |
+| Recharts              | Analytics dashboards |
+
+---
+
+### Backend & Database
+
+| Technologie           | Functie                                |
+| --------------------- | -------------------------------------- |
+| Supabase (PostgreSQL) | Database, auth & storage               |
+| pgvector              | Vector embeddings voor semantic search |
+| Hono.js               | Lichtgewicht Node.js API server        |
+
+---
+
+### AI & Machine Learning
+
+| Technologie       | Functie                         |
+| ----------------- | ------------------------------- |
+| OpenAI Embeddings | Tekst → vectoren                |
+| OpenAI GPT        | RAG-gebaseerde coaching chat    |
+| ElevenLabs Scribe | Automatische video-transcriptie |
+| Cosine Similarity | Techniek-matching op video’s    |
+
+---
+
+### Video Infrastructuur
+
+| Technologie      | Functie                                 |
+| ---------------- | --------------------------------------- |
+| Mux              | Video hosting, encoding & streaming     |
+| Google Drive API | Bronbestanden ophalen                   |
+| FFmpeg           | Greenscreen removal & audio extractie   |
+| Google Cloud Run | CPU-intensieve video processing workers |
+
+---
+
+### Video Processing Pipeline
+
+1. Download bronvideo
+2. Chromakey (greenscreen verwijderen)
+3. Audio extractie
+4. Transcriptie
+5. Embeddings genereren
+6. Automatische techniek-matching
+7. Upload naar Mux + metadata opslag
+
+---
+
+### RAG Systeem (Video + Coaching)
+
+* Alle transcripts + technieken → embeddings
+* User query → embedding
+* Semantic search via cosine similarity
+* GPT antwoordt met **relevante videofragmenten als context**
+
+**Huidige schaal**
+
+* 433 documenten
+* ~143.000 woorden
+* 57 verwerkte video’s
+* 54 EPIC sales technieken
+
+---
+
+### Security & Performance
+
+* JWT-authenticatie (Supabase)
+* Service role keys voor backend
+* Webhook-validatie (Mux)
+* Rate limiting op AI chat
+* Cloud Run voor zware workloads (niet op core app)
+
+---
+
+## Positionering (samengevat)
+
+HugoHerbots.ai is **geen chat-app**, maar een:
+
+* AI-native coaching engine
+* Real-time roleplay simulator
+* Video-gedreven knowledge system
+* Methodologie-vast maar AI-vrij platform
+
+---
+
+Als je wilt, kan ik dit verder omzetten naar:
+
+* een **investor-ready one-pager**
+* een **architectuurdiagram (C4 of system-level)**
+* een **pitch slide (tech slide)**
+* of een **developer onboarding document**
+
+Geef aan wat het doelpubliek is, dan optimaliseer ik de vorm en scherpte.
