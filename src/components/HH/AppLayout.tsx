@@ -119,7 +119,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
         videos: "videos",
         live: "live",
         analysis: "analysis",
-        roleplay: "coaching",
+        roleplay: "talk-to-hugo",
         users: "team",
         analytics: "analytics",
         techniques: "techniques",
@@ -139,7 +139,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
       videos: "videos",
       live: "live",
       analysis: "analysis",
-      roleplay: "coaching",
+      roleplay: "talk-to-hugo",
       users: "team",
       analytics: "analytics",
       techniques: "techniques",
@@ -463,7 +463,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
             
             {/* Talk to Hugo AI Button */}
             <Button
-              onClick={() => navigate?.("coaching?technique=talk-to-hugo-ai")}
+              onClick={() => navigate?.("talk-to-hugo")}
               className="gap-2 bg-[#0F172A] hover:bg-[#1e293b] text-white h-10 px-3 sm:px-4"
             >
               <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
