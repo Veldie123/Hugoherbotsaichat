@@ -14,16 +14,17 @@ import {
 import { getDailyQuote } from "../../data/hugoQuotes";
 import { getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
 
-// Epic Sales Flow progress bar - full width above action cards
-const EpicSalesFlowProgress = () => {
+// Progress bar - full width above action cards
+const SalesFlowProgress = () => {
   const faseLabels = ["-1\nVoorber.", "1\nOpening", "2\nOntdekking", "3\nVoorstel", "4\nAfsluiting"];
   const progress = [100, 100, 60, 20, 0]; // Example progress values
+  // Green for completed (0,1), blue for in progress (2), gray for not started (3,4)
   const faseColors = [
-    "bg-emerald-500", // Fase 0
-    "bg-emerald-500", // Fase 1  
-    "bg-blue-500",    // Fase 2
-    "bg-slate-300",   // Fase 3
-    "bg-slate-200",   // Fase 4
+    "bg-emerald-500", // Fase -1: completed
+    "bg-emerald-500", // Fase 1: completed  
+    "bg-blue-400",    // Fase 2: in progress
+    "bg-slate-200",   // Fase 3: not started
+    "bg-slate-200",   // Fase 4: not started
   ];
   
   const completedCount = 4;
@@ -31,22 +32,21 @@ const EpicSalesFlowProgress = () => {
   const percentage = Math.round((completedCount / totalCount) * 100);
   
   return (
-    <Card className="p-4 sm:p-5 rounded-[16px] border-hh-border">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[18px] sm:text-[20px] font-semibold text-hh-text">Epic Sales Flow</h2>
+    <Card className="p-4 rounded-[16px] border-hh-border">
+      <div className="flex items-center justify-end mb-3">
         <span className="text-[13px] text-hh-muted">{completedCount}/{totalCount} onderwerpen • {percentage}%</span>
       </div>
       <div className="flex gap-1">
         {progress.map((value, index) => (
-          <div key={index} className="flex-1 flex flex-col gap-2">
-            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div key={index} className="flex-1 flex flex-col gap-1.5">
+            <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
               <div 
-                className={`h-full rounded-full transition-all ${value > 0 ? faseColors[index] : 'bg-slate-200'}`}
+                className={`h-full rounded-full transition-all ${faseColors[index]}`}
                 style={{ width: `${value}%` }}
               />
             </div>
             <div className="text-center">
-              <span className="text-[12px] text-hh-muted whitespace-pre-line">{faseLabels[index]}</span>
+              <span className="text-[11px] text-hh-muted whitespace-pre-line">{faseLabels[index]}</span>
             </div>
           </div>
         ))}
@@ -106,7 +106,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
               Welkom terug, Jan
             </h1>
             <p className="text-[14px] leading-[20px] text-hh-muted">
-              Weer een dag om te groeien — laten we werk maken van je sales skills.
+              will + skill + drill
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -115,8 +115,8 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
           </div>
         </div>
 
-        {/* Epic Sales Flow Progress Card */}
-        <EpicSalesFlowProgress />
+        {/* Progress Card */}
+        <SalesFlowProgress />
 
         {/* 4 Action Cards - horizontal layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -285,6 +285,19 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             </Button>
           </Card>
         </div>
+
+        {/* Hugo's Quote */}
+        <Card className="p-3 rounded-[16px] border-hh-ink/20">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-hh-ink text-white flex items-center justify-center flex-shrink-0 text-[12px] font-semibold">
+              HH
+            </div>
+            <div>
+              <div className="text-[12px] text-hh-muted mb-0.5">Hugo's woord van de dag</div>
+              <p className="text-[14px] text-hh-text italic">"{getDailyQuote().text}"</p>
+            </div>
+          </div>
+        </Card>
       </div>
     </AppLayout>
   );
