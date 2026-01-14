@@ -175,8 +175,12 @@ export function EPICSidebar({
                         )}
                         <div
                           className={cn(
-                            "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold",
-                            "bg-hh-ui-200 text-hh-muted"
+                            "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold",
+                            phase === 0 ? "bg-slate-500 text-white" :
+                            phase === 1 ? "bg-emerald-500 text-white" :
+                            phase === 2 ? "bg-blue-500 text-white" :
+                            phase === 3 ? "bg-amber-500 text-white" :
+                            "bg-purple-500 text-white"
                           )}
                         >
                           {phase}

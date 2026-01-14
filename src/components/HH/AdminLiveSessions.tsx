@@ -1221,89 +1221,56 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Calendar Modal */}
+      {/* Calendar Modal - Compact Side-by-Side Layout */}
       <Dialog open={showCalendarModal} onOpenChange={setShowCalendarModal}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[900px] lg:max-w-[1200px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-[18px] sm:text-[24px]">Kalender Overzicht</DialogTitle>
-            <DialogDescription className="text-[13px] sm:text-[14px]">
-              Bekijk alle live sessies in kalender formaat
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-hh-border">
+            <div>
+              <DialogTitle className="text-[18px]">Kalender Overzicht</DialogTitle>
+              <DialogDescription className="text-[12px] text-hh-muted">
+                Bekijk alle sessies in één oogopslag
+              </DialogDescription>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" onClick={prevMonth} className="h-8 w-8 p-0">
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())} className="h-8 px-3 text-[12px] font-medium">
+                {monthName}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={nextMonth} className="h-8 w-8 p-0">
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
 
-          <div className="space-y-3 sm:space-y-4">
-            {/* Calendar Header */}
-            <Card className="p-3 sm:p-4 rounded-[16px] border-hh-border">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[16px] sm:text-[18px] font-semibold text-hh-text capitalize">
-                  {monthName}
-                </h3>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={prevMonth}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentMonth(new Date())}
-                    className="h-8 px-3 text-[13px]"
-                  >
-                    Vandaag
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={nextMonth}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-
-            {/* Calendar Grid - Scrollable wrapper for mobile */}
-            <div className="overflow-x-auto">
-              <Card className="p-3 sm:p-6 rounded-[16px] border-hh-border min-w-[340px]">
-                {/* Weekday headers */}
-                <div className="grid grid-cols-7 gap-1 sm:gap-3 mb-2 sm:mb-3">
-                {["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"].map((day, index) => {
-                  const fullDay = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"][index];
-                  return (
-                    <div
-                      key={day}
-                      className="text-center text-[11px] sm:text-[14px] font-semibold text-hh-text py-2 sm:py-3"
-                    >
-                      <span className="sm:hidden">{day}</span>
-                      <span className="hidden sm:inline">{fullDay}</span>
-                    </div>
-                  );
-                })}
+          {/* Split Layout: Calendar + Sessions */}
+          <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
+            {/* Left: Compact Calendar */}
+            <div className="flex-1 p-4 border-b sm:border-b-0 sm:border-r border-hh-border overflow-y-auto">
+              {/* Weekday headers */}
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"].map((day) => (
+                  <div key={day} className="text-center text-[10px] font-semibold text-hh-muted py-1">
+                    {day}
+                  </div>
+                ))}
               </div>
 
-              {/* Calendar days */}
-              <div className="grid grid-cols-7 gap-1 sm:gap-3">
-                {/* Empty cells for days before month starts */}
+              {/* Calendar days - Compact */}
+              <div className="grid grid-cols-7 gap-1">
+                {/* Empty cells */}
                 {Array.from({ length: startingDayOfWeek }).map((_, i) => (
-                  <div key={`empty-${i}`} className="h-16 sm:h-32" />
+                  <div key={`empty-${i}`} className="h-12" />
                 ))}
 
-                {/* Days of the month */}
+                {/* Days */}
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const day = i + 1;
-                  const date = new Date(
-                    currentMonth.getFullYear(),
-                    currentMonth.getMonth(),
-                    day
-                  );
+                  const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
                   const sessionsOnDay = getSessionsForDate(date);
-                  const isToday =
-                    date.toDateString() === new Date().toDateString();
+                  const isToday = date.toDateString() === new Date().toDateString();
 
                   return (
                     <div
@@ -1315,123 +1282,101 @@ export function AdminLiveSessions({ navigate }: AdminLiveSessionsProps) {
                           setIsEditDialogOpen(true);
                         }
                       }}
-                      className={`h-16 sm:h-32 border rounded-lg sm:rounded-xl p-1.5 sm:p-3 flex flex-col ${
+                      className={`h-12 rounded-md p-1 flex flex-col items-center ${
                         isToday
-                          ? "border-hh-primary bg-hh-primary/5 ring-1 sm:ring-2 ring-hh-primary/20"
-                          : "border-hh-border bg-white hover:bg-hh-ui-50"
-                      } ${sessionsOnDay.length > 0 ? "cursor-pointer" : ""} transition-all`}
+                          ? "bg-purple-600/10 ring-1 ring-purple-600/30"
+                          : sessionsOnDay.length > 0
+                          ? "bg-hh-ui-50 hover:bg-hh-ui-100 cursor-pointer"
+                          : "hover:bg-hh-ui-50/50"
+                      } transition-all`}
                     >
-                      {/* Day number */}
-                      <div
-                        className={`text-[13px] sm:text-[18px] font-semibold mb-0.5 sm:mb-2 ${
-                          isToday ? "text-hh-primary" : "text-hh-text"
-                        }`}
-                      >
+                      <span className={`text-[12px] font-medium ${isToday ? "text-purple-600" : "text-hh-text"}`}>
                         {day}
-                      </div>
-                      
-                      {/* Sessions */}
-                      <div className="flex-1 flex flex-col gap-0.5 sm:gap-1 overflow-hidden">
-                        {/* Mobile: Show dots only */}
-                        <div className="sm:hidden flex items-center gap-0.5 flex-wrap">
-                          {sessionsOnDay.slice(0, 4).map((session) => (
-                            <div
-                              key={session.id}
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                session.status === "scheduled"
-                                  ? "bg-hh-warn"
-                                  : session.status === "live"
-                                  ? "bg-red-500"
-                                  : "bg-hh-success"
-                              }`}
-                              title={`${session.time} - ${session.title}`}
-                            />
-                          ))}
-                        </div>
-                        
-                        {/* Desktop: Show time badges */}
-                        <div className="hidden sm:flex flex-col gap-1">
+                      </span>
+                      {/* Session dots */}
+                      {sessionsOnDay.length > 0 && (
+                        <div className="flex items-center gap-0.5 mt-0.5">
                           {sessionsOnDay.slice(0, 3).map((session) => (
                             <div
                               key={session.id}
-                              className={`text-[11px] leading-[16px] px-2 py-1 rounded truncate ${
-                                session.status === "scheduled"
-                                  ? "bg-hh-warn/20 text-hh-warn"
-                                  : session.status === "live"
-                                  ? "bg-red-500/20 text-red-600"
-                                  : "bg-hh-success/20 text-hh-success"
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                session.status === "scheduled" ? "bg-amber-500"
+                                : session.status === "live" ? "bg-red-500"
+                                : "bg-emerald-500"
                               }`}
-                              title={`${session.time} - ${session.title}`}
-                            >
-                              <span className="font-semibold">{session.time}</span>
-                            </div>
+                            />
                           ))}
                           {sessionsOnDay.length > 3 && (
-                            <div className="text-[10px] text-hh-muted px-2 font-medium">
-                              +{sessionsOnDay.length - 3} meer
-                            </div>
+                            <span className="text-[8px] text-hh-muted ml-0.5">+{sessionsOnDay.length - 3}</span>
                           )}
                         </div>
-                      </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-              </Card>
+
+              {/* Legend */}
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-hh-border text-[10px] text-hh-muted">
+                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /> Gepland</div>
+                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /> Live</div>
+                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Afgelopen</div>
+              </div>
             </div>
 
-            {/* Sessions list for selected month */}
-            <div>
-              <h3 className="text-[16px] font-semibold text-hh-text mb-3">
-                Sessies {monthName} ({filteredSessions.length})
-              </h3>
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                {filteredSessions.map((session) => (
-                  <Card
-                    key={session.id}
-                    className="p-3 rounded-lg border-hh-border hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => {
-                      setSelectedSession(session);
-                      setShowCalendarModal(false);
-                      setIsEditDialogOpen(true);
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="text-center flex-shrink-0">
-                          <div className="text-[11px] text-hh-muted uppercase">
-                            {new Date(session.date).toLocaleDateString("nl-NL", {
-                              month: "short",
-                            })}
-                          </div>
-                          <div className="text-[20px] font-semibold text-hh-text">
-                            {new Date(session.date).getDate()}
-                          </div>
+            {/* Right: Sessions List */}
+            <div className="w-full sm:w-[320px] flex flex-col max-h-[400px]">
+              <div className="p-3 border-b border-hh-border bg-hh-ui-50/50">
+                <h3 className="text-[13px] font-semibold text-hh-text">
+                  Sessies in {monthName} ({filteredSessions.length})
+                </h3>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+                {filteredSessions.length === 0 ? (
+                  <div className="p-4 text-center text-[12px] text-hh-muted">
+                    Geen sessies deze maand
+                  </div>
+                ) : (
+                  filteredSessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-hh-ui-50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSelectedSession(session);
+                        setShowCalendarModal(false);
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-purple-600/10 flex flex-col items-center justify-center flex-shrink-0">
+                        <span className="text-[8px] text-purple-600 font-medium uppercase leading-none">
+                          {new Date(session.date).toLocaleDateString("nl-NL", { month: "short" })}
+                        </span>
+                        <span className="text-[14px] font-bold text-purple-600 leading-none">
+                          {new Date(session.date).getDate()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[12px] font-medium text-hh-text truncate">{session.title}</span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[9px] px-1.5 py-0 h-4 ${
+                              session.status === "scheduled" ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                              : session.status === "live" ? "bg-red-500/10 text-red-600 border-red-500/20"
+                              : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            }`}
+                          >
+                            {session.status === "scheduled" ? "Gepland" : session.status === "live" ? "Live" : "Afgelopen"}
+                          </Badge>
                         </div>
-                        <div className="h-10 w-px bg-hh-border flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="text-[14px] font-medium text-hh-text truncate">
-                              {session.title}
-                            </h4>
-                            {getStatusBadge(session.status)}
-                          </div>
-                          <div className="flex items-center gap-2 text-[12px] text-hh-muted">
-                            <Clock className="w-3 h-3" />
-                            {session.time} • {session.duration}
-                            <span>•</span>
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] bg-hh-primary/10 text-hh-primary border-hh-primary/20"
-                            >
-                              {session.fase}
-                            </Badge>
-                          </div>
+                        <div className="text-[10px] text-hh-muted flex items-center gap-1.5">
+                          <Clock className="w-3 h-3" />
+                          {session.time} • {session.duration}
                         </div>
                       </div>
                     </div>
-                  </Card>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>

@@ -364,7 +364,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                     >
                       {/* Technique Number Badge - filled style like Admin */}
                       <td className="py-3 px-4">
-                        <Badge className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold">
+                        <Badge variant="outline" className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold px-2.5 py-1">
                           {session.nummer}
                         </Badge>
                       </td>
@@ -452,7 +452,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold">
+                    <Badge variant="outline" className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold px-2.5 py-1">
                       {session.nummer}
                     </Badge>
                     <div className="w-10 h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">

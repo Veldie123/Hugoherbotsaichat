@@ -144,9 +144,9 @@ src/
 
 ## User View vs Admin View Design Pattern
 - **Admin View**: Purple (purple-600) as dominant + green (hh-success) as accent, checkboxes for selection, edit/delete buttons, "Nieuwe X" buttons
-- **User View**: Dark navy blue (hh-ink: #1E2A3B) as dominant + steel blue (hh-primary: #6B7A92) as secondary
+- **User View**: Dark navy blue (hh-ink: #1E2A3B) as dominant + phase-colored accents for visual variety
   - Dominant actions (view toggle, code badges, active sort icons): hh-ink
-  - Secondary accents (icons, subtle backgrounds): hh-primary
+  - Phase-specific colors for visual hierarchy in E.P.I.C content
   - No checkboxes, read-only detail dialogs, action buttons for viewing/playing content
 
 ## Color Tokens (User View)
@@ -155,6 +155,20 @@ src/
 - **hh-success**: Positive metrics, active status
 - **hh-muted**: Secondary text, descriptions
 - **hh-text**: Primary text content
+
+## Phase Colors (Shared between Admin and User View)
+Used for E.P.I.C Sales Flow phases to add visual variety:
+- **Phase 0 (Voorbereiding)**: slate-500/100 - Preparation phase
+- **Phase 1 (Opening)**: emerald-500/100 - Opening phase  
+- **Phase 2 (Ontdekking)**: blue-500/100 - Discovery phase
+- **Phase 3 (Voorstel)**: amber-500/100 - Proposal phase
+- **Phase 4 (Afsluiting)**: purple-500/100 - Closing phase
+
+This creates consistent visual hierarchy in:
+- Epic Sales Flow progress bars
+- Phase number badges in sidebar
+- Technique badges in tables
+- Calendar session indicators
 
 ## SSOT Architecture (Single Source of Truth)
 
