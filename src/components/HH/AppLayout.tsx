@@ -77,7 +77,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
   // Auto-collapse sidebar on sub-pages (detail views)
   useEffect(() => {
     const subPages = [
-      "roleplay",
+      "talk-to-hugo",
       "coaching",
       "video-detail",
       "live-session",
@@ -119,7 +119,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
         videos: "videos",
         live: "live",
         analysis: "analysis",
-        roleplay: "talk-to-hugo",
+        roleplay: "hugo-overview",
         users: "team",
         analytics: "analytics",
         techniques: "techniques",
@@ -134,21 +134,21 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
 
   // Helper to check if a nav item is active based on currentPage
   const isNavItemActive = (itemId: string) => {
-    const pageMap: Record<string, string> = {
-      dashboard: "dashboard",
-      videos: "videos",
-      live: "live",
-      analysis: "analysis",
-      roleplay: "talk-to-hugo",
-      users: "team",
-      analytics: "analytics",
-      techniques: "techniques",
-      content: "library",
-      help: "help",
-      resources: "resources",
-      settings: "settings",
+    const pageMap: Record<string, string[]> = {
+      dashboard: ["dashboard"],
+      videos: ["videos"],
+      live: ["live"],
+      analysis: ["analysis"],
+      roleplay: ["hugo-overview", "talk-to-hugo", "roleplay", "roleplays"],
+      users: ["team"],
+      analytics: ["analytics"],
+      techniques: ["techniques"],
+      content: ["library"],
+      help: ["help"],
+      resources: ["resources"],
+      settings: ["settings"],
     };
-    return currentPage === pageMap[itemId];
+    return pageMap[itemId]?.includes(currentPage) || false;
   };
 
   return (
@@ -364,16 +364,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     <span className="text-[16px] leading-[24px] font-medium">
                       {item.label}
-                      {item.superscript && <sup className="text-[10px]">{item.superscript}</sup>}
                     </span>
-                    {item.badge && (
-                      <Badge
-                        variant="outline"
-                        className="ml-auto bg-hh-warn/10 text-hh-warn border-hh-warn/20 text-[10px] px-1.5 py-0"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
                   </button>
                 );
               })}

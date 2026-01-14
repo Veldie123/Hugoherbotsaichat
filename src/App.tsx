@@ -45,9 +45,10 @@ import { AdminHelpCenter } from "./components/HH/AdminHelpCenter";
 import { AdminResourceLibrary } from "./components/HH/AdminResourceLibrary";
 import { AdminConfigReview } from "./components/HH/AdminConfigReview";
 import { TechniqueLibrary } from "./components/HH/TechniqueLibrary";
+import { HugoAIOverview } from "./components/HH/HugoAIOverview";
 import { auth } from "./utils/supabase/client";
 
-type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "preview" | "onboarding" | "dashboard" | "coaching" | "talk-to-hugo" | "roleplay" | "roleplays" | "roleplaychat" | "roleplays-chat" | "overviewprogress" | "library" | "sessions" | "builder" | "videos" | "live" | "team" | "analytics" | "settings" | "analysis" | "analysis-results" | "help" | "resources" | "techniques" | "admin-dashboard" | "admin-videos" | "admin-live" | "admin-uploads" | "admin-users" | "admin-techniques" | "admin-sessions" | "admin-chat-expert" | "admin-content" | "admin-analytics" | "admin-settings" | "admin-help" | "admin-resources" | "admin-notifications" | "admin-config-review";
+type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "preview" | "onboarding" | "dashboard" | "coaching" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "roleplaychat" | "roleplays-chat" | "overviewprogress" | "library" | "sessions" | "builder" | "videos" | "live" | "team" | "analytics" | "settings" | "analysis" | "analysis-results" | "help" | "resources" | "techniques" | "admin-dashboard" | "admin-videos" | "admin-live" | "admin-uploads" | "admin-users" | "admin-techniques" | "admin-sessions" | "admin-chat-expert" | "admin-content" | "admin-analytics" | "admin-settings" | "admin-help" | "admin-resources" | "admin-notifications" | "admin-config-review";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page | null>(null); // Start with null = loading
@@ -179,8 +180,8 @@ export default function App() {
 
           {/* App pages - gebruik AppLayout's interne navigatie */}
           {currentPage === "dashboard" && <Dashboard hasData={true} navigate={navigate} isAdmin={true} />}
-          {currentPage === "roleplay" && <RolePlay navigate={navigate} isAdmin={true} />}
-          {currentPage === "roleplays" && <RolePlay navigate={navigate} isAdmin={true} />}
+          {currentPage === "roleplay" && <HugoAIOverview navigate={navigate} isAdmin={true} />}
+          {currentPage === "roleplays" && <HugoAIOverview navigate={navigate} isAdmin={true} />}
           {currentPage === "roleplaychat" && <RolePlayChat navigate={navigate} isAdmin={true} />}
           {currentPage === "roleplays-chat" && <RolePlayChat navigate={navigate} isAdmin={true} />}
           {currentPage === "overviewprogress" && <OverviewProgress navigate={navigate} isAdmin={true} />}
@@ -195,6 +196,7 @@ export default function App() {
           {currentPage === "help" && <Help navigate={navigate} isAdmin={true} />}
           {currentPage === "resources" && <Resources navigate={navigate} isAdmin={true} />}
           {currentPage === "techniques" && <TechniqueLibrary navigate={navigate} isAdmin={true} />}
+          {currentPage === "hugo-overview" && <HugoAIOverview navigate={navigate} isAdmin={true} />}
           {currentPage === "admin-dashboard" && <AdminDashboard navigate={navigate} />}
           {currentPage === "admin-videos" && <AdminVideoManagement navigate={navigate} />}
           {currentPage === "admin-live" && <AdminLiveSessions navigate={navigate} />}

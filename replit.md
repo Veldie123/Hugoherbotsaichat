@@ -50,6 +50,18 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-14: Hugo a.i. User View Flow Redesign
+  - Created HugoAIOverview.tsx as landing page for Hugo a.i. in User View
+    - 4 KPI cards: Total Sessies, Excellent Quality, Gem. Score, Needs Improvement
+    - Search & filter bar with Type/Quality dropdowns and List/Grid toggle
+    - Sessions table with user's chat history (read-only, no admin features)
+    - "Talk to Hugo a.i." button navigates to chat interface
+  - Updated EPICSidebar (AdminChatExpertModeSidebar.tsx) for User View colors
+    - isUserView prop controls purple vs hh-ink color scheme
+    - Replaced "Totale voortgang" with "Epic Sales Flow" progress bar (5 fases)
+  - Fixed Admin View link disappearing when Hugo a.i. page opened
+  - Navigation flow: Sidebar "Hugo a.i." → hugo-overview → "Talk to Hugo" → talk-to-hugo (collapsed sidebar)
+- 2026-01-14: Removed "Fase" section and "Geselecteerde techniek" indicator from chat interface
 - 2026-01-13: E.P.I.C Card Click to Open Details Dialog
   - Cards in grid view are now clickable to open TechniqueDetailsDialog
   - Dialog shows ALL data from technieken_index.json (nummer, naam, fase, tags, doel, hoe, stappenplan, voorbeeld)
