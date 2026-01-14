@@ -118,23 +118,6 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
     })),
   };
 
-  const getFaseLabel = (fase: string) => {
-    switch (fase) {
-      case "fase-0":
-        return "Fase 0 - Pre-contactfase";
-      case "fase-1":
-        return "Fase 1 - Openingsfase";
-      case "fase-2":
-        return "Fase 2 - Ontdekkingsfase";
-      case "fase-3":
-        return "Fase 3 - Aanbevelingsfase";
-      case "fase-4":
-        return "Fase 4 - Beslissingsfase";
-      default:
-        return fase;
-    }
-  };
-
   const currentTechnieken = activeFase === "all" ? Object.values(technieken).flat() : technieken[activeFase as keyof typeof technieken];
 
   const sortedTechnieken = [...currentTechnieken].sort((a, b) => {
@@ -266,121 +249,73 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
           </Card>
         </div>
 
-        {/* Search & Filters Card */}
+        {/* Search, View Toggle & Filters Card */}
         <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
-          <div className="flex flex-col gap-4">
-            {/* Top Row: Search + Type Filter + View Toggle */}
-            <div className="flex gap-2 items-center">
-              {/* Search + Filter container - matches fase button widths exactly */}
-              <div className="flex-1 flex gap-2">
-                {/* Search - 3 units (Fase 0 + 1 + 2) */}
-                <div className="flex-[3] relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
-                  <Input
-                    placeholder="Zoek technieken..."
-                    className="pl-10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                
-                {/* Type Filter - 2 units (Fase 3 + 4) */}
-                <div className="flex-[2]">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Alle Types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Alle Types</SelectItem>
-                      <SelectItem value="video">Video</SelectItem>
-                      <SelectItem value="webinar">Webinar</SelectItem>
-                      <SelectItem value="hugo-ai">Hugo AI Chat</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              {/* View Toggle - Fixed right */}
-              <div className="flex gap-1 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`${
-                    viewMode === "list" 
-                      ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
-                      : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
-                  }`}
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`${
-                    viewMode === "grid" 
-                      ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
-                      : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-100"
-                  }`}
-                  onClick={() => setViewMode("grid")}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </Button>
-              </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search - Left Side */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
+              <Input
+                placeholder="Zoek technieken..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-
-            {/* Fase Tabs Row */}
-            <div className="flex gap-2 items-center overflow-x-auto pb-1">
-              <button
-                onClick={() => setActiveFase(activeFase === "fase-0" ? "all" : "fase-0")}
-                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
-                  activeFase === "fase-0"
-                    ? "bg-hh-ink text-white"
-                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
+            
+            {/* Filters - Middle */}
+            <Select value={activeFase} onValueChange={setActiveFase}>
+              <SelectTrigger className="w-full lg:w-[220px]">
+                <SelectValue placeholder="Alle Fases" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Fases</SelectItem>
+                <SelectItem value="fase-0">Fase 0 - Pre-contactfase</SelectItem>
+                <SelectItem value="fase-1">Fase 1 - Openingsfase</SelectItem>
+                <SelectItem value="fase-2">Fase 2 - Ontdekkingsfase</SelectItem>
+                <SelectItem value="fase-3">Fase 3 - Aanbevelingsfase</SelectItem>
+                <SelectItem value="fase-4">Fase 4 - Beslissingsfase</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full lg:w-[180px]">
+                <SelectValue placeholder="Alle Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="actief">Actief</SelectItem>
+                <SelectItem value="concept">Concept</SelectItem>
+                <SelectItem value="archief">Archief</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {/* View Toggle - Right Side */}
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`${
+                  viewMode === "list" 
+                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
+                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
                 }`}
+                onClick={() => setViewMode("list")}
               >
-                Fase 0 ({technieken["fase-0"]?.length || 0})
-              </button>
-              <button
-                onClick={() => setActiveFase(activeFase === "fase-1" ? "all" : "fase-1")}
-                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
-                  activeFase === "fase-1"
-                    ? "bg-hh-ink text-white"
-                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`${
+                  viewMode === "grid" 
+                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
+                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
                 }`}
+                onClick={() => setViewMode("grid")}
               >
-                Fase 1 ({technieken["fase-1"].length})
-              </button>
-              <button
-                onClick={() => setActiveFase(activeFase === "fase-2" ? "all" : "fase-2")}
-                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
-                  activeFase === "fase-2"
-                    ? "bg-hh-ink text-white"
-                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
-                }`}
-              >
-                Fase 2 ({technieken["fase-2"].length})
-              </button>
-              <button
-                onClick={() => setActiveFase(activeFase === "fase-3" ? "all" : "fase-3")}
-                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
-                  activeFase === "fase-3"
-                    ? "bg-hh-ink text-white"
-                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
-                }`}
-              >
-                Fase 3 ({technieken["fase-3"].length})
-              </button>
-              <button
-                onClick={() => setActiveFase(activeFase === "fase-4" ? "all" : "fase-4")}
-                className={`flex-1 min-w-[80px] py-2.5 px-3 rounded-full text-[14px] font-medium transition-all ${
-                  activeFase === "fase-4"
-                    ? "bg-hh-ink text-white"
-                    : "bg-hh-ui-50 text-hh-text hover:bg-hh-ui-100"
-                }`}
-              >
-                Fase 4 ({technieken["fase-4"].length})
-              </button>
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </Card>
@@ -475,7 +410,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       }}
                     >
                       <td className="py-3 px-4">
-                        <Badge variant="outline" className={`text-[11px] font-mono font-semibold px-2.5 py-1 ${getCodeBadgeColors(techniek.code)}`}>
+                        <Badge variant="outline" className={`text-[11px] font-mono ${getCodeBadgeColors(techniek.code)}`}>
                           {techniek.code}
                         </Badge>
                       </td>
