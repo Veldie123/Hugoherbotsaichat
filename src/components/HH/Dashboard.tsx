@@ -33,7 +33,8 @@ const SalesFlowProgress = () => {
   
   return (
     <Card className="p-4 rounded-[16px] border-hh-border">
-      <div className="flex items-center justify-end mb-3">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[18px] font-semibold text-hh-text">E.P.I.C Sales Flow</h2>
         <span className="text-[13px] text-hh-muted">{completedCount}/{totalCount} onderwerpen • {percentage}%</span>
       </div>
       <div className="flex gap-1">
