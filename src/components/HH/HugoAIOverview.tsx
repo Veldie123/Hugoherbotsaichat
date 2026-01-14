@@ -31,63 +31,91 @@ import {
   CheckCircle2,
   AlertTriangle,
   Sparkles,
+  Upload,
 } from "lucide-react";
+import { getFaseNaam } from "../../data/technieken-service";
 
 interface HugoAIOverviewProps {
   navigate?: (page: string) => void;
   isAdmin?: boolean;
 }
 
-type SessionType = "ai-audio" | "ai-video" | "ai-chat";
+type SessionType = "ai-audio" | "ai-video" | "ai-chat" | "upload-audio";
 
 interface Session {
   id: number;
-  techniek: string;
+  nummer: string;
+  naam: string;
+  fase: string;
   type: SessionType;
   score: number;
   quality: "excellent" | "good" | "needs-improvement";
   duration: string;
   date: string;
+  time?: string;
 }
 
 const sessions: Session[] = [
   {
     id: 1,
-    techniek: "2.1.1 Feitgerichte vragen",
+    nummer: "2.1.1",
+    naam: "Feitgerichte vragen",
+    fase: "2",
     type: "ai-audio",
     score: 88,
     quality: "excellent",
     duration: "18:45",
     date: "2025-01-15",
+    time: "14:23",
   },
   {
     id: 2,
-    techniek: "4.2.4 Bezwaren behandelen",
+    nummer: "4.2.4",
+    naam: "Bezwaren behandelen",
+    fase: "4",
     type: "ai-video",
     score: 76,
     quality: "good",
     duration: "24:12",
     date: "2025-01-15",
+    time: "10:45",
   },
   {
     id: 3,
-    techniek: "1.2 Gentleman's Agreement",
+    nummer: "1.2",
+    naam: "Gentleman's Agreement",
+    fase: "1",
     type: "ai-chat",
     score: 68,
     quality: "needs-improvement",
     duration: "12:30",
     date: "2025-01-14",
+    time: "16:20",
+  },
+  {
+    id: 4,
+    nummer: "2.1.2",
+    naam: "Meningsgerichte vragen",
+    fase: "2",
+    type: "upload-audio",
+    score: 82,
+    quality: "excellent",
+    duration: "32:15",
+    date: "2025-01-15",
+    time: "14:23",
   },
 ];
 
 const getTypeIcon = (type: SessionType) => {
   switch (type) {
     case "ai-audio":
-      return <Mic className="w-4 h-4" />;
+      return <Mic className="w-4 h-4 text-purple-600" />;
     case "ai-video":
-      return <Video className="w-4 h-4" />;
+      return <Video className="w-4 h-4 text-blue-600" />;
     case "ai-chat":
-      return <MessageSquare className="w-4 h-4" />;
+      return <MessageSquare className="w-4 h-4 text-hh-ink" />;
+    case "upload-audio":
+      return <Upload className="w-4 h-4 text-amber-600" />;
   }
 };
 
@@ -99,6 +127,8 @@ const getTypeLabel = (type: SessionType) => {
       return "AI Video";
     case "ai-chat":
       return "AI Chat";
+    case "upload-audio":
+      return "Rollenspel Upload (Audio)";
   }
 };
 
@@ -137,7 +167,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   const filteredSessions = sessions.filter((session) => {
     const matchesSearch =
       searchQuery === "" ||
-      session.techniek.toLowerCase().includes(searchQuery.toLowerCase());
+      session.naam.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      session.nummer.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType =
       filterType === "all" || session.type === filterType;
     const matchesQuality =
@@ -185,7 +216,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               Total Sessies
             </p>
             <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink font-medium">
-              6
+              {sessions.length}
             </p>
           </Card>
 
@@ -205,7 +236,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               Excellent Quality
             </p>
             <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink font-medium">
-              3
+              {sessions.filter(s => s.quality === "excellent").length}
             </p>
           </Card>
 
@@ -225,7 +256,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               Gem. Score
             </p>
             <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink font-medium">
-              80%
+              {Math.round(sessions.reduce((acc, s) => acc + s.score, 0) / sessions.length)}%
             </p>
           </Card>
 
@@ -245,7 +276,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               Needs Improvement
             </p>
             <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink font-medium">
-              1
+              {sessions.filter(s => s.quality === "needs-improvement").length}
             </p>
           </Card>
         </div>
@@ -272,6 +303,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 <SelectItem value="ai-audio">AI Audio</SelectItem>
                 <SelectItem value="ai-video">AI Video</SelectItem>
                 <SelectItem value="ai-chat">AI Chat</SelectItem>
+                <SelectItem value="upload-audio">Upload Audio</SelectItem>
               </SelectContent>
             </Select>
 
@@ -315,13 +347,13 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-hh-border bg-hh-ui-50">
-                    <th className="text-left p-4 text-[13px] font-medium text-hh-muted">#</th>
-                    <th className="text-left p-4 text-[13px] font-medium text-hh-muted">Techniek</th>
-                    <th className="text-left p-4 text-[13px] font-medium text-hh-muted">Type</th>
-                    <th className="text-left p-4 text-[13px] font-medium text-hh-muted">Score</th>
-                    <th className="text-left p-4 text-[13px] font-medium text-hh-muted">Duur</th>
-                    <th className="text-left p-4 text-[13px] font-medium text-hh-muted">Datum</th>
-                    <th className="text-left p-4 text-[13px] font-medium text-hh-muted">Acties</th>
+                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">#</th>
+                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Techniek</th>
+                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Type</th>
+                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Score</th>
+                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Duur</th>
+                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Datum</th>
+                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Acties</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -330,25 +362,38 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       key={session.id}
                       className="border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors"
                     >
-                      <td className="p-4 text-[14px] text-hh-text">{session.id}</td>
+                      {/* Technique Number Badge */}
                       <td className="p-4">
-                        <div className="flex flex-col">
-                          <span className="text-[14px] text-hh-text font-medium">
-                            {session.techniek}
+                        <div className="inline-flex items-center justify-center min-w-[48px] px-2.5 py-1.5 rounded-lg bg-hh-ink/5 border border-hh-ink/20">
+                          <span className="text-[13px] font-semibold text-hh-ink">
+                            {session.nummer}
                           </span>
-                          {getQualityBadge(session.quality)}
                         </div>
                       </td>
+                      
+                      {/* Technique Name + Fase */}
+                      <td className="p-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[14px] text-hh-text font-medium">
+                            {session.naam}
+                          </span>
+                          <span className="text-[12px] text-hh-muted">
+                            {getFaseNaam(session.fase)}
+                          </span>
+                        </div>
+                      </td>
+                      
+                      {/* Type with Icon */}
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-hh-ink/10 flex items-center justify-center">
-                            {getTypeIcon(session.type)}
-                          </div>
+                          {getTypeIcon(session.type)}
                           <span className="text-[14px] text-hh-text">
                             {getTypeLabel(session.type)}
                           </span>
                         </div>
                       </td>
+                      
+                      {/* Score */}
                       <td className="p-4">
                         <span
                           className={`text-[14px] font-medium ${
@@ -362,13 +407,23 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                           {session.score}%
                         </span>
                       </td>
+                      
+                      {/* Duration */}
                       <td className="p-4">
-                        <div className="flex items-center gap-1.5 text-hh-muted">
-                          <Clock className="w-4 h-4" />
-                          <span className="text-[14px]">{session.duration}</span>
+                        <span className="text-[14px] text-hh-text">{session.duration}</span>
+                      </td>
+                      
+                      {/* Date + Time */}
+                      <td className="p-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[14px] text-hh-text">{session.date}</span>
+                          {session.time && (
+                            <span className="text-[12px] text-hh-muted">{session.time}</span>
+                          )}
                         </div>
                       </td>
-                      <td className="p-4 text-[14px] text-hh-muted">{session.date}</td>
+                      
+                      {/* Actions */}
                       <td className="p-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -398,8 +453,15 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 className="p-5 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-10 h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
-                    {getTypeIcon(session.type)}
+                  <div className="flex items-center gap-3">
+                    <div className="inline-flex items-center justify-center min-w-[48px] px-2.5 py-1.5 rounded-lg bg-hh-ink/5 border border-hh-ink/20">
+                      <span className="text-[13px] font-semibold text-hh-ink">
+                        {session.nummer}
+                      </span>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
+                      {getTypeIcon(session.type)}
+                    </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -416,9 +478,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                   </DropdownMenu>
                 </div>
 
-                <h3 className="text-[16px] font-medium text-hh-text mb-2">
-                  {session.techniek}
+                <h3 className="text-[16px] font-medium text-hh-text mb-1">
+                  {session.naam}
                 </h3>
+                <p className="text-[12px] text-hh-muted mb-3">
+                  {getFaseNaam(session.fase)}
+                </p>
 
                 <div className="flex items-center gap-2 mb-4">
                   {getQualityBadge(session.quality)}
