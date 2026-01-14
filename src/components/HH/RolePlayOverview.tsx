@@ -33,6 +33,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { getAllTechnieken, getFaseNaam } from "../../data/technieken-service";
+import { getCodeBadgeColors } from "../../utils/phaseColors";
 
 interface RolePlayOverviewProps {
   navigate?: (page: string) => void;

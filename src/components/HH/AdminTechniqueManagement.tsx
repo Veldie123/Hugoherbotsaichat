@@ -403,7 +403,7 @@ export function AdminTechniqueManagement({ navigate }: AdminTechniqueManagementP
                       onClick={() => handleSort("code")}
                     >
                       <div className="flex items-center gap-1.5">
-                        Code
+                        #
                         <SortIcon column="code" />
                       </div>
                     </th>

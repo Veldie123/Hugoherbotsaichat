@@ -35,6 +35,8 @@ import {
   BarChart2,
 } from "lucide-react";
 
+import { getCodeBadgeColors } from "../../utils/phaseColors";
+
 interface AnalysisProps {
   navigate?: (page: string) => void;
   isAdmin?: boolean;
@@ -451,7 +453,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                             <Badge
                               key={idx}
                               variant="outline"
-                              className="text-[10px] font-mono bg-hh-ui-50 text-hh-muted border-hh-border"
+                              className={`text-[10px] font-mono ${getCodeBadgeColors(tech)}`}
                             >
                               {tech}
                             </Badge>
@@ -552,7 +554,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                       <Badge
                         key={idx}
                         variant="outline"
-                        className="text-[10px] font-mono bg-hh-ui-50 text-hh-muted border-hh-border"
+                        className={`text-[10px] font-mono ${getCodeBadgeColors(tech)}`}
                       >
                         {tech}
                       </Badge>

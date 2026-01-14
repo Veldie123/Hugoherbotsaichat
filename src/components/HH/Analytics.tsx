@@ -25,8 +25,10 @@ import {
   ArrowDown,
   BarChart2,
 } from "lucide-react";
+import { Button } from "../ui/button";
 import { ProgressBar } from "./ProgressBar";
 import { getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
+import { getCodeBadgeColors } from "../../utils/phaseColors";
 
 interface AnalyticsProps {
   navigate?: (page: string) => void;
@@ -333,29 +335,31 @@ export function Analytics({ navigate, isAdmin }: AnalyticsProps) {
               </SelectContent>
             </Select>
 
-            <div className="flex border border-hh-border rounded-lg overflow-hidden">
-              <button
-                className={`p-2.5 transition-colors ${
-                  viewMode === "list"
-                    ? "bg-hh-ink text-white"
-                    : "bg-white text-hh-muted hover:bg-hh-ui-50"
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`${
+                  viewMode === "list" 
+                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
+                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
                 }`}
                 onClick={() => setViewMode("list")}
-                aria-label="Lijst weergave"
               >
                 <List className="w-4 h-4" />
-              </button>
-              <button
-                className={`p-2.5 transition-colors ${
-                  viewMode === "grid"
-                    ? "bg-hh-ink text-white"
-                    : "bg-white text-hh-muted hover:bg-hh-ui-50"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`${
+                  viewMode === "grid" 
+                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
+                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
                 }`}
                 onClick={() => setViewMode("grid")}
-                aria-label="Grid weergave"
               >
                 <LayoutGrid className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
         </Card>
@@ -375,51 +379,51 @@ export function Analytics({ navigate, isAdmin }: AnalyticsProps) {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-hh-border bg-hh-ui-50/50">
-                    <th className="text-left p-3 sm:p-4">
+                  <tr className="border-b border-hh-border bg-hh-ui-50">
+                    <th className="text-left py-3 px-4">
                       <button
-                        className="flex items-center gap-1.5 text-[12px] sm:text-[13px] font-medium text-hh-muted hover:text-hh-text transition-colors"
+                        className="flex items-center gap-1.5 text-[13px] font-semibold text-hh-text hover:text-hh-ink transition-colors"
                         onClick={() => handleSort("code")}
                       >
-                        Code
+                        #
                         <SortIcon column="code" />
                       </button>
                     </th>
-                    <th className="text-left p-3 sm:p-4">
+                    <th className="text-left py-3 px-4">
                       <button
-                        className="flex items-center gap-1.5 text-[12px] sm:text-[13px] font-medium text-hh-muted hover:text-hh-text transition-colors"
+                        className="flex items-center gap-1.5 text-[13px] font-semibold text-hh-text hover:text-hh-ink transition-colors"
                         onClick={() => handleSort("skill")}
                       >
                         Techniek
                         <SortIcon column="skill" />
                       </button>
                     </th>
-                    <th className="text-left p-3 sm:p-4 hidden md:table-cell">
-                      <span className="text-[12px] sm:text-[13px] font-medium text-hh-muted">
+                    <th className="text-left py-3 px-4 hidden md:table-cell">
+                      <span className="text-[13px] font-semibold text-hh-text">
                         Fase
                       </span>
                     </th>
-                    <th className="text-left p-3 sm:p-4">
+                    <th className="text-left py-3 px-4">
                       <button
-                        className="flex items-center gap-1.5 text-[12px] sm:text-[13px] font-medium text-hh-muted hover:text-hh-text transition-colors"
+                        className="flex items-center gap-1.5 text-[13px] font-semibold text-hh-text hover:text-hh-ink transition-colors"
                         onClick={() => handleSort("sessions")}
                       >
                         Sessies
                         <SortIcon column="sessions" />
                       </button>
                     </th>
-                    <th className="text-left p-3 sm:p-4">
+                    <th className="text-left py-3 px-4">
                       <button
-                        className="flex items-center gap-1.5 text-[12px] sm:text-[13px] font-medium text-hh-muted hover:text-hh-text transition-colors"
+                        className="flex items-center gap-1.5 text-[13px] font-semibold text-hh-text hover:text-hh-ink transition-colors"
                         onClick={() => handleSort("trend")}
                       >
                         Trend
                         <SortIcon column="trend" />
                       </button>
                     </th>
-                    <th className="text-left p-3 sm:p-4 min-w-[180px]">
+                    <th className="text-left py-3 px-4 min-w-[180px]">
                       <button
-                        className="flex items-center gap-1.5 text-[12px] sm:text-[13px] font-medium text-hh-muted hover:text-hh-text transition-colors"
+                        className="flex items-center gap-1.5 text-[13px] font-semibold text-hh-text hover:text-hh-ink transition-colors"
                         onClick={() => handleSort("score")}
                       >
                         Score
@@ -434,20 +438,20 @@ export function Analytics({ navigate, isAdmin }: AnalyticsProps) {
                       key={skill.id}
                       className="border-b border-hh-border last:border-0 hover:bg-hh-ui-50/30 transition-colors"
                     >
-                      <td className="p-3 sm:p-4">
+                      <td className="py-3 px-4">
                         <Badge
                           variant="outline"
-                          className="text-[11px] bg-hh-ink/10 text-hh-ink border-hh-ink/20"
+                          className={`text-[11px] font-mono font-semibold ${getCodeBadgeColors(skill.code)}`}
                         >
                           {skill.code}
                         </Badge>
                       </td>
-                      <td className="p-3 sm:p-4">
-                        <span className="text-[14px] sm:text-[15px] text-hh-text">
+                      <td className="py-3 px-4">
+                        <span className="text-[14px] text-hh-text">
                           {skill.skill}
                         </span>
                       </td>
-                      <td className="p-3 sm:p-4 hidden md:table-cell">
+                      <td className="py-3 px-4 hidden md:table-cell">
                         <Badge
                           variant="outline"
                           className="text-[11px] bg-hh-primary/10 text-hh-primary border-hh-primary/20"
@@ -455,12 +459,12 @@ export function Analytics({ navigate, isAdmin }: AnalyticsProps) {
                           {getFaseNaam(skill.fase)}
                         </Badge>
                       </td>
-                      <td className="p-3 sm:p-4">
+                      <td className="py-3 px-4">
                         <span className="text-[14px] text-hh-muted">
                           {skill.sessions}
                         </span>
                       </td>
-                      <td className="p-3 sm:p-4">
+                      <td className="py-3 px-4">
                         <div
                           className={`flex items-center gap-1 text-[13px] ${
                             skill.trend > 0
@@ -479,10 +483,10 @@ export function Analytics({ navigate, isAdmin }: AnalyticsProps) {
                           {skill.trend}%
                         </div>
                       </td>
-                      <td className="p-3 sm:p-4">
+                      <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="flex-1">
-                            <ProgressBar value={skill.score} size="sm" />
+                            <ProgressBar value={skill.score} size="sm" showValue={false} />
                           </div>
                           <span className="text-[14px] sm:text-[15px] text-hh-text font-medium w-12 text-right">
                             {skill.score}%
@@ -504,7 +508,7 @@ export function Analytics({ navigate, isAdmin }: AnalyticsProps) {
                   <div className="flex items-start justify-between mb-3">
                     <Badge
                       variant="outline"
-                      className="text-[11px] bg-hh-ink/10 text-hh-ink border-hh-ink/20"
+                      className={`text-[11px] font-mono font-semibold ${getCodeBadgeColors(skill.code)}`}
                     >
                       {skill.code}
                     </Badge>

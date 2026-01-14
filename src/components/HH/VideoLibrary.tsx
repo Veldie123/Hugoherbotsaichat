@@ -35,6 +35,7 @@ import {
   Download,
 } from "lucide-react";
 import { videos } from "../../data/videos-data";
+import { getCodeBadgeColors } from "../../utils/phaseColors";
 
 interface VideoLibraryProps {
   navigate?: (page: string) => void;
@@ -321,9 +322,9 @@ export function VideoLibrary({ navigate, isAdmin }: VideoLibraryProps) {
                     }`}
                   >
                     <td className="px-4 py-3">
-                      <div className="w-10 h-10 rounded-lg bg-hh-ink/10 text-hh-ink flex items-center justify-center text-[13px] font-semibold">
+                      <Badge variant="outline" className={`text-[11px] font-mono font-semibold ${getCodeBadgeColors(video.techniqueNumber)}`}>
                         {video.techniqueNumber}
-                      </div>
+                      </Badge>
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-[14px] text-hh-text font-medium">

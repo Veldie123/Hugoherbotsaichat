@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
 import { getAllTechnieken, getTechniekenByFase } from "../../data/technieken-service";
+import { getCodeBadgeColors } from "../../utils/phaseColors";
 
 interface TechniqueLibraryProps {
   navigate?: (page: string) => void;
@@ -396,7 +397,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       onClick={() => handleSort("code")}
                     >
                       <div className="flex items-center gap-1.5">
-                        Code
+                        #
                         <SortIcon column="code" />
                       </div>
                     </th>
@@ -474,7 +475,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       }}
                     >
                       <td className="py-3 px-4">
-                        <Badge variant="outline" className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold px-2.5 py-1">
+                        <Badge variant="outline" className={`text-[11px] font-mono font-semibold px-2.5 py-1 ${getCodeBadgeColors(techniek.code)}`}>
                           {techniek.code}
                         </Badge>
                       </td>

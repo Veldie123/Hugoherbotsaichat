@@ -167,8 +167,15 @@ Used for E.P.I.C Sales Flow phases to add visual variety:
 This creates consistent visual hierarchy in:
 - Epic Sales Flow progress bars
 - Phase number badges in sidebar
-- Technique badges in tables
+- Technique code badges in all tables
 - Calendar session indicators
+
+### Phase Colors Utility
+- **Source File**: `src/utils/phaseColors.ts`
+- **Functions**:
+  - `getCodeBadgeColors(code)` - Returns Tailwind classes for technique code badges based on phase
+  - `getFaseBadgeColors(fase)` - Returns object with bg, text, border classes for fase badges
+- **Used by**: Analytics.tsx, TechniqueLibrary.tsx, Analysis.tsx, VideoLibrary.tsx, RolePlayOverview.tsx
 
 ## SSOT Architecture (Single Source of Truth)
 
