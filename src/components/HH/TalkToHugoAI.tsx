@@ -370,15 +370,6 @@ export function TalkToHugoAI({
               </div>
             )}
 
-            {difficultyLevel !== "expert" && !selectedTechnique && (
-              <div className="mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <p className="text-[12px] text-amber-700 flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4" />
-                  Selecteer eerst een techniek uit de sidebar door op het{" "}
-                  <MessageSquare className="w-3.5 h-3.5 inline" /> icoon te klikken
-                </p>
-              </div>
-            )}
 
             {difficultyLevel !== "expert" && selectedTechnique && (
               <div className="mb-3 p-3 bg-hh-ink/10 rounded-lg border border-hh-ink/20">
