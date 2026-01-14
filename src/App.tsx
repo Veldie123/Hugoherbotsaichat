@@ -97,11 +97,9 @@ export default function App() {
   const navigate = (page: Page | string) => {
     console.log('🧭 Navigate called with:', page);
     
-    // Redirect talk-to-hugo to coaching with query parameter
+    // Navigate to talk-to-hugo
     if (page === "talk-to-hugo" || page.startsWith("talk-to-hugo")) {
-      // Set URL with query parameter
-      window.history.pushState({}, "", "?technique=talk-to-hugo-ai");
-      setCurrentPage("coaching");
+      setCurrentPage("talk-to-hugo");
       return;
     }
     
@@ -219,7 +217,7 @@ export default function App() {
           {currentPage === "admin-notifications" && <AdminNotifications navigate={navigate} />}
           {currentPage === "admin-config-review" && <AdminConfigReview navigate={navigate} />}
           {currentPage === "coaching" && <DigitalCoaching navigate={navigate} isAdmin={true} />}
-          {currentPage === "talk-to-hugo" && <TalkToHugoAI navigate={navigate} isAdmin={true} />}
+          {currentPage === "talk-to-hugo" && <TalkToHugoAI navigate={navigate} isAdmin={false} />}
           {currentPage === "analysis" && <Analysis navigate={navigate} isAdmin={true} />}
           {currentPage === "analysis-results" && <AnalysisResults navigate={navigate} isAdmin={true} />}
         </>
