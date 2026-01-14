@@ -474,10 +474,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                       }}
                     >
                       <td className="py-3 px-4">
-                        <Badge
-                          variant="outline"
-                          className="text-[11px] font-mono bg-hh-ink/10 text-hh-ink border-hh-ink/20"
-                        >
+                        <Badge className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold">
                           {techniek.code}
                         </Badge>
                       </td>
@@ -595,10 +592,7 @@ export function TechniqueLibrary({ navigate, isAdmin }: TechniqueLibraryProps) {
                 <div className="space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between">
-                    <Badge
-                      variant="outline"
-                      className="text-[11px] font-mono bg-hh-ink/10 text-hh-ink border-hh-ink/20"
-                    >
+                    <Badge className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold">
                       {techniek.code}
                     </Badge>
                     <div onClick={(e) => e.stopPropagation()}>

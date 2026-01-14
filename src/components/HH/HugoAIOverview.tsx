@@ -344,16 +344,16 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         {viewMode === "list" ? (
           <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b border-hh-border bg-hh-ui-50">
-                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">#</th>
-                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Techniek</th>
-                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Type</th>
-                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Score</th>
-                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Duur</th>
-                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Datum</th>
-                    <th className="text-left p-4 text-[13px] font-semibold text-hh-text">Acties</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">#</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[25%]">Techniek</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[20%]">Type</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">Score</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">Duur</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[120px]">Datum</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[70px]">Acties</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -362,19 +362,17 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       key={session.id}
                       className="border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors"
                     >
-                      {/* Technique Number Badge */}
-                      <td className="p-4">
-                        <div className="inline-flex items-center justify-center min-w-[48px] px-2.5 py-1.5 rounded-lg bg-hh-ink/5 border border-hh-ink/20">
-                          <span className="text-[13px] font-semibold text-hh-ink">
-                            {session.nummer}
-                          </span>
-                        </div>
+                      {/* Technique Number Badge - filled style like Admin */}
+                      <td className="py-3 px-4">
+                        <Badge className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold">
+                          {session.nummer}
+                        </Badge>
                       </td>
                       
                       {/* Technique Name + Fase */}
-                      <td className="p-4">
+                      <td className="py-3 px-4">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[14px] text-hh-text font-medium">
+                          <span className="text-[14px] text-hh-text font-medium truncate">
                             {session.naam}
                           </span>
                           <span className="text-[12px] text-hh-muted">
@@ -384,7 +382,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       </td>
                       
                       {/* Type with Icon */}
-                      <td className="p-4">
+                      <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           {getTypeIcon(session.type)}
                           <span className="text-[14px] text-hh-text">
@@ -394,7 +392,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       </td>
                       
                       {/* Score */}
-                      <td className="p-4">
+                      <td className="py-3 px-4">
                         <span
                           className={`text-[14px] font-medium ${
                             session.score >= 80
@@ -409,12 +407,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       </td>
                       
                       {/* Duration */}
-                      <td className="p-4">
+                      <td className="py-3 px-4">
                         <span className="text-[14px] text-hh-text">{session.duration}</span>
                       </td>
                       
                       {/* Date + Time */}
-                      <td className="p-4">
+                      <td className="py-3 px-4">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-[14px] text-hh-text">{session.date}</span>
                           {session.time && (
@@ -424,7 +422,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       </td>
                       
                       {/* Actions */}
-                      <td className="p-4">
+                      <td className="py-3 px-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -454,11 +452,9 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="inline-flex items-center justify-center min-w-[48px] px-2.5 py-1.5 rounded-lg bg-hh-ink/5 border border-hh-ink/20">
-                      <span className="text-[13px] font-semibold text-hh-ink">
-                        {session.nummer}
-                      </span>
-                    </div>
+                    <Badge className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold">
+                      {session.nummer}
+                    </Badge>
                     <div className="w-10 h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
                       {getTypeIcon(session.type)}
                     </div>
