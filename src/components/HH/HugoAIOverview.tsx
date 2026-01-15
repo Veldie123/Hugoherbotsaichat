@@ -364,20 +364,19 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         </div>
 
         {/* Filters & Search */}
-        <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
-          <div className="flex flex-col sm:flex-row gap-3">
+        <Card className="p-4 rounded-[16px] shadow-hh-sm border-hh-border">
+          <div className="flex flex-col lg:flex-row gap-3">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
                 placeholder="Zoek sessies, technieken..."
-                className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
               />
             </div>
-
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectTrigger className="w-full lg:w-[180px]">
                 <SelectValue placeholder="Alle Types" />
               </SelectTrigger>
               <SelectContent>
@@ -388,9 +387,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 <SelectItem value="upload-audio">Upload Audio</SelectItem>
               </SelectContent>
             </Select>
-
             <Select value={filterQuality} onValueChange={setFilterQuality}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full lg:w-[180px]">
                 <SelectValue placeholder="Alle Kwaliteit" />
               </SelectTrigger>
               <SelectContent>
@@ -400,21 +398,20 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 <SelectItem value="needs-improvement">Needs Improvement</SelectItem>
               </SelectContent>
             </Select>
-
-            <div className="flex gap-1 border rounded-lg p-1">
+            <div className="flex gap-2">
               <Button
                 variant={viewMode === "list" ? "default" : "ghost"}
                 size="icon"
-                className={`h-8 w-8 ${viewMode === "list" ? "bg-hh-ink text-white hover:bg-hh-ink/90" : ""}`}
                 onClick={() => setViewMode("list")}
+                className={viewMode === "list" ? "bg-hh-ink hover:bg-hh-ink/90" : ""}
               >
                 <List className="w-4 h-4" />
               </Button>
               <Button
                 variant={viewMode === "grid" ? "default" : "ghost"}
                 size="icon"
-                className={`h-8 w-8 ${viewMode === "grid" ? "bg-hh-ink text-white hover:bg-hh-ink/90" : ""}`}
                 onClick={() => setViewMode("grid")}
+                className={viewMode === "grid" ? "bg-hh-ink hover:bg-hh-ink/90" : ""}
               >
                 <LayoutGrid className="w-4 h-4" />
               </Button>
