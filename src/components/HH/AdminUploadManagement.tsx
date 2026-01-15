@@ -524,6 +524,9 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                   <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                     Datum
                   </th>
+                  <th className="text-right px-4 py-3 text-[13px] font-semibold text-hh-text">
+                    Acties
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -600,11 +603,37 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                     <td className="px-4 py-3">
                       {getQualityBadge(upload.quality)}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="text-[13px] text-hh-text">
-                        <p>{upload.date}</p>
-                        <p className="text-[12px] text-hh-muted">{upload.time}</p>
-                      </div>
+                    <td className="px-4 py-3 text-[13px] leading-[18px] text-hh-muted">
+                      {upload.date}
+                    </td>
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openTranscript(upload)}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Bekijk Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Download className="w-4 h-4 mr-2" />
+                            Download
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className={upload.flagged ? "text-hh-success" : "text-red-600"}
+                          >
+                            <Flag className="w-4 h-4 mr-2" />
+                            {upload.flagged ? "Unflag" : "Flag for Review"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-hh-error">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Verwijder
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
