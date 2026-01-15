@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -26,9 +26,9 @@ import {
   MoreVertical,
   Check,
   X,
-  AlertTriangle,
 } from "lucide-react";
 import { getCodeBadgeColors } from "../../utils/phaseColors";
+import { toast } from "sonner";
 
 interface AdminConfigReviewProps {
   navigate?: (page: string) => void;
@@ -49,8 +49,7 @@ export function AdminConfigReview({ navigate }: AdminConfigReviewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  const conflicts: ConfigConflict[] = useMemo(() => [
+  const [conflicts, setConflicts] = useState<ConfigConflict[]>([
     {
       id: "1",
       techniqueNumber: "2.1",
@@ -101,7 +100,7 @@ export function AdminConfigReview({ navigate }: AdminConfigReviewProps) {
       status: "rejected",
       detectedAt: "3d geleden",
     },
-  ], []);
+  ]);
 
   const filteredConflicts = conflicts.filter((conflict) => {
     const matchesSearch =
@@ -118,11 +117,33 @@ export function AdminConfigReview({ navigate }: AdminConfigReviewProps) {
   const rejectedCount = conflicts.filter((c) => c.status === "rejected").length;
 
   const handleApprove = (id: string) => {
-    console.log("Approving conflict:", id);
+    const conflict = conflicts.find((c) => c.id === id);
+    setConflicts((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: "approved" as const } : c))
+    );
+    toast.success(`Conflict goedgekeurd`, {
+      description: `${conflict?.techniqueNumber} - ${conflict?.techniqueName} is goedgekeurd`,
+    });
   };
 
   const handleReject = (id: string) => {
-    console.log("Rejecting conflict:", id);
+    const conflict = conflicts.find((c) => c.id === id);
+    setConflicts((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: "rejected" as const } : c))
+    );
+    toast.error(`Conflict afgewezen`, {
+      description: `${conflict?.techniqueNumber} - ${conflict?.techniqueName} is afgewezen`,
+    });
+  };
+
+  const handleResetStatus = (id: string) => {
+    const conflict = conflicts.find((c) => c.id === id);
+    setConflicts((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: "pending" as const } : c))
+    );
+    toast.info(`Status gereset`, {
+      description: `${conflict?.techniqueNumber} - ${conflict?.techniqueName} is terug naar pending`,
+    });
   };
 
   const getSeverityBadge = (severity: string) => {
@@ -357,7 +378,9 @@ export function AdminConfigReview({ navigate }: AdminConfigReviewProps) {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem>Bekijk details</DropdownMenuItem>
-                              <DropdownMenuItem>Reset status</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleResetStatus(conflict.id)}>
+                                Reset status
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}

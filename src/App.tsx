@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { UserProvider } from "./contexts/UserContext";
+import { Toaster } from "./components/ui/sonner";
 import { Landing } from "./components/HH/Landing";
 import { Pricing } from "./components/HH/Pricing";
 import { About } from "./components/HH/About";
@@ -141,6 +142,7 @@ export default function App() {
           {currentPage === "admin-notifications" && <AdminNotifications navigate={navigate} />}
         </>
       )}
+      <Toaster position="top-right" richColors />
     </UserProvider>
   );
 }
