@@ -1,278 +1,686 @@
-import { useState, useEffect } from "react";
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
+import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Upload, Sparkles, Info, Mic, MicOff, Clock, Lightbulb } from "lucide-react";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
+import { Label } from "../ui/label";
+import {
+  Upload,
+  FileAudio,
+  FileVideo,
+  Calendar,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Play,
+  Trash2,
+  Eye,
+  Download,
+  CheckCircle2,
+  Loader2,
+  AlertCircle,
+  Sparkles,
+  Mic,
+  MicOff,
+  Phone,
+  MessageSquare,
+  Lock,
+  Target,
+  Lightbulb,
+} from "lucide-react";
+import { useState } from "react";
+import { useUser } from "../../contexts/UserContext";
+import { getAllTechnieken, getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
+
+interface UploadedAnalysis {
+  id: string;
+  title: string;
+  type: "audio" | "video";
+  uploadDate: string;
+  duration: string;
+  status: "processing" | "completed" | "failed";
+  overallScore?: number;
+  scoreDelta?: "up" | "down" | "neutral";
+  topTechnique?: string;
+  phase?: string;
+}
 
 interface UploadAnalysisProps {
-  navigate?: (page: string) => void;
+  navigate?: (page: string, data?: any) => void;
+  isPreview?: boolean;
   isAdmin?: boolean;
 }
 
-interface LiveTip {
-  id: number;
-  text: string;
-  technique: string;
-  time: string;
-}
-
-interface TranscriptLine {
-  speaker: string;
-  text: string;
-  time: string;
-}
-
-export function UploadAnalysis({ navigate, isAdmin }: UploadAnalysisProps) {
+export function UploadAnalysis({
+  navigate,
+  isPreview = false,
+  isAdmin = false,
+}: UploadAnalysisProps) {
+  const { user } = useUser();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [liveStatus, setLiveStatus] = useState<"ready" | "active" | "processing">("ready");
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [tips, setTips] = useState<LiveTip[]>([]);
-  const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
+  const [title, setTitle] = useState("");
+  const [context, setContext] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Live Copilot state
+  const [copilotActive, setCopilotActive] = useState(false);
+  const [copilotListening, setCopilotListening] = useState(false);
+  const [copilotTranscript, setCopilotTranscript] = useState<Array<{ speaker: "you" | "client"; text: string; timestamp: string }>>([]);
+  const [copilotTips, setCopilotTips] = useState<Array<{ 
+    type: "wedervraag" | "lock" | "waarschuwing" | "open" | "positief"; 
+    text: string; 
+    timestamp: string;
+  }>>([]);
+
+  const analyses: UploadedAnalysis[] = [
+    {
+      id: "1",
+      title: "Discovery call - Acme Inc",
+      type: "audio",
+      uploadDate: "12 jan 2025",
+      duration: "24:18",
+      status: "completed",
+      overallScore: 78,
+      scoreDelta: "up",
+      topTechnique: getTechniekByNummer("2.1.2")?.naam || "Meningsgerichte vragen",
+      phase: "Fase 2 • Ontdekking",
+    },
+    {
+      id: "2",
+      title: "Closing meeting - TechCorp",
+      type: "video",
+      uploadDate: "10 jan 2025",
+      duration: "18:45",
+      status: "completed",
+      overallScore: 85,
+      scoreDelta: "up",
+      topTechnique: getTechniekByNummer("4.2.3")?.naam || "Poging tot uitstel",
+      phase: "Fase 4 • Afsluiting",
+    },
+    {
+      id: "3",
+      title: "Cold call - ScaleUp BV",
+      type: "audio",
+      uploadDate: "8 jan 2025",
+      duration: "12:34",
+      status: "processing",
+    },
+    {
+      id: "4",
+      title: "Proposal presentation - GrowCo",
+      type: "video",
+      uploadDate: "5 jan 2025",
+      duration: "32:12",
+      status: "completed",
+      overallScore: 72,
+      scoreDelta: "down",
+      topTechnique: getTechniekByNummer("3.2")?.naam || "Oplossing",
+      phase: "Fase 3 • Voorstel",
+    },
+    {
+      id: "5",
+      title: "Follow-up call - SalesForce",
+      type: "audio",
+      uploadDate: "3 jan 2025",
+      duration: "15:23",
+      status: "failed",
+    },
+  ];
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
+    console.log('🎯 Drag over detected');
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
     setIsDragging(false);
+    console.log('🚫 Drag leave');
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  };
-
-  const handleFileUpload = (file: File) => {
-    console.log("Uploading file:", file.name);
-    navigate?.("analysis");
-  };
-
-  const handleBrowseClick = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".mp3,.wav,.m4a,.mp4,.mov";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        handleFileUpload(file);
+    
+    const file = e.dataTransfer.files[0];
+    console.log('📥 File dropped:', { 
+      name: file?.name, 
+      type: file?.type, 
+      size: file?.size 
+    });
+    
+    if (file) {
+      // Check for iCloud placeholder files
+      if (file.name.endsWith('.icloud')) {
+        setUploadError('Dit is een iCloud placeholder bestand. Download eerst het echte bestand van iCloud naar je Mac (rechtsklik → Download Now).');
+        console.log('❌ iCloud placeholder detected');
+        return;
       }
-    };
-    input.click();
-  };
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (liveStatus === "active") {
-      interval = setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
+      
+      const isValidType = isValidFileType(file);
+      const isValidSize = isValidFileSize(file);
+      console.log('🔍 Validation results:', { isValidType, isValidSize });
+      
+      if (isValidType && isValidSize) {
+        setSelectedFile(file);
+        setUploadError(null);
+        console.log('✅ File accepted:', file.name);
+      }
     }
-    return () => clearInterval(interval);
-  }, [liveStatus]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleStartLiveCoaching = () => {
-    setLiveStatus("active");
-    setElapsedTime(0);
-    setTips([
-      {
-        id: 1,
-        text: "Probeer nu een open vraag te stellen om het probleem te verkennen",
-        technique: "Techniek 2.1.2",
-        time: "14:23",
-      },
-    ]);
-    setTranscript([
-      {
-        speaker: "Jij",
-        text: "Hoi, bedankt voor je tijd. Ik wilde even sparren over jullie CRM uitdagingen.",
-        time: "14:23",
-      },
-    ]);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    console.log('📂 File selected from input:', { 
+      name: file?.name, 
+      type: file?.type, 
+      size: file?.size 
+    });
+    
+    if (file) {
+      // Check for iCloud placeholder files
+      if (file.name.endsWith('.icloud')) {
+        setUploadError('Dit is een iCloud placeholder bestand. Download eerst het echte bestand van iCloud naar je Mac (rechtsklik → Download Now).');
+        console.log('❌ iCloud placeholder detected');
+        return;
+      }
+      
+      const isValidType = isValidFileType(file);
+      const isValidSize = isValidFileSize(file);
+      console.log('🔍 Validation results:', { isValidType, isValidSize });
+      
+      if (isValidType && isValidSize) {
+        setSelectedFile(file);
+        setUploadError(null);
+        console.log('✅ File accepted:', file.name);
+      }
+    }
   };
 
-  const handleStopCoaching = () => {
-    setLiveStatus("processing");
-    setTimeout(() => {
-      setLiveStatus("ready");
-      setElapsedTime(0);
-      setTips([]);
-      setTranscript([]);
-    }, 1500);
+  const isValidFileType = (file: File) => {
+    const validTypes = [
+      "audio/mpeg",
+      "audio/mp3",
+      "audio/wav",
+      "audio/m4a",
+      "audio/mp4",      // M4A files often have this MIME type
+      "audio/x-m4a",    // Alternative M4A MIME type
+      "video/mp4",
+      "video/quicktime",
+    ];
+    
+    // Check both MIME type AND file extension (fallback for browsers with incorrect MIME detection)
+    const hasValidMimeType = validTypes.includes(file.type);
+    const hasValidExtension = file.name.match(/\.(mp3|wav|m4a|mp4|mov)$/i);
+    
+    const isValid = hasValidMimeType || hasValidExtension;
+    
+    if (!isValid) {
+      setUploadError('Alleen audio (MP3, WAV, M4A) en video (MP4, MOV) bestanden zijn toegestaan');
+      console.log('❌ Invalid file:', { type: file.type, name: file.name });
+    } else {
+      console.log('✅ Valid file type:', { type: file.type, name: file.name, mimeMatch: hasValidMimeType, extMatch: !!hasValidExtension });
+    }
+    
+    return isValid;
+  };
+
+  const isValidFileSize = (file: File) => {
+    const maxSize = 50 * 1024 * 1024; // 50MB limit (Supabase bucket limit)
+    if (file.size > maxSize) {
+      setUploadError(`Bestand is te groot. Maximum: 50MB (jouw bestand: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+      return false;
+    }
+    return true;
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !title.trim()) return;
+    
+    // Check if user is logged in (preview mode check)
+    if (isPreview || !user) {
+      console.log('⚠️ Preview mode - upload blocked');
+      setUploadError('Log in om bestanden te uploaden');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    
+    console.log('📤 Starting upload via backend API...', { file: selectedFile.name, user: user.id });
+
+    try {
+      // Upload via backend API (bypasses RLS, normalizes MIME types)
+      const { uploadConversationViaAPI } = await import('../../utils/supabase/api');
+      const result = await uploadConversationViaAPI(selectedFile);
+
+      if ('error' in result) {
+        console.error('❌ Upload failed:', result.error);
+        setUploadError('Upload mislukt: ' + result.error);
+        setIsUploading(false);
+        return;
+      }
+
+      console.log('✅ Upload successful:', result.path);
+      
+      // TODO: Save metadata to database (conversation_analyses table)
+      // This would store: user_id, title, context, file_path, signed_url, status, created_at
+      
+      // Reset form
+      setSelectedFile(null);
+      setTitle("");
+      setContext("");
+      setIsUploading(false);
+      
+      // Navigate to results (or show "processing" state)
+      if (navigate) {
+        navigate("analysis-results", { id: "new-analysis", filePath: result.path });
+      }
+    } catch (err) {
+      console.error('❌ Unexpected error during upload:', err);
+      setUploadError('Er ging iets mis bij het uploaden');
+      setIsUploading(false);
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <CheckCircle2 className="w-5 h-5 text-hh-success" />;
+      case "processing":
+        return <Loader2 className="w-5 h-5 text-hh-primary animate-spin" />;
+      case "failed":
+        return <AlertCircle className="w-5 h-5 text-hh-destructive" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "Analyse compleet";
+      case "processing":
+        return "Analyseren...";
+      case "failed":
+        return "Analyse mislukt";
+      default:
+        return status;
+    }
   };
 
   return (
     <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+        {/* Header */}
         <div>
-          <h1 className="text-[32px] leading-[40px] font-bold text-hh-ink mb-2">
+          <h1 className="mb-2 text-[32px] leading-[40px] sm:text-[40px] sm:leading-[48px] lg:text-[48px] lg:leading-[56px]">
             Gesprek Analyse
           </h1>
-          <p className="text-[16px] leading-[24px] text-hh-muted">
-            Upload een rollenspel of echt klantgesprek en krijg gedetailleerde EPIC analyse van Hugo.
+          <p className="text-[14px] leading-[22px] sm:text-[16px] sm:leading-[24px] text-hh-muted">
+            Upload een rollenspel of echt klantgesprek en krijg gedetailleerde
+            EPIC analyse van Hugo.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-6 rounded-[20px] shadow-hh-sm border-hh-border">
-            <h2 className="text-[22px] font-bold text-hh-ink mb-1">Upload Rollenspel</h2>
-            <p className="text-[14px] text-hh-muted mb-6">Audio/video • EPIC analyse</p>
+        {/* 2 Main Action Blocks - Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Upload Section */}
+          <Card className="p-6 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all">
+            <div className="mb-5">
+              <h2 className="text-[24px] leading-[30px] text-hh-text font-semibold mb-2">
+                Upload Rollenspel
+              </h2>
+              <p className="text-[14px] leading-[20px] text-hh-muted">
+                Audio/video • EPIC analyse
+              </p>
+            </div>
 
+            {/* Drag & Drop Zone */}
             <div
-              className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                isDragging
-                  ? "border-hh-primary bg-hh-primary/5"
-                  : "border-hh-border hover:border-hh-muted"
-              }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-[12px] p-8 text-center transition-colors ${
+                isDragging
+                  ? "border-hh-primary bg-hh-primary/5"
+                  : "border-hh-border hover:border-hh-primary/50"
+              }`}
             >
-              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                <Upload className="w-5 h-5 text-hh-muted" />
-              </div>
-              <p className="text-[14px] text-hh-text mb-1">
-                Sleep een bestand hier of{" "}
-                <button
-                  onClick={handleBrowseClick}
-                  className="text-hh-primary hover:underline font-medium"
-                >
-                  browse
-                </button>
-              </p>
-              <p className="text-[12px] text-hh-muted">
-                Audio: MP3, WAV, M4A • Video: MP4, MOV • Max 50MB
-              </p>
+              {selectedFile ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center gap-3">
+                    {selectedFile.type.startsWith("audio") ? (
+                      <FileAudio className="w-12 h-12 text-hh-primary" />
+                    ) : (
+                      <FileVideo className="w-12 h-12 text-hh-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-hh-text mb-1">{selectedFile.name}</p>
+                    <p className="text-[14px] leading-[20px] text-hh-muted">
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedFile(null)}
+                  >
+                    Verwijder
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Upload className="w-12 h-12 text-hh-muted mx-auto" />
+                  <div>
+                    <p className="text-hh-text mb-2">
+                      Sleep een bestand hier of{" "}
+                      <label className="text-hh-primary hover:underline cursor-pointer">
+                        browse
+                        <input
+                          type="file"
+                          accept="audio/*,video/*"
+                          className="hidden"
+                          onChange={handleFileSelect}
+                        />
+                      </label>
+                    </p>
+                    <p className="text-[14px] leading-[20px] text-hh-muted">
+                      Audio: MP3, WAV, M4A • Video: MP4, MOV • Max 50MB
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Context Form */}
+            {selectedFile && (
+              <div className="mt-6 space-y-4">
+                <div>
+                  <Label htmlFor="title">Titel gesprek *</Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Bijv. Discovery call - Acme Inc"
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="context">
+                    Context (optioneel maar aanbevolen)
+                  </Label>
+                  <Textarea
+                    id="context"
+                    value={context}
+                    onChange={(e) => setContext(e.target.value)}
+                    placeholder="Beschrijf de situatie: Wat was het doel? In welke fase? Met wie sprak je? Dit helpt Hugo's analyse scherper te maken."
+                    className="mt-1.5 min-h-[100px]"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleUpload}
+                  disabled={!title.trim() || isUploading}
+                  className="w-full sm:w-auto gap-2"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Uploaden & analyseren...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      Start analyse
+                    </>
+                  )}
+                </Button>
+                {uploadError && (
+                  <p className="text-[14px] leading-[20px] text-hh-destructive mt-2">
+                    {uploadError}
+                  </p>
+                )}
+              </div>
+            )}
           </Card>
 
-          <Card className="p-6 rounded-[20px] shadow-hh-sm border-hh-border">
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="w-5 h-5 text-hh-primary" />
-              <h2 className="text-[22px] font-bold text-hh-ink">Live Analyse</h2>
+          {/* Live Copilot - Real-time Coaching */}
+          <Card className="p-6 rounded-[16px] border-hh-border hover:border-hh-primary/40 hover:shadow-lg hover:bg-hh-ui-50/30 transition-all">
+            <div className="mb-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-5 h-5 text-hh-primary" />
+                <h2 className="text-[24px] leading-[30px] text-hh-text font-semibold">
+                  Live Analyse
+                </h2>
+              </div>
+              <p className="text-[14px] leading-[20px] text-hh-muted">
+                Real-time coaching tijdens gesprekken
+              </p>
             </div>
-            <p className="text-[14px] text-hh-muted mb-6">Real-time coaching tijdens gesprekken</p>
 
             <div className="mb-6">
-              <p className="text-[13px] text-hh-muted mb-1">Status</p>
-              <p className="text-[16px] font-semibold text-hh-ink">
-                {liveStatus === "ready" && "Klaar om te starten"}
-                {liveStatus === "active" && "Live aan het luisteren"}
-                {liveStatus === "processing" && "Verwerken..."}
-              </p>
-              <p className="text-[13px] text-hh-muted mt-1">
+              <div className="text-[13px] leading-[18px] text-hh-muted mb-2">
+                Status
+              </div>
+              <div className="text-[18px] leading-[24px] text-hh-text font-semibold mb-1">
+                {copilotActive ? "Live aan het luisteren" : "Klaar om te starten"}
+              </div>
+              <div className="text-[13px] leading-[18px] text-hh-muted">
                 Hugo luistert mee en geeft real-time tips
-              </p>
+              </div>
             </div>
 
-            {liveStatus === "ready" && (
-              <Button
-                className="w-full gap-2 bg-[#5B7B9A] hover:bg-[#4A6A89] text-white h-12 text-[15px]"
-                onClick={handleStartLiveCoaching}
-              >
-                <Mic className="w-4 h-4" />
-                Start live coaching
-              </Button>
-            )}
-
-            {liveStatus === "active" && (
-              <div className="space-y-4">
-                <Button
-                  className="w-full gap-2 bg-red-500 hover:bg-red-600 text-white h-12 text-[15px]"
-                  onClick={handleStopCoaching}
-                >
+            <Button
+              onClick={() => {
+                setCopilotActive(!copilotActive);
+                if (!copilotActive) {
+                  // Start demo mode
+                  setCopilotListening(true);
+                  // Simulate initial transcript
+                  setTimeout(() => {
+                    setCopilotTranscript([
+                      { speaker: "you", text: "Hoi, bedankt voor je tijd. Ik wilde even sparren over jullie CRM uitdagingen.", timestamp: "14:23" },
+                      { speaker: "client", text: "Ja natuurlijk, we zitten inderdaad met wat problemen.", timestamp: "14:23" }
+                    ]);
+                    setCopilotTips([
+                      { type: "open", text: "Probeer nu een open vraag te stellen om het probleem te verkennen (Techniek 2.1.2)", timestamp: "14:23" }
+                    ]);
+                  }, 1500);
+                } else {
+                  // Stop
+                  setCopilotListening(false);
+                  setCopilotTranscript([]);
+                  setCopilotTips([]);
+                }
+              }}
+              variant={copilotActive ? "destructive" : "default"}
+              className="w-full h-11 gap-2"
+            >
+              {copilotActive ? (
+                <>
                   <MicOff className="w-4 h-4" />
                   Stop coaching
-                </Button>
+                </>
+              ) : (
+                <>
+                  <Mic className="w-4 h-4" />
+                  Start live coaching
+                </>
+              )}
+            </Button>
 
-                <div className="flex items-center justify-center gap-4 text-[13px] text-hh-muted">
+            {copilotActive && (
+              <div className="space-y-4 mt-6">
+                {/* Status Bar */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-hh-ui-50">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span>Listening...</span>
+                    {copilotListening ? (
+                      <>
+                        <div className="w-2 h-2 rounded-full bg-hh-success animate-pulse" />
+                        <span className="text-[12px] leading-[16px] text-hh-text">Listening...</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-2 h-2 rounded-full bg-hh-muted" />
+                        <span className="text-[12px] leading-[16px] text-hh-muted">Paused</span>
+                      </>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <span>{formatTime(elapsedTime)}</span>
+                  <div className="h-4 w-px bg-hh-ui-200" />
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-hh-muted" />
+                    <span className="text-[12px] leading-[16px] text-hh-muted">2:34</span>
                   </div>
                 </div>
 
-                {tips.length > 0 && (
-                  <div>
-                    <h3 className="text-[15px] font-semibold text-hh-ink mb-2">Hugo's Tips</h3>
-                    <div className="space-y-2">
-                      {tips.map((tip) => (
-                        <Card
-                          key={tip.id}
-                          className="p-3 rounded-xl border-l-4 border-l-amber-400 bg-amber-50/50"
-                        >
-                          <div className="flex items-start gap-2">
-                            <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-                            <div>
-                              <p className="text-[13px] text-hh-text">
-                                <span className="font-medium text-amber-700">Verdiep:</span>{" "}
-                                {tip.text} ({tip.technique})
-                              </p>
-                              <p className="text-[11px] text-hh-muted mt-1">{tip.time}</p>
-                            </div>
+                {/* Live Tips from Hugo */}
+                {copilotTips.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-[13px] leading-[18px] text-hh-muted">Hugo's Tips</h4>
+                    {copilotTips.map((tip, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded-lg border-l-4 ${
+                          tip.type === "wedervraag"
+                            ? "bg-blue-50 border-blue-500"
+                            : tip.type === "lock"
+                            ? "bg-purple-50 border-purple-500"
+                            : tip.type === "waarschuwing"
+                            ? "bg-red-50 border-red-500"
+                            : tip.type === "open"
+                            ? "bg-teal-50 border-teal-500"
+                            : "bg-green-50 border-green-500"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-shrink-0 mt-0.5">
+                            {tip.type === "wedervraag" && (
+                              <MessageSquare className="w-4 h-4 text-blue-600" />
+                            )}
+                            {tip.type === "lock" && (
+                              <Lock className="w-4 h-4 text-purple-600" />
+                            )}
+                            {tip.type === "waarschuwing" && (
+                              <Target className="w-4 h-4 text-red-600" />
+                            )}
+                            {tip.type === "open" && (
+                              <Lightbulb className="w-4 h-4 text-teal-600" />
+                            )}
+                            {tip.type === "positief" && (
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            )}
                           </div>
-                        </Card>
-                      ))}
-                    </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] leading-[17px] text-hh-text">
+                              <strong>
+                                {tip.type === "wedervraag"
+                                  ? "Wedervraag:"
+                                  : tip.type === "lock"
+                                  ? "Lock!:"
+                                  : tip.type === "waarschuwing"
+                                  ? "Let op:"
+                                  : tip.type === "open"
+                                  ? "Verdiep:"
+                                  : "Goed bezig:"}
+                              </strong>{" "}
+                              {tip.text}
+                            </p>
+                            <span className="text-[10px] leading-[14px] text-hh-muted">{tip.timestamp}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
-                {transcript.length > 0 && (
-                  <div>
-                    <h3 className="text-[15px] font-semibold text-hh-ink mb-2">Live Transcript</h3>
-                    <div className="space-y-2 max-h-[150px] overflow-y-auto">
-                      {transcript.map((line, index) => (
-                        <div key={index} className="flex items-start gap-2 text-[13px]">
-                          <span className="text-hh-muted shrink-0">{line.time}</span>
-                          <span className="text-hh-primary font-medium">{line.speaker}:</span>
-                          <span className="text-hh-text">{line.text}</span>
+                {/* Live Transcript */}
+                {copilotTranscript.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-[13px] leading-[18px] text-hh-muted">Live Transcript</h4>
+                    <div className="max-h-48 overflow-y-auto space-y-2 p-3 rounded-lg bg-hh-ui-50">
+                      {copilotTranscript.map((line, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <span className="text-[11px] leading-[16px] text-hh-muted flex-shrink-0">
+                            {line.timestamp}
+                          </span>
+                          <p className="text-[12px] leading-[17px] text-hh-text flex-1">
+                            <strong className={line.speaker === "you" ? "text-hh-primary" : "text-hh-text"}>
+                              {line.speaker === "you" ? "Jij:" : "Klant:"}
+                            </strong>{" "}
+                            {line.text}
+                          </p>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-              </div>
-            )}
 
-            {liveStatus === "processing" && (
-              <div className="flex items-center justify-center gap-2 py-4">
-                <div className="w-5 h-5 border-2 border-hh-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-[14px] text-hh-muted">Sessie wordt verwerkt...</span>
+                {/* Quick Actions */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      // Simulate adding more transcript + tip
+                      setCopilotTranscript(prev => [...prev, 
+                        { speaker: "you", text: "Wat zijn jullie grootste uitdagingen op dit moment?", timestamp: "14:24" }
+                      ]);
+                      setCopilotTips(prev => [...prev,
+                        { type: "positief", text: "Perfecte open vraag! Laat de klant nu praten.", timestamp: "14:24" }
+                      ]);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                    Test Open Vraag
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setCopilotTips(prev => [...prev,
+                        { type: "lock", text: "Dus als ik het goed begrijp, zoek je een manier om leads sneller op te volgen?", timestamp: "14:25" }
+                      ]);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <Lock className="w-3.5 h-3.5 mr-1.5" />
+                    Test Lock
+                  </Button>
+                </div>
               </div>
             )}
           </Card>
         </div>
 
-        <Card className="p-4 rounded-[16px] bg-white border-hh-border shadow-hh-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Info className="w-5 h-5 text-amber-500 shrink-0" />
-            <p className="text-[14px] font-medium text-hh-ink">
-              Privacy & toestemming
-            </p>
+        {/* Privacy Notice - Applies to both Upload and Live Analysis */}
+        <div className="p-4 rounded-[12px] bg-hh-warn/10 border border-hh-warn/20">
+          <div className="flex gap-3">
+            <AlertCircle className="w-5 h-5 text-hh-warn flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[14px] leading-[20px] text-hh-text mb-1">
+                <strong>Privacy & toestemming</strong>
+              </p>
+              <p className="text-[14px] leading-[20px] text-hh-muted">
+                Upload alleen gesprekken waarvoor je toestemming hebt van alle
+                betrokkenen. Bij echte klantgesprekken: vraag expliciet
+                toestemming voor opname en verwerking. Zie ons{" "}
+                <button className="text-hh-primary hover:underline">
+                  privacy beleid
+                </button>
+                .
+              </p>
+            </div>
           </div>
-          <p className="text-[13px] text-hh-muted leading-relaxed">
-            Upload alleen gesprekken waarvoor je toestemming hebt van alle betrokkenen. Bij echte
-            klantgesprekken: vraag expliciet toestemming voor opname en verwerking. Zie ons{" "}
-            <button className="text-hh-ink font-semibold hover:underline">
-              privacy beleid
-            </button>
-            .
-          </p>
-        </Card>
+        </div>
       </div>
     </AppLayout>
   );
