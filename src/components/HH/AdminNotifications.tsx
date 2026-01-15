@@ -243,34 +243,32 @@ export function AdminNotifications({ navigate }: AdminNotificationsProps) {
           </Card>
         </div>
 
-        <Card className="p-4 rounded-[16px] shadow-hh-sm border-hh-border">
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-            <div className="flex-1 relative w-full sm:max-w-md">
+        <Card className="p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
                 placeholder="Zoek notificaties..."
-                className="pl-10"
+                className="pl-10 border-0 bg-transparent shadow-none focus-visible:ring-0"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-[13px]"
-                onClick={selectAll}
-              >
-                <Check className="w-4 h-4" />
-                Alles
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-[13px] shrink-0"
+              onClick={selectAll}
+            >
+              <Check className="w-4 h-4" />
+              Alles
+            </Button>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 mt-3">
+          <div className="flex gap-4">
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="flex-1 border-0 bg-transparent shadow-none focus:ring-0 px-0 text-[14px] text-hh-muted">
                 <SelectValue placeholder="Alle notificaties" />
               </SelectTrigger>
               <SelectContent>
@@ -281,7 +279,7 @@ export function AdminNotifications({ navigate }: AdminNotificationsProps) {
             </Select>
 
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="flex-1 border-0 bg-transparent shadow-none focus:ring-0 px-0 text-[14px] text-hh-muted">
                 <SelectValue placeholder="Alle categorieën" />
               </SelectTrigger>
               <SelectContent>
