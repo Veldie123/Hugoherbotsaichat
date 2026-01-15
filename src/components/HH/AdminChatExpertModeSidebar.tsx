@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronDown, Info, MessageSquare } from "lucide-react";
+import { ChevronRight, ChevronDown, Info, MessageSquare, Check, Lock } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { cn } from "../ui/utils";
 import technieken_index from "../../data/technieken_index";
@@ -37,6 +37,8 @@ interface EPICSidebarProps {
   }>;
   difficultyLevel: "beginner" | "gemiddeld" | "expert";
   isUserView?: boolean;
+  completedTechniques?: string[];
+  currentUnlockedPhase?: number;
 }
 
 export function EPICSidebar({
@@ -66,11 +68,58 @@ export function EPICSidebar({
   klantHoudingen,
   difficultyLevel,
   isUserView = false,
+  completedTechniques = ["0.1", "0.2", "0.3", "0.4", "0.5", "1.1", "1.2"],
+  currentUnlockedPhase = 2,
 }: EPICSidebarProps) {
+  
+  const isTechniqueLocked = (techniqueNumber: string) => {
+    if (!isUserView) return false;
+    const phase = parseInt(techniqueNumber.split('.')[0]);
+    return phase > currentUnlockedPhase;
+  };
+
+  const isTechniqueCompleted = (techniqueNumber: string) => {
+    return completedTechniques.includes(techniqueNumber);
+  };
+
+  const getPhaseProgress = (phase: number) => {
+    const techniques = techniquesByPhase[phase] || [];
+    const nonFaseTechniques = techniques.filter((t: any) => !t.is_fase);
+    const completed = nonFaseTechniques.filter((t: any) => completedTechniques.includes(t.nummer)).length;
+    return { completed, total: nonFaseTechniques.length };
+  };
+
+  const hasGrandchildren = (technique: any) => {
+    const children = Object.values(technieken_index.technieken).filter(
+      (t: any) => t.parent === technique.nummer
+    );
+    return children.some((child: any) => 
+      Object.values(technieken_index.technieken).some((t: any) => t.parent === child.nummer)
+    );
+  };
+
+  const getGrandchildTechniques = (parentNumber: string) => {
+    return Object.values(technieken_index.technieken).filter(
+      (t: any) => t.parent === parentNumber
+    ).sort((a: any, b: any) => {
+      const aNum = a.nummer.split('.').map((n: string) => parseInt(n) || 0);
+      const bNum = b.nummer.split('.').map((n: string) => parseInt(n) || 0);
+      for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
+        if ((aNum[i] || 0) !== (bNum[i] || 0)) {
+          return (aNum[i] || 0) - (bNum[i] || 0);
+        }
+      }
+      return 0;
+    });
+  };
+
+  const totalCompleted = completedTechniques.length;
+  const totalTechniques = Object.values(technieken_index.technieken).filter((t: any) => !t.is_fase).length;
+  const progressPercent = Math.round((totalCompleted / totalTechniques) * 100);
+
   return (
     <div className="h-full bg-hh-ui-50/30 border-r border-hh-border overflow-y-auto">
       <div className="p-4 space-y-4">
-        {/* Header - Title + Badges */}
         {!isUserView && (
           <div className="pb-3 border-b border-hh-border">
             <h3 className="text-[18px] leading-[24px] font-semibold text-hh-text mb-1">
@@ -82,39 +131,55 @@ export function EPICSidebar({
           </div>
         )}
 
-        {/* Epic Sales Flow Progress */}
         <div className="pb-4 border-b border-hh-border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-[14px] font-semibold text-hh-text">Epic Sales Flow</h3>
-            <span className="text-[11px] text-hh-muted">4/12 onderwerpen • 33%</span>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[15px] font-semibold text-hh-text">Epic Sales Flow</h3>
+            <span className="text-[11px] text-hh-muted">{totalCompleted}/{totalTechniques} • {progressPercent}%</span>
           </div>
-          <div className="flex gap-0.5">
+          
+          <div className="flex items-center gap-1">
             {[
-              { label: "Voorber.", color: "bg-emerald-500", width: "100%" },
-              { label: "Opening", color: "bg-emerald-500", width: "100%" },
-              { label: "Ontdekking", color: "bg-blue-400", width: "60%" },
-              { label: "Voorstel", color: "bg-slate-200", width: "0%" },
-              { label: "Afsluiting", color: "bg-slate-200", width: "0%" },
-            ].map((fase, index) => (
-              <div key={index} className="flex-1 flex flex-col gap-1">
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full ${fase.color}`}
-                    style={{ width: fase.width }}
-                  />
+              { phase: 0, label: "Voorber." },
+              { phase: 1, label: "Opening" },
+              { phase: 2, label: "Ontdekking" },
+              { phase: 3, label: "Voorstel" },
+              { phase: 4, label: "Afsluiting" },
+            ].map((item, index) => {
+              const progress = getPhaseProgress(item.phase);
+              const isCompleted = progress.completed === progress.total && progress.total > 0;
+              const isCurrent = item.phase === currentUnlockedPhase;
+              const isLocked = isUserView && item.phase > currentUnlockedPhase;
+              
+              let barColor = "bg-hh-ui-200";
+              if (isCompleted) barColor = "bg-emerald-500";
+              else if (isCurrent) barColor = "bg-[#4F7396]";
+              else if (isLocked) barColor = "bg-hh-ui-100";
+              
+              let textColor = "text-hh-muted";
+              if (isCompleted) textColor = "text-emerald-600";
+              else if (isCurrent) textColor = "text-[#4F7396]";
+              
+              return (
+                <div key={index} className="flex-1 flex flex-col items-center gap-1.5">
+                  <div className="w-full h-1.5 bg-hh-ui-100 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all ${barColor}`}
+                      style={{ width: progress.total > 0 ? `${(progress.completed / progress.total) * 100}%` : "0%" }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className={cn("text-[11px] leading-[14px] font-semibold", textColor)}>
+                      {item.phase === 0 ? "-1" : item.phase}
+                    </span>
+                    <span className="text-[10px] leading-[12px] text-hh-muted text-center">{item.label}</span>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <span className="text-[9px] text-hh-muted leading-tight block">{index === 0 ? "-1" : index}</span>
-                  <span className="text-[9px] text-hh-muted leading-tight block">{fase.label}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* ========== FASES SECTION (COLLAPSIBLE) ========== */}
         <div className="space-y-2">
-          {/* Fases Accordion Header */}
           <button
             type="button"
             onClick={(e) => {
@@ -138,37 +203,41 @@ export function EPICSidebar({
             </Badge>
           </button>
 
-          {/* Phases Content */}
           {fasesAccordionOpen && (
             <div className="ml-4 space-y-2">
               {Object.entries(phaseNames).map(([phaseNum, phaseName]) => {
                 const phase = parseInt(phaseNum);
                 const isExpanded = expandedPhases.includes(phase);
                 const techniques = techniquesByPhase[phase] || [];
-                
-                // Get actual sub-techniques (excluding phase headers)
                 const subTechniques = getTopLevelTechniques(phase);
+                const phaseProgress = getPhaseProgress(phase);
+                const isPhaseLocked = isUserView && phase > currentUnlockedPhase;
+                const isPhaseCompleted = phaseProgress.completed === phaseProgress.total && phaseProgress.total > 0;
                 
-                // Don't show phase if it has no sub-techniques
                 if (subTechniques.length === 0) return null;
 
                 return (
                   <div key={phase} className="space-y-1">
-                    {/* Phase Header */}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.preventDefault();
-                        togglePhase(phase);
-                        setCurrentPhase(phase);
+                        if (!isPhaseLocked) {
+                          togglePhase(phase);
+                          setCurrentPhase(phase);
+                        }
                       }}
                       className={cn(
                         "w-full flex items-center justify-between p-3 rounded-lg border transition-all",
-                        "border-hh-border bg-white hover:bg-hh-ui-50"
+                        isPhaseLocked 
+                          ? "border-hh-border bg-hh-ui-50 opacity-60 cursor-not-allowed"
+                          : "border-hh-border bg-white hover:bg-hh-ui-50"
                       )}
                     >
                       <div className="flex items-center gap-2">
-                        {isExpanded ? (
+                        {isPhaseLocked ? (
+                          <Lock className="w-4 h-4 text-hh-muted" />
+                        ) : isExpanded ? (
                           <ChevronDown className="w-4 h-4 text-hh-muted" />
                         ) : (
                           <ChevronRight className="w-4 h-4 text-hh-muted" />
@@ -176,6 +245,8 @@ export function EPICSidebar({
                         <div
                           className={cn(
                             "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold",
+                            isPhaseLocked ? "bg-hh-ui-200 text-hh-muted" :
+                            isPhaseCompleted ? "bg-emerald-500 text-white" :
                             phase === 0 ? "bg-slate-500 text-white" :
                             phase === 1 ? "bg-emerald-500 text-white" :
                             phase === 2 ? "bg-blue-500 text-white" :
@@ -183,24 +254,32 @@ export function EPICSidebar({
                             "bg-purple-500 text-white"
                           )}
                         >
-                          {phase}
+                          {isPhaseCompleted ? <Check className="w-3 h-3" /> : phase}
                         </div>
-                        <span className="text-[13px] leading-[18px] font-medium text-hh-text">
+                        <span className={cn(
+                          "text-[13px] leading-[18px] font-medium",
+                          isPhaseLocked ? "text-hh-muted" : "text-hh-text"
+                        )}>
                           {phaseName}
                         </span>
                       </div>
-                      <Badge className={getFaseBadgeColor(phase)}>
-                        0/{techniques.length}
+                      <Badge className={cn(
+                        isPhaseLocked ? "bg-hh-ui-100 text-hh-muted border-hh-ui-200" :
+                        isPhaseCompleted ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
+                        getFaseBadgeColor(phase)
+                      )}>
+                        {phaseProgress.completed}/{phaseProgress.total}
                       </Badge>
                     </button>
 
-                    {/* Techniques List */}
-                    {isExpanded && (
+                    {isExpanded && !isPhaseLocked && (
                       <div className="ml-4 space-y-1">
                         {getTopLevelTechniques(phase).map((technique: any) => {
                           const isParent = hasChildren(technique, phase);
                           const isExpandedParent = expandedParents.includes(technique.nummer);
                           const isRecommended = recommendedTechnique === technique.nummer;
+                          const isLocked = isTechniqueLocked(technique.nummer);
+                          const isCompleted = isTechniqueCompleted(technique.nummer);
 
                           return (
                             <div key={technique.nummer}>
@@ -208,6 +287,7 @@ export function EPICSidebar({
                                 type="button"
                                 onClick={(e) => {
                                   e.preventDefault();
+                                  if (isLocked) return;
                                   if (isParent) {
                                     toggleParentTechnique(technique.nummer);
                                   } else {
@@ -216,7 +296,9 @@ export function EPICSidebar({
                                 }}
                                 className={cn(
                                   "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
-                                  selectedTechnique === technique.naam
+                                  isLocked 
+                                    ? "bg-hh-ui-50 text-hh-muted cursor-not-allowed opacity-60"
+                                    : selectedTechnique === technique.naam
                                     ? isUserView 
                                       ? "bg-hh-ink/5 text-hh-ink border border-hh-ink/20"
                                       : "bg-purple-50 text-purple-800 border border-purple-300"
@@ -229,106 +311,238 @@ export function EPICSidebar({
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex items-center gap-2 flex-1">
-                                    <span className="text-hh-muted font-mono text-[10px]">
+                                    {isUserView && (
+                                      <div className={cn(
+                                        "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
+                                        isCompleted ? "bg-emerald-500" : isLocked ? "bg-hh-ui-200" : "bg-hh-ui-100 border border-hh-border"
+                                      )}>
+                                        {isCompleted && <Check className="w-2.5 h-2.5 text-white" />}
+                                        {isLocked && <Lock className="w-2 h-2 text-hh-muted" />}
+                                      </div>
+                                    )}
+                                    <span className={cn(
+                                      "font-mono text-[10px]",
+                                      isLocked ? "text-hh-muted/50" : "text-hh-muted"
+                                    )}>
                                       {technique.nummer}
                                     </span>
-                                    <span className="flex-1">{technique.naam}</span>
+                                    <span className={cn("flex-1", isLocked && "text-hh-muted/70")}>{technique.naam}</span>
+                                    {isParent && (
+                                      isExpandedParent ? 
+                                        <ChevronDown className="w-3 h-3 text-hh-muted" /> : 
+                                        <ChevronRight className="w-3 h-3 text-hh-muted" />
+                                    )}
                                   </div>
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        startTechniqueChat(technique.nummer, technique.naam);
-                                      }}
-                                      className={cn("p-1 rounded transition-colors flex-shrink-0", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
-                                      title="Start chat over deze techniek"
-                                    >
-                                      <MessageSquare className={cn("w-3.5 h-3.5", isUserView ? "text-hh-ink hover:text-hh-ink" : "text-purple-600 hover:text-purple-700")} />
-                                    </button>
-                                    {difficultyLevel !== "gemiddeld" && (
+                                  {!isLocked && (
+                                    <div className="flex items-center gap-1">
                                       <button
                                         type="button"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           e.preventDefault();
-                                          openTechniqueDetails(technique.nummer);
+                                          startTechniqueChat(technique.nummer, technique.naam);
                                         }}
-                                        className="p-1 hover:bg-hh-ui-100 rounded transition-colors flex-shrink-0"
-                                        title="Bekijk techniek details"
+                                        className={cn("p-1 rounded transition-colors flex-shrink-0", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
+                                        title="Start chat over deze techniek"
                                       >
-                                        <Info className="w-3.5 h-3.5 text-hh-muted hover:text-hh-primary" />
+                                        <MessageSquare className={cn("w-3.5 h-3.5", isUserView ? "text-hh-ink" : "text-purple-600")} />
                                       </button>
-                                    )}
-                                  </div>
+                                      {difficultyLevel !== "gemiddeld" && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            openTechniqueDetails(technique.nummer);
+                                          }}
+                                          className="p-1 hover:bg-hh-ui-100 rounded transition-colors flex-shrink-0"
+                                          title="Bekijk techniek details"
+                                        >
+                                          <Info className="w-3.5 h-3.5 text-hh-muted hover:text-hh-primary" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </button>
 
-                              {/* Child Techniques */}
-                              {isExpandedParent && (
-                                <div className="ml-4 space-y-1">
+                              {isExpandedParent && !isLocked && (
+                                <div className="ml-4 space-y-1 mt-1">
                                   {getChildTechniques(technique.nummer, phase).map((child: any) => {
                                     const isChildRecommended = recommendedTechnique === child.nummer;
+                                    const isChildLocked = isTechniqueLocked(child.nummer);
+                                    const isChildCompleted = isTechniqueCompleted(child.nummer);
+                                    const childHasGrandchildren = getGrandchildTechniques(child.nummer).length > 0;
+                                    const isChildExpanded = expandedParents.includes(child.nummer);
                                     
                                     return (
-                                      <button
-                                        key={child.nummer}
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          setSelectedTechnique(child.naam);
-                                        }}
-                                        className={cn(
-                                          "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
-                                          selectedTechnique === child.naam
-                                            ? isUserView
-                                              ? "bg-hh-ink/5 text-hh-ink border border-hh-ink/20"
-                                              : "bg-purple-50 text-purple-800 border border-purple-300"
-                                            : isChildRecommended
-                                            ? isUserView
-                                              ? "bg-hh-ink/5 border border-hh-ink/10"
-                                              : "bg-purple-50/30 border border-purple-200"
-                                            : "bg-white text-hh-text hover:bg-hh-ui-50"
-                                        )}
-                                      >
-                                        <div className="flex items-center justify-between gap-2">
-                                          <div className="flex items-center gap-2 flex-1">
-                                            <span className="text-hh-muted font-mono text-[10px]">
-                                              {child.nummer}
-                                            </span>
-                                            <span className="flex-1">{child.naam}</span>
-                                          </div>
-                                          <div className="flex items-center gap-1">
-                                            <button
-                                              type="button"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                startTechniqueChat(child.nummer, child.naam);
-                                              }}
-                                              className={cn("p-1 rounded transition-colors flex-shrink-0", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
-                                              title="Start chat over deze techniek"
-                                            >
-                                              <MessageSquare className={cn("w-3.5 h-3.5", isUserView ? "text-hh-ink hover:text-hh-ink" : "text-purple-600 hover:text-purple-700")} />
-                                            </button>
-                                            {difficultyLevel !== "gemiddeld" && (
-                                              <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  e.preventDefault();
-                                                  openTechniqueDetails(child.nummer);
-                                                }}
-                                                className="p-1 hover:bg-hh-ui-100 rounded transition-colors flex-shrink-0"
-                                                title="Bekijk techniek details"
-                                              >
-                                                <Info className="w-3.5 h-3.5 text-hh-muted hover:text-hh-primary" />
-                                              </button>
+                                      <div key={child.nummer}>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            if (isChildLocked) return;
+                                            if (childHasGrandchildren) {
+                                              toggleParentTechnique(child.nummer);
+                                            } else {
+                                              setSelectedTechnique(child.naam);
+                                            }
+                                          }}
+                                          className={cn(
+                                            "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
+                                            isChildLocked 
+                                              ? "bg-hh-ui-50 text-hh-muted cursor-not-allowed opacity-60"
+                                              : selectedTechnique === child.naam
+                                              ? isUserView
+                                                ? "bg-hh-ink/5 text-hh-ink border border-hh-ink/20"
+                                                : "bg-purple-50 text-purple-800 border border-purple-300"
+                                              : isChildRecommended
+                                              ? isUserView
+                                                ? "bg-hh-ink/5 border border-hh-ink/10"
+                                                : "bg-purple-50/30 border border-purple-200"
+                                              : "bg-white text-hh-text hover:bg-hh-ui-50"
+                                          )}
+                                        >
+                                          <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 flex-1">
+                                              {isUserView && (
+                                                <div className={cn(
+                                                  "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
+                                                  isChildCompleted ? "bg-emerald-500" : isChildLocked ? "bg-hh-ui-200" : "bg-hh-ui-100 border border-hh-border"
+                                                )}>
+                                                  {isChildCompleted && <Check className="w-2.5 h-2.5 text-white" />}
+                                                  {isChildLocked && <Lock className="w-2 h-2 text-hh-muted" />}
+                                                </div>
+                                              )}
+                                              <span className={cn(
+                                                "font-mono text-[10px]",
+                                                isChildLocked ? "text-hh-muted/50" : "text-hh-muted"
+                                              )}>
+                                                {child.nummer}
+                                              </span>
+                                              <span className={cn("flex-1", isChildLocked && "text-hh-muted/70")}>{child.naam}</span>
+                                              {childHasGrandchildren && (
+                                                isChildExpanded ? 
+                                                  <ChevronDown className="w-3 h-3 text-hh-muted" /> : 
+                                                  <ChevronRight className="w-3 h-3 text-hh-muted" />
+                                              )}
+                                            </div>
+                                            {!isChildLocked && (
+                                              <div className="flex items-center gap-1">
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                    startTechniqueChat(child.nummer, child.naam);
+                                                  }}
+                                                  className={cn("p-1 rounded transition-colors flex-shrink-0", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
+                                                  title="Start chat over deze techniek"
+                                                >
+                                                  <MessageSquare className={cn("w-3.5 h-3.5", isUserView ? "text-hh-ink" : "text-purple-600")} />
+                                                </button>
+                                                {difficultyLevel !== "gemiddeld" && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      e.preventDefault();
+                                                      openTechniqueDetails(child.nummer);
+                                                    }}
+                                                    className="p-1 hover:bg-hh-ui-100 rounded transition-colors flex-shrink-0"
+                                                    title="Bekijk techniek details"
+                                                  >
+                                                    <Info className="w-3.5 h-3.5 text-hh-muted hover:text-hh-primary" />
+                                                  </button>
+                                                )}
+                                              </div>
                                             )}
                                           </div>
-                                        </div>
-                                      </button>
+                                        </button>
+
+                                        {isChildExpanded && childHasGrandchildren && !isChildLocked && (
+                                          <div className="ml-4 space-y-1 mt-1">
+                                            {getGrandchildTechniques(child.nummer).map((grandchild: any) => {
+                                              const isGrandchildLocked = isTechniqueLocked(grandchild.nummer);
+                                              const isGrandchildCompleted = isTechniqueCompleted(grandchild.nummer);
+                                              const isGrandchildRecommended = recommendedTechnique === grandchild.nummer;
+                                              
+                                              return (
+                                                <button
+                                                  key={grandchild.nummer}
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.preventDefault();
+                                                    if (isGrandchildLocked) return;
+                                                    setSelectedTechnique(grandchild.naam);
+                                                  }}
+                                                  className={cn(
+                                                    "w-full text-left px-3 py-1.5 rounded-lg text-[11px] leading-[15px] transition-all",
+                                                    isGrandchildLocked 
+                                                      ? "bg-hh-ui-50 text-hh-muted cursor-not-allowed opacity-60"
+                                                      : selectedTechnique === grandchild.naam
+                                                      ? isUserView
+                                                        ? "bg-hh-ink/5 text-hh-ink border border-hh-ink/20"
+                                                        : "bg-purple-50 text-purple-800 border border-purple-300"
+                                                      : isGrandchildRecommended
+                                                      ? isUserView
+                                                        ? "bg-hh-ink/5 border border-hh-ink/10"
+                                                        : "bg-purple-50/30 border border-purple-200"
+                                                      : "bg-hh-ui-50/50 text-hh-text hover:bg-hh-ui-100"
+                                                  )}
+                                                >
+                                                  <div className="flex items-center gap-2">
+                                                    {isUserView && (
+                                                      <div className={cn(
+                                                        "w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0",
+                                                        isGrandchildCompleted ? "bg-emerald-500" : isGrandchildLocked ? "bg-hh-ui-200" : "bg-hh-ui-100 border border-hh-border"
+                                                      )}>
+                                                        {isGrandchildCompleted && <Check className="w-2 h-2 text-white" />}
+                                                        {isGrandchildLocked && <Lock className="w-1.5 h-1.5 text-hh-muted" />}
+                                                      </div>
+                                                    )}
+                                                    <span className={cn(
+                                                      "font-mono text-[9px]",
+                                                      isGrandchildLocked ? "text-hh-muted/50" : "text-hh-muted"
+                                                    )}>
+                                                      {grandchild.nummer}
+                                                    </span>
+                                                    <span className={cn("flex-1", isGrandchildLocked && "text-hh-muted/70")}>{grandchild.naam}</span>
+                                                    {!isGrandchildLocked && (
+                                                      <div className="flex items-center gap-0.5">
+                                                        <button
+                                                          type="button"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            startTechniqueChat(grandchild.nummer, grandchild.naam);
+                                                          }}
+                                                          className={cn("p-0.5 rounded transition-colors", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
+                                                          title="Start chat"
+                                                        >
+                                                          <MessageSquare className={cn("w-3 h-3", isUserView ? "text-hh-ink" : "text-purple-600")} />
+                                                        </button>
+                                                        <button
+                                                          type="button"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            openTechniqueDetails(grandchild.nummer);
+                                                          }}
+                                                          className="p-0.5 hover:bg-hh-ui-100 rounded transition-colors"
+                                                          title="Info"
+                                                        >
+                                                          <Info className="w-3 h-3 text-hh-muted hover:text-hh-primary" />
+                                                        </button>
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                </button>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
                                     );
                                   })}
                                 </div>
@@ -345,9 +559,7 @@ export function EPICSidebar({
           )}
         </div>
 
-        {/* ========== HOUDINGEN SECTION (COLLAPSIBLE) ========== */}
         <div className="space-y-2 pt-2 border-t border-hh-border">
-          {/* Houdingen Accordion Header */}
           <button
             type="button"
             onClick={(e) => {
@@ -371,7 +583,6 @@ export function EPICSidebar({
             </Badge>
           </button>
 
-          {/* Klant Houdingen Content */}
           {houdingenAccordionOpen && (
             <div className="ml-4 space-y-2">
               {klantHoudingen.map((houding) => {
@@ -380,7 +591,6 @@ export function EPICSidebar({
 
                 return (
                   <div key={houding.id} className="space-y-1">
-                    {/* Houding Header */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -422,13 +632,11 @@ export function EPICSidebar({
                       </Badge>
                     </button>
 
-                    {/* Aanbevolen Technieken */}
                     {isExpanded && (
                       <div className="ml-10 space-y-1">
                         {houding.recommended_technique_ids && houding.recommended_technique_ids.length > 0 ? (
                           <div className="space-y-1">
                             {houding.recommended_technique_ids.map((techniqueId: string) => {
-                              // Find the technique in technieken_index
                               const technique = Object.values(technieken_index.technieken).find(
                                 (t: any) => t.nummer === techniqueId
                               ) as any;
@@ -436,6 +644,8 @@ export function EPICSidebar({
                               if (!technique) return null;
 
                               const isRecommended = recommendedTechnique === techniqueId;
+                              const isLocked = isTechniqueLocked(techniqueId);
+                              const isCompleted = isTechniqueCompleted(techniqueId);
 
                               return (
                                 <button
@@ -443,11 +653,13 @@ export function EPICSidebar({
                                   type="button"
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    setSelectedTechnique(technique.naam);
+                                    if (!isLocked) setSelectedTechnique(technique.naam);
                                   }}
                                   className={cn(
                                     "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
-                                    selectedTechnique === technique.naam
+                                    isLocked 
+                                      ? "bg-hh-ui-50 text-hh-muted cursor-not-allowed opacity-60"
+                                      : selectedTechnique === technique.naam
                                       ? isUserView
                                         ? "bg-hh-ink/5 text-hh-ink border border-hh-ink/20"
                                         : "bg-purple-50 text-purple-800 border border-purple-300"
@@ -460,39 +672,50 @@ export function EPICSidebar({
                                 >
                                   <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2 flex-1">
+                                      {isUserView && (
+                                        <div className={cn(
+                                          "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
+                                          isCompleted ? "bg-emerald-500" : isLocked ? "bg-hh-ui-200" : "bg-hh-ui-100 border border-hh-border"
+                                        )}>
+                                          {isCompleted && <Check className="w-2.5 h-2.5 text-white" />}
+                                          {isLocked && <Lock className="w-2 h-2 text-hh-muted" />}
+                                        </div>
+                                      )}
                                       <span className="text-hh-muted font-mono text-[10px]">
                                         {technique.nummer}
                                       </span>
                                       <span className="flex-1">{technique.naam}</span>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          startTechniqueChat(technique.nummer, technique.naam);
-                                        }}
-                                        className={cn("p-1 rounded transition-colors flex-shrink-0", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
-                                        title="Start chat over deze techniek"
-                                      >
-                                        <MessageSquare className={cn("w-3.5 h-3.5", isUserView ? "text-hh-ink hover:text-hh-ink" : "text-purple-600 hover:text-purple-700")} />
-                                      </button>
-                                      {difficultyLevel !== "gemiddeld" && (
+                                    {!isLocked && (
+                                      <div className="flex items-center gap-1">
                                         <button
                                           type="button"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            openTechniqueDetails(technique.nummer);
+                                            startTechniqueChat(technique.nummer, technique.naam);
                                           }}
-                                          className="p-1 hover:bg-hh-ui-100 rounded transition-colors flex-shrink-0"
-                                          title="Bekijk techniek details"
+                                          className={cn("p-1 rounded transition-colors flex-shrink-0", isUserView ? "hover:bg-hh-ink/10" : "hover:bg-purple-100")}
+                                          title="Start chat over deze techniek"
                                         >
-                                          <Info className="w-3.5 h-3.5 text-hh-muted hover:text-hh-primary" />
+                                          <MessageSquare className={cn("w-3.5 h-3.5", isUserView ? "text-hh-ink" : "text-purple-600")} />
                                         </button>
-                                      )}
-                                    </div>
+                                        {difficultyLevel !== "gemiddeld" && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              e.preventDefault();
+                                              openTechniqueDetails(technique.nummer);
+                                            }}
+                                            className="p-1 hover:bg-hh-ui-100 rounded transition-colors flex-shrink-0"
+                                            title="Bekijk techniek details"
+                                          >
+                                            <Info className="w-3.5 h-3.5 text-hh-muted hover:text-hh-primary" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 </button>
                               );

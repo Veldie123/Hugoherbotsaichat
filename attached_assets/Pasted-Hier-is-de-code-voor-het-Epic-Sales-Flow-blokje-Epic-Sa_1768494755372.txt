@@ -1,0 +1,84 @@
+Hier is de code voor het Epic Sales Flow blokje:
+
+{/* Epic Sales Flow Card */}
+<Card className="p-4 rounded-[16px] border-hh-border">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-[15px] leading-[20px] text-hh-text font-semibold">
+      Epic Sales Flow
+    </h3>
+    <div className="text-[12px] leading-[16px] text-hh-muted">
+      4/12 onderwerpen • 33%
+    </div>
+  </div>
+  {/* Horizontal Phase Bar */}
+  <div className="flex items-center gap-1">
+    {/* Fase -1: Voorbereiding - Completed (groen) */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-success rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-success font-semibold">-1</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Voorber.</div>
+      </div>
+    </div>
+    {/* Fase 1: Opening - Completed (groen) */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-success rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-success font-semibold">1</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Opening</div>
+      </div>
+    </div>
+    {/* Fase 2: Ontdekking - Current (blauw/primary) */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-primary rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-primary font-semibold">2</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Ontdekking</div>
+      </div>
+    </div>
+    {/* Fase 3: Voorstel - Upcoming (lichtgrijs) */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-ui-200 rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-muted font-semibold">3</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Voorstel</div>
+      </div>
+    </div>
+    {/* Fase 4: Afsluiting - Locked (zeer lichtgrijs) */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-ui-100 rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-muted font-semibold">4</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Afsluiting</div>
+      </div>
+    </div>
+  </div>
+</Card>
+CSS Variabelen:
+:root {
+  --hh-success: #10B981;    /* Groen - voltooide fases */
+  --hh-primary: #4F7396;    /* Blauw - huidige fase */
+  --hh-ui-200: #E2E8F0;     /* Lichtgrijs - aankomende fases */
+  --hh-ui-100: #F1F5F9;     /* Zeer lichtgrijs - vergrendelde fases */
+  --hh-text: #0F1826;       /* Donker - titels */
+  --hh-muted: #9CA3AF;      /* Grijs - labels */
+  --hh-border: #D1D5DB;     /* Border kleur */
+}
+Card Component:
+function Card({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "bg-white text-card-foreground flex flex-col rounded-xl border",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+Tailwind config (als je geen CSS variabelen wil gebruiken):
+// Direct met hex kleuren:
+<div className="w-full h-1.5 bg-[#10B981] rounded-full" />  {/* groen */}
+<div className="w-full h-1.5 bg-[#4F7396] rounded-full" />  {/* blauw */}
+<div className="w-full h-1.5 bg-[#E2E8F0] rounded-full" />  {/* lichtgrijs */}
+<div className="w-full h-1.5 bg-[#F1F5F9] rounded-full" />  {/* zeer lichtgrijs */}
