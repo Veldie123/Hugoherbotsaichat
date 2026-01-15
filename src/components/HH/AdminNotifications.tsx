@@ -156,18 +156,38 @@ export function AdminNotifications({ navigate }: AdminNotificationsProps) {
     }
   };
 
-  const getCategoryIcon = (category: string) => {
+  const getCategoryStyles = (category: string) => {
     switch (category) {
       case "Users":
-        return <Users className="w-5 h-5 text-purple-600" />;
+        return {
+          bgColor: "bg-purple-100",
+          icon: <Users className="w-5 h-5 text-purple-600" />,
+        };
       case "Sessions":
-        return <Calendar className="w-5 h-5 text-blue-600" />;
+        return {
+          bgColor: "bg-green-100",
+          icon: <Calendar className="w-5 h-5 text-green-600" />,
+        };
+      case "Content":
+        return {
+          bgColor: "bg-blue-100",
+          icon: <Bell className="w-5 h-5 text-blue-600" />,
+        };
       case "System":
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
+        return {
+          bgColor: "bg-green-100",
+          icon: <CheckCircle2 className="w-5 h-5 text-green-600" />,
+        };
       case "Config":
-        return <AlertCircle className="w-5 h-5 text-red-600" />;
+        return {
+          bgColor: "bg-red-100",
+          icon: <AlertCircle className="w-5 h-5 text-red-600" />,
+        };
       default:
-        return <Bell className="w-5 h-5 text-slate-600" />;
+        return {
+          bgColor: "bg-slate-100",
+          icon: <Bell className="w-5 h-5 text-slate-600" />,
+        };
     }
   };
 
@@ -290,8 +310,8 @@ export function AdminNotifications({ navigate }: AdminNotificationsProps) {
                   className="mt-1"
                 />
 
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                  {getCategoryIcon(notif.category)}
+                <div className={`w-10 h-10 rounded-full ${getCategoryStyles(notif.category).bgColor} flex items-center justify-center shrink-0`}>
+                  {getCategoryStyles(notif.category).icon}
                 </div>
 
                 <div className="flex-1 min-w-0">
