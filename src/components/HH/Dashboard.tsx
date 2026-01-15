@@ -319,31 +319,38 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             <h2 className="text-[16px] font-semibold text-hh-text">Epic Sales Flow</h2>
             <span className="text-[13px] text-hh-muted">4/12 onderwerpen • 33%</span>
           </div>
-          <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-hh-ui-100">
-            <div className="flex-1 bg-slate-400 rounded-l-full" style={{ flex: '0.8' }} />
-            <div className="flex-1 bg-emerald-500" style={{ flex: '1' }} />
-            <div className="flex-1 bg-blue-500" style={{ flex: '0.6' }} />
-            <div className="flex-1 bg-slate-300" style={{ flex: '1' }} />
-            <div className="flex-1 bg-slate-200 rounded-r-full" style={{ flex: '1' }} />
+          <div className="flex gap-2">
+            {/* Fase 0 - Voorbereiding - Completed (Green) */}
+            <div className="flex-1 h-2 rounded-full bg-emerald-500" />
+            {/* Fase 1 - Opening - Completed (Green) */}
+            <div className="flex-1 h-2 rounded-full bg-emerald-500" />
+            {/* Fase 2 - Ontdekking - In Progress (Blue, partial) */}
+            <div className="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+              <div className="h-full w-3/5 rounded-full bg-blue-500" />
+            </div>
+            {/* Fase 3 - Voorstel - Not started (Grey) */}
+            <div className="flex-1 h-2 rounded-full bg-slate-200" />
+            {/* Fase 4 - Afsluiting - Not started (Grey) */}
+            <div className="flex-1 h-2 rounded-full bg-slate-200" />
           </div>
-          <div className="flex mt-2">
-            <div className="flex-1 text-center" style={{ flex: '0.8' }}>
-              <span className="text-[11px] text-hh-muted">0</span>
+          <div className="flex gap-2 mt-2">
+            <div className="flex-1 text-center">
+              <span className="text-[11px] text-emerald-600 font-medium">-1</span>
               <p className="text-[10px] text-hh-muted">Voorber.</p>
             </div>
-            <div className="flex-1 text-center" style={{ flex: '1' }}>
+            <div className="flex-1 text-center">
               <span className="text-[11px] text-emerald-600 font-medium">1</span>
               <p className="text-[10px] text-hh-muted">Opening</p>
             </div>
-            <div className="flex-1 text-center" style={{ flex: '0.6' }}>
+            <div className="flex-1 text-center">
               <span className="text-[11px] text-blue-600 font-medium">2</span>
               <p className="text-[10px] text-hh-muted">Ontdekking</p>
             </div>
-            <div className="flex-1 text-center" style={{ flex: '1' }}>
+            <div className="flex-1 text-center">
               <span className="text-[11px] text-hh-muted">3</span>
               <p className="text-[10px] text-hh-muted">Voorstel</p>
             </div>
-            <div className="flex-1 text-center" style={{ flex: '1' }}>
+            <div className="flex-1 text-center">
               <span className="text-[11px] text-hh-muted">4</span>
               <p className="text-[10px] text-hh-muted">Afsluiting</p>
             </div>
