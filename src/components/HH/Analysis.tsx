@@ -450,6 +450,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                       className={`border-t border-hh-border hover:bg-hh-ui-50 transition-colors cursor-pointer ${
                         index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                       }`}
+                      onClick={() => openTranscript(conv)}
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
@@ -537,7 +538,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
             {sortedConversations.map((conv) => (
               <Card
                 key={conv.id}
-                className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden hover:shadow-hh-md hover:border-hh-ink/30 transition-all"
+                className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden hover:shadow-hh-md hover:border-hh-ink/30 transition-all cursor-pointer"
+                onClick={() => openTranscript(conv)}
               >
                 <div className="p-5 space-y-4">
                   <div className="flex items-start justify-between">

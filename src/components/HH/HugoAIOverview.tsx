@@ -495,7 +495,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                   {filteredSessions.map((session) => (
                     <tr
                       key={session.id}
-                      className="border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors"
+                      className="border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors cursor-pointer"
+                      onClick={() => openTranscript(session)}
                     >
                       {/* Technique Number Badge - colored by phase */}
                       <td className="py-3 px-4">
