@@ -121,60 +121,73 @@ const VideoCard = ({
   </div>
 );
 
-// Webinar card
+// Webinar card with placeholder thumbnail
 const WebinarCard = ({ 
   title, 
+  techniqueNumber,
   date,
   time,
   isLive,
   isRegistered,
+  isReplay,
   onClick
 }: {
   title: string;
+  techniqueNumber?: string;
   date: string;
   time: string;
   isLive?: boolean;
   isRegistered?: boolean;
+  isReplay?: boolean;
   onClick?: () => void;
 }) => (
   <div 
     className="flex-shrink-0 w-[200px] group cursor-pointer"
     onClick={onClick}
   >
-    <div className="relative rounded-lg overflow-hidden bg-gradient-to-br from-red-600 to-red-800 aspect-video mb-2">
-      <div className="w-full h-full flex items-center justify-center">
-        <Radio className="w-10 h-10 text-white/60" />
+    <div className="relative rounded-lg overflow-hidden aspect-video mb-2">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-600/80 to-slate-800/90" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-white/30 text-[11px] font-medium tracking-wide">{title.substring(0, 20)}...</span>
       </div>
-      {/* Live indicator or date */}
-      {isLive ? (
-        <Badge className="absolute top-2 left-2 bg-red-500 text-white text-[10px] px-2 py-0.5 animate-pulse">
-          🔴 LIVE
+      {/* Technique badge */}
+      {techniqueNumber && (
+        <Badge className="absolute top-2 left-2 bg-emerald-100 text-emerald-600 rounded-full px-2 py-0.5 text-[10px] font-mono font-medium">
+          {techniqueNumber}
         </Badge>
-      ) : (
-        <Badge className="absolute top-2 left-2 bg-white/90 text-hh-ink text-[10px] px-1.5 py-0.5">
-          {date}
+      )}
+      {/* Live indicator */}
+      {isLive && (
+        <Badge className="absolute top-2 right-2 bg-red-500 text-white text-[10px] px-2 py-0.5 animate-pulse">
+          LIVE
+        </Badge>
+      )}
+      {/* Replay indicator */}
+      {isReplay && (
+        <Badge className="absolute top-2 right-2 bg-hh-ink/80 text-white text-[10px] px-1.5 py-0.5">
+          Opname
         </Badge>
       )}
       {/* Registered badge */}
-      {isRegistered && (
+      {isRegistered && !isLive && !isReplay && (
         <Badge className="absolute top-2 right-2 bg-hh-success text-white text-[10px] px-1.5 py-0.5">
-          ✓ Ingeschreven
+          ✓
         </Badge>
       )}
       {/* Hover overlay */}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
         <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
-          <Play className="w-6 h-6 text-red-600 ml-0.5" />
+          <Play className="w-6 h-6 text-hh-ink ml-0.5" />
         </div>
       </div>
     </div>
-    <h3 className="text-[13px] font-medium text-hh-text leading-tight line-clamp-2 group-hover:text-red-600 transition-colors">
+    <h3 className="text-[13px] font-medium text-hh-text leading-tight line-clamp-2 group-hover:text-hh-primary transition-colors">
       {title}
     </h3>
     <div className="flex items-center gap-2 mt-1">
       <span className="text-[11px] text-hh-muted flex items-center gap-1">
         <Calendar className="w-3 h-3" />
-        {time}
+        {isReplay ? "Opgenomen" : date} • {time}
       </span>
     </div>
   </div>
@@ -234,9 +247,14 @@ const HugoTrainingCard = ({
 export function Dashboard({ hasData = true, navigate, isAdmin = false }: DashboardProps) {
   const currentTechnique = getTechniekByNummer("2.1.1");
   
-  // Get next upcoming webinar
+  // Get upcoming/live webinars
   const upcomingWebinars = liveSessions
-    .filter(s => s.status === "upcoming" || s.status === "live")
+    .filter(s => s.status === "upcoming" || s.status === "live" || s.status === "scheduled")
+    .slice(0, 5);
+  
+  // Get completed webinars for "terugkijken"
+  const completedWebinars = liveSessions
+    .filter(s => s.status === "completed")
     .slice(0, 5);
   
   // Get videos for "verder kijken" - simulate some in-progress
@@ -405,6 +423,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             <WebinarCard
               key={webinar.id || index}
               title={webinar.title}
+              techniqueNumber={webinar.techniqueNumber}
               date={webinar.date}
               time={webinar.time}
               isLive={webinar.status === "live"}
@@ -413,6 +432,27 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             />
           ))}
         </ContentRow>
+
+        {/* Terugkijken - Completed Webinars */}
+        {completedWebinars.length > 0 && (
+          <ContentRow 
+            title="Terugkijken" 
+            icon={Play}
+            onSeeAll={() => navigate?.("live")}
+          >
+            {completedWebinars.map((webinar, index) => (
+              <WebinarCard
+                key={webinar.id || index}
+                title={webinar.title}
+                techniqueNumber={webinar.techniqueNumber}
+                date={webinar.date}
+                time={webinar.time}
+                isReplay={true}
+                onClick={() => navigate?.("live")}
+              />
+            ))}
+          </ContentRow>
+        )}
 
         {/* Train met Hugo AI */}
         <ContentRow 
