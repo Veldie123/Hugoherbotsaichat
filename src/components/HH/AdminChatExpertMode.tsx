@@ -421,223 +421,6 @@ export function AdminChatExpertMode({
           </div>
         )}
 
-        {/* Technique Details Modal Dialog */}
-        <Dialog open={techniqueDetailsPanelOpen} onOpenChange={setTechniqueDetailsPanelOpen}>
-          <DialogContent className="max-w-[700px] max-h-[90vh] overflow-hidden p-0 flex flex-col">
-            {/* Header */}
-            <DialogHeader className="p-6 pb-0">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge className="bg-purple-600 text-white text-[12px] px-2 py-0.5">
-                      {selectedTechniqueDetails?.nummer}
-                    </Badge>
-                    <span className="text-[12px] text-hh-muted">
-                      Fase {selectedTechniqueDetails?.fase}
-                    </span>
-                  </div>
-                  <DialogTitle className="text-[24px] leading-[32px] font-bold text-hh-text">
-                    {selectedTechniqueDetails?.naam}
-                  </DialogTitle>
-                  {selectedTechniqueDetails?.tags && selectedTechniqueDetails.tags.length > 0 && (
-                    <div className="flex gap-2 mt-3">
-                      {selectedTechniqueDetails.tags.map((tag: string, idx: number) => (
-                        <Badge key={idx} variant="outline" className="text-[10px] px-2 py-0.5">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </DialogHeader>
-
-            {/* Scrollable Content */}
-            <div className="overflow-y-auto px-6 pb-6 space-y-4 flex-1" style={{ maxHeight: 'calc(90vh - 180px)' }}>
-              {/* Doel */}
-              {selectedTechniqueDetails?.doel && (
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-                  <div className="flex items-start gap-2 mb-2">
-                    <Target className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                    <h3 className="text-[13px] font-semibold text-hh-text">Doel</h3>
-                  </div>
-                  <p className="text-[13px] leading-[20px] text-hh-text">
-                    {selectedTechniqueDetails.doel}
-                  </p>
-                </div>
-              )}
-
-              {/* Wat */}
-              {selectedTechniqueDetails?.wat && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Wat</h3>
-                  {!isEditingTechnique ? (
-                    <p className="text-[13px] leading-[20px] text-hh-muted">
-                      {selectedTechniqueDetails.wat}
-                    </p>
-                  ) : (
-                    <Textarea
-                      value={editedTechniqueData?.wat || ""}
-                      onChange={(e) =>
-                        setEditedTechniqueData({ ...editedTechniqueData, wat: e.target.value })
-                      }
-                      className="text-[13px] min-h-[80px]"
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Waarom */}
-              {selectedTechniqueDetails?.waarom && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Waarom</h3>
-                  {!isEditingTechnique ? (
-                    <p className="text-[13px] leading-[20px] text-hh-muted">
-                      {selectedTechniqueDetails.waarom}
-                    </p>
-                  ) : (
-                    <Textarea
-                      value={editedTechniqueData?.waarom || ""}
-                      onChange={(e) =>
-                        setEditedTechniqueData({ ...editedTechniqueData, waarom: e.target.value })
-                      }
-                      className="text-[13px] min-h-[80px]"
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Wanneer */}
-              {selectedTechniqueDetails?.wanneer && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Wanneer</h3>
-                  {!isEditingTechnique ? (
-                    <p className="text-[13px] leading-[20px] text-hh-muted">
-                      {selectedTechniqueDetails.wanneer}
-                    </p>
-                  ) : (
-                    <Textarea
-                      value={editedTechniqueData?.wanneer || ""}
-                      onChange={(e) =>
-                        setEditedTechniqueData({ ...editedTechniqueData, wanneer: e.target.value })
-                      }
-                      className="text-[13px] min-h-[80px]"
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Hoe */}
-              {selectedTechniqueDetails?.hoe && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Hoe</h3>
-                  {!isEditingTechnique ? (
-                    <p className="text-[13px] leading-[20px] text-hh-muted">
-                      {selectedTechniqueDetails.hoe}
-                    </p>
-                  ) : (
-                    <Textarea
-                      value={editedTechniqueData?.hoe || ""}
-                      onChange={(e) =>
-                        setEditedTechniqueData({ ...editedTechniqueData, hoe: e.target.value })
-                      }
-                      className="text-[13px] min-h-[80px]"
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Stappenplan */}
-              {selectedTechniqueDetails?.stappenplan && selectedTechniqueDetails.stappenplan.length > 0 && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Stappenplan</h3>
-                  <ol className="space-y-2">
-                    {selectedTechniqueDetails.stappenplan.map((step: string, idx: number) => (
-                      <li key={idx} className="flex gap-3">
-                        <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-[11px] font-semibold">
-                          {idx + 1}
-                        </span>
-                        <span className="text-[13px] leading-[20px] text-hh-muted pt-0.5">
-                          {step}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              {/* Voorbeelden */}
-              {selectedTechniqueDetails?.voorbeeld && selectedTechniqueDetails.voorbeeld.length > 0 && (
-                <div>
-                  <h3 className="text-[14px] font-bold text-hh-text mb-2">Voorbeelden</h3>
-                  <div className="space-y-2">
-                    {selectedTechniqueDetails.voorbeeld.map((ex: string, idx: number) => (
-                      <div key={idx} className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-                        <p className="text-[13px] leading-[20px] text-hh-text italic">
-                          "{ex}"
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer met Bewerken, Opslaan en Sluiten buttons */}
-            <div className="px-6 pb-6 pt-4 border-t border-hh-border bg-white sticky bottom-0">
-              <div className="flex gap-2">
-                {!isEditingTechnique ? (
-                  <>
-                    <Button
-                      onClick={() => {
-                        setIsEditingTechnique(true);
-                        setEditedTechniqueData({ ...selectedTechniqueDetails });
-                      }}
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white gap-2"
-                    >
-                      <Pencil className="w-4 h-4" />
-                      Bewerken
-                    </Button>
-                    <Button
-                      onClick={() => setTechniqueDetailsPanelOpen(false)}
-                      className="flex-1"
-                      variant="outline"
-                    >
-                      Sluiten
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      onClick={() => {
-                        // Save changes
-                        console.log("Saving technique:", editedTechniqueData);
-                        setSelectedTechniqueDetails(editedTechniqueData);
-                        setIsEditingTechnique(false);
-                        // TODO: Send to backend
-                      }}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white gap-2"
-                    >
-                      <Check className="w-4 h-4" />
-                      Opslaan
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setIsEditingTechnique(false);
-                        setEditedTechniqueData(null);
-                      }}
-                      className="flex-1"
-                      variant="outline"
-                    >
-                      Annuleren
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         {/* Right Panel - Chat */}
         <div className="flex-1 flex flex-col bg-white">
           {/* Chat Header */}
@@ -651,10 +434,10 @@ export function AdminChatExpertMode({
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant={isRecording ? "destructive" : "default"}
+                  variant={isRecording ? "destructive" : "outline"}
                   size="sm"
                   onClick={() => setIsRecording(!isRecording)}
-                  className={`gap-2 ${!isRecording ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+                  className={`gap-2 ${!isRecording ? "border-emerald-500 text-emerald-600 hover:bg-emerald-50" : ""}`}
                 >
                   {isRecording ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                   {isRecording ? "Stop Opname" : "Start Opname"}
@@ -691,7 +474,7 @@ export function AdminChatExpertMode({
                       variant={difficultyLevel === level ? "default" : "outline"}
                       size="sm"
                       onClick={() => setDifficultyLevel(level)}
-                      className={`h-7 text-[11px] px-3 ${difficultyLevel === level ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+                      className={`h-7 text-[11px] px-3 ${difficultyLevel === level ? "bg-slate-800 hover:bg-slate-900" : ""}`}
                     >
                       {level === "beginner" ? "Beginner" : level === "gemiddeld" ? "Gemiddeld" : "Expert"}
                     </Button>
@@ -707,40 +490,168 @@ export function AdminChatExpertMode({
                     <span>{formatTime(sessionTimer)}</span>
                   </div>
                 )}
-                <div className="flex items-center border border-purple-200 rounded-lg overflow-hidden">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <div className="flex items-center bg-slate-100 rounded-lg p-1">
+                  <button
                     onClick={() => setChatMode("chat")}
-                    className={`h-8 px-3 rounded-none border-r border-purple-200 ${chatMode === "chat" ? "bg-purple-600 text-white hover:bg-purple-700" : "hover:bg-purple-50"}`}
+                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 text-[12px] ${chatMode === "chat" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
                   >
-                    <MessageSquare className="w-4 h-4 mr-1.5" />
-                    <span className="text-[11px]">Chat</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                    <MessageSquare className="w-4 h-4" />
+                    Chat
+                  </button>
+                  <button
                     onClick={() => setChatMode("audio")}
-                    className={`h-8 px-3 rounded-none border-r border-purple-200 ${chatMode === "audio" ? "bg-purple-600 text-white hover:bg-purple-700" : "hover:bg-purple-50"}`}
+                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 text-[12px] ${chatMode === "audio" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
                   >
-                    <Phone className="w-4 h-4 mr-1.5" />
-                    <span className="text-[11px]">Bellen</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                    <Phone className="w-4 h-4" />
+                    Bellen
+                  </button>
+                  <button
                     onClick={() => setChatMode("video")}
-                    className={`h-8 px-3 rounded-none ${chatMode === "video" ? "bg-purple-600 text-white hover:bg-purple-700" : "hover:bg-purple-50"}`}
+                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 text-[12px] ${chatMode === "video" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
                   >
-                    <Video className="w-4 h-4 mr-1.5" />
-                    <span className="text-[11px]">Video</span>
-                  </Button>
+                    <Video className="w-4 h-4" />
+                    Video
+                  </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Messages */}
+          {/* Audio Mode Interface */}
+          {chatMode === "audio" && (
+            <div className="flex-1 flex flex-col items-center justify-center" style={{ background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #0d9488 100%)' }}>
+              <div 
+                className="rounded-full flex items-center justify-center shadow-2xl mb-6"
+                style={{ width: '180px', height: '180px', backgroundColor: '#6B7A92' }}
+              >
+                <span className="text-white font-bold" style={{ fontSize: '64px' }}>HH</span>
+              </div>
+              <h3 className="text-white text-[20px] font-semibold mb-1">Hugo Herbots</h3>
+              <p className="text-[22px] font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>{formatTime(sessionTimer)}</p>
+              
+              {/* Waveform visualization */}
+              <div className="flex items-end justify-center gap-1.5 h-16 mt-8">
+                {[...Array(15)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-full"
+                    style={{
+                      width: '6px',
+                      backgroundColor: 'rgba(255,255,255,0.7)',
+                      height: `${Math.random() * 40 + 15}px`,
+                    }}
+                  />
+                ))}
+              </div>
+              
+              {/* Audio controls */}
+              <div className="mt-auto pb-8 pt-4">
+                <div className="flex items-center justify-center gap-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <button 
+                      onClick={() => setIsMuted(!isMuted)}
+                      className="flex items-center justify-center transition-colors"
+                      style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.2)' }}
+                    >
+                      {isMuted ? <MicOff className="w-5 h-5 text-teal-700" /> : <Mic className="w-5 h-5 text-white" />}
+                    </button>
+                    <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>{isMuted ? "Unmute" : "Mute"}</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <button 
+                      onClick={handleStopRoleplay}
+                      className="flex items-center justify-center shadow-xl"
+                      style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#ef4444' }}
+                    >
+                      <Phone className="w-6 h-6 text-white" style={{ transform: 'rotate(135deg)' }} />
+                    </button>
+                    <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Ophangen</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <button 
+                      className="flex items-center justify-center"
+                      style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)' }}
+                    >
+                      <Volume2 className="w-5 h-5 text-white" />
+                    </button>
+                    <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Speaker</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Video Mode Interface */}
+          {chatMode === "video" && (
+            <div className="flex-1 relative" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%)' }}>
+              {/* Main video area with large HH avatar */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div 
+                  className="rounded-full flex items-center justify-center"
+                  style={{ width: '220px', height: '220px', backgroundColor: '#6B7A92' }}
+                >
+                  <span className="text-white font-bold" style={{ fontSize: '80px' }}>HH</span>
+                </div>
+              </div>
+
+              {/* Top overlay with name */}
+              <div className="absolute top-0 left-0 right-0 p-4" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
+                <h3 className="text-white text-[18px] font-semibold">Hugo Herbots</h3>
+                <p className="text-white/70 text-[14px]">{formatTime(sessionTimer)}</p>
+              </div>
+
+              {/* PiP preview - user camera - circular */}
+              <div 
+                className="absolute top-4 right-4 flex items-center justify-center border-2 border-white/30 shadow-xl"
+                style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#475569' }}
+              >
+                <div 
+                  className="flex items-center justify-center"
+                  style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundColor: '#e2e8f0' }}
+                >
+                  <span className="text-slate-700 text-[12px] font-medium">JIJ</span>
+                </div>
+              </div>
+
+              {/* Bottom controls - circular buttons */}
+              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
+                <div className="flex items-center justify-center gap-6">
+                  <div className="flex flex-col items-center gap-2">
+                    <button 
+                      onClick={() => setIsMuted(!isMuted)}
+                      className="flex items-center justify-center transition-colors"
+                      style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.2)' }}
+                    >
+                      {isMuted ? <MicOff className="w-5 h-5 text-slate-800" /> : <Mic className="w-5 h-5 text-white" />}
+                    </button>
+                    <span className="text-white/70 text-[11px]">{isMuted ? "Unmute" : "Mute"}</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <button 
+                      className="flex items-center justify-center"
+                      style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)' }}
+                    >
+                      <Video className="w-5 h-5 text-white" />
+                    </button>
+                    <span className="text-white/70 text-[11px]">Camera</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <button 
+                      onClick={handleStopRoleplay}
+                      className="flex items-center justify-center shadow-xl"
+                      style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#ef4444' }}
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                    <span className="text-white/70 text-[11px]">Ophangen</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Chat Mode - Messages */}
+          {chatMode === "chat" && (
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <div className="flex items-center justify-center h-full">
@@ -769,7 +680,7 @@ export function AdminChatExpertMode({
                       <div
                         className={`p-3 rounded-lg relative ${
                           message.sender === "hugo"
-                            ? "bg-purple-600 text-white"
+                            ? "bg-slate-800 text-white"
                             : "bg-hh-ui-50 text-hh-text border border-hh-border"
                         }`}
                       >
@@ -797,7 +708,7 @@ export function AdminChatExpertMode({
                               }
                               className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
                                 message.sender === "hugo"
-                                  ? "bg-purple-700 hover:bg-purple-800 text-white"
+                                  ? "bg-slate-700 hover:bg-slate-600 text-white"
                                   : "bg-gray-200 hover:bg-gray-300 text-hh-text"
                               }`}
                               title="Toggle debug info"
@@ -822,8 +733,8 @@ export function AdminChatExpertMode({
                   <div className={`${message.sender === "hugo" ? "flex justify-end" : "ml-10"}`}>
                     <Card className={`p-4 mt-2 border-2 border-dashed max-w-[280px] ${
                         message.sender === "ai" 
-                          ? "border-purple-200 bg-purple-50/30" 
-                          : "border-purple-200 bg-purple-50/30"
+                          ? "border-slate-200 bg-slate-50/50" 
+                          : "border-slate-200 bg-slate-50/50"
                       }`}>
                         <div className="space-y-3 text-[13px] leading-[18px]">
                           {/* For Hugo/Seller messages */}
@@ -831,11 +742,11 @@ export function AdminChatExpertMode({
                             <div className="space-y-3">
                               {/* Gekozen techniek (MOVED HERE from AI) */}
                               {message.debugInfo.chosenTechniqueForSeller && (
-                                <div className="pb-3 border-b border-purple-200">
+                                <div className="pb-3 border-b border-slate-200">
                                   <p className="text-[12px] text-hh-muted mb-1">Gekozen techniek:</p>
                                   <Badge 
                                     variant="outline" 
-                                    className="text-[11px] cursor-pointer hover:bg-purple-100"
+                                    className="text-[11px] cursor-pointer hover:bg-slate-100"
                                     onClick={() => openTechniqueDetails(message.debugInfo?.chosenTechniqueForSeller || "")}
                                   >
                                     {message.debugInfo.chosenTechniqueForSeller}
@@ -914,7 +825,7 @@ export function AdminChatExpertMode({
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        className="flex-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+                                        className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50"
                                         onClick={() => {
                                           console.log("Feedback submitted:", feedbackText[message.id]);
                                           setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
@@ -1004,7 +915,7 @@ export function AdminChatExpertMode({
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        className="flex-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+                                        className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50"
                                         onClick={() => {
                                           console.log("Feedback submitted:", feedbackText[message.id + "_detected"]);
                                           setShowFeedbackInput((prev) => ({ ...prev, [message.id + "_detected"]: false }));
@@ -1020,7 +931,7 @@ export function AdminChatExpertMode({
 
                               {/* Collapsible sections for Hugo */}
                               {/* Persona */}
-                              <div className="pt-4 border-t border-purple-200/50">
+                              <div className="pt-4 border-t border-slate-200/50">
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "persona")}
                                   className="flex items-center gap-2 text-[12px] font-semibold text-hh-text hover:text-hh-primary w-full"
@@ -1210,7 +1121,7 @@ export function AdminChatExpertMode({
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          className="flex-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+                                          className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50"
                                           onClick={() => {
                                             console.log("Feedback submitted:", feedbackText[message.id]);
                                             setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
@@ -1227,7 +1138,7 @@ export function AdminChatExpertMode({
 
                               {/* Gedetecteerde techniek (for AI messages) */}
                               {message.debugInfo.expectedTechnique && (
-                                <div className="pb-3 border-b border-purple-200">
+                                <div className="pb-3 border-b border-slate-200">
                                   <p className="text-[12px] text-hh-muted mb-1">Gedetecteerde techniek:</p>
                                   <p className="text-hh-text font-medium text-[13px]">
                                     {message.debugInfo.expectedTechnique}
@@ -1340,7 +1251,7 @@ export function AdminChatExpertMode({
                               </div>
 
                               {/* AI Beslissingen */}
-                              <div className="pt-4 border-t border-purple-200/50">
+                              <div className="pt-4 border-t border-slate-200/50">
                                 <h4 className="text-[11px] font-semibold text-hh-text mb-3">AI Beslissingen</h4>
                                 <div className="space-y-2 text-[12px]">
                                   <div className="flex justify-between">
@@ -1371,8 +1282,10 @@ export function AdminChatExpertMode({
               ))}
             <div ref={messagesEndRef} />
           </div>
+          )}
 
-          {/* Input */}
+          {/* Input - only show in chat mode */}
+          {chatMode === "chat" && (
           <div className="p-4 border-t border-hh-border">
             {/* Expert Mode: Technique Selector ABOVE input - CUSTOM STYLED */}
             {difficultyLevel === "expert" && (
@@ -1384,7 +1297,7 @@ export function AdminChatExpertMode({
                   <select
                     value={selectedTechnique}
                     onChange={(e) => setSelectedTechnique(e.target.value)}
-                    className="w-full px-4 py-3 text-[13px] border-2 border-purple-200 rounded-lg bg-white text-hh-text focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 appearance-none cursor-pointer hover:border-purple-300 transition-colors font-medium shadow-sm"
+                    className="w-full px-4 py-3 text-[13px] border-2 border-slate-200 rounded-lg bg-white text-hh-text focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 appearance-none cursor-pointer hover:border-slate-300 transition-colors font-medium shadow-sm"
                   >
                     <option value="" className="text-hh-muted">-- Kies een techniek uit de lijst --</option>
                     {[0, 1, 2, 3, 4].map(phase => {
@@ -1417,8 +1330,8 @@ export function AdminChatExpertMode({
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted pointer-events-none" />
                 </div>
                 {selectedTechnique && (
-                  <div className="mt-2 p-2 bg-purple-50 rounded-lg border border-purple-200">
-                    <p className="text-[11px] text-purple-700 flex items-center gap-1 font-medium">
+                  <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200">
+                    <p className="text-[11px] text-emerald-700 flex items-center gap-1 font-medium">
                       <Check className="w-3 h-3" />
                       Je gaat techniek {selectedTechnique} toepassen
                     </p>
@@ -1440,9 +1353,9 @@ export function AdminChatExpertMode({
 
             {/* Selected technique indicator for non-expert modes */}
             {difficultyLevel !== "expert" && selectedTechnique && (
-              <div className="mb-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                <p className="text-[12px] text-purple-700 flex items-center justify-between">
-                  <span>✓ Geselecteerde techniek: {selectedTechnique}</span>
+              <div className="mb-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                <p className="text-[12px] text-emerald-700 flex items-center justify-between">
+                  <span>Geselecteerde techniek: {selectedTechnique}</span>
                   <button
                     onClick={() => setSelectedTechnique("")}
                     className="text-[11px] text-hh-muted hover:text-hh-text underline"
@@ -1454,21 +1367,31 @@ export function AdminChatExpertMode({
             )}
             
             <div className="flex gap-2">
-              <Input
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && selectedTechnique && handleSendMessage()}
-                placeholder={
-                  selectedTechnique 
-                    ? "Type je antwoord als verkoper..." 
-                    : "Selecteer eerst een techniek..."
-                }
-                className="flex-1"
-                disabled={!selectedTechnique}
-              />
+              <div className="flex-1 relative">
+                <Input
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && selectedTechnique && handleSendMessage()}
+                  placeholder={
+                    selectedTechnique 
+                      ? "Type je antwoord als verkoper..." 
+                      : "Selecteer eerst een techniek..."
+                  }
+                  className="pr-12"
+                  disabled={!selectedTechnique}
+                />
+                {/* Dictation button */}
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                  title="Dicteer"
+                  disabled={!selectedTechnique}
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+              </div>
               <Button 
                 onClick={handleSendMessage} 
-                className="gap-2 bg-purple-600 hover:bg-purple-700"
+                className="gap-2 bg-slate-800 hover:bg-slate-900"
                 disabled={!selectedTechnique || !inputText.trim()}
               >
                 <Send className="w-4 h-4" />
@@ -1476,6 +1399,7 @@ export function AdminChatExpertMode({
               </Button>
             </div>
           </div>
+          )}
         </div>
       </div>
 
