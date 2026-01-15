@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -33,6 +33,7 @@ import {
   Mic,
   MessageSquare,
   BarChart2,
+  Video,
 } from "lucide-react";
 
 import { getCodeBadgeColors } from "../../utils/phaseColors";
@@ -182,28 +183,29 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
     }
   };
 
-  const getTypeBadge = (type: string) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
       case "call":
-        return (
-          <Badge variant="outline" className="text-[11px] bg-hh-ink/10 text-hh-ink border-hh-ink/20">
-            Telefoongesprek
-          </Badge>
-        );
+        return <Mic className="w-4 h-4 text-[#5B7B9A]" />;
       case "meeting":
-        return (
-          <Badge variant="outline" className="text-[11px] bg-hh-primary/10 text-hh-primary border-hh-primary/20">
-            Meeting
-          </Badge>
-        );
+        return <Video className="w-4 h-4 text-[#5B7B9A]" />;
       case "demo":
-        return (
-          <Badge variant="outline" className="text-[11px] bg-purple-500/10 text-purple-500 border-purple-500/20">
-            Demo
-          </Badge>
-        );
+        return <MessageSquare className="w-4 h-4 text-[#5B7B9A]" />;
       default:
         return null;
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "call":
+        return "AI Audio";
+      case "meeting":
+        return "AI Video";
+      case "demo":
+        return "AI Chat";
+      default:
+        return type;
     }
   };
 
@@ -403,16 +405,31 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
           <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-hh-ui-50">
+                <thead className="bg-hh-ui-50 border-b border-hh-border">
                   <tr>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Gesprek
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
+                      #
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
+                      Techniek
+                    </th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
                       Type
                     </th>
                     <th 
-                      className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
+                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("score")}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Score
+                        <SortIcon column="score" />
+                      </div>
+                    </th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
+                      Duur
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
                       onClick={() => handleSort("date")}
                     >
                       <div className="flex items-center gap-1.5">
@@ -420,25 +437,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                         <SortIcon column="date" />
                       </div>
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Duur
-                    </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Technieken
-                    </th>
-                    <th 
-                      className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold cursor-pointer hover:bg-hh-ui-100 transition-colors select-none"
-                      onClick={() => handleSort("score")}
-                    >
-                      <div className="flex items-center justify-end gap-1.5">
-                        Score
-                        <SortIcon column="score" />
-                      </div>
-                    </th>
-                    <th className="text-left py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
-                      Status
-                    </th>
-                    <th className="text-right py-3 px-4 text-[13px] leading-[18px] text-hh-text font-semibold">
+                    <th className="text-right py-3 px-4 text-[13px] font-semibold text-hh-text">
                       Acties
                     </th>
                   </tr>
@@ -447,55 +446,35 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                   {sortedConversations.map((conv, index) => (
                     <tr
                       key={conv.id}
-                      className={`border-t border-hh-border hover:bg-hh-ui-50 transition-colors cursor-pointer ${
+                      className={`border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors cursor-pointer ${
                         index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                       }`}
                       onClick={() => openTranscript(conv)}
                     >
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-hh-ink/10 flex items-center justify-center flex-shrink-0">
-                            {conv.type === "call" ? (
-                              <Mic className="w-4 h-4 text-hh-ink" />
-                            ) : (
-                              <MessageSquare className="w-4 h-4 text-hh-ink" />
-                            )}
-                          </div>
-                          <p className="text-[14px] leading-[20px] text-hh-text font-medium">
+                        <Badge className="bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20 text-[11px] font-mono">
+                          {conv.techniquesUsed[0] || "1.1"}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="text-[14px] font-medium text-hh-text">
                             {conv.title}
+                          </p>
+                          <p className="text-[12px] text-hh-muted">
+                            {conv.prospect}
                           </p>
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        {getTypeBadge(conv.type)}
-                      </td>
-                      <td className="py-3 px-4 text-[14px] text-hh-muted">
-                        {new Date(conv.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
-                      </td>
-                      <td className="py-3 px-4 text-[14px] text-hh-muted">
-                        {conv.duration}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex gap-1 flex-wrap">
-                          {conv.techniquesUsed.slice(0, 2).map((tech, idx) => (
-                            <Badge
-                              key={idx}
-                              variant="outline"
-                              className={`text-[10px] font-mono ${getCodeBadgeColors(tech)}`}
-                            >
-                              {tech}
-                            </Badge>
-                          ))}
-                          {conv.techniquesUsed.length > 2 && (
-                            <Badge variant="outline" className="text-[10px] bg-hh-ui-50 text-hh-muted border-hh-border">
-                              +{conv.techniquesUsed.length - 2}
-                            </Badge>
-                          )}
+                        <div className="flex items-center gap-2">
+                          {getTypeIcon(conv.type)}
+                          <span className="text-[13px] text-hh-text">{getTypeLabel(conv.type)}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4">
                         {conv.status === "analyzed" ? (
-                          <span className={`text-[14px] leading-[20px] font-medium ${
+                          <span className={`text-[14px] font-medium ${
                             conv.score >= 80
                               ? "text-hh-success"
                               : conv.score >= 70
@@ -509,9 +488,12 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                         )}
                       </td>
                       <td className="py-3 px-4">
-                        {getStatusBadge(conv.status)}
+                        <span className="text-[13px] text-hh-text">{conv.duration}</span>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-[13px] text-hh-muted">
+                        {conv.date}
+                      </td>
+                      <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -521,11 +503,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openTranscript(conv)}>
                               <Eye className="w-4 h-4 mr-2" />
-                              Bekijk analyse
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate?.("library")}>
-                              <BarChart2 className="w-4 h-4 mr-2" />
-                              Bekijk technieken
+                              Bekijk details
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -540,84 +518,72 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
 
         {/* Grid View */}
         {viewMode === "grid" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedConversations.map((conv) => (
               <Card
                 key={conv.id}
-                className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden hover:shadow-hh-md hover:border-hh-ink/30 transition-all cursor-pointer"
+                className="p-5 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => openTranscript(conv)}
               >
-                <div className="p-5 space-y-4">
-                  <div className="flex items-start justify-between">
-                    {getTypeBadge(conv.type)}
-                    {getStatusBadge(conv.status)}
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-hh-ink/10 flex items-center justify-center flex-shrink-0">
-                      {conv.type === "call" ? (
-                        <Mic className="w-5 h-5 text-hh-ink" />
-                      ) : (
-                        <MessageSquare className="w-5 h-5 text-hh-ink" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-[16px] leading-[24px] text-hh-text font-semibold">
-                        {conv.title}
-                      </h3>
-                      <p className="text-[13px] text-hh-muted">
-                        {new Date(conv.date).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}
-                      </p>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20 text-[11px] font-mono font-semibold px-2.5 py-1">
+                      {conv.techniquesUsed[0] || "1.1"}
+                    </Badge>
+                    <div className="w-10 h-10 rounded-full bg-[#5B7B9A]/10 flex items-center justify-center">
+                      {getTypeIcon(conv.type)}
                     </div>
                   </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openTranscript(conv)}>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Bekijk details
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
-                  <div className="flex items-center gap-4 text-[13px] text-hh-muted">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-4 h-4" />
-                      <span>{conv.duration}</span>
-                    </div>
-                    {conv.status === "analyzed" && (
-                      <div className="flex items-center gap-1.5">
-                        <TrendingUp className={`w-4 h-4 ${
-                          conv.score >= 80
-                            ? "text-hh-success"
-                            : conv.score >= 70
-                            ? "text-blue-600"
-                            : "text-hh-warn"
-                        }`} />
-                        <span className={`font-medium ${
-                          conv.score >= 80
-                            ? "text-hh-success"
-                            : conv.score >= 70
-                            ? "text-blue-600"
-                            : "text-hh-warn"
-                        }`}>{conv.score}%</span>
-                      </div>
-                    )}
+                <h3 className="text-[16px] font-medium text-hh-text mb-1">
+                  {conv.title}
+                </h3>
+                <p className="text-[12px] text-hh-muted mb-3">
+                  {conv.prospect}
+                </p>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-1.5">
+                    {getTypeIcon(conv.type)}
+                    <span className="text-[12px] text-hh-muted">{getTypeLabel(conv.type)}</span>
                   </div>
+                </div>
 
-                  <div className="flex flex-wrap gap-1.5">
-                    {conv.techniquesUsed.map((tech, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="outline"
-                        className={`text-[10px] font-mono ${getCodeBadgeColors(tech)}`}
-                      >
-                        {tech}
-                      </Badge>
-                    ))}
+                <div className="flex items-center justify-between text-[13px] text-hh-muted">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    {conv.duration}
                   </div>
-
-                  <div className="pt-3 border-t border-hh-border">
-                    <Button 
-                      className="w-full bg-hh-ink hover:bg-hh-ink/90" 
-                      size="sm"
-                      onClick={() => openTranscript(conv)}
+                  {conv.status === "analyzed" ? (
+                    <span
+                      className={`font-medium ${
+                        conv.score >= 80
+                          ? "text-hh-success"
+                          : conv.score >= 70
+                          ? "text-blue-600"
+                          : "text-hh-warn"
+                      }`}
                     >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Bekijk analyse
-                    </Button>
-                  </div>
+                      {conv.score}%
+                    </span>
+                  ) : (
+                    <span className="text-hh-muted">—</span>
+                  )}
+                  <span>{conv.date}</span>
                 </div>
               </Card>
             ))}

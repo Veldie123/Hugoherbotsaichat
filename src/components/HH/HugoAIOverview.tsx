@@ -138,13 +138,13 @@ const sessions: Session[] = [
 const getTypeIcon = (type: SessionType) => {
   switch (type) {
     case "ai-audio":
-      return <Mic className="w-4 h-4 text-purple-600" />;
+      return <Mic className="w-4 h-4 text-[#5B7B9A]" />;
     case "ai-video":
-      return <Video className="w-4 h-4 text-blue-600" />;
+      return <Video className="w-4 h-4 text-[#5B7B9A]" />;
     case "ai-chat":
-      return <MessageSquare className="w-4 h-4 text-hh-ink" />;
+      return <MessageSquare className="w-4 h-4 text-[#5B7B9A]" />;
     case "upload-audio":
-      return <Upload className="w-4 h-4 text-amber-600" />;
+      return <Upload className="w-4 h-4 text-[#5B7B9A]" />;
   }
 };
 
@@ -547,14 +547,9 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                         <span className="text-[14px] text-hh-text">{session.duration}</span>
                       </td>
                       
-                      {/* Date + Time */}
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-[14px] text-hh-text">{session.date}</span>
-                          {session.time && (
-                            <span className="text-[12px] text-hh-muted">{session.time}</span>
-                          )}
-                        </div>
+                      {/* Date */}
+                      <td className="py-3 px-4 text-[13px] text-hh-muted">
+                        {session.date}
                       </td>
                       
                       {/* Actions */}
