@@ -325,17 +325,17 @@ export function EPICSidebar({
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex items-center gap-2 flex-1">
                                     {isUserView && (
-                                      <>
+                                      <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
                                         {isCompleted ? (
-                                          <div className="w-5 h-5 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center flex-shrink-0">
-                                            <Check className="w-3 h-3 text-emerald-600" strokeWidth={3} />
+                                          <div className="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center">
+                                            <Check className="w-3 h-3 text-white" strokeWidth={3} />
                                           </div>
                                         ) : isLocked ? (
-                                          <div className="w-5 h-5 rounded-full bg-hh-ui-100 border border-hh-border flex items-center justify-center flex-shrink-0">
+                                          <div className="w-5 h-5 rounded-full bg-hh-ui-100 border border-hh-border flex items-center justify-center">
                                             <Lock className="w-2.5 h-2.5 text-hh-muted" />
                                           </div>
                                         ) : null}
-                                      </>
+                                      </div>
                                     )}
                                     <span className={cn(
                                       "font-mono text-[10px]",
@@ -436,17 +436,17 @@ export function EPICSidebar({
                                           <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 flex-1">
                                               {isUserView && (
-                                                <>
+                                                <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
                                                   {isChildCompleted ? (
-                                                    <div className="w-5 h-5 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center flex-shrink-0">
-                                                      <Check className="w-3 h-3 text-emerald-600" strokeWidth={3} />
+                                                    <div className="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center">
+                                                      <Check className="w-3 h-3 text-white" strokeWidth={3} />
                                                     </div>
                                                   ) : isChildLocked ? (
-                                                    <div className="w-5 h-5 rounded-full bg-hh-ui-100 border border-hh-border flex items-center justify-center flex-shrink-0">
+                                                    <div className="w-5 h-5 rounded-full bg-hh-ui-100 border border-hh-border flex items-center justify-center">
                                                       <Lock className="w-2.5 h-2.5 text-hh-muted" />
                                                     </div>
                                                   ) : null}
-                                                </>
+                                                </div>
                                               )}
                                               <span className={cn(
                                                 "font-mono text-[10px]",
@@ -536,17 +536,17 @@ export function EPICSidebar({
                                                 >
                                                   <div className="flex items-center gap-2">
                                                     {isUserView && (
-                                                      <>
+                                                      <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
                                                         {isGrandchildCompleted ? (
-                                                          <div className="w-4 h-4 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center flex-shrink-0">
-                                                            <Check className="w-2.5 h-2.5 text-emerald-600" strokeWidth={3} />
+                                                          <div className="w-4 h-4 rounded-full bg-slate-700 flex items-center justify-center">
+                                                            <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                                                           </div>
                                                         ) : isGrandchildLocked ? (
-                                                          <div className="w-4 h-4 rounded-full bg-hh-ui-100 border border-hh-border flex items-center justify-center flex-shrink-0">
+                                                          <div className="w-4 h-4 rounded-full bg-hh-ui-100 border border-hh-border flex items-center justify-center">
                                                             <Lock className="w-2 h-2 text-hh-muted" />
                                                           </div>
                                                         ) : null}
-                                                      </>
+                                                      </div>
                                                     )}
                                                     <span className={cn(
                                                       "font-mono text-[9px]",
