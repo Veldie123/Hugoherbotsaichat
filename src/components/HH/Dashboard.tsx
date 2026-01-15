@@ -319,40 +319,46 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             <h2 className="text-[16px] font-semibold text-hh-text">Epic Sales Flow</h2>
             <span className="text-[13px] text-hh-muted">4/12 onderwerpen • 33%</span>
           </div>
-          <div className="flex gap-2 mb-3">
-            {/* Fase 0 - Voorbereiding - Completed (Green) */}
-            <div className="flex-1 h-3 rounded-full" style={{ backgroundColor: '#10b981' }} />
-            {/* Fase 1 - Opening - Completed (Green) */}
-            <div className="flex-1 h-3 rounded-full" style={{ backgroundColor: '#10b981' }} />
-            {/* Fase 2 - Ontdekking - In Progress (Blue, partial) */}
-            <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#e2e8f0' }}>
-              <div className="h-full w-3/5 rounded-full" style={{ backgroundColor: '#3b82f6' }} />
+          <div className="flex items-center gap-1">
+            {/* Fase -1: Voorbereiding - Completed */}
+            <div className="flex-1 flex flex-col items-center gap-1.5">
+              <div className="w-full h-1.5 bg-hh-success rounded-full" />
+              <div className="flex flex-col items-center">
+                <div className="text-[11px] leading-[14px] text-hh-success font-semibold">-1</div>
+                <div className="text-[10px] leading-[12px] text-hh-muted text-center">Voorber.</div>
+              </div>
             </div>
-            {/* Fase 3 - Voorstel - Not started (Grey) */}
-            <div className="flex-1 h-3 rounded-full" style={{ backgroundColor: '#e2e8f0' }} />
-            {/* Fase 4 - Afsluiting - Not started (Grey) */}
-            <div className="flex-1 h-3 rounded-full" style={{ backgroundColor: '#e2e8f0' }} />
-          </div>
-          <div className="flex gap-2 mt-2">
-            <div className="flex-1 text-center">
-              <span className="text-[11px] text-emerald-600 font-medium">-1</span>
-              <p className="text-[10px] text-hh-muted">Voorber.</p>
+            {/* Fase 1: Opening - Completed */}
+            <div className="flex-1 flex flex-col items-center gap-1.5">
+              <div className="w-full h-1.5 bg-hh-success rounded-full" />
+              <div className="flex flex-col items-center">
+                <div className="text-[11px] leading-[14px] text-hh-success font-semibold">1</div>
+                <div className="text-[10px] leading-[12px] text-hh-muted text-center">Opening</div>
+              </div>
             </div>
-            <div className="flex-1 text-center">
-              <span className="text-[11px] text-emerald-600 font-medium">1</span>
-              <p className="text-[10px] text-hh-muted">Opening</p>
+            {/* Fase 2: Ontdekking - Current */}
+            <div className="flex-1 flex flex-col items-center gap-1.5">
+              <div className="w-full h-1.5 bg-hh-primary rounded-full" />
+              <div className="flex flex-col items-center">
+                <div className="text-[11px] leading-[14px] text-hh-primary font-semibold">2</div>
+                <div className="text-[10px] leading-[12px] text-hh-muted text-center">Ontdekking</div>
+              </div>
             </div>
-            <div className="flex-1 text-center">
-              <span className="text-[11px] text-blue-600 font-medium">2</span>
-              <p className="text-[10px] text-hh-muted">Ontdekking</p>
+            {/* Fase 3: Voorstel - Upcoming */}
+            <div className="flex-1 flex flex-col items-center gap-1.5">
+              <div className="w-full h-1.5 bg-hh-ui-200 rounded-full" />
+              <div className="flex flex-col items-center">
+                <div className="text-[11px] leading-[14px] text-hh-muted font-semibold">3</div>
+                <div className="text-[10px] leading-[12px] text-hh-muted text-center">Voorstel</div>
+              </div>
             </div>
-            <div className="flex-1 text-center">
-              <span className="text-[11px] text-hh-muted">3</span>
-              <p className="text-[10px] text-hh-muted">Voorstel</p>
-            </div>
-            <div className="flex-1 text-center">
-              <span className="text-[11px] text-hh-muted">4</span>
-              <p className="text-[10px] text-hh-muted">Afsluiting</p>
+            {/* Fase 4: Afsluiting - Locked */}
+            <div className="flex-1 flex flex-col items-center gap-1.5">
+              <div className="w-full h-1.5 bg-hh-ui-100 rounded-full" />
+              <div className="flex flex-col items-center">
+                <div className="text-[11px] leading-[14px] text-hh-muted font-semibold">4</div>
+                <div className="text-[10px] leading-[12px] text-hh-muted text-center">Afsluiting</div>
+              </div>
             </div>
           </div>
         </Card>

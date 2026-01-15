@@ -1,0 +1,110 @@
+1. CSS Variabelen (globals.css of index.css)
+:root {
+  /* HH Brand Colors */
+  --hh-mirage: #0F1826;
+  --hh-indian-ink: #464B50;
+  --hh-slate-gray: #6B7280;
+  --hh-french-gray: #9CA3AF;
+  --hh-platinum: #D1D5DB;
+  --hh-white: #FFFFFF;
+  --hh-steel-blue: #4F7396;
+  
+  /* Design Tokens */
+  --hh-primary: #4F7396;
+  --hh-success: #10B981;
+  --hh-ui-50: #F8FAFC;
+  --hh-ui-100: #F1F5F9;
+  --hh-ui-200: #E2E8F0;
+  --hh-bg: #FFFFFF;
+  --hh-text: #0F1826;
+  --hh-muted: #9CA3AF;
+  --hh-border: #D1D5DB;
+}
+2. Epic Sales Flow Progress Bar (Dashboard component)
+// Dashboard - De horizontale progress bar die je op de screenshot ziet
+<Card className="p-4 rounded-[16px] border-hh-border">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-[15px] leading-[20px] text-hh-text font-semibold">
+      Epic Sales Flow
+    </h3>
+    <div className="text-[12px] leading-[16px] text-hh-muted">
+      4/12 onderwerpen • 33%
+    </div>
+  </div>
+  {/* Horizontal Phase Bar */}
+  <div className="flex items-center gap-1">
+    {/* Fase -1: Voorbereiding - Completed */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-success rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-success font-semibold">-1</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Voorber.</div>
+      </div>
+    </div>
+    {/* Fase 1: Opening - Completed */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-success rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-success font-semibold">1</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Opening</div>
+      </div>
+    </div>
+    {/* Fase 2: Ontdekking - Current */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-primary rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-primary font-semibold">2</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Ontdekking</div>
+      </div>
+    </div>
+    {/* Fase 3: Voorstel - Upcoming */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-ui-200 rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-muted font-semibold">3</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Voorstel</div>
+      </div>
+    </div>
+    {/* Fase 4: Afsluiting - Locked */}
+    <div className="flex-1 flex flex-col items-center gap-1.5">
+      <div className="w-full h-1.5 bg-hh-ui-100 rounded-full" />
+      <div className="flex flex-col items-center">
+        <div className="text-[11px] leading-[14px] text-hh-muted font-semibold">4</div>
+        <div className="text-[10px] leading-[12px] text-hh-muted text-center">Afsluiting</div>
+      </div>
+    </div>
+  </div>
+</Card>
+3. Card Component
+function Card({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+4. Progress Bar Component (Radix UI)
+import * as ProgressPrimitive from "@radix-ui/react-progress";
+function Progress({ className, value, ...props }) {
+  return (
+    <ProgressPrimitive.Root
+      className={cn("bg-primary/20 relative h-2 w-full overflow-hidden rounded-full", className)}
+      {...props}
+    >
+      <ProgressPrimitive.Indicator
+        className="bg-primary h-full w-full flex-1 transition-all"
+        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+      />
+    </ProgressPrimitive.Root>
+  );
+}
+Kleuren uitleg:
+bg-hh-success (groen #10B981) = voltooide fases
+bg-hh-primary (blauw #4F7396) = huidige fase
+bg-hh-ui-200 (lichtgrijs #E2E8F0) = aankomende fases
+bg-hh-ui-100 (zeer lichtgrijs #F1F5F9) = vergrendelde fases
+text-hh-muted (grijs #9CA3AF) = labels
