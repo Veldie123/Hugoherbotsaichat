@@ -319,19 +319,19 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
             <h2 className="text-[16px] font-semibold text-hh-text">Epic Sales Flow</h2>
             <span className="text-[13px] text-hh-muted">4/12 onderwerpen • 33%</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-3">
             {/* Fase 0 - Voorbereiding - Completed (Green) */}
-            <div className="flex-1 h-2 rounded-full bg-emerald-500" />
+            <div className="flex-1 h-3 rounded-full" style={{ backgroundColor: '#10b981' }} />
             {/* Fase 1 - Opening - Completed (Green) */}
-            <div className="flex-1 h-2 rounded-full bg-emerald-500" />
+            <div className="flex-1 h-3 rounded-full" style={{ backgroundColor: '#10b981' }} />
             {/* Fase 2 - Ontdekking - In Progress (Blue, partial) */}
-            <div className="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
-              <div className="h-full w-3/5 rounded-full bg-blue-500" />
+            <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#e2e8f0' }}>
+              <div className="h-full w-3/5 rounded-full" style={{ backgroundColor: '#3b82f6' }} />
             </div>
             {/* Fase 3 - Voorstel - Not started (Grey) */}
-            <div className="flex-1 h-2 rounded-full bg-slate-200" />
+            <div className="flex-1 h-3 rounded-full" style={{ backgroundColor: '#e2e8f0' }} />
             {/* Fase 4 - Afsluiting - Not started (Grey) */}
-            <div className="flex-1 h-2 rounded-full bg-slate-200" />
+            <div className="flex-1 h-3 rounded-full" style={{ backgroundColor: '#e2e8f0' }} />
           </div>
           <div className="flex gap-2 mt-2">
             <div className="flex-1 text-center">
