@@ -6,7 +6,6 @@ import { Progress } from "../ui/progress";
 import { ScrollArea } from "../ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Sheet, SheetContent } from "../ui/sheet";
-import { EPICSalesFlow } from "./EPICSalesFlow";
 import {
   TrendingUp,
   TrendingDown,
@@ -722,19 +721,6 @@ export function AnalysisResults({
         </Tabs>
       </div>
 
-      {/* Epic Sales Flow Sheet - Mobile Drawer */}
-      <Sheet open={flowDrawerOpen} onOpenChange={setFlowDrawerOpen}>
-        <SheetContent
-          side="left"
-          className="w-full sm:max-w-md p-0 overflow-y-auto"
-        >
-          <EPICSalesFlow
-            currentPhase="fase2"
-            currentStep="spin-questioning"
-            onClose={() => setFlowDrawerOpen(false)}
-          />
-        </SheetContent>
-      </Sheet>
     </AppLayout>
   );
 }

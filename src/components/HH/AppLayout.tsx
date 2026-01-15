@@ -1,36 +1,15 @@
 import { useState, useEffect } from "react";
 import {
-  Home,
-  Video,
-  PlaySquare,
-  BookOpen,
-  Users,
-  BarChart3,
-  Settings,
   Search,
   Bell,
-  User,
   Menu,
   ChevronLeft,
-  X,
-  Youtube,
-  Radio,
-  GraduationCap,
   FileSearch,
   Shield,
   MessageSquare,
-  LayoutDashboard,
-  TrendingUp,
-  History,
-  Target,
-  Library,
-  HelpCircle,
-  FileText,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Badge } from "../ui/badge";
 import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
 import { AppFooter } from "./AppFooter";
@@ -44,24 +23,10 @@ interface AppLayoutProps {
   isAdmin?: boolean; // New prop to check if user has admin rights
 }
 
-// Primary navigation items (top section)
+// Primary navigation items (top section) - Simplified to 2 core features
 const mainNavItems = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "techniques", label: "E.P.I.C technieken", icon: Target },
-  { id: "videos", label: "Video's", icon: Video },
-  { id: "live", label: "Webinars", icon: Radio },
   { id: "analysis", label: "Gespreksanalyse", icon: FileSearch },
   { id: "roleplay", label: "Hugo a.i.", icon: MessageSquare },
-];
-
-// Admin management items (bottom section)
-const adminNavItems = [
-  { id: "users", label: "Gebruikers", icon: Users },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "content", label: "Content", icon: Library },
-  { id: "help", label: "Help Center", icon: HelpCircle },
-  { id: "resources", label: "Resources", icon: FileText },
-  { id: "settings", label: "Instellingen", icon: Settings },
 ];
 
 export function AppLayout({ children, currentPage = "home", navigate, onOpenFlowDrawer, isAdmin }: AppLayoutProps) {
@@ -115,18 +80,8 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
     if (navigate) {
       // Map nav item ids to actual page names
       const pageMap: Record<string, string> = {
-        dashboard: "dashboard",
-        videos: "videos",
-        live: "live",
         analysis: "analysis",
         roleplay: "hugo-overview",
-        users: "team",
-        analytics: "analytics",
-        techniques: "techniques",
-        content: "library",
-        help: "help",
-        resources: "resources",
-        settings: "settings",
       };
       navigate(pageMap[pageId] || pageId);
     }
@@ -135,18 +90,8 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
   // Helper to check if a nav item is active based on currentPage
   const isNavItemActive = (itemId: string) => {
     const pageMap: Record<string, string[]> = {
-      dashboard: ["dashboard"],
-      videos: ["videos"],
-      live: ["live"],
-      analysis: ["analysis"],
+      analysis: ["analysis", "analysis-results", "upload-analysis"],
       roleplay: ["hugo-overview", "talk-to-hugo", "roleplay", "roleplays"],
-      users: ["team"],
-      analytics: ["analytics"],
-      techniques: ["techniques"],
-      content: ["library"],
-      help: ["help"],
-      resources: ["resources"],
-      settings: ["settings"],
     };
     return pageMap[itemId]?.includes(currentPage) || false;
   };
@@ -212,45 +157,19 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
             })}
         </nav>
 
-        {/* Admin Section - Sticky to bottom */}
-        <div className="p-2 space-y-1 flex-shrink-0 border-t border-hh-border">
-          {adminNavItems
-            .map((item) => {
-              const Icon = item.icon;
-              const isActive = isNavItemActive(item.id);
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigate(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                    isActive
-                      ? "bg-hh-primary text-white"
-                      : "text-hh-text hover:bg-hh-ui-50"
-                  }`}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                  {!collapsed && (
-                    <span className="text-[14px] leading-[20px] font-light whitespace-nowrap">
-                      {item.label}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          
-          {/* Admin View Toggle - Desktop */}
-          {isAdmin && (
+        {/* Admin View Toggle - Sticky to bottom */}
+        {isAdmin && (
+          <div className="p-2 flex-shrink-0 border-t border-hh-border">
             <Button
               variant="outline"
               className="w-full gap-2 justify-start px-3 py-2.5 h-auto"
-              onClick={() => navigate?.("admin-dashboard")}
+              onClick={() => navigate?.("admin-uploads")}
             >
               <Shield className="w-4 h-4" />
               {!collapsed && <span className="text-[14px]">Admin View</span>}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Collapsed sidebar - Click anywhere to expand */}
         {collapsed && (
@@ -297,39 +216,18 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
             })}
         </nav>
 
-        {/* Admin Section - Bottom */}
-        <div className="p-2 space-y-1 border-t border-hh-border">
-          {adminNavItems
-            .map((item) => {
-              const Icon = item.icon;
-              const isActive = isNavItemActive(item.id);
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigate(item.id)}
-                  className={`w-full flex items-center justify-center p-2.5 rounded-lg transition-all ${
-                    isActive
-                      ? "bg-hh-primary text-white"
-                      : "text-hh-text hover:bg-hh-ui-50"
-                  }`}
-                  aria-label={item.label}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                </button>
-              );
-            })}
-          
-          {/* Admin View Toggle - Mobile Collapsed Sidebar */}
-          {isAdmin && (
+        {/* Admin View Toggle - Mobile Collapsed Sidebar */}
+        {isAdmin && (
+          <div className="p-2 border-t border-hh-border">
             <button
-              onClick={() => navigate?.("admin-dashboard")}
+              onClick={() => navigate?.("admin-uploads")}
               className="w-full flex items-center justify-center p-2.5 rounded-lg transition-colors border border-hh-border text-hh-text hover:bg-hh-ui-50"
               aria-label="Admin View"
             >
               <Shield className="w-5 h-5 flex-shrink-0" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile Menu Sheet */}
@@ -370,41 +268,14 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
               })}
           </nav>
           
-          {/* Bottom Section - Admin Items */}
-          <div className="p-4 space-y-1 border-t border-hh-border flex-shrink-0">
-            {adminNavItems
-              .map((item) => {
-                const Icon = item.icon;
-                const isActive = isNavItemActive(item.id);
-                
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      handleNavigate(item.id);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-hh-primary text-white"
-                        : "text-hh-text hover:bg-hh-ui-50"
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="text-[16px] leading-[24px] font-medium">
-                      {item.label}
-                    </span>
-                  </button>
-                );
-              })}
-            
-            {/* Admin View Toggle - Mobile Sheet */}
-            {isAdmin && (
+          {/* Admin View Toggle - Mobile Sheet */}
+          {isAdmin && (
+            <div className="p-4 border-t border-hh-border flex-shrink-0">
               <Button
                 variant="outline"
                 className="w-full gap-3 justify-start h-12"
                 onClick={() => {
-                  navigate?.("admin-dashboard");
+                  navigate?.("admin-uploads");
                   setMobileMenuOpen(false);
                 }}
               >
@@ -413,8 +284,8 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
                   Admin View
                 </span>
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
 

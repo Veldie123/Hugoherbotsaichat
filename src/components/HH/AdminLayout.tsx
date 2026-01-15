@@ -78,25 +78,14 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
     }
   }, [currentPage]);
 
-  // Primary navigation items
+  // Primary navigation items - Simplified to 2 core features
   const mainNavItems = [
-    { id: "admin-dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "admin-techniques", label: "E.P.I.C technieken", icon: Target },
-    { id: "admin-videos", label: "Video's", icon: Video },
-    { id: "admin-live", label: "Webinars", icon: Radio },
     { id: "admin-uploads", label: "Gespreksanalyse", icon: Upload },
     { id: "admin-sessions", label: "Hugo a.i.", icon: MessageSquare },
   ];
 
-  // Secondary navigation items (including Users)
-  const adminManagementItems = [
-    { id: "admin-users", label: "Gebruikers", icon: Users },
-    { id: "admin-analytics", label: "Analytics", icon: BarChart3 },
-    { id: "admin-content", label: "Content", icon: Library },
-    { id: "admin-help", label: "Help Center", icon: HelpCircle },
-    { id: "admin-resources", label: "Resources", icon: FileText },
-    { id: "admin-settings", label: "Instellingen", icon: Settings },
-  ];
+  // Secondary navigation items removed - keeping empty for structure
+  const adminManagementItems: { id: string; label: string; icon: any }[] = [];
 
   const handleNavigate = (page: string) => {
     setMobileMenuOpen(false);
@@ -250,7 +239,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
                 <Button
                   variant="outline"
                   className="w-full gap-2 justify-start h-12"
-                  onClick={() => handleNavigate("dashboard")}
+                  onClick={() => handleNavigate("analysis")}
                 >
                   <Eye className="w-5 h-5" />
                   <span className="text-[16px] font-normal">User View</span>
@@ -339,7 +328,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
           <Button
             variant="outline"
             className="w-full gap-2 justify-start"
-            onClick={() => navigate?.("dashboard")}
+            onClick={() => navigate?.("analysis")}
           >
             <Eye className="w-4 h-4" />
             {!collapsed && <span className="text-[14px]">User View</span>}
@@ -504,7 +493,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate?.("dashboard")}>
+                <DropdownMenuItem onClick={() => navigate?.("analysis")}>
                   <Eye className="w-4 h-4 mr-2" />
                   Switch to User View
                 </DropdownMenuItem>
