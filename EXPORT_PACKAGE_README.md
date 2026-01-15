@@ -1,7 +1,32 @@
 # HugoHerbots.ai - Export Package
 ## Gespreksanalyse + Hugo a.i. + Config Review Modules
+### v2.0 - Multi-Modal Chat & Progressive Unlocking
 
 Dit document beschrijft welke bestanden je nodig hebt om de Gespreksanalyse, Hugo a.i. en Config Review modules te exporteren naar een andere Replit met werkende backend.
+
+---
+
+## 🆕 NIEUWE FEATURES (v2.0)
+
+### Multi-Modal Chat Interface (TalkToHugoAI.tsx)
+De Hugo a.i. chat ondersteunt nu 3 modi:
+- **Chat Mode**: WhatsApp-stijl met dicteermicrofoon
+- **Audio Mode**: Teal gradient achtergrond, waveform visualisatie, telefoon controls (Mute, Speaker, End)
+- **Video Mode**: Dark slate gradient, HH avatar, PiP preview, camera controls
+
+### Progressive Unlocking System (EPICSidebar)
+- Locked techniques: Grijs + 🔒 icoon
+- Completed techniques: ✅ Groen vinkje
+- Current technique: Highlighted in brand colors
+- Props: `completedTechniques`, `currentUnlockedPhase`
+
+### 3-Level Technique Hierarchy
+Sidebar ondersteunt nu 3 niveaus:
+- Parent → Child → Grandchild
+- Voorbeelden: 2.1.1.x (discovery themes), 4.2.x (afritten types), 4.3.x (closing steps)
+
+### Session Timer
+MM:SS timer die start wanneer een techniek wordt geselecteerd.
 
 ---
 
@@ -193,11 +218,20 @@ interface Session {
   techniqueNumber: string;
   techniqueName: string;
   type: "AI Audio" | "AI Video" | "AI Chat" | "Rollenspel Upload";
+  mode: "chat" | "audio" | "video"; // NEW: Multi-modal type
   score: number;       // 0-100
   duration: string;    // "18:45"
   quality: "Excellent" | "Good" | "Needs Work";
   createdAt: string;   // ISO date
   messages: Message[];
+}
+
+// EPICSidebar Props (v2.0)
+interface EPICSidebarProps {
+  // ... existing props ...
+  isUserView?: boolean;              // Purple vs hh-ink color scheme
+  completedTechniques?: string[];    // Array of completed technique nummers
+  currentUnlockedPhase?: number;     // Highest unlocked phase (0-4)
 }
 
 // Message Interface
