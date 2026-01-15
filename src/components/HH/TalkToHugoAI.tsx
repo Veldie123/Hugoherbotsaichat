@@ -338,12 +338,15 @@ export function TalkToHugoAI({
 
   const renderAudioInterface = () => (
     <div className="h-full w-full flex flex-col" style={{ background: 'linear-gradient(180deg, #059669 0%, #0d9488 50%, #0f766e 100%)' }}>
-      {/* Top section - caller info */}
+      {/* Top section - caller info with large avatar */}
       <div className="flex-1 flex flex-col items-center justify-center">
-        {/* Phone icon with pulsing effect */}
+        {/* Large HH avatar */}
         <div className="relative mb-6">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}>
-            <Phone className="w-10 h-10 text-white" />
+          <div 
+            className="rounded-full flex items-center justify-center"
+            style={{ width: '180px', height: '180px', backgroundColor: 'rgba(255,255,255,0.25)' }}
+          >
+            <span className="text-white font-bold" style={{ fontSize: '64px' }}>HH</span>
           </div>
         </div>
         
@@ -351,13 +354,14 @@ export function TalkToHugoAI({
         <p className="text-[16px] mb-2" style={{ color: 'rgba(255,255,255,0.8)' }}>Bellen...</p>
         <p className="text-[22px] font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>{formatTime(sessionTimer)}</p>
         
-        {/* Simple waveform visualization */}
+        {/* Waveform visualization */}
         <div className="flex items-end justify-center gap-1.5 h-16 mt-8">
           {[...Array(15)].map((_, i) => (
             <div
               key={i}
-              className="w-2 rounded-full"
+              className="rounded-full"
               style={{
+                width: '6px',
                 backgroundColor: 'rgba(255,255,255,0.7)',
                 height: `${Math.random() * 40 + 15}px`,
               }}
@@ -366,36 +370,55 @@ export function TalkToHugoAI({
         </div>
       </div>
 
-      {/* Bottom controls */}
+      {/* Bottom controls - circular buttons with labels below */}
       <div className="pb-8 pt-4">
-        <div className="flex items-center justify-center gap-6">
-          <button 
-            onClick={() => setIsMuted(!isMuted)}
-            className="w-14 h-14 rounded-full flex items-center justify-center transition-colors"
-            style={{ backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.2)' }}
-          >
-            {isMuted ? <MicOff className="w-5 h-5 text-teal-700" /> : <Mic className="w-5 h-5 text-white" />}
-          </button>
+        <div className="flex items-center justify-center gap-8">
+          <div className="flex flex-col items-center gap-2">
+            <button 
+              onClick={() => setIsMuted(!isMuted)}
+              className="flex items-center justify-center transition-colors"
+              style={{ 
+                width: '56px', 
+                height: '56px', 
+                borderRadius: '50%',
+                backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.2)' 
+              }}
+            >
+              {isMuted ? <MicOff className="w-5 h-5 text-teal-700" /> : <Mic className="w-5 h-5 text-white" />}
+            </button>
+            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>{isMuted ? "Unmute" : "Mute"}</span>
+          </div>
           
-          <button 
-            onClick={handleStopRoleplay}
-            className="w-16 h-16 rounded-full flex items-center justify-center shadow-xl"
-            style={{ backgroundColor: '#ef4444' }}
-          >
-            <Phone className="w-6 h-6 text-white" style={{ transform: 'rotate(135deg)' }} />
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button 
+              onClick={handleStopRoleplay}
+              className="flex items-center justify-center shadow-xl"
+              style={{ 
+                width: '64px', 
+                height: '64px', 
+                borderRadius: '50%',
+                backgroundColor: '#ef4444' 
+              }}
+            >
+              <Phone className="w-6 h-6 text-white" style={{ transform: 'rotate(135deg)' }} />
+            </button>
+            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Ophangen</span>
+          </div>
           
-          <button 
-            className="w-14 h-14 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-          >
-            <Volume2 className="w-5 h-5 text-white" />
-          </button>
-        </div>
-        <div className="flex items-center justify-center gap-10 mt-3">
-          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>{isMuted ? "Unmute" : "Mute"}</span>
-          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Ophangen</span>
-          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Speaker</span>
+          <div className="flex flex-col items-center gap-2">
+            <button 
+              className="flex items-center justify-center"
+              style={{ 
+                width: '56px', 
+                height: '56px', 
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255,255,255,0.2)' 
+              }}
+            >
+              <Volume2 className="w-5 h-5 text-white" />
+            </button>
+            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Speaker</span>
+          </div>
         </div>
       </div>
     </div>
@@ -403,10 +426,13 @@ export function TalkToHugoAI({
 
   const renderVideoInterface = () => (
     <div className="h-full w-full relative" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%)' }}>
-      {/* Main video area with HH avatar */}
+      {/* Main video area with large HH avatar */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-40 h-40 rounded-full flex items-center justify-center" style={{ backgroundColor: '#6B7A92' }}>
-          <span className="text-white text-[56px] font-bold">HH</span>
+        <div 
+          className="rounded-full flex items-center justify-center"
+          style={{ width: '220px', height: '220px', backgroundColor: '#6B7A92' }}
+        >
+          <span className="text-white font-bold" style={{ fontSize: '80px' }}>HH</span>
         </div>
       </div>
 
@@ -425,33 +451,55 @@ export function TalkToHugoAI({
         </div>
       </div>
 
-      {/* Bottom controls */}
+      {/* Bottom controls - circular buttons */}
       <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
-        <div className="flex items-center justify-center gap-4">
-          <button 
-            onClick={() => setIsMuted(!isMuted)}
-            className="w-14 h-14 rounded-full flex items-center justify-center transition-colors"
-            style={{ backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.2)' }}
-          >
-            {isMuted ? <MicOff className="w-5 h-5 text-slate-800" /> : <Mic className="w-5 h-5 text-white" />}
-          </button>
+        <div className="flex items-center justify-center gap-6">
+          <div className="flex flex-col items-center gap-2">
+            <button 
+              onClick={() => setIsMuted(!isMuted)}
+              className="flex items-center justify-center transition-colors"
+              style={{ 
+                width: '56px', 
+                height: '56px', 
+                borderRadius: '50%',
+                backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.2)' 
+              }}
+            >
+              {isMuted ? <MicOff className="w-5 h-5 text-slate-800" /> : <Mic className="w-5 h-5 text-white" />}
+            </button>
+            <span className="text-white/70 text-[11px]">{isMuted ? "Unmute" : "Mute"}</span>
+          </div>
           
-          <button className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
-            <Video className="w-5 h-5 text-white" />
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button 
+              className="flex items-center justify-center"
+              style={{ 
+                width: '56px', 
+                height: '56px', 
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255,255,255,0.2)' 
+              }}
+            >
+              <Video className="w-5 h-5 text-white" />
+            </button>
+            <span className="text-white/70 text-[11px]">Camera</span>
+          </div>
           
-          <button 
-            onClick={handleStopRoleplay}
-            className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl"
-            style={{ backgroundColor: '#ef4444' }}
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
-        </div>
-        <div className="flex items-center justify-center gap-10 mt-3">
-          <span className="text-white/70 text-[11px]">{isMuted ? "Unmute" : "Mute"}</span>
-          <span className="text-white/70 text-[11px]">Camera</span>
-          <span className="text-white/70 text-[11px]">Ophangen</span>
+          <div className="flex flex-col items-center gap-2">
+            <button 
+              onClick={handleStopRoleplay}
+              className="flex items-center justify-center shadow-xl"
+              style={{ 
+                width: '56px', 
+                height: '56px', 
+                borderRadius: '50%',
+                backgroundColor: '#ef4444' 
+              }}
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            <span className="text-white/70 text-[11px]">Ophangen</span>
+          </div>
         </div>
       </div>
     </div>

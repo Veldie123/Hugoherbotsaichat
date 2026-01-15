@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, BarChart3, Lightbulb, Target } from "lucide-react";
 
 interface StopRoleplayDialogProps {
   open: boolean;
@@ -22,52 +22,51 @@ export function StopRoleplayDialog({
 }: StopRoleplayDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[520px] p-0 overflow-hidden">
-        {/* Header with friendly green accent */}
-        <div className="bg-green-50 border-b border-green-200 px-6 py-6">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
+      <DialogContent className="max-w-[480px] p-0 overflow-hidden border-hh-border">
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1E2A3B' }}>
+              <CheckCircle2 className="w-5 h-5 text-white" />
             </div>
-            <div className="flex-1">
-              <DialogTitle className="text-[24px] font-bold text-hh-text mb-2">
-                Goed bezig! 👏
-              </DialogTitle>
-              <DialogDescription className="text-[15px] text-hh-muted leading-relaxed">
-                Je rollenspel is afgerond. Nu krijg je gedetailleerde feedback van Hugo.
-              </DialogDescription>
-            </div>
+            <DialogTitle className="text-[20px] font-semibold text-hh-text">
+              Sessie afgerond
+            </DialogTitle>
           </div>
+          <DialogDescription className="text-[14px] text-hh-muted leading-relaxed">
+            Je oefensessie is voltooid. Bekijk nu je persoonlijke feedback en verbeterpunten.
+          </DialogDescription>
         </div>
 
-        {/* Body */}
-        <div className="px-6 py-6 space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-[14px] text-blue-900 font-medium mb-1">
-              📊 Wat komt er nu?
-            </p>
-            <ul className="text-[14px] text-blue-800 space-y-1.5 ml-4">
-              <li>• Je persoonlijke score & analyse</li>
-              <li>• Hugo's tips per gebruikte techniek</li>
-              <li>• Concrete verbeterpunten voor volgende keer</li>
-            </ul>
+        {/* Body - what's next */}
+        <div className="px-6 pb-6">
+          <div className="border border-hh-border rounded-lg divide-y divide-hh-border">
+            <div className="flex items-center gap-3 p-3">
+              <BarChart3 className="w-4 h-4 text-hh-primary flex-shrink-0" />
+              <span className="text-[13px] text-hh-text">Je persoonlijke score & analyse</span>
+            </div>
+            <div className="flex items-center gap-3 p-3">
+              <Lightbulb className="w-4 h-4 text-hh-primary flex-shrink-0" />
+              <span className="text-[13px] text-hh-text">Hugo's tips per gebruikte techniek</span>
+            </div>
+            <div className="flex items-center gap-3 p-3">
+              <Target className="w-4 h-4 text-hh-primary flex-shrink-0" />
+              <span className="text-[13px] text-hh-text">Concrete verbeterpunten voor volgende keer</span>
+            </div>
           </div>
-          
-          <p className="text-[14px] text-hh-muted text-center">
-            Klaar om je resultaten te bekijken?
-          </p>
         </div>
 
         {/* Footer */}
-        <DialogFooter className="px-6 py-4 bg-hh-ui-50 border-t border-hh-border">
+        <DialogFooter className="px-6 py-4 border-t border-hh-border bg-hh-ui-50">
           <Button
             onClick={() => {
               onConfirm();
               onOpenChange(false);
             }}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold h-12 text-[15px]"
+            className="w-full font-medium h-11 text-[14px]"
+            style={{ backgroundColor: '#1E2A3B' }}
           >
-            Bekijk Feedback 🎯
+            Bekijk Feedback
           </Button>
         </DialogFooter>
       </DialogContent>
