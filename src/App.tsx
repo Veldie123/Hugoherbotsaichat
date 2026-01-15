@@ -116,6 +116,7 @@ export default function App() {
           {/* User View - Gespreksanalyse */}
           {currentPage === "analysis" && <Analysis navigate={navigate} isAdmin={isAdmin} />}
           {currentPage === "analysis-results" && <AnalysisResults navigate={navigate} isAdmin={isAdmin} />}
+          {currentPage === "upload-analysis" && <AnalysisResults navigate={navigate} isAdmin={isAdmin} />}
 
           {/* Admin View - Gespreksanalyse */}
           {currentPage === "admin-uploads" && <AdminUploadManagement navigate={navigate} />}
