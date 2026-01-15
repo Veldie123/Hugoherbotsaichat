@@ -18,6 +18,13 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
+import {
   Search,
   List,
   LayoutGrid,
@@ -32,8 +39,14 @@ import {
   AlertTriangle,
   Sparkles,
   Upload,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { getFaseNaam } from "../../data/technieken-service";
+import { getCodeBadgeColors } from "../../utils/phaseColors";
 
 interface HugoAIOverviewProps {
   navigate?: (page: string) => void;
@@ -53,6 +66,7 @@ interface Session {
   duration: string;
   date: string;
   time?: string;
+  transcript: Array<{ speaker: string; time: string; text: string }>;
 }
 
 const sessions: Session[] = [
@@ -67,6 +81,13 @@ const sessions: Session[] = [
     duration: "18:45",
     date: "2025-01-15",
     time: "14:23",
+    transcript: [
+      { speaker: "AI Coach", time: "00:00", text: "Goedemiddag! Vandaag gaan we oefenen met feitgerichte vragen. Ben je er klaar voor?" },
+      { speaker: "Jan", time: "00:05", text: "Ja, ik ben er klaar voor. Ik wil graag beter worden in het stellen van de juiste vragen." },
+      { speaker: "AI Coach", time: "00:12", text: "Perfect! Stel je voor: je belt een prospect die interesse heeft getoond in jullie software. Begin maar met je opening." },
+      { speaker: "Jan", time: "00:20", text: "Goedemiddag, met Jan van TechCorp. Ik bel naar aanleiding van uw interesse in onze CRM oplossing. Klopt het dat jullie momenteel uitdagingen ervaren met klantendata?" },
+      { speaker: "AI Coach", time: "00:35", text: "Goede opening! Je gaat direct in op hun situatie. Ja, dat klopt. We hebben inderdaad moeite met het centraliseren van klantinformatie." },
+    ],
   },
   {
     id: 2,
@@ -79,6 +100,12 @@ const sessions: Session[] = [
     duration: "24:12",
     date: "2025-01-15",
     time: "10:45",
+    transcript: [
+      { speaker: "AI Coach", time: "00:00", text: "Vandaag oefenen we met bezwaar afhandeling. Ik zal de rol spelen van een sceptische klant. Klaar?" },
+      { speaker: "Sarah", time: "00:06", text: "Ja, laten we beginnen." },
+      { speaker: "AI Coach", time: "00:08", text: "Jullie prijs is veel te hoog vergeleken met de concurrent. Waarom zou ik voor jullie kiezen?" },
+      { speaker: "Sarah", time: "00:15", text: "Ik begrijp uw bezorgdheid over de prijs. Mag ik vragen met welke concurrent u ons vergelijkt?" },
+    ],
   },
   {
     id: 3,
@@ -91,6 +118,11 @@ const sessions: Session[] = [
     duration: "12:30",
     date: "2025-01-14",
     time: "16:20",
+    transcript: [
+      { speaker: "AI Coach", time: "00:00", text: "Laten we oefenen met het openen van een gesprek en het gentleman's agreement. Begin maar!" },
+      { speaker: "Mark", time: "00:05", text: "Hoi, ik ben Mark. Kan ik u iets vertellen over ons product?" },
+      { speaker: "AI Coach", time: "00:10", text: "Dat klopt niet helemaal. Probeer eerst een gentleman's agreement te maken voordat je begint met pitchen." },
+    ],
   },
   {
     id: 4,
@@ -103,6 +135,11 @@ const sessions: Session[] = [
     duration: "32:15",
     date: "2025-01-15",
     time: "14:23",
+    transcript: [
+      { speaker: "AI Coach", time: "00:00", text: "Vandaag analyseren we je gesprek over meningsgerichte vragen." },
+      { speaker: "Lisa", time: "00:08", text: "Wat vindt u van de huidige manier waarop jullie team leads opvolgt?" },
+      { speaker: "AI Coach", time: "00:15", text: "Goede meningsgerichte vraag! Je vraagt naar hun mening, niet alleen naar feiten." },
+    ],
   },
 ];
 
@@ -163,18 +200,64 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterQuality, setFilterQuality] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [sortField, setSortField] = useState<"score" | "date" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
+  const [expandedDebug, setExpandedDebug] = useState<string | null>(null);
 
-  const filteredSessions = sessions.filter((session) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      session.naam.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.nummer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType =
-      filterType === "all" || session.type === filterType;
-    const matchesQuality =
-      filterQuality === "all" || session.quality === filterQuality;
-    return matchesSearch && matchesType && matchesQuality;
-  });
+  const handleSort = (field: "score" | "date") => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const toggleDebug = (lineId: string) => {
+    setExpandedDebug(expandedDebug === lineId ? null : lineId);
+  };
+
+  const openTranscript = (session: Session) => {
+    setSelectedSession(session);
+    setTranscriptDialogOpen(true);
+  };
+
+  const filteredSessions = sessions
+    .filter((session) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        session.naam.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        session.nummer.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType =
+        filterType === "all" || session.type === filterType;
+      const matchesQuality =
+        filterQuality === "all" || session.quality === filterQuality;
+      return matchesSearch && matchesType && matchesQuality;
+    })
+    .sort((a, b) => {
+      if (!sortField) return 0;
+      
+      if (sortField === "score") {
+        return sortDirection === "asc" ? a.score - b.score : b.score - a.score;
+      }
+      if (sortField === "date") {
+        const dateA = new Date(`${a.date} ${a.time || "00:00"}`).getTime();
+        const dateB = new Date(`${b.date} ${b.time || "00:00"}`).getTime();
+        return sortDirection === "asc" ? dateA - dateB : dateB - dateA;
+      }
+      return 0;
+    });
+
+  const SortIcon = ({ field }: { field: "score" | "date" }) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-3 h-3 ml-1 text-hh-muted" />;
+    }
+    return sortDirection === "asc" 
+      ? <ArrowUp className="w-3 h-3 ml-1 text-hh-ink" />
+      : <ArrowDown className="w-3 h-3 ml-1 text-hh-ink" />;
+  };
 
   return (
     <AppLayout currentPage="hugo-overview" navigate={navigate} isAdmin={isAdmin}>
@@ -350,9 +433,25 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                     <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">#</th>
                     <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[25%]">Techniek</th>
                     <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[20%]">Type</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">Score</th>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("score")}
+                    >
+                      <div className="flex items-center">
+                        Score
+                        <SortIcon field="score" />
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">Duur</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[120px]">Datum</th>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[120px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("date")}
+                    >
+                      <div className="flex items-center">
+                        Datum
+                        <SortIcon field="date" />
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[70px]">Acties</th>
                   </tr>
                 </thead>
@@ -362,9 +461,9 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       key={session.id}
                       className="border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors"
                     >
-                      {/* Technique Number Badge - filled style like Admin */}
+                      {/* Technique Number Badge - colored by phase */}
                       <td className="py-3 px-4">
-                        <Badge variant="outline" className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold px-2.5 py-1">
+                        <Badge variant="outline" className={`${getCodeBadgeColors(session.nummer)} text-[11px] font-mono font-semibold px-2.5 py-1`}>
                           {session.nummer}
                         </Badge>
                       </td>
@@ -391,7 +490,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                         </div>
                       </td>
                       
-                      {/* Score */}
+                      {/* Score - colored */}
                       <td className="py-3 px-4">
                         <span
                           className={`text-[14px] font-medium ${
@@ -430,7 +529,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openTranscript(session)}>
                               <Eye className="w-4 h-4 mr-2" />
                               Bekijk details
                             </DropdownMenuItem>
@@ -448,11 +547,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
             {filteredSessions.map((session) => (
               <Card
                 key={session.id}
-                className="p-5 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-md transition-shadow"
+                className="p-5 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => openTranscript(session)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="bg-hh-ink/10 text-hh-ink border-hh-ink/20 text-[11px] font-mono font-semibold px-2.5 py-1">
+                    <Badge variant="outline" className={`${getCodeBadgeColors(session.nummer)} text-[11px] font-mono font-semibold px-2.5 py-1`}>
                       {session.nummer}
                     </Badge>
                     <div className="w-10 h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
@@ -461,12 +561,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e: Event) => { e.stopPropagation(); openTranscript(session); }}>
                         <Eye className="w-4 h-4 mr-2" />
                         Bekijk details
                       </DropdownMenuItem>
@@ -511,6 +611,146 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
           </div>
         )}
       </div>
+
+      {/* Transcript Dialog */}
+      <Dialog open={transcriptDialogOpen} onOpenChange={setTranscriptDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 flex-wrap">
+              <span>{selectedSession?.naam || "Session Details"}</span>
+              {selectedSession && (
+                <>
+                  <Badge variant="outline" className={`${getCodeBadgeColors(selectedSession.nummer)} text-[11px]`}>
+                    {selectedSession.nummer} - {selectedSession.naam}
+                  </Badge>
+                  {getQualityBadge(selectedSession.quality)}
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Bekijk de volledige transcript en details van de sessie
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedSession && (
+            <div className="space-y-6">
+              {/* Session Info */}
+              <div className="flex items-center gap-4 text-[14px] leading-[20px] text-hh-muted flex-wrap">
+                <span>{getTypeLabel(selectedSession.type)}</span>
+                <span>•</span>
+                <span>{selectedSession.date} {selectedSession.time}</span>
+              </div>
+
+              {/* Transcript */}
+              <Card className="p-4 rounded-[16px] border-hh-border">
+                <h3 className="text-[16px] leading-[22px] text-hh-text font-medium mb-3">
+                  Transcript
+                </h3>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {selectedSession.transcript.map((line, index) => {
+                    const isAICoach = line.speaker === "AI Coach" || line.speaker.includes("Coach");
+                    const lineId = `${selectedSession.id}-${index}`;
+                    
+                    return (
+                      <div key={index} className="space-y-2">
+                        <div
+                          className={`flex gap-3 p-3 rounded-lg ${
+                            isAICoach ? "bg-purple-50" : "bg-blue-50"
+                          }`}
+                        >
+                          <div className="flex-shrink-0">
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] ${
+                                isAICoach
+                                  ? "bg-purple-600/10 text-purple-600 border-purple-600/20"
+                                  : "bg-blue-600/10 text-blue-600 border-blue-600/20"
+                              }`}
+                            >
+                              {line.time}
+                            </Badge>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[13px] leading-[18px] font-medium text-hh-text mb-1">
+                              {line.speaker}:
+                            </p>
+                            <p className="text-[14px] leading-[20px] text-hh-text">
+                              {line.text}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Debug toggle */}
+                        <div className="ml-11">
+                          <button
+                            onClick={() => toggleDebug(lineId)}
+                            className="flex items-center gap-2 text-[12px] leading-[16px] text-hh-muted hover:text-hh-text transition-colors"
+                          >
+                            {expandedDebug === lineId ? (
+                              <ChevronDown className="w-3 h-3" />
+                            ) : (
+                              <ChevronRight className="w-3 h-3" />
+                            )}
+                            Debug Info
+                          </button>
+
+                          {expandedDebug === lineId && (
+                            <Card className="mt-2 p-4 border-2 border-dashed border-hh-ink/20 bg-hh-ui-50/30">
+                              <div className="space-y-3 text-[13px] leading-[18px]">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-hh-muted">Signaal:</span>
+                                  <Badge className="bg-green-100 text-green-700 border-green-300">
+                                    positief
+                                  </Badge>
+                                </div>
+                              </div>
+                            </Card>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              {/* AI Feedback */}
+              <Card className="p-4 rounded-[16px] border-hh-border bg-hh-ui-50/50">
+                <h3 className="text-[16px] leading-[22px] text-hh-text font-medium mb-3">
+                  AI Feedback
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-[13px] font-medium text-hh-success mb-2">Sterke punten</h4>
+                    <ul className="space-y-1">
+                      <li className="text-[13px] text-hh-text flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-hh-success flex-shrink-0 mt-0.5" />
+                        Goede opening
+                      </li>
+                      <li className="text-[13px] text-hh-text flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-hh-success flex-shrink-0 mt-0.5" />
+                        Sterke feitgerichte vragen
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="text-[13px] font-medium text-hh-warning mb-2">Verbeterpunten</h4>
+                    <ul className="space-y-1">
+                      <li className="text-[13px] text-hh-text flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-hh-warning flex-shrink-0 mt-0.5" />
+                        Meer doorvragen na antwoord
+                      </li>
+                      <li className="text-[13px] text-hh-text flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-hh-warning flex-shrink-0 mt-0.5" />
+                        Pauzes inbouwen
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
