@@ -7,6 +7,7 @@ import {
   Video,
   FileAudio,
   MessageSquare,
+  Mic,
   CheckCircle2,
   AlertTriangle,
   ThumbsUp,
@@ -310,13 +311,26 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "Audio":
-        return <FileAudio className="w-4 h-4 text-hh-muted" />;
+        return <Mic className="w-4 h-4 text-purple-600" />;
       case "Video":
-        return <Video className="w-4 h-4 text-hh-muted" />;
+        return <Video className="w-4 h-4 text-purple-600" />;
       case "Chat":
-        return <MessageSquare className="w-4 h-4 text-hh-muted" />;
+        return <MessageSquare className="w-4 h-4 text-purple-600" />;
       default:
         return null;
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "Audio":
+        return "AI Audio";
+      case "Video":
+        return "AI Video";
+      case "Chat":
+        return "AI Chat";
+      default:
+        return type;
     }
   };
 
@@ -572,7 +586,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {getTypeIcon(upload.type)}
-                        <span className="text-[13px] text-hh-text">{upload.type}</span>
+                        <span className="text-[13px] text-hh-text">{getTypeLabel(upload.type)}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
