@@ -356,7 +356,8 @@ export function AdminChatExpertMode({
   };
 
   const handleStopRoleplay = () => {
-    setStopRoleplayDialogOpen(true);
+    // Admin/Expert mode: skip the feedback dialog, just reset directly
+    confirmStopRoleplay();
   };
 
   const confirmStopRoleplay = () => {
@@ -482,35 +483,35 @@ export function AdminChatExpertMode({
                 </div>
               </div>
               
-              {/* Mode Toggle - Chat/Bellen/Video */}
+              {/* Mode Toggle - Chat/Bellen/Video (same as User View) */}
               <div className="flex items-center gap-3">
                 {selectedTechnique && (
                   <div className="flex items-center gap-1.5 text-[13px] text-hh-muted">
                     <Clock className="w-4 h-4" />
-                    <span>{formatTime(sessionTimer)}</span>
+                    <span className="font-mono">{formatTime(sessionTimer)}</span>
                   </div>
                 )}
-                <div className="flex items-center bg-slate-100 rounded-lg p-1">
+                <div className="flex items-center bg-hh-ui-50 rounded-lg p-1">
                   <button
                     onClick={() => setChatMode("chat")}
-                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 text-[12px] ${chatMode === "chat" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                    className={`p-2 rounded-md transition-all ${chatMode === "chat" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                    title="Chat"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    Chat
                   </button>
                   <button
                     onClick={() => setChatMode("audio")}
-                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 text-[12px] ${chatMode === "audio" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                    className={`p-2 rounded-md transition-all ${chatMode === "audio" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                    title="Bellen"
                   >
                     <Phone className="w-4 h-4" />
-                    Bellen
                   </button>
                   <button
                     onClick={() => setChatMode("video")}
-                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 text-[12px] ${chatMode === "video" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                    className={`p-2 rounded-md transition-all ${chatMode === "video" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                    title="Video"
                   >
                     <Video className="w-4 h-4" />
-                    Video
                   </button>
                 </div>
               </div>
@@ -1366,8 +1367,8 @@ export function AdminChatExpertMode({
               </div>
             )}
             
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
+            <div className="flex gap-2 items-center">
+              <div className="flex-1 min-w-0 relative">
                 <Input
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
@@ -1391,7 +1392,7 @@ export function AdminChatExpertMode({
               </div>
               <Button 
                 onClick={handleSendMessage} 
-                className="gap-2 bg-slate-800 hover:bg-slate-900"
+                className="gap-2 bg-slate-800 hover:bg-slate-900 shrink-0"
                 disabled={!selectedTechnique || !inputText.trim()}
               >
                 <Send className="w-4 h-4" />
