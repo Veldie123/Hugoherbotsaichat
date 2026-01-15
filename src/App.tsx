@@ -10,6 +10,7 @@ import { AuthCallback } from "./components/HH/AuthCallback";
 import { TalkToHugoAI } from "./components/HH/TalkToHugoAI";
 import { Analysis } from "./components/HH/Analysis";
 import { AnalysisResults } from "./components/HH/AnalysisResults";
+import { UploadAnalysis } from "./components/HH/UploadAnalysis";
 import { AdminSessions } from "./components/HH/AdminSessions";
 import { AdminChatExpertMode } from "./components/HH/AdminChatExpertMode";
 import { AdminUploadManagement } from "./components/HH/AdminUploadManagement";
@@ -116,7 +117,7 @@ export default function App() {
           {/* User View - Gespreksanalyse */}
           {currentPage === "analysis" && <Analysis navigate={navigate} isAdmin={isAdmin} />}
           {currentPage === "analysis-results" && <AnalysisResults navigate={navigate} isAdmin={isAdmin} />}
-          {currentPage === "upload-analysis" && <AnalysisResults navigate={navigate} isAdmin={isAdmin} />}
+          {currentPage === "upload-analysis" && <UploadAnalysis navigate={navigate} isAdmin={isAdmin} />}
 
           {/* Admin View - Gespreksanalyse */}
           {currentPage === "admin-uploads" && <AdminUploadManagement navigate={navigate} />}
