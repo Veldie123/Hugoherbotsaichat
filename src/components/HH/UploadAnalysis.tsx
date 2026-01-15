@@ -177,7 +177,7 @@ export function UploadAnalysis({ navigate, isAdmin }: UploadAnalysisProps) {
 
             {liveStatus === "ready" && (
               <Button
-                className="w-full gap-2 bg-hh-ink hover:bg-hh-ink/90 text-white h-12 text-[15px]"
+                className="w-full gap-2 bg-[#5B7B9A] hover:bg-[#4A6A89] text-white h-12 text-[15px]"
                 onClick={handleStartLiveCoaching}
               >
                 <Mic className="w-4 h-4" />
@@ -257,21 +257,21 @@ export function UploadAnalysis({ navigate, isAdmin }: UploadAnalysisProps) {
           </Card>
         </div>
 
-        <Card className="p-4 rounded-[16px] bg-amber-50/50 border-amber-200/50 flex items-start gap-3">
-          <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-[14px] font-medium text-amber-900 mb-1">
+        <Card className="p-4 rounded-[16px] bg-white border-hh-border shadow-hh-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <Info className="w-5 h-5 text-amber-500 shrink-0" />
+            <p className="text-[14px] font-medium text-hh-ink">
               Privacy & toestemming
             </p>
-            <p className="text-[13px] text-amber-800">
-              Upload alleen gesprekken waarvoor je toestemming hebt van alle betrokkenen. Bij echte
-              klantgesprekken: vraag expliciet toestemming voor opname en verwerking. Zie ons{" "}
-              <button className="text-amber-900 underline hover:no-underline">
-                privacy beleid
-              </button>
-              .
-            </p>
           </div>
+          <p className="text-[13px] text-hh-muted leading-relaxed">
+            Upload alleen gesprekken waarvoor je toestemming hebt van alle betrokkenen. Bij echte
+            klantgesprekken: vraag expliciet toestemming voor opname en verwerking. Zie ons{" "}
+            <button className="text-hh-ink font-semibold hover:underline">
+              privacy beleid
+            </button>
+            .
+          </p>
         </Card>
       </div>
     </AppLayout>
