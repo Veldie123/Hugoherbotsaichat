@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 
 import { getCodeBadgeColors } from "../../utils/phaseColors";
+import { TranscriptDialog, TranscriptSession } from "./TranscriptDialog";
 
 interface AnalysisProps {
   navigate?: (page: string) => void;
@@ -61,6 +62,32 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortField, setSortField] = useState<"date" | "score" | null>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<TranscriptSession | null>(null);
+
+  const openTranscript = (conv: ConversationRecord) => {
+    const session: TranscriptSession = {
+      id: conv.id,
+      techniqueNumber: conv.techniquesUsed[0] || "1.1",
+      techniqueName: conv.title,
+      type: conv.type === "call" ? "Audio" : conv.type === "meeting" ? "Video" : "Demo",
+      date: conv.date,
+      duration: conv.duration,
+      score: conv.score,
+      quality: conv.score >= 80 ? "excellent" : conv.score >= 60 ? "good" : "needs-improvement",
+      transcript: [
+        { speaker: "AI Coach", time: "00:00", text: "Goedemiddag! Vandaag gaan we oefenen met verkooptechnieken. Ben je er klaar voor?" },
+        { speaker: "Gebruiker", time: "00:05", text: "Ja, ik ben er klaar voor. Ik wil graag beter worden in het stellen van de juiste vragen." },
+        { speaker: "AI Coach", time: "00:12", text: "Perfect! Stel je voor: je belt een prospect die interesse heeft getoond in jullie software. Begin maar met je opening." },
+        { speaker: "Gebruiker", time: "00:25", text: "Goedemiddag, u spreekt met Jan. Ik bel naar aanleiding van uw interesse in onze oplossing. Heeft u even tijd?" },
+        { speaker: "AI Coach", time: "00:35", text: "Goede opening! Je hebt direct de reden van je call benoemd. Probeer nu een open vraag te stellen om de situatie te verkennen." },
+      ],
+      strengths: ["Duidelijke opening", "Goede timing", "Actief luisteren"],
+      improvements: ["Meer doorvragen", "Betere afsluiting"],
+    };
+    setSelectedSession(session);
+    setTranscriptDialogOpen(true);
+  };
 
   const conversations: ConversationRecord[] = useMemo(() => {
     const seedFromString = (str: string): number => {
@@ -485,7 +512,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate?.("analysis-results")}>
+                            <DropdownMenuItem onClick={() => openTranscript(conv)}>
                               <Eye className="w-4 h-4 mr-2" />
                               Bekijk analyse
                             </DropdownMenuItem>
@@ -565,7 +592,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     <Button 
                       className="w-full bg-hh-ink hover:bg-hh-ink/90" 
                       size="sm"
-                      onClick={() => navigate?.("analysis-results")}
+                      onClick={() => openTranscript(conv)}
                     >
                       <Eye className="w-4 h-4 mr-2" />
                       Bekijk analyse
@@ -577,6 +604,12 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
           </div>
         )}
       </div>
+
+      <TranscriptDialog
+        open={transcriptDialogOpen}
+        onOpenChange={setTranscriptDialogOpen}
+        session={selectedSession}
+      />
     </AppLayout>
   );
 }
