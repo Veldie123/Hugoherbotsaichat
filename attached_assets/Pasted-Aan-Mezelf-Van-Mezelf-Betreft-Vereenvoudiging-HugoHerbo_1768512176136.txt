@@ -1,0 +1,89 @@
+Aan: Mezelf
+Van: Mezelf
+Betreft: Vereenvoudiging HugoHerbots.ai naar 2 kernfuncties
+
+Doel
+Behoud alleen Gespreksanalyse en Hugo a.i. in zowel User View als Admin View. Alle andere sidebar-items en pagina's worden verwijderd, maar ALLE onderliggende functionaliteit blijft intact.
+
+Wat blijft behouden
+User View
+Functie	Componenten
+Hugo a.i.	HugoAIOverview.tsx, TalkToHugoAI.tsx, AdminChatExpertModeSidebar.tsx (EPIC sidebar), TranscriptDialog.tsx, TechniqueDetailsDialog.tsx
+Gespreksanalyse	Analysis.tsx, TranscriptDialog.tsx (SSOT popup)
+Admin View
+Functie	Componenten
+Hugo a.i. Sessies	AdminHugoSessions.tsx, AdminChatExpertMode.tsx, AdminChatExpertModeSidebar.tsx (alle chat modi: Chat/Audio/Video), TranscriptDialog.tsx
+Gespreksanalyse	AdminUploadManagement.tsx, TranscriptDialog.tsx
+Gedeelde resources (MOET blijven)
+src/data/technieken_index.json - SSOT voor alle technieken
+src/data/technieken-service.ts - Service wrapper
+src/utils/phaseColors.ts - Fase kleur utilities
+src/components/ui/* - Alle UI components (shadcn)
+src/contexts/UserContext.tsx - Auth context
+Supabase configuratie
+Wat wordt verwijderd
+Sidebar items (User View)
+Dashboard → weg
+E.P.I.C Technieken → weg
+Video's → weg
+Webinars → weg
+Scenario's → weg
+Team → weg
+Voortgang → weg
+Downloads → weg
+Help → weg
+Sidebar items (Admin View)
+Admin Dashboard → weg (of omzetten naar simpele landing)
+Gebruikers → weg
+Teams → weg
+Video's → weg
+Webinars → weg
+Technieken → weg
+Organisaties → weg
+Facturatie → weg
+Component bestanden te verwijderen
+src/components/HH/Dashboard.tsx
+src/components/HH/TechniqueLibrary.tsx
+src/components/HH/VideoLibrary.tsx
+src/components/HH/LiveCoaching.tsx
+src/components/HH/RolePlayOverview.tsx
+src/components/HH/TeamSessions.tsx
+src/components/HH/Analytics.tsx
+src/components/HH/Resources.tsx
+src/components/HH/Help.tsx
+src/components/HH/Admin*.tsx (behalve AdminHugoSessions, AdminUploadManagement, AdminChatExpertMode*)
+Data bestanden te verwijderen
+src/data/videos-data.ts
+src/data/live-sessions-data.ts
+src/data/content-items.ts
+Stappenplan
+Backup: Kopieer huidige staat (je hebt dit al gedaan ✓)
+
+Sidebar updaten:
+
+AppLayout.tsx: Verwijder alle menu items behalve Gespreksanalyse & Hugo a.i.
+AdminLayout.tsx: Idem voor admin sidebar
+App.tsx routing opschonen:
+
+Verwijder routes naar verwijderde pagina's
+Default landing aanpassen (hugo-overview of analysis)
+Ongebruikte componenten verwijderen:
+
+Verwijder alleen de .tsx bestanden die niet meer nodig zijn
+Behoud alle *_V0.tsx backups NIET (die kunnen ook weg)
+Data bestanden opschonen:
+
+Verwijder videos-data.ts, live-sessions-data.ts, content-items.ts
+BEHOUD technieken_index.json (wordt gebruikt door Hugo a.i.)
+Test alle bestaande functionaliteit:
+
+Hugo a.i. overview → Talk to Hugo flow
+Alle chat modi (Chat/Audio/Video)
+EPIC sidebar met progressive unlocking
+Gespreksanalyse upload flow
+Transcript popups in beide views
+Admin sessie beheer
+Risico's
+Referenties checken: Sommige verwijderde pagina's kunnen nog gelinkt zijn vanuit navigatie
+Imports opruimen: Na verwijderen bestanden, check of imports nog kloppen
+EPIC sidebar: Navigatie buttons (Video/Webinar) in technique cards moeten weg of aangepast
