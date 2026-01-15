@@ -43,13 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
-import { getCodeBadgeColors } from "@/utils/phaseColors";
+import { TranscriptDialog, TranscriptSession } from "./TranscriptDialog";
 
 interface AdminUploadManagementProps {
   navigate?: (page: string) => void;
@@ -86,13 +80,38 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterQuality, setFilterQuality] = useState("all");
   const [filterType, setFilterType] = useState("all");
-  const [selectedUpload, setSelectedUpload] = useState<UploadItem | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [transcriptSession, setTranscriptSession] = useState<TranscriptSession | null>(null);
+  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
 
   const selectionMode = selectedIds.length > 0;
+
+  const openTranscript = (upload: UploadItem) => {
+    const transcriptData: TranscriptSession = {
+      id: upload.id,
+      userName: upload.user,
+      userWorkspace: upload.userEmail.split('@')[1]?.replace('.nl', '').replace('.io', '') || '',
+      techniqueNumber: upload.techniqueNumber,
+      techniqueName: upload.techniqueName,
+      type: upload.type,
+      date: upload.date,
+      time: upload.time,
+      duration: upload.duration,
+      score: upload.score,
+      quality: upload.quality,
+      transcript: upload.transcript?.map(msg => ({
+        speaker: msg.speakerName,
+        time: msg.timestamp,
+        text: msg.message,
+      })) || [],
+      strengths: upload.strengths,
+      improvements: upload.improvements,
+    };
+    setTranscriptSession(transcriptData);
+    setTranscriptDialogOpen(true);
+  };
 
   const toggleSelectId = (id: number) => {
     setSelectedIds(prev =>
@@ -502,10 +521,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                     key={upload.id}
                     onMouseEnter={() => setHoveredRow(upload.id)}
                     onMouseLeave={() => setHoveredRow(null)}
-                    onClick={() => {
-                      setSelectedUpload(upload);
-                      setShowDetails(true);
-                    }}
+                    onClick={() => openTranscript(upload)}
                     className={`border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors cursor-pointer ${
                       index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                     }`}
@@ -588,130 +604,12 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
           )}
         </Card>
 
-        {/* Details Dialog */}
-        <Dialog open={showDetails} onOpenChange={setShowDetails}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            {selectedUpload && (
-              <>
-                <DialogHeader className="pb-4">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <DialogTitle className="text-[24px] font-semibold text-hh-text">
-                      {selectedUpload.user}
-                    </DialogTitle>
-                    <Badge variant="outline" className={`font-mono text-[12px] ${getCodeBadgeColors(selectedUpload.techniqueNumber)}`}>
-                      {selectedUpload.techniqueNumber} - {selectedUpload.techniqueName}
-                    </Badge>
-                    {getQualityBadge(selectedUpload.quality)}
-                  </div>
-                  <p className="text-[14px] text-hh-muted mt-2">
-                    {selectedUpload.date} {selectedUpload.time} • {selectedUpload.duration} • Score: {selectedUpload.score}%
-                  </p>
-                </DialogHeader>
-
-                <div className="space-y-6">
-                  {/* Transcript */}
-                  {selectedUpload.transcript && selectedUpload.transcript.length > 0 && (
-                    <Card className="p-5 border-hh-border">
-                      <h3 className="text-[18px] font-semibold text-hh-text mb-4">
-                        Transcript
-                      </h3>
-                      <div className="space-y-4">
-                        {selectedUpload.transcript.map((msg, idx) => (
-                          <div key={idx} className="flex gap-3">
-                            <Badge className={`shrink-0 text-[11px] font-mono h-6 ${
-                              msg.speaker === "ai" 
-                                ? "bg-purple-600 text-white border-purple-600" 
-                                : "bg-hh-success text-white border-hh-success"
-                            }`}>
-                              {msg.timestamp}
-                            </Badge>
-                            <div className={`flex-1 rounded-lg p-3 ${
-                              msg.speaker === "ai" 
-                                ? "bg-amber-50 border border-amber-200" 
-                                : "bg-white border border-gray-200"
-                            }`}>
-                              <p className="text-[13px] font-semibold text-hh-text mb-1">
-                                {msg.speakerName}:
-                              </p>
-                              <p className="text-[13px] text-hh-text leading-relaxed">
-                                {msg.message}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
-                  )}
-
-                  {/* AI Feedback */}
-                  <Card className="p-5 border-hh-border">
-                    <h3 className="text-[18px] font-semibold text-hh-text mb-4">
-                      AI Feedback
-                    </h3>
-                    <div className="space-y-4">
-                      {/* Strengths */}
-                      {selectedUpload.strengths && selectedUpload.strengths.length > 0 && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <ThumbsUp className="w-4 h-4 text-hh-success" />
-                            <span className="text-[14px] font-semibold text-hh-success">
-                              Strengths:
-                            </span>
-                          </div>
-                          <ul className="list-disc list-inside space-y-1 ml-6">
-                            {selectedUpload.strengths.map((strength, idx) => (
-                              <li key={idx} className="text-[13px] text-hh-text">
-                                {strength}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Areas for Improvement */}
-                      {selectedUpload.improvements && selectedUpload.improvements.length > 0 && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Lightbulb className="w-4 h-4 text-orange-500" />
-                            <span className="text-[14px] font-semibold text-orange-500">
-                              Areas for Improvement:
-                            </span>
-                          </div>
-                          <ul className="list-disc list-inside space-y-1 ml-6">
-                            {selectedUpload.improvements.map((improvement, idx) => (
-                              <li key={idx} className="text-[13px] text-hh-text">
-                                {improvement}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-2">
-                    <Button variant="outline" className="flex-1 gap-2">
-                      <Download className="w-4 h-4" />
-                      Download Transcript
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className={`flex-1 gap-2 ${
-                        selectedUpload.flagged 
-                          ? "border-orange-500 text-orange-600 hover:bg-orange-50" 
-                          : "border-red-500 text-red-600 hover:bg-red-50"
-                      }`}
-                    >
-                      <Flag className="w-4 h-4" />
-                      {selectedUpload.flagged ? "Remove Flag" : "Flag for Review"}
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+        {/* Shared Transcript Dialog */}
+        <TranscriptDialog
+          open={transcriptDialogOpen}
+          onOpenChange={setTranscriptDialogOpen}
+          session={transcriptSession}
+        />
       </div>
     </AdminLayout>
   );

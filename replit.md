@@ -50,6 +50,11 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-15: Shared TranscriptDialog Component (SSOT)
+  - Created `src/components/HH/TranscriptDialog.tsx` as single source of truth
+  - Unified transcript popup design across Hugo a.i. (HugoAIOverview) and Gespreksanalyse (AdminUploadManagement)
+  - Features: colored badges, Debug Info toggle per message, AI Feedback section
+  - Design matches Hugo a.i. view (printscreen 2 reference)
 - 2026-01-15: Multi-Modal Chat Interface + Progressive Unlocking
   - Added multi-modal toggle (Chat/Audio/Video) to TalkToHugoAI.tsx
     - **Chat Mode**: WhatsApp-style with dictation microphone

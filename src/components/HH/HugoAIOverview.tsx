@@ -18,13 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "../ui/dialog";
-import {
   Search,
   List,
   LayoutGrid,
@@ -42,11 +35,10 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
-  ChevronRight,
-  ChevronDown,
 } from "lucide-react";
 import { getFaseNaam } from "../../data/technieken-service";
 import { getCodeBadgeColors } from "../../utils/phaseColors";
+import { TranscriptDialog, TranscriptSession } from "./TranscriptDialog";
 
 interface HugoAIOverviewProps {
   navigate?: (page: string) => void;
@@ -202,9 +194,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [sortField, setSortField] = useState<"score" | "date" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [transcriptSession, setTranscriptSession] = useState<TranscriptSession | null>(null);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
-  const [expandedDebug, setExpandedDebug] = useState<string | null>(null);
 
   const handleSort = (field: "score" | "date") => {
     if (sortField === field) {
@@ -215,12 +206,20 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
     }
   };
 
-  const toggleDebug = (lineId: string) => {
-    setExpandedDebug(expandedDebug === lineId ? null : lineId);
-  };
-
   const openTranscript = (session: Session) => {
-    setSelectedSession(session);
+    const transcriptData: TranscriptSession = {
+      id: session.id,
+      techniqueNumber: session.nummer,
+      techniqueName: session.naam,
+      type: getTypeLabel(session.type),
+      date: session.date,
+      time: session.time,
+      duration: session.duration,
+      score: session.score,
+      quality: session.quality,
+      transcript: session.transcript,
+    };
+    setTranscriptSession(transcriptData);
     setTranscriptDialogOpen(true);
   };
 
@@ -612,145 +611,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         )}
       </div>
 
-      {/* Transcript Dialog */}
-      <Dialog open={transcriptDialogOpen} onOpenChange={setTranscriptDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 flex-wrap">
-              <span>{selectedSession?.naam || "Session Details"}</span>
-              {selectedSession && (
-                <>
-                  <Badge variant="outline" className={`${getCodeBadgeColors(selectedSession.nummer)} text-[11px]`}>
-                    {selectedSession.nummer} - {selectedSession.naam}
-                  </Badge>
-                  {getQualityBadge(selectedSession.quality)}
-                </>
-              )}
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              Bekijk de volledige transcript en details van de sessie
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedSession && (
-            <div className="space-y-6">
-              {/* Session Info */}
-              <div className="flex items-center gap-4 text-[14px] leading-[20px] text-hh-muted flex-wrap">
-                <span>{getTypeLabel(selectedSession.type)}</span>
-                <span>•</span>
-                <span>{selectedSession.date} {selectedSession.time}</span>
-              </div>
-
-              {/* Transcript */}
-              <Card className="p-4 rounded-[16px] border-hh-border">
-                <h3 className="text-[16px] leading-[22px] text-hh-text font-medium mb-3">
-                  Transcript
-                </h3>
-                <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {selectedSession.transcript.map((line, index) => {
-                    const isAICoach = line.speaker === "AI Coach" || line.speaker.includes("Coach");
-                    const lineId = `${selectedSession.id}-${index}`;
-                    
-                    return (
-                      <div key={index} className="space-y-2">
-                        <div
-                          className={`flex gap-3 p-3 rounded-lg ${
-                            isAICoach ? "bg-purple-50" : "bg-blue-50"
-                          }`}
-                        >
-                          <div className="flex-shrink-0">
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] ${
-                                isAICoach
-                                  ? "bg-purple-600/10 text-purple-600 border-purple-600/20"
-                                  : "bg-blue-600/10 text-blue-600 border-blue-600/20"
-                              }`}
-                            >
-                              {line.time}
-                            </Badge>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-[13px] leading-[18px] font-medium text-hh-text mb-1">
-                              {line.speaker}:
-                            </p>
-                            <p className="text-[14px] leading-[20px] text-hh-text">
-                              {line.text}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Debug toggle */}
-                        <div className="ml-11">
-                          <button
-                            onClick={() => toggleDebug(lineId)}
-                            className="flex items-center gap-2 text-[12px] leading-[16px] text-hh-muted hover:text-hh-text transition-colors"
-                          >
-                            {expandedDebug === lineId ? (
-                              <ChevronDown className="w-3 h-3" />
-                            ) : (
-                              <ChevronRight className="w-3 h-3" />
-                            )}
-                            Debug Info
-                          </button>
-
-                          {expandedDebug === lineId && (
-                            <Card className="mt-2 p-4 border-2 border-dashed border-hh-ink/20 bg-hh-ui-50/30">
-                              <div className="space-y-3 text-[13px] leading-[18px]">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-hh-muted">Signaal:</span>
-                                  <Badge className="bg-green-100 text-green-700 border-green-300">
-                                    positief
-                                  </Badge>
-                                </div>
-                              </div>
-                            </Card>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
-
-              {/* AI Feedback */}
-              <Card className="p-4 rounded-[16px] border-hh-border bg-hh-ui-50/50">
-                <h3 className="text-[16px] leading-[22px] text-hh-text font-medium mb-3">
-                  AI Feedback
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-[13px] font-medium text-hh-success mb-2">Sterke punten</h4>
-                    <ul className="space-y-1">
-                      <li className="text-[13px] text-hh-text flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-hh-success flex-shrink-0 mt-0.5" />
-                        Goede opening
-                      </li>
-                      <li className="text-[13px] text-hh-text flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-hh-success flex-shrink-0 mt-0.5" />
-                        Sterke feitgerichte vragen
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="text-[13px] font-medium text-hh-warning mb-2">Verbeterpunten</h4>
-                    <ul className="space-y-1">
-                      <li className="text-[13px] text-hh-text flex items-start gap-2">
-                        <AlertTriangle className="w-4 h-4 text-hh-warning flex-shrink-0 mt-0.5" />
-                        Meer doorvragen na antwoord
-                      </li>
-                      <li className="text-[13px] text-hh-text flex items-start gap-2">
-                        <AlertTriangle className="w-4 h-4 text-hh-warning flex-shrink-0 mt-0.5" />
-                        Pauzes inbouwen
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Shared Transcript Dialog */}
+      <TranscriptDialog
+        open={transcriptDialogOpen}
+        onOpenChange={setTranscriptDialogOpen}
+        session={transcriptSession}
+      />
     </AppLayout>
   );
 }
