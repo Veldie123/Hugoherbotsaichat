@@ -32,6 +32,12 @@ import {
   MessageSquare,
   StopCircle,
   AlertCircle,
+  Phone,
+  Video,
+  Mic,
+  MicOff,
+  Volume2,
+  Clock,
 } from "lucide-react";
 import { getAllTechnieken } from "../../data/technieken-service";
 import technieken_index from "../../data/technieken_index";
@@ -114,12 +120,35 @@ export function AdminChatExpertMode({
   const [recommendedTechnique, setRecommendedTechnique] = useState<string | null>(null); // NEW: Recommended technique to highlight
   const [difficultyLevel, setDifficultyLevel] = useState<"beginner" | "gemiddeld" | "expert">("beginner"); // NEW: Difficulty level
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false); // NEW: Stop roleplay confirmation dialog
+  const [chatMode, setChatMode] = useState<"chat" | "audio" | "video">("chat"); // Multi-modal chat mode
+  const [isMuted, setIsMuted] = useState(false); // Audio/video mute state
+  const [sessionTimer, setSessionTimer] = useState(0); // Session timer
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Session timer effect
+  useEffect(() => {
+    if (selectedTechnique) {
+      timerRef.current = setInterval(() => {
+        setSessionTimer(prev => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [selectedTechnique]);
+
+  // Format time helper
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Parse techniques by phase from technieken_index
   const techniquesByPhase: Record<number, any[]> = {};
@@ -651,21 +680,62 @@ export function AdminChatExpertMode({
               </div>
             </div>
 
-            {/* Difficulty Level Selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] text-hh-muted">Niveau:</span>
-              <div className="flex gap-1">
-                {(["beginner", "gemiddeld", "expert"] as const).map((level) => (
+            {/* Difficulty Level and Mode Selector */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-hh-muted">Niveau:</span>
+                <div className="flex gap-1">
+                  {(["beginner", "gemiddeld", "expert"] as const).map((level) => (
+                    <Button
+                      key={level}
+                      variant={difficultyLevel === level ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setDifficultyLevel(level)}
+                      className={`h-7 text-[11px] px-3 ${difficultyLevel === level ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+                    >
+                      {level === "beginner" ? "Beginner" : level === "gemiddeld" ? "Gemiddeld" : "Expert"}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Mode Toggle - Chat/Bellen/Video */}
+              <div className="flex items-center gap-3">
+                {selectedTechnique && (
+                  <div className="flex items-center gap-1.5 text-[13px] text-hh-muted">
+                    <Clock className="w-4 h-4" />
+                    <span>{formatTime(sessionTimer)}</span>
+                  </div>
+                )}
+                <div className="flex items-center border border-purple-200 rounded-lg overflow-hidden">
                   <Button
-                    key={level}
-                    variant={difficultyLevel === level ? "default" : "outline"}
+                    variant="ghost"
                     size="sm"
-                    onClick={() => setDifficultyLevel(level)}
-                    className={`h-7 text-[11px] px-3 ${difficultyLevel === level ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+                    onClick={() => setChatMode("chat")}
+                    className={`h-8 px-3 rounded-none border-r border-purple-200 ${chatMode === "chat" ? "bg-purple-600 text-white hover:bg-purple-700" : "hover:bg-purple-50"}`}
                   >
-                    {level === "beginner" ? "Beginner" : level === "gemiddeld" ? "Gemiddeld" : "Expert"}
+                    <MessageSquare className="w-4 h-4 mr-1.5" />
+                    <span className="text-[11px]">Chat</span>
                   </Button>
-                ))}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setChatMode("audio")}
+                    className={`h-8 px-3 rounded-none border-r border-purple-200 ${chatMode === "audio" ? "bg-purple-600 text-white hover:bg-purple-700" : "hover:bg-purple-50"}`}
+                  >
+                    <Phone className="w-4 h-4 mr-1.5" />
+                    <span className="text-[11px]">Bellen</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setChatMode("video")}
+                    className={`h-8 px-3 rounded-none ${chatMode === "video" ? "bg-purple-600 text-white hover:bg-purple-700" : "hover:bg-purple-50"}`}
+                  >
+                    <Video className="w-4 h-4 mr-1.5" />
+                    <span className="text-[11px]">Video</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

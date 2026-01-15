@@ -501,61 +501,17 @@ export function TalkToHugoAI({
             </div>
             
             <div className="flex items-center gap-2">
+              {/* Session timer when technique selected */}
               {selectedTechnique && (
-                <>
-                  <div className="flex items-center gap-1.5 text-[13px] text-hh-muted mr-2">
-                    <Clock className="w-4 h-4" />
-                    <span>{formatTime(sessionTimer)}</span>
-                  </div>
-                  
-                  <Badge variant="outline" className="flex items-center gap-1 text-[11px]">
-                    {getModeIcon()}
-                    {getModeLabel()}
-                  </Badge>
-                  
-                  <div className="flex items-center border-l border-hh-border pl-2 ml-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setChatMode("chat")}
-                      className={`h-8 w-8 ${chatMode === "chat" ? "bg-hh-ink/10" : ""}`}
-                      title="Chat mode"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setChatMode("video")}
-                      className={`h-8 w-8 ${chatMode === "video" ? "bg-hh-ink/10" : ""}`}
-                      title="Video call"
-                    >
-                      <Video className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setChatMode("audio")}
-                      className={`h-8 w-8 ${chatMode === "audio" ? "bg-hh-ink/10" : ""}`}
-                      title="Audio call"
-                    >
-                      <Phone className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleStopRoleplay}
-                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                      title="Stop rollenspel"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </>
+                <div className="flex items-center gap-1.5 text-[13px] text-hh-muted mr-2">
+                  <Clock className="w-4 h-4" />
+                  <span>{formatTime(sessionTimer)}</span>
+                </div>
               )}
               
+              {/* Niveau selector - always visible when no technique selected */}
               {!selectedTechnique && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mr-3">
                   <span className="text-[12px] text-hh-muted">Niveau:</span>
                   <div className="flex gap-1">
                     {(["beginner", "gemiddeld", "expert"] as const).map((level) => (
@@ -571,6 +527,53 @@ export function TalkToHugoAI({
                     ))}
                   </div>
                 </div>
+              )}
+              
+              {/* Mode toggle - ALWAYS visible */}
+              <div className="flex items-center border border-hh-border rounded-lg overflow-hidden">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setChatMode("chat")}
+                  className={`h-8 px-3 rounded-none border-r border-hh-border ${chatMode === "chat" ? "bg-hh-ink text-white hover:bg-hh-ink/90" : "hover:bg-hh-ui-100"}`}
+                  title="Chat mode"
+                >
+                  <MessageSquare className="w-4 h-4 mr-1.5" />
+                  <span className="text-[11px]">Chat</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setChatMode("audio")}
+                  className={`h-8 px-3 rounded-none border-r border-hh-border ${chatMode === "audio" ? "bg-hh-ink text-white hover:bg-hh-ink/90" : "hover:bg-hh-ui-100"}`}
+                  title="Audio call"
+                >
+                  <Phone className="w-4 h-4 mr-1.5" />
+                  <span className="text-[11px]">Bellen</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setChatMode("video")}
+                  className={`h-8 px-3 rounded-none ${chatMode === "video" ? "bg-hh-ink text-white hover:bg-hh-ink/90" : "hover:bg-hh-ui-100"}`}
+                  title="Video call"
+                >
+                  <Video className="w-4 h-4 mr-1.5" />
+                  <span className="text-[11px]">Video</span>
+                </Button>
+              </div>
+              
+              {/* Stop button when technique active */}
+              {selectedTechnique && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleStopRoleplay}
+                  className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 ml-1"
+                  title="Stop rollenspel"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               )}
             </div>
           </div>

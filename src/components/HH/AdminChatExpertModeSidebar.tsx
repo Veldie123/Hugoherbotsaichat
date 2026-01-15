@@ -283,8 +283,9 @@ export function EPICSidebar({
 
                           return (
                             <div key={technique.nummer}>
-                              <button
-                                type="button"
+                              <div
+                                role="button"
+                                tabIndex={0}
                                 onClick={(e) => {
                                   e.preventDefault();
                                   if (isLocked) return;
@@ -294,8 +295,20 @@ export function EPICSidebar({
                                     setSelectedTechnique(technique.naam);
                                   }
                                 }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    if (!isLocked) {
+                                      if (isParent) {
+                                        toggleParentTechnique(technique.nummer);
+                                      } else {
+                                        setSelectedTechnique(technique.naam);
+                                      }
+                                    }
+                                  }
+                                }}
                                 className={cn(
-                                  "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
+                                  "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all cursor-pointer",
                                   isLocked 
                                     ? "bg-hh-ui-50 text-hh-muted cursor-not-allowed opacity-60"
                                     : selectedTechnique === technique.naam
@@ -312,13 +325,17 @@ export function EPICSidebar({
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex items-center gap-2 flex-1">
                                     {isUserView && (
-                                      <div className={cn(
-                                        "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
-                                        isCompleted ? "bg-emerald-500" : isLocked ? "bg-hh-ui-200" : "bg-hh-ui-100 border border-hh-border"
-                                      )}>
-                                        {isCompleted && <Check className="w-2.5 h-2.5 text-white" />}
-                                        {isLocked && <Lock className="w-2 h-2 text-hh-muted" />}
-                                      </div>
+                                      <>
+                                        {isCompleted ? (
+                                          <div className="w-5 h-5 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center flex-shrink-0">
+                                            <Check className="w-3 h-3 text-emerald-600" strokeWidth={3} />
+                                          </div>
+                                        ) : isLocked ? (
+                                          <div className="w-5 h-5 rounded-full bg-hh-ui-100 border border-hh-border flex items-center justify-center flex-shrink-0">
+                                            <Lock className="w-2.5 h-2.5 text-hh-muted" />
+                                          </div>
+                                        ) : null}
+                                      </>
                                     )}
                                     <span className={cn(
                                       "font-mono text-[10px]",
@@ -364,7 +381,7 @@ export function EPICSidebar({
                                     </div>
                                   )}
                                 </div>
-                              </button>
+                              </div>
 
                               {isExpandedParent && !isLocked && (
                                 <div className="ml-4 space-y-1 mt-1">
@@ -377,8 +394,9 @@ export function EPICSidebar({
                                     
                                     return (
                                       <div key={child.nummer}>
-                                        <button
-                                          type="button"
+                                        <div
+                                          role="button"
+                                          tabIndex={0}
                                           onClick={(e) => {
                                             e.preventDefault();
                                             if (isChildLocked) return;
@@ -388,8 +406,20 @@ export function EPICSidebar({
                                               setSelectedTechnique(child.naam);
                                             }
                                           }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                              e.preventDefault();
+                                              if (!isChildLocked) {
+                                                if (childHasGrandchildren) {
+                                                  toggleParentTechnique(child.nummer);
+                                                } else {
+                                                  setSelectedTechnique(child.naam);
+                                                }
+                                              }
+                                            }
+                                          }}
                                           className={cn(
-                                            "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
+                                            "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all cursor-pointer",
                                             isChildLocked 
                                               ? "bg-hh-ui-50 text-hh-muted cursor-not-allowed opacity-60"
                                               : selectedTechnique === child.naam
@@ -406,13 +436,17 @@ export function EPICSidebar({
                                           <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 flex-1">
                                               {isUserView && (
-                                                <div className={cn(
-                                                  "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
-                                                  isChildCompleted ? "bg-emerald-500" : isChildLocked ? "bg-hh-ui-200" : "bg-hh-ui-100 border border-hh-border"
-                                                )}>
-                                                  {isChildCompleted && <Check className="w-2.5 h-2.5 text-white" />}
-                                                  {isChildLocked && <Lock className="w-2 h-2 text-hh-muted" />}
-                                                </div>
+                                                <>
+                                                  {isChildCompleted ? (
+                                                    <div className="w-5 h-5 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center flex-shrink-0">
+                                                      <Check className="w-3 h-3 text-emerald-600" strokeWidth={3} />
+                                                    </div>
+                                                  ) : isChildLocked ? (
+                                                    <div className="w-5 h-5 rounded-full bg-hh-ui-100 border border-hh-border flex items-center justify-center flex-shrink-0">
+                                                      <Lock className="w-2.5 h-2.5 text-hh-muted" />
+                                                    </div>
+                                                  ) : null}
+                                                </>
                                               )}
                                               <span className={cn(
                                                 "font-mono text-[10px]",
@@ -458,7 +492,7 @@ export function EPICSidebar({
                                               </div>
                                             )}
                                           </div>
-                                        </button>
+                                        </div>
 
                                         {isChildExpanded && childHasGrandchildren && !isChildLocked && (
                                           <div className="ml-4 space-y-1 mt-1">
@@ -468,16 +502,25 @@ export function EPICSidebar({
                                               const isGrandchildRecommended = recommendedTechnique === grandchild.nummer;
                                               
                                               return (
-                                                <button
+                                                <div
                                                   key={grandchild.nummer}
-                                                  type="button"
+                                                  role="button"
+                                                  tabIndex={0}
                                                   onClick={(e) => {
                                                     e.preventDefault();
                                                     if (isGrandchildLocked) return;
                                                     setSelectedTechnique(grandchild.naam);
                                                   }}
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                      e.preventDefault();
+                                                      if (!isGrandchildLocked) {
+                                                        setSelectedTechnique(grandchild.naam);
+                                                      }
+                                                    }
+                                                  }}
                                                   className={cn(
-                                                    "w-full text-left px-3 py-1.5 rounded-lg text-[11px] leading-[15px] transition-all",
+                                                    "w-full text-left px-3 py-1.5 rounded-lg text-[11px] leading-[15px] transition-all cursor-pointer",
                                                     isGrandchildLocked 
                                                       ? "bg-hh-ui-50 text-hh-muted cursor-not-allowed opacity-60"
                                                       : selectedTechnique === grandchild.naam
@@ -493,13 +536,17 @@ export function EPICSidebar({
                                                 >
                                                   <div className="flex items-center gap-2">
                                                     {isUserView && (
-                                                      <div className={cn(
-                                                        "w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0",
-                                                        isGrandchildCompleted ? "bg-emerald-500" : isGrandchildLocked ? "bg-hh-ui-200" : "bg-hh-ui-100 border border-hh-border"
-                                                      )}>
-                                                        {isGrandchildCompleted && <Check className="w-2 h-2 text-white" />}
-                                                        {isGrandchildLocked && <Lock className="w-1.5 h-1.5 text-hh-muted" />}
-                                                      </div>
+                                                      <>
+                                                        {isGrandchildCompleted ? (
+                                                          <div className="w-4 h-4 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center flex-shrink-0">
+                                                            <Check className="w-2.5 h-2.5 text-emerald-600" strokeWidth={3} />
+                                                          </div>
+                                                        ) : isGrandchildLocked ? (
+                                                          <div className="w-4 h-4 rounded-full bg-hh-ui-100 border border-hh-border flex items-center justify-center flex-shrink-0">
+                                                            <Lock className="w-2 h-2 text-hh-muted" />
+                                                          </div>
+                                                        ) : null}
+                                                      </>
                                                     )}
                                                     <span className={cn(
                                                       "font-mono text-[9px]",
@@ -537,7 +584,7 @@ export function EPICSidebar({
                                                       </div>
                                                     )}
                                                   </div>
-                                                </button>
+                                                </div>
                                               );
                                             })}
                                           </div>
