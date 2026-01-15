@@ -17,8 +17,8 @@ interface TechniqueDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   technique: {
-    id: string;
-    number: string;
+    id?: string;
+    nummer: string;
     naam: string;
     fase: string;
     tags?: string[];
@@ -118,7 +118,7 @@ export function TechniqueDetailsDialog({
   if (!technique) return null;
 
   const displayData = isEditing ? editedData : technique;
-  const codeBadgeColors = getCodeBadgeColors(technique.number);
+  const codeBadgeColors = getCodeBadgeColors(technique.nummer);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -127,7 +127,7 @@ export function TechniqueDetailsDialog({
         <DialogHeader className="p-6 pb-4 border-b border-hh-border/50">
           <DialogTitle className="flex items-center gap-4">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-[15px] font-bold shrink-0 ${codeBadgeColors}`}>
-              {technique.number}
+              {technique.nummer}
             </div>
             <div className="flex-1">
               {isEditing ? (
