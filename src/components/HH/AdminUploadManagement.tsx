@@ -326,18 +326,6 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
     return "text-hh-warn";
   };
 
-  const getAvatarColor = (initials: string) => {
-    const colors = [
-      "bg-emerald-100 text-emerald-700",
-      "bg-blue-100 text-blue-700",
-      "bg-purple-100 text-purple-700",
-      "bg-amber-100 text-amber-700",
-      "bg-rose-100 text-rose-700",
-    ];
-    const index = initials.charCodeAt(0) % colors.length;
-    return colors[index];
-  };
-
   return (
     <AdminLayout currentPage="admin-uploads" navigate={navigate}>
       <div className="p-6 space-y-6">
@@ -499,10 +487,13 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                     )}
                   </th>
                   <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Gebruiker
+                    #
                   </th>
                   <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                     Techniek
+                  </th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
+                    Gebruiker
                   </th>
                   <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                     Type
@@ -542,9 +533,24 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                       ) : <div className="w-4 h-4" />}
                     </td>
                     <td className="px-4 py-3">
+                      <Badge className="bg-purple-600/10 text-purple-600 border-purple-600/20 text-[11px] font-mono">
+                        {upload.techniqueNumber}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="text-[14px] font-medium text-hh-text">
+                          {upload.techniqueName}
+                        </p>
+                        <p className="text-[12px] text-hh-muted">
+                          {upload.fase}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarFallback className="bg-purple-600/10 text-purple-600 text-[12px] font-semibold">
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className="bg-purple-600/10 text-purple-600 text-[11px] font-semibold">
                             {upload.userInitials}
                           </AvatarFallback>
                         </Avatar>
@@ -561,16 +567,6 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                             {upload.user} • {upload.workspace}
                           </p>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="text-[14px] font-medium text-hh-text mb-0.5">
-                          {upload.techniqueNumber} - {upload.techniqueName}
-                        </p>
-                        <p className="text-[12px] text-hh-muted">
-                          {upload.fase}
-                        </p>
                       </div>
                     </td>
                     <td className="px-4 py-3">
