@@ -1417,6 +1417,7 @@ export function AdminChatExpertMode({
         onOpenChange={setTechniqueDetailsPanelOpen}
         technique={selectedTechniqueDetails}
         isEditable={true}
+        isAdmin={true}
         onSave={(updatedTechnique) => {
           console.log("Technique updated:", updatedTechnique);
           // TODO: Save to backend

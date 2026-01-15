@@ -688,6 +688,7 @@ export function TalkToHugoAI({
         onOpenChange={setTechniqueDetailsPanelOpen}
         technique={selectedTechniqueDetails}
         isEditable={false}
+        isAdmin={false}
       />
     </AppLayout>
   );
