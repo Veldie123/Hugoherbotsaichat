@@ -381,8 +381,7 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
                   Bekijk Video
                 </Button>
                 <Button 
-                  variant="outline" 
-                  className="border-white/30 text-white hover:bg-white/10 gap-2"
+                  className="bg-white/20 border-2 border-white/50 text-white hover:bg-white/30 gap-2"
                   onClick={() => navigate?.("talk-to-hugo")}
                 >
                   <MessageSquare className="w-4 h-4" />
