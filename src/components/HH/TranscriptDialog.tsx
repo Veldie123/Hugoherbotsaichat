@@ -43,6 +43,7 @@ interface TranscriptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   session: TranscriptSession | null;
+  isAdmin?: boolean;
 }
 
 const getQualityBadge = (quality: string) => {
@@ -75,7 +76,7 @@ const getQualityBadge = (quality: string) => {
   }
 };
 
-export function TranscriptDialog({ open, onOpenChange, session }: TranscriptDialogProps) {
+export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false }: TranscriptDialogProps) {
   const [expandedDebug, setExpandedDebug] = useState<string | null>(null);
 
   const toggleDebug = (lineId: string) => {
@@ -134,15 +135,23 @@ export function TranscriptDialog({ open, onOpenChange, session }: TranscriptDial
                   <div key={index} className="space-y-2">
                     <div
                       className={`flex gap-3 p-3 rounded-lg ${
-                        isAICoach ? "bg-slate-50 border border-slate-200" : "bg-slate-100 border border-slate-200"
+                        isAdmin
+                          ? isAICoach 
+                            ? "bg-slate-50 border border-slate-200" 
+                            : "bg-fuchsia-50 border border-fuchsia-200"
+                          : isAICoach 
+                            ? "bg-slate-50 border border-slate-200" 
+                            : "bg-slate-100 border border-slate-200"
                       }`}
                     >
                       <div className="flex-shrink-0">
                         <Badge
                           className={`text-[10px] font-mono ${
-                            isAICoach
-                              ? "bg-hh-ink text-white border-hh-ink"
-                              : "bg-hh-primary text-white border-hh-primary"
+                            isAdmin
+                              ? "bg-purple-600 text-white border-purple-600"
+                              : isAICoach
+                                ? "bg-hh-ink text-white border-hh-ink"
+                                : "bg-hh-primary text-white border-hh-primary"
                           }`}
                         >
                           {line.time}

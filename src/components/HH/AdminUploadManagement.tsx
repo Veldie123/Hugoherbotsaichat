@@ -609,6 +609,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
           open={transcriptDialogOpen}
           onOpenChange={setTranscriptDialogOpen}
           session={transcriptSession}
+          isAdmin={true}
         />
       </div>
     </AdminLayout>

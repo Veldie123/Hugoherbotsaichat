@@ -611,6 +611,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
         open={transcriptDialogOpen}
         onOpenChange={setTranscriptDialogOpen}
         session={selectedSession}
+        isAdmin={isAdmin}
       />
     </AppLayout>
   );
