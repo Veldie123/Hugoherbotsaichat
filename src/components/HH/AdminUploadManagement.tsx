@@ -61,6 +61,7 @@ interface UploadItem {
   user: string;
   userEmail: string;
   userInitials: string;
+  workspace: string;
   techniqueNumber: string;
   techniqueName: string;
   fase: string;
@@ -92,7 +93,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
     const transcriptData: TranscriptSession = {
       id: upload.id,
       userName: upload.user,
-      userWorkspace: upload.userEmail.split('@')[1]?.replace('.nl', '').replace('.io', '') || '',
+      userWorkspace: upload.workspace,
       techniqueNumber: upload.techniqueNumber,
       techniqueName: upload.techniqueName,
       type: upload.type,
@@ -125,6 +126,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
       user: "Jan de Vries",
       userEmail: "jan@techcorp.nl",
       userInitials: "JdV",
+      workspace: "TechCorp BV",
       techniqueNumber: "2.1",
       techniqueName: "SPIN Questioning",
       fase: "Ontdekkingsfase",
@@ -152,6 +154,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
       user: "Sarah van Dijk",
       userEmail: "sarah@growco.nl",
       userInitials: "SvD",
+      workspace: "GrowCo",
       techniqueNumber: "4.1",
       techniqueName: "Objection Handling",
       fase: "Beslissingsfase",
@@ -176,6 +179,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
       user: "Mark Peters",
       userEmail: "mark@startup.io",
       userInitials: "MP",
+      workspace: "ScaleUp BV",
       techniqueNumber: "1.2",
       techniqueName: "Gentleman's Agreement",
       fase: "Openingsfase",
@@ -199,6 +203,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
       user: "Lisa de Jong",
       userEmail: "lisa@salesforce.com",
       userInitials: "LdJ",
+      workspace: "SalesForce NL",
       techniqueNumber: "2.2",
       techniqueName: "E.P.I.C Framework",
       fase: "Ontdekkingsfase",
@@ -222,6 +227,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
       user: "Tom Bakker",
       userEmail: "tom@example.com",
       userInitials: "TB",
+      workspace: "TechStart",
       techniqueNumber: "3.1",
       techniqueName: "Value Proposition",
       fase: "Aanbevelingsfase",
@@ -537,20 +543,22 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-semibold ${getAvatarColor(upload.userInitials)}`}>
-                          {upload.userInitials}
-                        </div>
+                        <Avatar className="w-10 h-10">
+                          <AvatarFallback className="bg-purple-600/10 text-purple-600 text-[12px] font-semibold">
+                            {upload.userInitials}
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-[14px] font-medium text-hh-text">
                               {upload.user}
                             </p>
                             {upload.flagged && (
-                              <Flag className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+                              <Flag className="w-3.5 h-3.5 text-red-600" />
                             )}
                           </div>
                           <p className="text-[12px] text-hh-muted">
-                            {upload.userEmail}
+                            {upload.user} • {upload.workspace}
                           </p>
                         </div>
                       </div>
