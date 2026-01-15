@@ -134,15 +134,15 @@ export function TranscriptDialog({ open, onOpenChange, session }: TranscriptDial
                   <div key={index} className="space-y-2">
                     <div
                       className={`flex gap-3 p-3 rounded-lg ${
-                        isAICoach ? "bg-amber-50 border border-amber-200" : "bg-blue-50 border border-blue-200"
+                        isAICoach ? "bg-slate-50 border border-slate-200" : "bg-slate-100 border border-slate-200"
                       }`}
                     >
                       <div className="flex-shrink-0">
                         <Badge
                           className={`text-[10px] font-mono ${
                             isAICoach
-                              ? "bg-purple-600 text-white border-purple-600"
-                              : "bg-blue-600 text-white border-blue-600"
+                              ? "bg-hh-ink text-white border-hh-ink"
+                              : "bg-hh-primary text-white border-hh-primary"
                           }`}
                         >
                           {line.time}
