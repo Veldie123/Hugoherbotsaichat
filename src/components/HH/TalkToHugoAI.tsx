@@ -337,137 +337,121 @@ export function TalkToHugoAI({
   );
 
   const renderAudioInterface = () => (
-    <div className="h-full relative bg-gradient-to-br from-teal-900 via-teal-800 to-teal-900">
-      <div className="absolute top-12 left-0 right-0 text-center">
-        <div className="mb-8">
-          <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm mx-auto mb-4 flex items-center justify-center">
-            <div className="w-28 h-28 rounded-full bg-hh-primary flex items-center justify-center">
-              <span className="text-white text-[40px] leading-[48px] font-semibold">HH</span>
-            </div>
+    <div className="h-full w-full flex flex-col" style={{ background: 'linear-gradient(180deg, #059669 0%, #0d9488 50%, #0f766e 100%)' }}>
+      {/* Top section - caller info */}
+      <div className="flex-1 flex flex-col items-center justify-center">
+        {/* Phone icon with pulsing effect */}
+        <div className="relative mb-6">
+          <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}>
+            <Phone className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-white text-[24px] leading-[32px] font-semibold mb-2">Hugo Herbots</h3>
-          <p className="text-white/70 text-[16px] leading-[24px]">{formatTime(sessionTimer)}</p>
         </div>
         
-        <div className="flex items-center justify-center gap-1 h-16 px-8 mt-12">
-          {[...Array(30)].map((_, i) => (
+        <h3 className="text-white text-[26px] font-bold mb-1">Hugo AI Coach</h3>
+        <p className="text-[16px] mb-2" style={{ color: 'rgba(255,255,255,0.8)' }}>Bellen...</p>
+        <p className="text-[22px] font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>{formatTime(sessionTimer)}</p>
+        
+        {/* Simple waveform visualization */}
+        <div className="flex items-end justify-center gap-1.5 h-16 mt-8">
+          {[...Array(15)].map((_, i) => (
             <div
               key={i}
-              className="flex-1 rounded-full bg-white/60 transition-all animate-pulse"
+              className="w-2 rounded-full"
               style={{
-                height: `${Math.random() * 60 + 20}%`,
-                animationDelay: `${i * 0.05}s`,
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                height: `${Math.random() * 40 + 15}px`,
               }}
             />
           ))}
         </div>
       </div>
 
-      <div className="absolute bottom-12 left-0 right-0">
-        <div className="flex items-center justify-center gap-6 mb-6">
-          <div className="text-center">
-            <button 
-              onClick={() => setIsMuted(!isMuted)}
-              className={`w-16 h-16 rounded-full backdrop-blur-sm transition-colors flex items-center justify-center mb-2 ${
-                isMuted ? "bg-white/40" : "bg-white/20 hover:bg-white/30"
-              }`}
-            >
-              {isMuted ? <MicOff className="w-6 h-6 text-white" /> : <Mic className="w-6 h-6 text-white" />}
-            </button>
-            <span className="text-white/80 text-[12px]">{isMuted ? "Unmute" : "Mute"}</span>
-          </div>
+      {/* Bottom controls */}
+      <div className="pb-8 pt-4">
+        <div className="flex items-center justify-center gap-6">
+          <button 
+            onClick={() => setIsMuted(!isMuted)}
+            className="w-14 h-14 rounded-full flex items-center justify-center transition-colors"
+            style={{ backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.2)' }}
+          >
+            {isMuted ? <MicOff className="w-5 h-5 text-teal-700" /> : <Mic className="w-5 h-5 text-white" />}
+          </button>
           
-          <div className="text-center">
-            <button className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors flex items-center justify-center mb-2">
-              <Volume2 className="w-6 h-6 text-white" />
-            </button>
-            <span className="text-white/80 text-[12px]">Speaker</span>
-          </div>
+          <button 
+            onClick={handleStopRoleplay}
+            className="w-16 h-16 rounded-full flex items-center justify-center shadow-xl"
+            style={{ backgroundColor: '#ef4444' }}
+          >
+            <Phone className="w-6 h-6 text-white" style={{ transform: 'rotate(135deg)' }} />
+          </button>
           
-          <div className="text-center">
-            <button 
-              onClick={handleStopRoleplay}
-              className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 transition-colors flex items-center justify-center mb-2 shadow-xl"
-            >
-              <Phone className="w-6 h-6 text-white rotate-[135deg]" />
-            </button>
-            <span className="text-white/80 text-[12px]">End</span>
-          </div>
+          <button 
+            className="w-14 h-14 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+          >
+            <Volume2 className="w-5 h-5 text-white" />
+          </button>
         </div>
-
-        {messages.length > 0 && (
-          <div className="px-8">
-            <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm">
-              <p className="text-white/90 text-[13px] leading-[18px] text-center">
-                <strong>Hugo: </strong>{messages[messages.length - 1]?.text}
-              </p>
-            </div>
-          </div>
-        )}
+        <div className="flex items-center justify-center gap-10 mt-3">
+          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>{isMuted ? "Unmute" : "Mute"}</span>
+          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Ophangen</span>
+          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Speaker</span>
+        </div>
       </div>
     </div>
   );
 
   const renderVideoInterface = () => (
-    <div className="h-full relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="absolute inset-0">
-        <div className="size-full bg-gradient-to-br from-hh-primary/20 to-slate-900 flex items-center justify-center">
-          <div className="w-48 h-48 rounded-full bg-hh-primary flex items-center justify-center">
-            <span className="text-white text-[64px] leading-[72px] font-semibold">HH</span>
+    <div className="h-full w-full relative" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%)' }}>
+      {/* Main video area with HH avatar */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-40 h-40 rounded-full flex items-center justify-center" style={{ backgroundColor: '#6B7A92' }}>
+          <span className="text-white text-[56px] font-bold">HH</span>
+        </div>
+      </div>
+
+      {/* Top overlay with name */}
+      <div className="absolute top-0 left-0 right-0 p-4" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
+        <h3 className="text-white text-[18px] font-semibold">Hugo Herbots</h3>
+        <p className="text-white/70 text-[14px]">{formatTime(sessionTimer)}</p>
+      </div>
+
+      {/* PiP preview - user camera */}
+      <div className="absolute top-4 right-4 w-28 h-36 rounded-xl overflow-hidden border-2 border-white/30 shadow-xl" style={{ backgroundColor: '#475569' }}>
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: '#e2e8f0' }}>
+            <span className="text-slate-700 text-[12px] font-medium">JIJ</span>
           </div>
         </div>
       </div>
 
-      <div className="absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/60 to-transparent">
-        <h3 className="text-white text-[20px] leading-[28px] font-semibold mb-1">Hugo Herbots</h3>
-        <p className="text-white/70 text-[14px] leading-[20px]">{formatTime(sessionTimer)}</p>
-      </div>
-
-      <div className="absolute top-6 right-6 w-32 h-40 rounded-2xl bg-slate-700 border-2 border-white/20 overflow-hidden shadow-2xl">
-        <div className="size-full flex items-center justify-center bg-slate-800">
-          <div className="w-16 h-16 rounded-full bg-hh-ui-100 flex items-center justify-center">
-            <span className="text-hh-text text-[14px] leading-[20px] font-medium">JIJ</span>
-          </div>
-        </div>
-      </div>
-
-      {messages.length > 0 && (
-        <div className="absolute top-1/3 left-6 right-6">
-          <div className="p-4 rounded-xl bg-black/80 backdrop-blur-md border border-white/10">
-            <div className="flex gap-2">
-              <Sparkles className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] leading-[17px] text-white">
-                <strong>Tip:</strong> Focus op {selectedTechniqueName || "de techniek"}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
+      {/* Bottom controls */}
+      <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
         <div className="flex items-center justify-center gap-4">
           <button 
             onClick={() => setIsMuted(!isMuted)}
-            className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors flex items-center justify-center"
+            className="w-14 h-14 rounded-full flex items-center justify-center transition-colors"
+            style={{ backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.2)' }}
           >
-            {isMuted ? <MicOff className="w-6 h-6 text-white" /> : <Mic className="w-6 h-6 text-white" />}
+            {isMuted ? <MicOff className="w-5 h-5 text-slate-800" /> : <Mic className="w-5 h-5 text-white" />}
           </button>
           
-          <button className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors flex items-center justify-center">
-            <Video className="w-6 h-6 text-white" />
+          <button className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+            <Video className="w-5 h-5 text-white" />
           </button>
           
           <button 
             onClick={handleStopRoleplay}
-            className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 transition-colors flex items-center justify-center shadow-xl"
+            className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl"
+            style={{ backgroundColor: '#ef4444' }}
           >
-            <X className="w-6 h-6 text-white" />
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
-        <div className="flex items-center justify-center gap-8 mt-4 text-white/80 text-[12px]">
-          <span>{isMuted ? "Unmute" : "Mute"}</span>
-          <span>Flip</span>
-          <span>End</span>
+        <div className="flex items-center justify-center gap-10 mt-3">
+          <span className="text-white/70 text-[11px]">{isMuted ? "Unmute" : "Mute"}</span>
+          <span className="text-white/70 text-[11px]">Camera</span>
+          <span className="text-white/70 text-[11px]">Ophangen</span>
         </div>
       </div>
     </div>
