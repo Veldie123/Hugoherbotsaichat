@@ -192,12 +192,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterQuality, setFilterQuality] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [sortField, setSortField] = useState<"score" | "date" | null>(null);
+  const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [transcriptSession, setTranscriptSession] = useState<TranscriptSession | null>(null);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
 
-  const handleSort = (field: "score" | "date") => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -246,10 +246,18 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         const dateB = new Date(`${b.date} ${b.time || "00:00"}`).getTime();
         return sortDirection === "asc" ? dateA - dateB : dateB - dateA;
       }
-      return 0;
+      if (sortField === "duration") {
+        const durA = parseInt(a.duration.replace(":", "")) || 0;
+        const durB = parseInt(b.duration.replace(":", "")) || 0;
+        return sortDirection === "asc" ? durA - durB : durB - durA;
+      }
+      const valA = String((a as any)[sortField] || "").toLowerCase();
+      const valB = String((b as any)[sortField] || "").toLowerCase();
+      const cmp = valA.localeCompare(valB);
+      return sortDirection === "asc" ? cmp : -cmp;
     });
 
-  const SortIcon = ({ field }: { field: "score" | "date" }) => {
+  const SortIcon = ({ field }: { field: string }) => {
     if (sortField !== field) {
       return <ArrowUpDown className="w-3 h-3 ml-1 text-hh-muted" />;
     }
@@ -423,12 +431,36 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         {viewMode === "list" ? (
           <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full table-fixed">
+              <table className="w-full">
                 <thead>
                   <tr className="border-b border-hh-border bg-hh-ui-50">
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">#</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[25%]">Techniek</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[20%]">Type</th>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[70px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("nummer")}
+                    >
+                      <div className="flex items-center">
+                        #
+                        <SortIcon field="nummer" />
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("naam")}
+                    >
+                      <div className="flex items-center">
+                        Techniek
+                        <SortIcon field="naam" />
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[120px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("type")}
+                    >
+                      <div className="flex items-center">
+                        Type
+                        <SortIcon field="type" />
+                      </div>
+                    </th>
                     <th 
                       className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
                       onClick={() => handleSort("score")}
@@ -438,9 +470,17 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                         <SortIcon field="score" />
                       </div>
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">Duur</th>
                     <th 
-                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[120px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("duration")}
+                    >
+                      <div className="flex items-center">
+                        Duur
+                        <SortIcon field="duration" />
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[110px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
                       onClick={() => handleSort("date")}
                     >
                       <div className="flex items-center">
@@ -448,7 +488,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                         <SortIcon field="date" />
                       </div>
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[70px]">Acties</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[60px]">Acties</th>
                   </tr>
                 </thead>
                 <tbody>
