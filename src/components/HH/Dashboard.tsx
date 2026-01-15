@@ -295,6 +295,43 @@ export function Dashboard({ hasData = true, navigate, isAdmin = false }: Dashboa
           </div>
         </div>
 
+        {/* Epic Sales Flow Progress */}
+        <Card className="p-5 rounded-xl border border-hh-border bg-white">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[16px] font-semibold text-hh-text">Epic Sales Flow</h2>
+            <span className="text-[13px] text-hh-muted">4/12 onderwerpen • 33%</span>
+          </div>
+          <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-hh-ui-100">
+            <div className="flex-1 bg-slate-400 rounded-l-full" style={{ flex: '0.8' }} />
+            <div className="flex-1 bg-emerald-500" style={{ flex: '1' }} />
+            <div className="flex-1 bg-blue-500" style={{ flex: '0.6' }} />
+            <div className="flex-1 bg-slate-300" style={{ flex: '1' }} />
+            <div className="flex-1 bg-slate-200 rounded-r-full" style={{ flex: '1' }} />
+          </div>
+          <div className="flex mt-2">
+            <div className="flex-1 text-center" style={{ flex: '0.8' }}>
+              <span className="text-[11px] text-hh-muted">0</span>
+              <p className="text-[10px] text-hh-muted">Voorber.</p>
+            </div>
+            <div className="flex-1 text-center" style={{ flex: '1' }}>
+              <span className="text-[11px] text-emerald-600 font-medium">1</span>
+              <p className="text-[10px] text-hh-muted">Opening</p>
+            </div>
+            <div className="flex-1 text-center" style={{ flex: '0.6' }}>
+              <span className="text-[11px] text-blue-600 font-medium">2</span>
+              <p className="text-[10px] text-hh-muted">Ontdekking</p>
+            </div>
+            <div className="flex-1 text-center" style={{ flex: '1' }}>
+              <span className="text-[11px] text-hh-muted">3</span>
+              <p className="text-[10px] text-hh-muted">Voorstel</p>
+            </div>
+            <div className="flex-1 text-center" style={{ flex: '1' }}>
+              <span className="text-[11px] text-hh-muted">4</span>
+              <p className="text-[10px] text-hh-muted">Afsluiting</p>
+            </div>
+          </div>
+        </Card>
+
         {/* Hero Banner - Featured Content */}
         <Card className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-hh-ink via-hh-ink/95 to-hh-primary/80 p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row gap-6 items-start">
