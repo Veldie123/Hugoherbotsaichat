@@ -135,13 +135,9 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                   <div key={index} className="space-y-2">
                     <div
                       className={`flex gap-3 p-3 rounded-lg ${
-                        isAdmin
-                          ? isAICoach 
-                            ? "bg-slate-50 border border-slate-200" 
-                            : "bg-fuchsia-50 border border-fuchsia-200"
-                          : isAICoach 
-                            ? "bg-slate-50 border border-slate-200" 
-                            : "bg-slate-100 border border-slate-200"
+                        isAICoach 
+                          ? "bg-cyan-50 border border-cyan-200" 
+                          : "bg-fuchsia-50 border border-fuchsia-200"
                       }`}
                     >
                       <div className="flex-shrink-0">
@@ -149,9 +145,7 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                           className={`text-[10px] font-mono ${
                             isAdmin
                               ? "bg-purple-600 text-white border-purple-600"
-                              : isAICoach
-                                ? "bg-hh-ink text-white border-hh-ink"
-                                : "bg-hh-primary text-white border-hh-primary"
+                              : "bg-[#5B7B9A] text-white border-[#5B7B9A]"
                           }`}
                         >
                           {line.time}

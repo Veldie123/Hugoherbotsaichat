@@ -534,8 +534,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                             session.score >= 80
                               ? "text-hh-success"
                               : session.score >= 70
-                              ? "text-hh-ink"
-                              : "text-hh-warning"
+                              ? "text-blue-600"
+                              : "text-hh-warn"
                           }`}
                         >
                           {session.score}%
@@ -635,8 +635,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       session.score >= 80
                         ? "text-hh-success"
                         : session.score >= 70
-                        ? "text-hh-ink"
-                        : "text-hh-warning"
+                        ? "text-blue-600"
+                        : "text-hh-warn"
                     }`}
                   >
                     {session.score}%

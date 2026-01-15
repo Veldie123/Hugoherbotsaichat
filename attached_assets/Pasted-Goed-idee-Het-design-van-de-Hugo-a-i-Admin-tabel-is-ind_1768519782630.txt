@@ -1,0 +1,48 @@
+Goed idee! Het design van de Hugo a.i. Admin tabel is inderdaad heel clean en consistent. Dit plan omvat:
+
+Design elementen die overal toegepast worden:
+
+Technieknummer (#) als eerste kolom met gekleurde monochrome cirkeltjes
+Initialen in gekleurde cirkeltjes voor gebruikers
+Icoontjes met kleuren per type (Audio, Video, Chat)
+Scores in groen/geel/blauw kleurcodering
+Lichtgrijze subtitels en datums
+Alle kolommen sorteerbaar
+Technieken kolom met meerdere gekleurde badges (voor Gespreksanalyse)
+Tabellen die aangepast worden:
+
+Analysis.tsx (User View - Gespreksanalyse) - technieken kolom toevoegen
+HugoAIOverview.tsx (User View - Hugo a.i.) - dezelfde stijl als Admin
+AdminUploadManagement.tsx (Admin View - Gespreksanalyse) - technieken kolom toevoegen
+Worked for 33 seconds
+kopieer exact dit desgin van hugo a.i. detail naar gespreksanalys (exact die kleuren, exact die opmaak).
+
+Begrepen! Het design van de Hugo a.i. detail pop-up heeft:
+
+AI Coach berichten: lichtblauwe/cyaan achtergrond met paarse tijd-badges
+Gebruiker berichten: roze/magenta achtergrond met paarse tijd-badges
+Paarse afgeronde tijd-badges voor alle berichten
+Consistente opmaak
+Ik update de takenlijst om dit als eerste prioriteit toe te voegen:
+
+Worked for 21 seconds
+kopieer exact dit design van hugo a.i. detail pop up naar de user view en verander enkel het paars naar het steal blue.
+
+Duidelijk! Exact hetzelfde design maar:
+
+Admin View: paarse tijd-badges (zoals nu)
+User View: steel blue (#5B7B9A) tijd-badges
+Beide views krijgen:
+
+Cyaan/lichtblauwe achtergrond voor AI Coach berichten
+Roze/magenta achtergrond voor gebruiker berichten
+Worked for 25 seconds
+het gekozen niveau in de chat is niet zichtbaar. dus in printscreen 1 ben ik beginner maar het wordt wit dus onzeichtbaar. in printscreen 2 be ik gemiddeld maar opnieuw onzichtbaar. is verwarrend
+
+geen steal blue gebruiken in expert mode in de admin view chat.
+
+Begrepen! De Admin view chat moet paars blijven, geen steel blue. Dus:
+
+Admin View: paars voor actieve elementen (niveau selector, badges, etc.)
+User View: steel blue voor actieve elementen
+Ik update de takenlijst:

@@ -495,7 +495,13 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                       </td>
                       <td className="py-3 px-4 text-right">
                         {conv.status === "analyzed" ? (
-                          <span className="text-[14px] leading-[20px] text-hh-success font-medium">
+                          <span className={`text-[14px] leading-[20px] font-medium ${
+                            conv.score >= 80
+                              ? "text-hh-success"
+                              : conv.score >= 70
+                              ? "text-blue-600"
+                              : "text-hh-warn"
+                          }`}>
                             {conv.score}%
                           </span>
                         ) : (
@@ -572,8 +578,20 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     </div>
                     {conv.status === "analyzed" && (
                       <div className="flex items-center gap-1.5">
-                        <TrendingUp className="w-4 h-4 text-hh-success" />
-                        <span className="text-hh-success font-medium">{conv.score}%</span>
+                        <TrendingUp className={`w-4 h-4 ${
+                          conv.score >= 80
+                            ? "text-hh-success"
+                            : conv.score >= 70
+                            ? "text-blue-600"
+                            : "text-hh-warn"
+                        }`} />
+                        <span className={`font-medium ${
+                          conv.score >= 80
+                            ? "text-hh-success"
+                            : conv.score >= 70
+                            ? "text-blue-600"
+                            : "text-hh-warn"
+                        }`}>{conv.score}%</span>
                       </div>
                     )}
                   </div>

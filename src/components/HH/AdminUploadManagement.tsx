@@ -315,9 +315,9 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 85) return "text-hh-success";
+    if (score >= 80) return "text-hh-success";
     if (score >= 70) return "text-blue-600";
-    return "text-orange-600";
+    return "text-hh-warn";
   };
 
   const getAvatarColor = (initials: string) => {

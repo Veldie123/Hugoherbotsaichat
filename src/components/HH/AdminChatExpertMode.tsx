@@ -475,7 +475,7 @@ export function AdminChatExpertMode({
                       variant={difficultyLevel === level ? "default" : "outline"}
                       size="sm"
                       onClick={() => setDifficultyLevel(level)}
-                      className={`h-7 text-[11px] px-3 ${difficultyLevel === level ? "bg-slate-800 hover:bg-slate-900" : ""}`}
+                      className={`h-7 text-[11px] px-3 ${difficultyLevel === level ? "bg-purple-600 hover:bg-purple-700" : ""}`}
                     >
                       {level === "beginner" ? "Beginner" : level === "gemiddeld" ? "Gemiddeld" : "Expert"}
                     </Button>

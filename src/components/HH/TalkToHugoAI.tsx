@@ -273,7 +273,7 @@ export function TalkToHugoAI({
                       onClick={() => setDifficultyLevel(level)}
                       className={`px-4 py-2 rounded-md text-[13px] font-medium transition-all ${
                         difficultyLevel === level 
-                          ? "bg-white shadow-sm text-hh-ink" 
+                          ? "bg-[#5B7B9A] shadow-sm text-white" 
                           : "text-hh-muted hover:text-hh-text"
                       }`}
                     >
