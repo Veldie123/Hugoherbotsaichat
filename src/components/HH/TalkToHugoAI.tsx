@@ -252,11 +252,41 @@ export function TalkToHugoAI({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <Lightbulb className="w-12 h-12 text-hh-muted mx-auto mb-4" />
-              <p className="text-hh-muted text-[14px]">
-                Selecteer een techniek om te beginnen
+            <div className="text-center max-w-md">
+              <div className="w-16 h-16 rounded-full bg-hh-ink/5 mx-auto mb-4 flex items-center justify-center">
+                <Sparkles className="w-8 h-8 text-hh-ink" />
+              </div>
+              <h3 className="text-[18px] font-semibold text-hh-text mb-2">
+                Welkom bij Hugo AI Coach
+              </h3>
+              <p className="text-hh-muted text-[14px] mb-6">
+                Selecteer een techniek in de sidebar om te beginnen met oefenen
               </p>
+              
+              {/* Niveau selector */}
+              <div className="inline-flex flex-col items-center gap-2">
+                <span className="text-[12px] text-hh-muted">Kies je niveau:</span>
+                <div className="flex gap-1 bg-hh-ui-50 rounded-lg p-1">
+                  {(["beginner", "gemiddeld", "expert"] as const).map((level) => (
+                    <button
+                      key={level}
+                      onClick={() => setDifficultyLevel(level)}
+                      className={`px-4 py-2 rounded-md text-[13px] font-medium transition-all ${
+                        difficultyLevel === level 
+                          ? "bg-white shadow-sm text-hh-ink" 
+                          : "text-hh-muted hover:text-hh-text"
+                      }`}
+                    >
+                      {level === "beginner" ? "Beginner" : level === "gemiddeld" ? "Gemiddeld" : "Expert"}
+                    </button>
+                  ))}
+                </div>
+                {difficultyLevel === "expert" && (
+                  <p className="text-[11px] text-hh-muted mt-1">
+                    Expert modus: geen sidebar hulp
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -488,91 +518,69 @@ export function TalkToHugoAI({
         )}
 
         <div className="flex-1 flex flex-col bg-white overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-hh-border bg-white">
-            <div className="flex items-center gap-3">
-              {selectedTechnique && (
-                <Badge variant="outline" className="rounded-full bg-hh-ink/10 text-hh-ink border-hh-ink/20 font-mono text-[11px]">
-                  {selectedTechnique}
-                </Badge>
-              )}
-              <h2 className="text-[18px] leading-[26px] text-hh-text font-semibold">
-                {selectedTechniqueName || "Hugo AI Coach"}
+          {/* Clean header - title left, mode toggle right */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-hh-border bg-white">
+            {/* Left: Title + Timer */}
+            <div className="flex items-center gap-4">
+              <h2 className="text-[20px] leading-[28px] text-hh-text font-semibold">
+                Hugo AI Coach
               </h2>
+              {selectedTechnique && (
+                <>
+                  <div className="h-5 w-px bg-hh-border" />
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="rounded-full bg-hh-ink/10 text-hh-ink border-hh-ink/20 font-mono text-[12px] px-2.5 py-0.5">
+                      {selectedTechnique}
+                    </Badge>
+                    <span className="text-[14px] text-hh-text">{selectedTechniqueName}</span>
+                  </div>
+                  <div className="h-5 w-px bg-hh-border" />
+                  <div className="flex items-center gap-1.5 text-[14px] text-hh-muted">
+                    <Clock className="w-4 h-4" />
+                    <span className="font-mono">{formatTime(sessionTimer)}</span>
+                  </div>
+                </>
+              )}
             </div>
             
-            <div className="flex items-center gap-2">
-              {/* Session timer when technique selected */}
-              {selectedTechnique && (
-                <div className="flex items-center gap-1.5 text-[13px] text-hh-muted mr-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{formatTime(sessionTimer)}</span>
-                </div>
-              )}
-              
-              {/* Niveau selector - always visible when no technique selected */}
-              {!selectedTechnique && (
-                <div className="flex items-center gap-2 mr-3">
-                  <span className="text-[12px] text-hh-muted">Niveau:</span>
-                  <div className="flex gap-1">
-                    {(["beginner", "gemiddeld", "expert"] as const).map((level) => (
-                      <Button
-                        key={level}
-                        variant={difficultyLevel === level ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setDifficultyLevel(level)}
-                        className={`h-7 text-[11px] px-3 ${difficultyLevel === level ? "bg-hh-ink hover:bg-hh-ink/90" : ""}`}
-                      >
-                        {level === "beginner" ? "Beginner" : level === "gemiddeld" ? "Gemiddeld" : "Expert"}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Mode toggle - ALWAYS visible */}
-              <div className="flex items-center border border-hh-border rounded-lg overflow-hidden">
-                <Button
-                  variant="ghost"
-                  size="sm"
+            {/* Right: Mode toggle + Stop */}
+            <div className="flex items-center gap-3">
+              {/* Mode toggle - compact icon buttons */}
+              <div className="flex items-center bg-hh-ui-50 rounded-lg p-1">
+                <button
                   onClick={() => setChatMode("chat")}
-                  className={`h-8 px-3 rounded-none border-r border-hh-border ${chatMode === "chat" ? "bg-hh-ink text-white hover:bg-hh-ink/90" : "hover:bg-hh-ui-100"}`}
-                  title="Chat mode"
+                  className={`p-2 rounded-md transition-all ${chatMode === "chat" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
+                  title="Chat"
                 >
-                  <MessageSquare className="w-4 h-4 mr-1.5" />
-                  <span className="text-[11px]">Chat</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => setChatMode("audio")}
-                  className={`h-8 px-3 rounded-none border-r border-hh-border ${chatMode === "audio" ? "bg-hh-ink text-white hover:bg-hh-ink/90" : "hover:bg-hh-ui-100"}`}
-                  title="Audio call"
+                  className={`p-2 rounded-md transition-all ${chatMode === "audio" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
+                  title="Bellen"
                 >
-                  <Phone className="w-4 h-4 mr-1.5" />
-                  <span className="text-[11px]">Bellen</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                  <Phone className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => setChatMode("video")}
-                  className={`h-8 px-3 rounded-none ${chatMode === "video" ? "bg-hh-ink text-white hover:bg-hh-ink/90" : "hover:bg-hh-ui-100"}`}
-                  title="Video call"
+                  className={`p-2 rounded-md transition-all ${chatMode === "video" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
+                  title="Video"
                 >
-                  <Video className="w-4 h-4 mr-1.5" />
-                  <span className="text-[11px]">Video</span>
-                </Button>
+                  <Video className="w-4 h-4" />
+                </button>
               </div>
               
               {/* Stop button when technique active */}
               {selectedTechnique && (
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   onClick={handleStopRoleplay}
-                  className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 ml-1"
+                  className="h-8 px-3 text-red-500 hover:text-red-600 hover:bg-red-50 gap-1.5"
                   title="Stop rollenspel"
                 >
                   <X className="w-4 h-4" />
+                  <span className="text-[12px]">Stop</span>
                 </Button>
               )}
             </div>
