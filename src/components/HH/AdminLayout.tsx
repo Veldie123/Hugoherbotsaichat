@@ -467,7 +467,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
                     variant="ghost"
                     size="sm"
                     className="w-full justify-center text-[12px]"
-                    onClick={() => navigate?.("admin-notifications")}
+                    onClick={() => navigate?.("admin-config-review")}
                   >
                     Alle notificaties
                   </Button>

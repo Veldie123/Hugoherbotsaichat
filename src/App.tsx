@@ -14,10 +14,11 @@ import { UploadAnalysis } from "./components/HH/UploadAnalysis";
 import { AdminSessions } from "./components/HH/AdminSessions";
 import { AdminChatExpertMode } from "./components/HH/AdminChatExpertMode";
 import { AdminUploadManagement } from "./components/HH/AdminUploadManagement";
+import { AdminConfigReview } from "./components/HH/AdminConfigReview";
 import { HugoAIOverview } from "./components/HH/HugoAIOverview";
 import { auth } from "./utils/supabase/client";
 
-type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "onboarding" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "analysis" | "analysis-results" | "upload-analysis" | "admin-uploads" | "admin-sessions" | "admin-chat-expert";
+type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "onboarding" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "analysis" | "analysis-results" | "upload-analysis" | "admin-uploads" | "admin-sessions" | "admin-chat-expert" | "admin-config-review";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page | null>(null);
@@ -131,6 +132,9 @@ export default function App() {
               navigate={navigate} 
             />
           )}
+
+          {/* Admin View - Config Review */}
+          {currentPage === "admin-config-review" && <AdminConfigReview navigate={navigate} />}
         </>
       )}
     </UserProvider>
