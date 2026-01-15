@@ -604,16 +604,14 @@ export function TalkToHugoAI({
               
               {/* Stop button when technique active */}
               {selectedTechnique && (
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={handleStopRoleplay}
-                  className="h-8 px-3 text-red-500 hover:text-red-600 hover:bg-red-50 gap-1.5"
+                  className="h-8 px-3 rounded-md border border-hh-border bg-white hover:bg-hh-ui-50 transition-colors flex items-center gap-1.5"
                   title="Stop rollenspel"
                 >
-                  <X className="w-4 h-4" />
-                  <span className="text-[12px]">Stop</span>
-                </Button>
+                  <X className="w-3.5 h-3.5 text-hh-muted" />
+                  <span className="text-[12px] text-hh-text">Stop</span>
+                </button>
               )}
             </div>
           </div>
