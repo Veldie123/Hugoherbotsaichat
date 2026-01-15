@@ -50,6 +50,18 @@ src/
 - **Badge patterns**: Semantic coloring (success/error/warning/info) with bg-color/10 text-color border-color/20
 
 ## Recent Changes
+- 2026-01-15: Multi-Modal Chat Interface + Progressive Unlocking
+  - Added multi-modal toggle (Chat/Audio/Video) to TalkToHugoAI.tsx
+    - **Chat Mode**: WhatsApp-style with dictation microphone
+    - **Audio Mode**: Teal gradient, waveform visualization, phone controls (Mute, Speaker, End)
+    - **Video Mode**: Dark slate gradient, HH avatar, PiP preview, camera controls
+  - Session timer (MM:SS) starts when technique is selected
+  - Enhanced AdminChatExpertModeSidebar.tsx with:
+    - Progressive unlocking: greyed-out locked techniques with 🔒, green ✅ for completed
+    - 3-level technique hierarchy (parent → child → grandchild)
+    - Grandchild examples: 2.1.1.x (discovery themes), 4.2.x (afritten types), 4.3.x (closing steps)
+  - Updated Epic Sales Flow progress bar with correct colors (green #10B981 completed, HH blue #4F7396 current)
+  - Updated export package (hugo_export_package.tar.gz) to v2.0 with all new features
 - 2026-01-14: Hugo a.i. User View Flow Redesign
   - Created HugoAIOverview.tsx as landing page for Hugo a.i. in User View
     - 4 KPI cards: Total Sessies, Excellent Quality, Gem. Score, Needs Improvement
