@@ -411,7 +411,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 variant={viewMode === "list" ? "default" : "ghost"}
                 size="icon"
                 onClick={() => setViewMode("list")}
-                className={viewMode === "list" ? "bg-hh-ink hover:bg-hh-ink/90" : ""}
+                className={viewMode === "list" ? "bg-[#5B7B9A] hover:bg-[#4A6A89]" : ""}
               >
                 <List className="w-4 h-4" />
               </Button>
@@ -419,7 +419,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 variant={viewMode === "grid" ? "default" : "ghost"}
                 size="icon"
                 onClick={() => setViewMode("grid")}
-                className={viewMode === "grid" ? "bg-hh-ink hover:bg-hh-ink/90" : ""}
+                className={viewMode === "grid" ? "bg-[#5B7B9A] hover:bg-[#4A6A89]" : ""}
               >
                 <LayoutGrid className="w-4 h-4" />
               </Button>

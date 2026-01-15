@@ -375,7 +375,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                 size="sm"
                 className={`${
                   viewMode === "list" 
-                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
+                    ? "bg-[#5B7B9A] text-white hover:bg-[#4A6A89]" 
                     : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
                 }`}
                 onClick={() => setViewMode("list")}
@@ -387,7 +387,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                 size="sm"
                 className={`${
                   viewMode === "grid" 
-                    ? "bg-hh-ink text-white hover:bg-hh-ink/90" 
+                    ? "bg-[#5B7B9A] text-white hover:bg-[#4A6A89]" 
                     : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
                 }`}
                 onClick={() => setViewMode("grid")}
