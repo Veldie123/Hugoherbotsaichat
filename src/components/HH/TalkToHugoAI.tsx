@@ -442,12 +442,16 @@ export function TalkToHugoAI({
         <p className="text-white/70 text-[14px]">{formatTime(sessionTimer)}</p>
       </div>
 
-      {/* PiP preview - user camera */}
-      <div className="absolute top-4 right-4 w-28 h-36 rounded-xl overflow-hidden border-2 border-white/30 shadow-xl" style={{ backgroundColor: '#475569' }}>
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: '#e2e8f0' }}>
-            <span className="text-slate-700 text-[12px] font-medium">JIJ</span>
-          </div>
+      {/* PiP preview - user camera - circular */}
+      <div 
+        className="absolute top-4 right-4 flex items-center justify-center border-2 border-white/30 shadow-xl"
+        style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#475569' }}
+      >
+        <div 
+          className="flex items-center justify-center"
+          style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundColor: '#e2e8f0' }}
+        >
+          <span className="text-slate-700 text-[12px] font-medium">JIJ</span>
         </div>
       </div>
 
