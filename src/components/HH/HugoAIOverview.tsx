@@ -280,10 +280,10 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
             </p>
           </div>
           <Button
-            className="bg-hh-ink hover:bg-hh-ink/90 text-white gap-2"
+            className="bg-[#5B7B9A] hover:bg-[#4A6A89] text-white gap-2"
             onClick={() => navigate?.("talk-to-hugo")}
           >
-            <Sparkles className="w-4 h-4" />
+            <MessageSquare className="w-4 h-4" />
             Talk to Hugo a.i.
           </Button>
         </div>
