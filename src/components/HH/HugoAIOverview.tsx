@@ -418,7 +418,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 style={viewMode === "list" ? { backgroundColor: '#4F7396', color: 'white' } : {}}
                 className={viewMode !== "list" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}
               >
-                <List className="w-4 h-4" />
+                <List className="w-4 h-4 text-current" />
               </Button>
               <Button
                 variant="ghost"
@@ -427,7 +427,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 style={viewMode === "grid" ? { backgroundColor: '#4F7396', color: 'white' } : {}}
                 className={viewMode !== "grid" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}
               >
-                <LayoutGrid className="w-4 h-4" />
+                <LayoutGrid className="w-4 h-4 text-current" />
               </Button>
             </div>
           </div>
@@ -566,7 +566,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="w-4 h-4" />
+                              <MoreVertical className="w-4 h-4 text-hh-muted" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -606,7 +606,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                        <MoreVertical className="w-4 h-4" />
+                        <MoreVertical className="w-4 h-4 text-hh-muted" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -634,7 +634,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
 
                 <div className="flex items-center justify-between text-[13px] text-hh-muted">
                   <div className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4" />
+                    <Clock className="w-4 h-4 text-[#4F7396]" />
                     {session.duration}
                   </div>
                   <span
