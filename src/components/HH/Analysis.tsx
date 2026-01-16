@@ -61,7 +61,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortField, setSortField] = useState<"date" | "score" | null>("date");
+  const [sortField, setSortField] = useState<string | null>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<TranscriptSession | null>(null);
@@ -138,7 +138,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
     });
   }, []);
 
-  const handleSort = (field: "date" | "score") => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -227,6 +227,20 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
         break;
       case "score":
         comparison = a.score - b.score;
+        break;
+      case "title":
+        comparison = a.title.localeCompare(b.title);
+        break;
+      case "type":
+        comparison = a.type.localeCompare(b.type);
+        break;
+      case "duration":
+        const durationA = parseInt(a.duration.split(':')[0]) * 60 + parseInt(a.duration.split(':')[1]);
+        const durationB = parseInt(b.duration.split(':')[0]) * 60 + parseInt(b.duration.split(':')[1]);
+        comparison = durationA - durationB;
+        break;
+      case "technieken":
+        comparison = (a.techniquesUsed[0] || "").localeCompare(b.techniquesUsed[0] || "");
         break;
     }
     return sortDirection === "asc" ? comparison : -comparison;
@@ -413,17 +427,35 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               <table className="w-full">
                 <thead className="bg-hh-ui-50 border-b border-hh-border">
                   <tr>
-                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[80px]">
-                      #
+                    <th 
+                      className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[80px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("technieken")}
+                    >
+                      <div className="flex items-center gap-2">
+                        #
+                        <SortIcon column="technieken" />
+                      </div>
                     </th>
-                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                      Techniek
+                    <th 
+                      className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("title")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Techniek
+                        <SortIcon column="title" />
+                      </div>
                     </th>
                     <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                       Technieken
                     </th>
-                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                      Type
+                    <th 
+                      className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("type")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Type
+                        <SortIcon column="type" />
+                      </div>
                     </th>
                     <th
                       className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
@@ -431,19 +463,17 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     >
                       <div className="flex items-center gap-2">
                         Score
-                        {sortField === "score" &&
-                          (sortDirection === "asc" ? (
-                            <ArrowUp className="w-3 h-3" />
-                          ) : (
-                            <ArrowDown className="w-3 h-3" />
-                          ))}
-                        {sortField !== "score" && (
-                          <ArrowUpDown className="w-3 h-3 opacity-30" />
-                        )}
+                        <SortIcon column="score" />
                       </div>
                     </th>
-                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                      Duur
+                    <th 
+                      className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                      onClick={() => handleSort("duration")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Duur
+                        <SortIcon column="duration" />
+                      </div>
                     </th>
                     <th
                       className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
@@ -451,15 +481,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     >
                       <div className="flex items-center gap-2">
                         Datum
-                        {sortField === "date" &&
-                          (sortDirection === "asc" ? (
-                            <ArrowUp className="w-3 h-3" />
-                          ) : (
-                            <ArrowDown className="w-3 h-3" />
-                          ))}
-                        {sortField !== "date" && (
-                          <ArrowUpDown className="w-3 h-3 opacity-30" />
-                        )}
+                        <SortIcon column="date" />
                       </div>
                     </th>
                     <th className="text-right px-4 py-3 text-[13px] font-semibold text-hh-text">

@@ -22,6 +22,9 @@ import {
   Eye,
   Upload as UploadIcon,
   XCircle,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import { CustomCheckbox } from "../ui/custom-checkbox";
 import { useState } from "react";
@@ -87,8 +90,30 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [transcriptSession, setTranscriptSession] = useState<TranscriptSession | null>(null);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const selectionMode = selectedIds.length > 0;
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  };
+
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortField !== column) {
+      return <ArrowUpDown className="w-3 h-3 opacity-30" />;
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="w-3 h-3" />
+    ) : (
+      <ArrowDown className="w-3 h-3" />
+    );
+  };
 
   const openTranscript = (upload: UploadItem) => {
     const transcriptData: TranscriptSession = {
@@ -270,6 +295,35 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
       return false;
     }
     return true;
+  }).sort((a, b) => {
+    if (!sortField) return 0;
+    let comparison = 0;
+    switch (sortField) {
+      case "techniqueNumber":
+        comparison = a.techniqueNumber.localeCompare(b.techniqueNumber);
+        break;
+      case "techniqueName":
+        comparison = a.techniqueName.localeCompare(b.techniqueName);
+        break;
+      case "user":
+        comparison = a.user.localeCompare(b.user);
+        break;
+      case "type":
+        comparison = a.type.localeCompare(b.type);
+        break;
+      case "score":
+        comparison = a.score - b.score;
+        break;
+      case "duration":
+        const durationA = parseInt(a.duration.split(':')[0]) * 60 + parseInt(a.duration.split(':')[1]);
+        const durationB = parseInt(b.duration.split(':')[0]) * 60 + parseInt(b.duration.split(':')[1]);
+        comparison = durationA - durationB;
+        break;
+      case "date":
+        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+        break;
+    }
+    return sortDirection === "asc" ? comparison : -comparison;
   });
 
   const toggleSelectAll = () => {
@@ -500,29 +554,71 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                       />
                     )}
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    #
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("techniqueNumber")}
+                  >
+                    <div className="flex items-center gap-2">
+                      #
+                      <SortIcon column="techniqueNumber" />
+                    </div>
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Techniek
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("techniqueName")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Techniek
+                      <SortIcon column="techniqueName" />
+                    </div>
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Gebruiker
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("user")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Gebruiker
+                      <SortIcon column="user" />
+                    </div>
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Type
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("type")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Type
+                      <SortIcon column="type" />
+                    </div>
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Duur
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("duration")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Duur
+                      <SortIcon column="duration" />
+                    </div>
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Score
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("score")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Score
+                      <SortIcon column="score" />
+                    </div>
                   </th>
                   <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                     Kwaliteit
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Datum
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("date")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Datum
+                      <SortIcon column="date" />
+                    </div>
                   </th>
                   <th className="text-right px-4 py-3 text-[13px] font-semibold text-hh-text">
                     Acties

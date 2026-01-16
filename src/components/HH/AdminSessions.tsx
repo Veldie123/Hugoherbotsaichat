@@ -103,7 +103,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
-  const [sortField, setSortField] = useState<"user" | "score" | "date" | null>(null);
+  const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -113,13 +113,24 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
   const [showFeedbackInput, setShowFeedbackInput] = useState<Record<string, boolean>>({});
   const [feedbackText, setFeedbackText] = useState<Record<string, string>>({});
 
-  const handleSort = (field: "user" | "score" | "date") => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
       setSortDirection("asc");
     }
+  };
+
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortField !== column) {
+      return <ArrowUpDown className="w-3 h-3 opacity-30" />;
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="w-3 h-3" />
+    ) : (
+      <ArrowDown className="w-3 h-3" />
+    );
   };
 
   const toggleSelection = (id: number) => {
@@ -442,20 +453,31 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
     const matchesQuality = filterQuality === "all" || session.quality === filterQuality;
     return matchesSearch && matchesType && matchesQuality;
   }).sort((a, b) => {
-    if (sortField === "user") {
-      return sortDirection === "asc"
-        ? a.user.localeCompare(b.user)
-        : b.user.localeCompare(a.user);
-    } else if (sortField === "score") {
-      return sortDirection === "asc"
-        ? a.score - b.score
-        : b.score - a.score;
-    } else if (sortField === "date") {
-      return sortDirection === "asc"
-        ? new Date(a.date).getTime() - new Date(b.date).getTime()
-        : new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (!sortField) return 0;
+    let comparison = 0;
+    switch (sortField) {
+      case "user":
+        comparison = a.user.localeCompare(b.user);
+        break;
+      case "score":
+        comparison = a.score - b.score;
+        break;
+      case "date":
+        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+        break;
+      case "techniek":
+        comparison = a.techniek.localeCompare(b.techniek);
+        break;
+      case "type":
+        comparison = a.type.localeCompare(b.type);
+        break;
+      case "duration":
+        const durationA = parseInt(a.duration.split(':')[0]) * 60 + parseInt(a.duration.split(':')[1]);
+        const durationB = parseInt(b.duration.split(':')[0]) * 60 + parseInt(b.duration.split(':')[1]);
+        comparison = durationA - durationB;
+        break;
     }
-    return 0;
+    return sortDirection === "asc" ? comparison : -comparison;
   });
 
   return (
@@ -692,11 +714,23 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                       />
                     )}
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[80px]">
-                    #
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[80px] cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("techniek")}
+                  >
+                    <div className="flex items-center gap-2">
+                      #
+                      <SortIcon column="techniek" />
+                    </div>
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Techniek
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("techniek")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Techniek
+                      <SortIcon column="techniek" />
+                    </div>
                   </th>
                   <th
                     className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
@@ -704,19 +738,17 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                   >
                     <div className="flex items-center gap-2">
                       Gebruiker
-                      {sortField === "user" &&
-                        (sortDirection === "asc" ? (
-                          <ArrowUp className="w-3 h-3" />
-                        ) : (
-                          <ArrowDown className="w-3 h-3" />
-                        ))}
-                      {sortField !== "user" && (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
+                      <SortIcon column="user" />
                     </div>
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Type
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("type")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Type
+                      <SortIcon column="type" />
+                    </div>
                   </th>
                   <th
                     className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
@@ -724,19 +756,17 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                   >
                     <div className="flex items-center gap-2">
                       Score
-                      {sortField === "score" &&
-                        (sortDirection === "asc" ? (
-                          <ArrowUp className="w-3 h-3" />
-                        ) : (
-                          <ArrowDown className="w-3 h-3" />
-                        ))}
-                      {sortField !== "score" && (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
+                      <SortIcon column="score" />
                     </div>
                   </th>
-                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
-                    Duur
+                  <th 
+                    className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    onClick={() => handleSort("duration")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Duur
+                      <SortIcon column="duration" />
+                    </div>
                   </th>
                   <th
                     className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
@@ -744,15 +774,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                   >
                     <div className="flex items-center gap-2">
                       Datum
-                      {sortField === "date" &&
-                        (sortDirection === "asc" ? (
-                          <ArrowUp className="w-3 h-3" />
-                        ) : (
-                          <ArrowDown className="w-3 h-3" />
-                        ))}
-                      {sortField !== "date" && (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
+                      <SortIcon column="date" />
                     </div>
                   </th>
                   <th className="text-right px-4 py-3 text-[13px] font-semibold text-hh-text">
