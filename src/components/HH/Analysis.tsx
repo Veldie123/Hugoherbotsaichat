@@ -497,8 +497,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     >
                       <td className="py-3 px-4">
                         <span 
-                          style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
-                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[12px] font-semibold border-2">
+                          style={{ backgroundColor: '#D1FAE5', color: '#10B981' }}
+                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[12px] font-semibold">
                           {conv.techniquesUsed[0] || "1.1"}
                         </span>
                       </td>
@@ -515,8 +515,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                           {conv.techniquesUsed.map((tech, idx) => (
                             <span
                               key={idx}
-                              style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold border"
+                              style={{ backgroundColor: '#D1FAE5', color: '#10B981' }}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold"
                             >
                               {tech}
                             </span>
@@ -620,8 +620,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                   {conv.techniquesUsed.map((tech, idx) => (
                     <span
                       key={idx}
-                      style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold border"
+                      style={{ backgroundColor: '#D1FAE5', color: '#10B981' }}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold"
                     >
                       {tech}
                     </span>
