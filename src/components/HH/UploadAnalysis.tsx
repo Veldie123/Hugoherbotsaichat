@@ -342,16 +342,22 @@ export function UploadAnalysis({
             </div>
 
             {/* Drag & Drop Zone */}
-            <div
+            <label
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-[12px] p-8 text-center transition-colors ${
+              className={`border-2 border-dashed rounded-[12px] p-8 text-center transition-colors cursor-pointer block ${
                 isDragging
                   ? "border-hh-primary bg-hh-primary/5"
                   : "border-hh-border hover:border-hh-primary/50"
               }`}
             >
+              <input
+                type="file"
+                accept="audio/*,video/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
               {selectedFile ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-center gap-3">
@@ -370,7 +376,7 @@ export function UploadAnalysis({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedFile(null)}
+                    onClick={(e: React.MouseEvent) => { e.preventDefault(); setSelectedFile(null); }}
                   >
                     Verwijder
                   </Button>
@@ -381,15 +387,9 @@ export function UploadAnalysis({
                   <div>
                     <p className="text-hh-text mb-2">
                       Sleep een bestand hier of{" "}
-                      <label className="text-hh-primary hover:underline cursor-pointer">
+                      <span className="text-hh-primary hover:underline">
                         browse
-                        <input
-                          type="file"
-                          accept="audio/*,video/*"
-                          className="hidden"
-                          onChange={handleFileSelect}
-                        />
-                      </label>
+                      </span>
                     </p>
                     <p className="text-[14px] leading-[20px] text-hh-muted">
                       Audio: MP3, WAV, M4A • Video: MP4, MOV • Max 50MB
@@ -397,7 +397,7 @@ export function UploadAnalysis({
                   </div>
                 </div>
               )}
-            </div>
+            </label>
 
             {/* Context Form */}
             {selectedFile && (
