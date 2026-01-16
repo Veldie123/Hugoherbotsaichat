@@ -286,7 +286,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +3
               </Badge>
@@ -306,7 +307,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 100%
               </Badge>
@@ -340,7 +342,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +7%
               </Badge>
