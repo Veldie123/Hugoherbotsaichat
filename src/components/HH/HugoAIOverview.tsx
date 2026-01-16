@@ -411,11 +411,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setViewMode("list")}
-                className={`${
-                  viewMode === "list" 
-                    ? "bg-[#5B7B9A] text-white hover:bg-[#4A6A89] hover:text-white" 
-                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
-                }`}
+                style={viewMode === "list" ? { backgroundColor: '#5B7B9A', color: 'white' } : {}}
+                className={viewMode !== "list" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}
               >
                 <List className="w-4 h-4" />
               </Button>
@@ -423,11 +420,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setViewMode("grid")}
-                className={`${
-                  viewMode === "grid" 
-                    ? "bg-[#5B7B9A] text-white hover:bg-[#4A6A89] hover:text-white" 
-                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
-                }`}
+                style={viewMode === "grid" ? { backgroundColor: '#5B7B9A', color: 'white' } : {}}
+                className={viewMode !== "grid" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}
               >
                 <LayoutGrid className="w-4 h-4" />
               </Button>
@@ -506,11 +500,11 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       className="border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors cursor-pointer"
                       onClick={() => openTranscript(session)}
                     >
-                      {/* Technique Number Badge - colored by phase */}
+                      {/* Technique Number Badge - emerald circles */}
                       <td className="py-3 px-4">
-                        <Badge variant="outline" className={`${getCodeBadgeColors(session.nummer)} text-[11px] font-mono font-semibold px-2.5 py-1`}>
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-mono font-semibold">
                           {session.nummer}
-                        </Badge>
+                        </span>
                       </td>
                       
                       {/* Technique Name + Fase */}

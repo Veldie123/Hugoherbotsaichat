@@ -395,24 +395,18 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`${
-                  viewMode === "list" 
-                    ? "bg-[#5B7B9A] text-white hover:bg-[#4A6A89] hover:text-white" 
-                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
-                }`}
                 onClick={() => setViewMode("list")}
+                style={viewMode === "list" ? { backgroundColor: '#5B7B9A', color: 'white' } : {}}
+                className={viewMode !== "list" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}
               >
                 <List className="w-4 h-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className={`${
-                  viewMode === "grid" 
-                    ? "bg-[#5B7B9A] text-white hover:bg-[#4A6A89] hover:text-white" 
-                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
-                }`}
                 onClick={() => setViewMode("grid")}
+                style={viewMode === "grid" ? { backgroundColor: '#5B7B9A', color: 'white' } : {}}
+                className={viewMode !== "grid" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}
               >
                 <LayoutGrid className="w-4 h-4" />
               </Button>
@@ -499,9 +493,9 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                       }`}
                     >
                       <td className="py-3 px-4">
-                        <Badge className="bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20 text-[11px] font-mono">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-mono font-semibold">
                           {conv.techniquesUsed[0] || "1.1"}
-                        </Badge>
+                        </span>
                       </td>
                       <td className="py-3 px-4">
                         <p className="text-[14px] leading-[20px] text-hh-text font-medium">
@@ -516,7 +510,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                           {conv.techniquesUsed.map((tech, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#5B7B9A]/10 text-[#5B7B9A] text-[11px] font-mono font-semibold"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-mono font-semibold"
                             >
                               {tech}
                             </span>
