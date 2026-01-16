@@ -516,7 +516,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                             <span
                               key={idx}
                               style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold"
+                              className="inline-flex items-center justify-center min-w-[40px] h-10 px-2 rounded-full text-[11px] font-mono font-semibold"
                             >
                               {tech}
                             </span>
@@ -621,7 +621,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     <span
                       key={idx}
                       style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold"
+                              className="inline-flex items-center justify-center min-w-[40px] h-10 px-2 rounded-full text-[11px] font-mono font-semibold"
                     >
                       {tech}
                     </span>
