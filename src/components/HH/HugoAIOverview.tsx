@@ -298,7 +298,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               </div>
               <Badge
                 variant="outline"
-                style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                 className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +15%
@@ -319,7 +319,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               </div>
               <Badge
                 variant="outline"
-                style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                 className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +8%
@@ -340,7 +340,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               </div>
               <Badge
                 variant="outline"
-                style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                 className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +2.3%
@@ -507,7 +507,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       {/* Technique Number Badge - emerald circles */}
                       <td className="py-3 px-4">
                         <span 
-                          style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                          style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                           className="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[12px] font-semibold border-2"
                         >
                           {session.nummer}
@@ -594,7 +594,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <span 
-                      style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                      style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                       className="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[12px] font-semibold border-2"
                     >
                       {session.nummer}

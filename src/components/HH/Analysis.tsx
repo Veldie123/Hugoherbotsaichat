@@ -286,7 +286,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </div>
               <Badge
                 variant="outline"
-                style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                 className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +3
@@ -307,7 +307,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </div>
               <Badge
                 variant="outline"
-                style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                 className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 100%
@@ -342,7 +342,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </div>
               <Badge
                 variant="outline"
-                style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                 className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +7%
@@ -497,7 +497,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     >
                       <td className="py-3 px-4">
                         <span 
-                          style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                          style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                           className="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[12px] font-semibold border-2">
                           {conv.techniquesUsed[0] || "1.1"}
                         </span>
@@ -515,7 +515,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                           {conv.techniquesUsed.map((tech, idx) => (
                             <span
                               key={idx}
-                              style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                              style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                               className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold border"
                             >
                               {tech}
@@ -620,7 +620,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                   {conv.techniquesUsed.map((tech, idx) => (
                     <span
                       key={idx}
-                      style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                      style={{ backgroundColor: '#D1FAE5', color: '#10B981', borderColor: '#10B981' }}
                               className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold border"
                     >
                       {tech}
