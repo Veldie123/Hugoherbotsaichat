@@ -406,20 +406,28 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                 <SelectItem value="needs-improvement">Needs Improvement</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="icon"
+                variant="ghost"
+                size="sm"
                 onClick={() => setViewMode("list")}
-                className={viewMode === "list" ? "bg-[#5B7B9A] hover:bg-[#4A6A89]" : ""}
+                className={`${
+                  viewMode === "list" 
+                    ? "bg-[#5B7B9A] text-white hover:bg-[#4A6A89] hover:text-white" 
+                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
+                }`}
               >
                 <List className="w-4 h-4" />
               </Button>
               <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="icon"
+                variant="ghost"
+                size="sm"
                 onClick={() => setViewMode("grid")}
-                className={viewMode === "grid" ? "bg-[#5B7B9A] hover:bg-[#4A6A89]" : ""}
+                className={`${
+                  viewMode === "grid" 
+                    ? "bg-[#5B7B9A] text-white hover:bg-[#4A6A89] hover:text-white" 
+                    : "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50"
+                }`}
               >
                 <LayoutGrid className="w-4 h-4" />
               </Button>
