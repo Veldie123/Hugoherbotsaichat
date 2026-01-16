@@ -413,11 +413,14 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               <table className="w-full">
                 <thead className="bg-hh-ui-50 border-b border-hh-border">
                   <tr>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">
                       #
                     </th>
                     <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
                       Techniek
+                    </th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
+                      Technieken
                     </th>
                     <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
                       Type
@@ -458,8 +461,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                       onClick={() => openTranscript(conv)}
                     >
                       <td className="py-3 px-4">
-                        <Badge className="bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20 text-[11px] font-mono">
-                          {conv.techniquesUsed[0] || "1.1"}
+                        <Badge className="bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20 text-[11px] font-mono font-semibold px-2.5 py-1">
+                          {index + 1}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
@@ -470,6 +473,18 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                           <p className="text-[12px] text-hh-muted">
                             {conv.prospect}
                           </p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {conv.techniquesUsed.map((tech, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#5B7B9A]/10 text-[#5B7B9A] text-[11px] font-mono font-semibold"
+                            >
+                              {tech}
+                            </span>
+                          ))}
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -531,14 +546,10 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                 className="p-5 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => openTranscript(conv)}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20 text-[11px] font-mono font-semibold px-2.5 py-1">
-                      {conv.techniquesUsed[0] || "1.1"}
-                    </Badge>
-                    <div className="w-10 h-10 rounded-full bg-[#5B7B9A]/10 flex items-center justify-center">
-                      {getTypeIcon(conv.type)}
-                    </div>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {getTypeIcon(conv.type)}
+                    <span className="text-[12px] text-hh-muted">{getTypeLabel(conv.type)}</span>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -562,14 +573,18 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                   {conv.prospect}
                 </p>
 
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center gap-1.5">
-                    {getTypeIcon(conv.type)}
-                    <span className="text-[12px] text-hh-muted">{getTypeLabel(conv.type)}</span>
-                  </div>
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {conv.techniquesUsed.map((tech, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#5B7B9A]/10 text-[#5B7B9A] text-[11px] font-mono font-semibold"
+                    >
+                      {tech}
+                    </span>
+                  ))}
                 </div>
 
-                <div className="flex items-center justify-between text-[13px] text-hh-muted">
+                <div className="flex items-center justify-between text-[13px] text-hh-muted pt-3 border-t border-hh-border">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4" />
                     {conv.duration}
