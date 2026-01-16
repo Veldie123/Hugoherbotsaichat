@@ -292,12 +292,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#5B7B9A]/10 flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-[#5B7B9A]" />
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20"
               >
                 +15%
               </Badge>
@@ -312,12 +312,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-success/10 flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-hh-success" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
               >
                 +8%
               </Badge>
@@ -332,12 +332,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-sky-500/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-sky-500" />
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-sky-500/10 text-sky-500 border-sky-500/20"
               >
                 +2.3%
               </Badge>
@@ -352,12 +352,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-warning/10 flex items-center justify-center">
-                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-hh-warning" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-warning/10 text-hh-warning border-hh-warning/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-orange-500/10 text-orange-500 border-orange-500/20"
               >
                 -5%
               </Badge>

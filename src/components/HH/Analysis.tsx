@@ -267,12 +267,12 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
-                <FileAudio className="w-4 h-4 sm:w-5 sm:h-5 text-hh-ink" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#5B7B9A]/10 flex items-center justify-center">
+                <FileAudio className="w-4 h-4 sm:w-5 sm:h-5 text-[#5B7B9A]" />
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20"
               >
                 +3
               </Badge>
@@ -287,9 +287,15 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-success/10 flex items-center justify-center">
-                <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-hh-success" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
               </div>
+              <Badge
+                variant="outline"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+              >
+                100%
+              </Badge>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Geanalyseerd
@@ -301,8 +307,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-primary/10 flex items-center justify-center">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-hh-primary" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
               </div>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
@@ -315,12 +321,12 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
 
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-success/10 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-hh-success" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-sky-500/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-sky-500" />
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-sky-500/10 text-sky-500 border-sky-500/20"
               >
                 +7%
               </Badge>
