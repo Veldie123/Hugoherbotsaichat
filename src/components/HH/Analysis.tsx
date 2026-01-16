@@ -494,7 +494,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     >
                       <td className="py-3 px-4">
                         <span 
-                          style={{ backgroundColor: '#34D399', color: '#000000', borderColor: '#10B981' }}
+                          style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
                           className="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[12px] font-semibold border-2">
                           {conv.techniquesUsed[0] || "1.1"}
                         </span>
