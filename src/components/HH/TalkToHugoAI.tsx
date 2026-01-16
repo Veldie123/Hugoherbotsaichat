@@ -266,15 +266,16 @@ export function TalkToHugoAI({
               {/* Niveau selector */}
               <div className="inline-flex flex-col items-center gap-2">
                 <span className="text-[12px] text-hh-muted">Kies je niveau:</span>
-                <div className="flex gap-1 bg-hh-ui-50 rounded-lg p-1">
+                <div className="flex gap-1 bg-hh-ui-100 rounded-lg p-1 border border-hh-border">
                   {(["beginner", "gemiddeld", "expert"] as const).map((level) => (
                     <button
                       key={level}
                       onClick={() => setDifficultyLevel(level)}
+                      style={difficultyLevel === level ? { backgroundColor: '#5B7B9A', color: 'white' } : {}}
                       className={`px-4 py-2 rounded-md text-[13px] font-medium transition-all ${
                         difficultyLevel === level 
-                          ? "bg-[#5B7B9A] shadow-sm text-white" 
-                          : "text-hh-muted hover:text-hh-text"
+                          ? "shadow-sm" 
+                          : "text-hh-text hover:bg-hh-ui-50"
                       }`}
                     >
                       {level === "beginner" ? "Beginner" : level === "gemiddeld" ? "Gemiddeld" : "Expert"}
