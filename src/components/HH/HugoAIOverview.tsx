@@ -298,8 +298,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               </div>
               <Badge
                 variant="outline"
-                style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5"
+                style={{ backgroundColor: 'transparent', color: '#10B981', borderColor: '#10B981' }}
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +15%
               </Badge>
@@ -319,8 +319,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               </div>
               <Badge
                 variant="outline"
-                style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5"
+                style={{ backgroundColor: 'transparent', color: '#10B981', borderColor: '#10B981' }}
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +8%
               </Badge>
@@ -340,8 +340,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               </div>
               <Badge
                 variant="outline"
-                style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5"
+                style={{ backgroundColor: 'transparent', color: '#10B981', borderColor: '#10B981' }}
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
               >
                 +2.3%
               </Badge>
