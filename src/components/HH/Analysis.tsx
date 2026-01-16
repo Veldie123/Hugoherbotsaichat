@@ -286,7 +286,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
               >
                 +3
               </Badge>
@@ -340,7 +340,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-sky-500/10 text-sky-500 border-sky-500/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
               >
                 +7%
               </Badge>

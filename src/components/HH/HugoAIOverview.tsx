@@ -297,7 +297,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
               >
                 +15%
               </Badge>
@@ -337,7 +337,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-sky-500/10 text-sky-500 border-sky-500/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
               >
                 +2.3%
               </Badge>
@@ -357,7 +357,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               </div>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-orange-500/10 text-orange-500 border-orange-500/20"
+                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-red-500/10 text-red-600 border-red-500/20"
               >
                 -5%
               </Badge>
