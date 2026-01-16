@@ -156,11 +156,15 @@ export function EPICSidebar({
               let barFillColor = "bg-slate-300";
               let barWidth = "0%";
               
-              if (isCompleted) {
-                barBgColor = "bg-emerald-100";
-                barFillColor = "bg-emerald-500";
+              if (isCompleted || (item.phase < currentUnlockedPhase && !isLocked)) {
+                barBgColor = "bg-[#4F7396]/20";
+                barFillColor = "bg-[#4F7396]";
                 barWidth = "100%";
-              } else if (isCurrent || (hasProgress && !isLocked)) {
+              } else if (isCurrent) {
+                barBgColor = "bg-[#10B981]/20";
+                barFillColor = "bg-[#10B981]";
+                barWidth = progress.total > 0 ? `${(progress.completed / progress.total) * 100}%` : "0%";
+              } else if (hasProgress && !isLocked) {
                 barBgColor = "bg-slate-200";
                 barFillColor = "bg-[#4F7396]";
                 barWidth = progress.total > 0 ? `${(progress.completed / progress.total) * 100}%` : "0%";
@@ -170,14 +174,14 @@ export function EPICSidebar({
                 barWidth = "0%";
               }
               
-              // Text colors
+              // Text colors - completed phases in steel blue, current phase in green
               let numberColor = "text-slate-400";
               let labelColor = "text-slate-400";
-              if (isCompleted) {
-                numberColor = "text-emerald-600";
+              if (isCompleted || (item.phase < currentUnlockedPhase && !isLocked)) {
+                numberColor = "text-[#4F7396]";
                 labelColor = "text-slate-600";
               } else if (isCurrent) {
-                numberColor = "text-[#4F7396]";
+                numberColor = "text-[#10B981]";
                 labelColor = "text-slate-600";
               } else if (!isLocked) {
                 numberColor = "text-slate-500";
