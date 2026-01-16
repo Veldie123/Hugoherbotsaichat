@@ -151,56 +151,50 @@ export function EPICSidebar({
               const isCurrent = item.phase === currentUnlockedPhase;
               const isLocked = isUserView && item.phase > currentUnlockedPhase;
               
-              // Bar background and fill colors
-              let barBgColor = "bg-slate-200";
-              let barFillColor = "bg-slate-300";
+              // Bar and text colors using inline styles for CSS specificity
+              let barBgStyle = { backgroundColor: '#e2e8f0' };
+              let barFillStyle = { backgroundColor: '#cbd5e1' };
               let barWidth = "0%";
+              let numberStyle = { color: '#94a3b8' };
+              let labelStyle = { color: '#94a3b8' };
               
               if (isCompleted || (item.phase < currentUnlockedPhase && !isLocked)) {
-                barBgColor = "bg-[#4F7396]/20";
-                barFillColor = "bg-[#4F7396]";
+                barBgStyle = { backgroundColor: 'rgba(79, 115, 150, 0.2)' };
+                barFillStyle = { backgroundColor: '#4F7396' };
                 barWidth = "100%";
+                numberStyle = { color: '#4F7396' };
+                labelStyle = { color: '#475569' };
               } else if (isCurrent) {
-                barBgColor = "bg-[#10B981]/20";
-                barFillColor = "bg-[#10B981]";
+                barBgStyle = { backgroundColor: 'rgba(16, 185, 129, 0.2)' };
+                barFillStyle = { backgroundColor: '#10B981' };
                 barWidth = progress.total > 0 ? `${(progress.completed / progress.total) * 100}%` : "0%";
+                numberStyle = { color: '#10B981' };
+                labelStyle = { color: '#475569' };
               } else if (hasProgress && !isLocked) {
-                barBgColor = "bg-slate-200";
-                barFillColor = "bg-[#4F7396]";
+                barBgStyle = { backgroundColor: '#e2e8f0' };
+                barFillStyle = { backgroundColor: '#4F7396' };
                 barWidth = progress.total > 0 ? `${(progress.completed / progress.total) * 100}%` : "0%";
+                numberStyle = { color: '#64748b' };
+                labelStyle = { color: '#64748b' };
               } else if (isLocked) {
-                barBgColor = "bg-slate-100";
-                barFillColor = "bg-slate-200";
+                barBgStyle = { backgroundColor: '#f1f5f9' };
+                barFillStyle = { backgroundColor: '#e2e8f0' };
                 barWidth = "0%";
-              }
-              
-              // Text colors - completed phases in steel blue, current phase in green
-              let numberColor = "text-slate-400";
-              let labelColor = "text-slate-400";
-              if (isCompleted || (item.phase < currentUnlockedPhase && !isLocked)) {
-                numberColor = "text-[#4F7396]";
-                labelColor = "text-slate-600";
-              } else if (isCurrent) {
-                numberColor = "text-[#10B981]";
-                labelColor = "text-slate-600";
-              } else if (!isLocked) {
-                numberColor = "text-slate-500";
-                labelColor = "text-slate-500";
               }
               
               return (
                 <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                  <div className={`w-full h-2 rounded-full overflow-hidden ${barBgColor}`}>
+                  <div className="w-full h-2 rounded-full overflow-hidden" style={barBgStyle}>
                     <div 
-                      className={`h-full rounded-full transition-all duration-300 ${barFillColor}`}
-                      style={{ width: barWidth }}
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{ ...barFillStyle, width: barWidth }}
                     />
                   </div>
                   <div className="flex flex-col items-center">
-                    <span className={cn("text-[12px] leading-[16px] font-semibold", numberColor)}>
+                    <span className="text-[12px] leading-[16px] font-semibold" style={numberStyle}>
                       {item.phase === 0 ? "-1" : item.phase}
                     </span>
-                    <span className={cn("text-[11px] leading-[14px] text-center", labelColor)}>{item.label}</span>
+                    <span className="text-[11px] leading-[14px] text-center" style={labelStyle}>{item.label}</span>
                   </div>
                 </div>
               );
