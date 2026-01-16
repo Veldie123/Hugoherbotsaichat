@@ -280,7 +280,8 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
             </p>
           </div>
           <Button
-            className="bg-[#5B7B9A] hover:bg-[#4A6A89] text-white gap-2"
+            style={{ backgroundColor: '#5B7B9A', color: 'white' }}
+            className="hover:bg-[#4A6A89] gap-2"
             onClick={() => navigate?.("talk-to-hugo")}
           >
             <MessageSquare className="w-4 h-4" />
