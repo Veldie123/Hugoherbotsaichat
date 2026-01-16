@@ -493,7 +493,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                       }`}
                     >
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[12px] font-semibold border-2 border-emerald-200">
+                        <span className="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-emerald-400 text-hh-ink text-[12px] font-semibold border-2 border-emerald-500">
                           {conv.techniquesUsed[0] || "1.1"}
                         </span>
                       </td>
