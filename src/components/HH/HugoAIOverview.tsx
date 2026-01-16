@@ -507,7 +507,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       {/* Technique Number Badge - emerald circles */}
                       <td className="py-3 px-4">
                         <span 
-                          style={{ backgroundColor: '#D1FAE5', color: '#10B981' }}
+                          style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
                           className="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[12px] font-semibold"
                         >
                           {session.nummer}
