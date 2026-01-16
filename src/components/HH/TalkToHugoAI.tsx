@@ -625,56 +625,6 @@ export function TalkToHugoAI({
             {renderMainContent()}
           </div>
 
-          {difficultyLevel === "expert" && !selectedTechnique && (
-            <div className="p-4 border-t border-hh-border">
-              <label className="text-[12px] font-medium text-hh-text mb-2 block">
-                Selecteer techniek die je gaat toepassen:
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedTechnique}
-                  onChange={(e) => {
-                    const technique = Object.values(technieken_index.technieken).find(
-                      (t: any) => t.nummer === e.target.value
-                    ) as any;
-                    if (technique) {
-                      startTechniqueChat(technique.nummer, technique.naam);
-                    }
-                  }}
-                  className="w-full px-4 py-3 text-[13px] border-2 border-hh-ink/20 rounded-lg bg-white text-hh-text focus:outline-none focus:ring-2 focus:ring-hh-ink focus:border-hh-ink appearance-none cursor-pointer hover:border-hh-ink/30 transition-colors font-medium shadow-sm"
-                >
-                  <option value="" className="text-hh-muted">-- Kies een techniek uit de lijst --</option>
-                  {[0, 1, 2, 3, 4].map(phase => {
-                    const phaseTechniques = (techniquesByPhase[phase] || [])
-                      .filter((t: any) => !t.is_fase)
-                      .sort((a: any, b: any) => {
-                        const aNum = a.nummer.split('.').map((n: string) => parseInt(n) || 0);
-                        const bNum = b.nummer.split('.').map((n: string) => parseInt(n) || 0);
-                        for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
-                          if ((aNum[i] || 0) !== (bNum[i] || 0)) {
-                            return (aNum[i] || 0) - (bNum[i] || 0);
-                          }
-                        }
-                        return 0;
-                      });
-                    
-                    if (phaseTechniques.length === 0) return null;
-                    
-                    return (
-                      <optgroup key={phase} label={`── ${phaseNames[phase]} ──`}>
-                        {phaseTechniques.map((t: any) => (
-                          <option key={t.nummer} value={t.nummer} className="py-2 font-normal">
-                            {t.nummer} • {t.naam}
-                          </option>
-                        ))}
-                      </optgroup>
-                    );
-                  })}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted pointer-events-none" />
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
