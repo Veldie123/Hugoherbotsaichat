@@ -145,7 +145,7 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                           className={`text-[10px] font-mono ${
                             isAdmin
                               ? "bg-purple-600 text-white border-purple-600"
-                              : "bg-[#5B7B9A] text-white border-[#5B7B9A]"
+                              : "bg-[#4F7396] text-white border-[#4F7396]"
                           }`}
                         >
                           {line.time}

@@ -186,11 +186,11 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "call":
-        return <Mic className="w-4 h-4 text-[#5B7B9A]" />;
+        return <Mic className="w-4 h-4 text-[#4F7396]" />;
       case "meeting":
-        return <Video className="w-4 h-4 text-[#5B7B9A]" />;
+        return <Video className="w-4 h-4 text-[#4F7396]" />;
       case "demo":
-        return <MessageSquare className="w-4 h-4 text-[#5B7B9A]" />;
+        return <MessageSquare className="w-4 h-4 text-[#4F7396]" />;
       default:
         return null;
     }
@@ -281,8 +281,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#5B7B9A]/10 flex items-center justify-center">
-                <FileAudio className="w-4 h-4 sm:w-5 sm:h-5 text-[#5B7B9A]" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#4F7396]/10 flex items-center justify-center">
+                <FileAudio className="w-4 h-4 sm:w-5 sm:h-5 text-[#4F7396]" />
               </div>
               <Badge
                 variant="outline"
@@ -396,7 +396,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setViewMode("list")}
-                style={viewMode === "list" ? { backgroundColor: '#5B7B9A', color: 'white' } : {}}
+                style={viewMode === "list" ? { backgroundColor: '#4F7396', color: 'white' } : {}}
                 className={viewMode !== "list" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}
               >
                 <List className="w-4 h-4" />
@@ -405,7 +405,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setViewMode("grid")}
-                style={viewMode === "grid" ? { backgroundColor: '#5B7B9A', color: 'white' } : {}}
+                style={viewMode === "grid" ? { backgroundColor: '#4F7396', color: 'white' } : {}}
                 className={viewMode !== "grid" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}
               >
                 <LayoutGrid className="w-4 h-4" />

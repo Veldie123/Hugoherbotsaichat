@@ -271,7 +271,7 @@ export function TalkToHugoAI({
                     <button
                       key={level}
                       onClick={() => setDifficultyLevel(level)}
-                      style={difficultyLevel === level ? { backgroundColor: '#5B7B9A', color: 'white' } : {}}
+                      style={difficultyLevel === level ? { backgroundColor: '#4F7396', color: 'white' } : {}}
                       className={`px-4 py-2 rounded-md text-[13px] font-medium transition-all ${
                         difficultyLevel === level 
                           ? "shadow-sm" 
