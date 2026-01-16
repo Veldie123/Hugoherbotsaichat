@@ -515,7 +515,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                           {conv.techniquesUsed.map((tech, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-mono font-semibold"
+                              style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold border"
                             >
                               {tech}
                             </span>
@@ -619,7 +620,8 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                   {conv.techniquesUsed.map((tech, idx) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-mono font-semibold"
+                      style={{ backgroundColor: '#D1FAE5', color: '#059669', borderColor: '#10B981' }}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-mono font-semibold border"
                     >
                       {tech}
                     </span>
