@@ -503,7 +503,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                     >
                       {/* Technique Number Badge - emerald circles */}
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-mono font-semibold">
+                        <span className="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[12px] font-semibold border-2 border-emerald-200">
                           {session.nummer}
                         </span>
                       </td>
@@ -587,7 +587,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-mono font-semibold">
+                    <span className="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[12px] font-semibold border-2 border-emerald-200">
                       {session.nummer}
                     </span>
                     <div className="w-10 h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
