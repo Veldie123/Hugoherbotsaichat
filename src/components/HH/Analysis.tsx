@@ -406,47 +406,63 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
           </div>
         </Card>
 
-        {/* List View */}
+        {/* List View - Copied from Admin, adapted for User */}
         {viewMode === "list" && (
           <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-hh-ui-50 border-b border-hh-border">
                   <tr>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text w-[80px]">
+                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text w-[80px]">
                       #
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
+                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                       Techniek
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
+                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                       Technieken
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
+                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                       Type
                     </th>
-                    <th 
-                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    <th
+                      className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
                       onClick={() => handleSort("score")}
                     >
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         Score
-                        <SortIcon column="score" />
+                        {sortField === "score" &&
+                          (sortDirection === "asc" ? (
+                            <ArrowUp className="w-3 h-3" />
+                          ) : (
+                            <ArrowDown className="w-3 h-3" />
+                          ))}
+                        {sortField !== "score" && (
+                          <ArrowUpDown className="w-3 h-3 opacity-30" />
+                        )}
                       </div>
                     </th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text">
+                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                       Duur
                     </th>
-                    <th 
-                      className="text-left py-3 px-4 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
+                    <th
+                      className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
                       onClick={() => handleSort("date")}
                     >
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         Datum
-                        <SortIcon column="date" />
+                        {sortField === "date" &&
+                          (sortDirection === "asc" ? (
+                            <ArrowUp className="w-3 h-3" />
+                          ) : (
+                            <ArrowDown className="w-3 h-3" />
+                          ))}
+                        {sortField !== "date" && (
+                          <ArrowUpDown className="w-3 h-3 opacity-30" />
+                        )}
                       </div>
                     </th>
-                    <th className="text-right py-3 px-4 text-[13px] font-semibold text-hh-text">
+                    <th className="text-right px-4 py-3 text-[13px] font-semibold text-hh-text">
                       Acties
                     </th>
                   </tr>
@@ -455,25 +471,23 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                   {sortedConversations.map((conv, index) => (
                     <tr
                       key={conv.id}
-                      className={`border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors cursor-pointer ${
+                      onClick={() => openTranscript(conv)}
+                      className={`border-b border-hh-border last:border-0 hover:bg-hh-ui-50 transition-colors cursor-pointer ${
                         index % 2 === 0 ? "bg-white" : "bg-hh-ui-50/30"
                       }`}
-                      onClick={() => openTranscript(conv)}
                     >
                       <td className="py-3 px-4">
-                        <Badge className="bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20 text-[11px] font-mono font-semibold px-2.5 py-1">
-                          {index + 1}
+                        <Badge className="bg-[#5B7B9A]/10 text-[#5B7B9A] border-[#5B7B9A]/20 text-[11px] font-mono">
+                          {conv.techniquesUsed[0] || "1.1"}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
-                        <div>
-                          <p className="text-[14px] font-medium text-hh-text">
-                            {conv.title}
-                          </p>
-                          <p className="text-[12px] text-hh-muted">
-                            {conv.prospect}
-                          </p>
-                        </div>
+                        <p className="text-[14px] leading-[20px] text-hh-text font-medium">
+                          {conv.title}
+                        </p>
+                        <p className="text-[12px] leading-[16px] text-hh-muted">
+                          {conv.prospect}
+                        </p>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1.5">
@@ -488,30 +502,28 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-[14px] leading-[20px] text-hh-text">
                           {getTypeIcon(conv.type)}
-                          <span className="text-[13px] text-hh-text">{getTypeLabel(conv.type)}</span>
+                          <span className="text-[13px]">{getTypeLabel(conv.type)}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        {conv.status === "analyzed" ? (
-                          <span className={`text-[14px] font-medium ${
+                        <span
+                          className={`text-[14px] leading-[20px] font-medium ${
                             conv.score >= 80
                               ? "text-hh-success"
                               : conv.score >= 70
                               ? "text-blue-600"
                               : "text-hh-warn"
-                          }`}>
-                            {conv.score}%
-                          </span>
-                        ) : (
-                          <span className="text-[14px] text-hh-muted">—</span>
-                        )}
+                          }`}
+                        >
+                          {conv.score}%
+                        </span>
                       </td>
-                      <td className="py-3 px-4">
-                        <span className="text-[13px] text-hh-text">{conv.duration}</span>
+                      <td className="py-3 px-4 text-[14px] leading-[20px] text-hh-text">
+                        {conv.duration}
                       </td>
-                      <td className="py-3 px-4 text-[13px] text-hh-muted">
+                      <td className="py-3 px-4 text-[13px] leading-[18px] text-hh-muted">
                         {conv.date}
                       </td>
                       <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
@@ -524,7 +536,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openTranscript(conv)}>
                               <Eye className="w-4 h-4 mr-2" />
-                              Bekijk details
+                              Bekijk Details
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -534,6 +546,15 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                 </tbody>
               </table>
             </div>
+
+            {sortedConversations.length === 0 && (
+              <div className="p-12 text-center">
+                <FileAudio className="w-12 h-12 text-hh-muted mx-auto mb-4" />
+                <p className="text-[16px] leading-[24px] text-hh-muted">
+                  Geen analyses gevonden met deze filters
+                </p>
+              </div>
+            )}
           </Card>
         )}
 
