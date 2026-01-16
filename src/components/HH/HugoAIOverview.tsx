@@ -586,9 +586,9 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className={`${getCodeBadgeColors(session.nummer)} text-[11px] font-mono font-semibold px-2.5 py-1`}>
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-mono font-semibold">
                       {session.nummer}
-                    </Badge>
+                    </span>
                     <div className="w-10 h-10 rounded-full bg-hh-ink/10 flex items-center justify-center">
                       {getTypeIcon(session.type)}
                     </div>
