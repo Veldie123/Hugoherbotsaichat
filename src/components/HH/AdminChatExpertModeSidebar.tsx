@@ -165,7 +165,7 @@ export function EPICSidebar({
                 numberStyle = { color: '#4F7396' };
                 labelStyle = { color: '#475569' };
               } else if (isCurrent) {
-                barBgStyle = { backgroundColor: 'rgba(16, 185, 129, 0.2)' };
+                barBgStyle = { backgroundColor: '#d1fae5' };
                 barFillStyle = { backgroundColor: '#10B981' };
                 barWidth = progress.total > 0 ? `${(progress.completed / progress.total) * 100}%` : "0%";
                 numberStyle = { color: '#10B981' };
