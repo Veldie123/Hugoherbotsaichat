@@ -294,7 +294,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Analyses
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-emerald-600">
               {conversations.length}
             </p>
           </Card>
@@ -314,7 +314,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Geanalyseerd
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-emerald-600">
               {analyzedCount}
             </p>
           </Card>
@@ -328,7 +328,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totale Duur
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-orange-600">
               {Math.floor(totalDuration / 60)}u {totalDuration % 60}m
             </p>
           </Card>
@@ -348,7 +348,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Gem. Score
             </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-emerald-600">
               {avgScore}%
             </p>
           </Card>
