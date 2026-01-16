@@ -323,14 +323,14 @@ export function TalkToHugoAI({
             disabled={!selectedTechnique}
             className={`flex-shrink-0 ${isRecording ? "bg-red-50 border-red-300 text-red-600" : ""}`}
           >
-            <Mic className="w-4 h-4" />
+            <Mic className="w-4 h-4 text-[#4F7396]" />
           </Button>
           <Button
             onClick={handleSendMessage}
             disabled={!selectedTechnique || !inputText.trim()}
             className="bg-hh-ink hover:bg-hh-ink/90"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4 text-white" />
           </Button>
         </div>
       </div>
@@ -573,7 +573,7 @@ export function TalkToHugoAI({
                   </div>
                   <div className="h-5 w-px bg-hh-border" />
                   <div className="flex items-center gap-1.5 text-[14px] text-hh-muted">
-                    <Clock className="w-4 h-4" />
+                    <Clock className="w-4 h-4 text-[#4F7396]" />
                     <span className="font-mono">{formatTime(sessionTimer)}</span>
                   </div>
                 </>
@@ -589,21 +589,21 @@ export function TalkToHugoAI({
                   className={`p-2 rounded-md transition-all ${chatMode === "chat" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
                   title="Chat"
                 >
-                  <MessageSquare className="w-4 h-4" />
+                  <MessageSquare className="w-4 h-4 text-current" />
                 </button>
                 <button
                   onClick={() => setChatMode("audio")}
                   className={`p-2 rounded-md transition-all ${chatMode === "audio" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
                   title="Bellen"
                 >
-                  <Phone className="w-4 h-4" />
+                  <Phone className="w-4 h-4 text-current" />
                 </button>
                 <button
                   onClick={() => setChatMode("video")}
                   className={`p-2 rounded-md transition-all ${chatMode === "video" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
                   title="Video"
                 >
-                  <Video className="w-4 h-4" />
+                  <Video className="w-4 h-4 text-current" />
                 </button>
               </div>
               

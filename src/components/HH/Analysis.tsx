@@ -272,7 +272,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
             className="gap-2 bg-hh-primary hover:bg-hh-primary/90 text-white"
             onClick={() => navigate?.("upload-analysis")}
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-4 h-4 text-white" />
             Analyseer gesprek
           </Button>
         </div>
