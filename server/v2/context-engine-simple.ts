@@ -36,6 +36,7 @@ function extractContextFromMessage(message: string, currentContext: ContextData)
   const context: ContextData = { ...currentContext };
   const lower = message.toLowerCase();
 
+  // Extract sector
   if (!context.sector) {
     if (lower.includes("it") || lower.includes("software") || lower.includes("tech") || lower.includes("saas")) {
       context.sector = "IT/Software";
@@ -52,14 +53,51 @@ function extractContextFromMessage(message: string, currentContext: ContextData)
     }
   }
 
+  // Extract product - look for "verkoop" patterns and common product types
+  if (!context.product) {
+    // Pattern: "verkoop X" or "verkopen X"
+    const verkoopMatch = message.match(/verkoop(?:en?)?\s+(.+?)(?:\s+aan|\s+voor|\s+bij|\.|,|$)/i);
+    if (verkoopMatch) {
+      context.product = verkoopMatch[1].trim();
+    }
+    // Pattern: specific product keywords
+    else if (lower.includes("crm")) {
+      context.product = "CRM software";
+    } else if (lower.includes("erp")) {
+      context.product = "ERP software";
+    } else if (lower.includes("saas")) {
+      context.product = "SaaS oplossingen";
+    } else if (lower.includes("software")) {
+      context.product = "Software";
+    } else if (lower.includes("verzekering")) {
+      context.product = "Verzekeringen";
+    } else if (lower.includes("hypothe")) {
+      context.product = "Hypotheken";
+    } else if (lower.includes("lening") || lower.includes("krediet")) {
+      context.product = "Leningen/Krediet";
+    } else if (lower.includes("training") || lower.includes("cursus") || lower.includes("opleiding")) {
+      context.product = "Training/Opleidingen";
+    } else if (lower.includes("consult") || lower.includes("advies")) {
+      context.product = "Consultancy/Advies";
+    } else if (lower.includes("dienst") || lower.includes("service")) {
+      context.product = "Dienstverlening";
+    } else if (lower.includes("machine") || lower.includes("apparaat") || lower.includes("equipment")) {
+      context.product = "Machines/Apparatuur";
+    } else if (lower.includes("hardware")) {
+      context.product = "Hardware";
+    }
+  }
+
+  // Extract klant_type
   if (!context.klant_type) {
-    if (lower.includes("b2b") || lower.includes("bedrijven") || lower.includes("zakelijk")) {
+    if (lower.includes("b2b") || lower.includes("bedrijven") || lower.includes("zakelijk") || lower.includes("aan bedrijven")) {
       context.klant_type = "B2B";
     } else if (lower.includes("b2c") || lower.includes("consumenten") || lower.includes("particulier")) {
       context.klant_type = "B2C";
     }
   }
 
+  // Extract verkoopkanaal
   if (!context.verkoopkanaal) {
     if (lower.includes("telefon") || lower.includes("bellen")) {
       context.verkoopkanaal = "Telefonisch";
