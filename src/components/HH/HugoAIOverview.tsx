@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AppLayout } from "./AppLayout";
+import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -266,8 +267,14 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
       : <ArrowDown className="w-3 h-3 ml-1 text-hh-ink" />;
   };
 
+  // Choose layout based on isAdmin prop
+  const Layout = isAdmin ? AdminLayout : AppLayout;
+  const layoutProps = isAdmin 
+    ? { currentPage: "admin-sessions", navigate } 
+    : { currentPage: "hugo-overview", navigate, isAdmin };
+
   return (
-    <AppLayout currentPage="hugo-overview" navigate={navigate} isAdmin={isAdmin}>
+    <Layout {...layoutProps}>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -663,6 +670,6 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         session={transcriptSession}
         isAdmin={isAdmin}
       />
-    </AppLayout>
+    </Layout>
   );
 }

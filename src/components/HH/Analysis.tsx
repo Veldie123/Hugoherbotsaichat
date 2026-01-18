@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { AppLayout } from "./AppLayout";
+import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -255,8 +256,14 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
     return sum + mins;
   }, 0);
 
+  // Choose layout based on isAdmin prop
+  const Layout = isAdmin ? AdminLayout : AppLayout;
+  const layoutProps = isAdmin 
+    ? { currentPage: "admin-uploads", navigate } 
+    : { currentPage: "analysis", navigate, isAdmin };
+
   return (
-    <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>
+    <Layout {...layoutProps}>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -662,6 +669,6 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
         session={selectedSession}
         isAdmin={isAdmin}
       />
-    </AppLayout>
+    </Layout>
   );
 }
