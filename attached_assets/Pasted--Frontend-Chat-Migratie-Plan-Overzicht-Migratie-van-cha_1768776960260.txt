@@ -1,0 +1,258 @@
+# Frontend Chat Migratie Plan
+
+## Overzicht
+Migratie van chat UI componenten van externe Replit naar dit Hugo Platform V2, met behoud van Supabase auth en integratie met bestaande V2 backend.
+
+**Status:** In voorbereiding  
+**Laatste update:** Januari 2026
+
+---
+
+## Fase 1: Frontend Files Overnemen
+
+### Hoofdcomponenten (bron → doel)
+
+| Bronbestand | Doellocatie | Doel |
+|-------------|-------------|------|
+| `TalkToHugoAI.tsx` | `client/src/pages/talk-to-hugo.tsx` | Hoofdchat component |
+| `AdminChatExpertModeSidebar.tsx` | `client/src/components/HH/AdminSidebar.tsx` | Techniek selectie panel |
+| `TranscriptDialog.tsx` | `client/src/components/HH/TranscriptDialog.tsx` | Debug/transcript panel |
+| `UserContext.tsx` | `client/src/contexts/UserContext.tsx` | User state management |
+| `AdminLayout.tsx` | `client/src/layouts/AdminLayout.tsx` | Admin wrapper |
+| `AppLayout.tsx` | `client/src/layouts/AppLayout.tsx` | User wrapper |
+
+### Services (bron → doel)
+
+| Bronbestand | Doellocatie | Doel |
+|-------------|-------------|------|
+| `technieken-service.ts` | `client/src/services/technieken-service.ts` | Techniek data fetching |
+| `supabase-client.ts` | `client/src/lib/supabase.ts` | Supabase configuratie |
+
+---
+
+## Fase 2: API Endpoint Mapping
+
+### Chat Flow
+
+| Frontend Actie | API Endpoint | Beschrijving |
+|----------------|--------------|--------------|
+| Nieuwe sessie starten | `POST /api/session` | Creëert V2 sessie |
+| Sessie herstellen | `GET /api/session/:id` | Laadt bestaande sessie |
+| Bericht versturen | `POST /api/session/:id/message/stream` | Streaming response |
+| Technieken laden | `GET /api/v2/techniques` | Volledige techniekenboom |
+| User context ophalen | `GET /api/user/context` | Sector, product, naam |
+| User context opslaan | `POST /api/user/context` | Persisteert context |
+
+### Session Management
+
+| Frontend Actie | API Endpoint | Beschrijving |
+|----------------|--------------|--------------|
+| Techniek selecteren | `POST /api/session/technique-training` | Start training voor techniek |
+| Context resetten | `POST /api/session/:id/reset-context` | Reset naar CONTEXT_GATHERING |
+| Roleplay starten | `POST /api/session/:id/start-roleplay` | Start ROLEPLAY mode |
+| Feedback vragen | `POST /api/session/:id/feedback` | Vraag FEEDBACK/DEBRIEF |
+| Evaluatie ophalen | `POST /api/session/:id/evaluate` | Krijg score + rapport |
+| Turns ophalen | `GET /api/session/:id/turns` | Conversatie historie |
+| Rapport ophalen | `GET /api/session/:id/report` | Uitgebreid rapport |
+
+---
+
+## Fase 3: Audio/Video Integratie
+
+### Audio (ElevenLabs)
+
+| Component | Implementatie |
+|-----------|---------------|
+| `renderAudioInterface()` | ElevenLabs Conversational AI SDK |
+| Voice ID | Configureerbaar per sessie |
+| Backend token | Geen - direct client-side met API key |
+
+**SDK packages (reeds aanwezig):**
+- `@elevenlabs/client`
+- `@elevenlabs/react`
+
+### Video (HeyGen)
+
+| Component | Implementatie |
+|-----------|---------------|
+| `renderVideoInterface()` | HeyGen Streaming Avatar SDK |
+| Avatar ID | Configureerbaar |
+| Backend token | `HEYGEN_API_KEY` via backend proxy indien nodig |
+
+**SDK packages (reeds aanwezig):**
+- `@heygen/streaming-avatar`
+- `@heygen/liveavatar-web-sdk`
+
+---
+
+## Fase 4: Dependencies Check
+
+### Reeds aanwezig in deze Replit
+
+```
+✅ @elevenlabs/client
+✅ @elevenlabs/react
+✅ @heygen/streaming-avatar
+✅ @heygen/liveavatar-web-sdk
+✅ @tanstack/react-query
+✅ wouter
+✅ shadcn/ui componenten
+✅ tailwindcss
+✅ framer-motion
+✅ lucide-react
+```
+
+### Mogelijk toe te voegen
+
+```
+⬜ @supabase/supabase-js (voor auth)
+⬜ @supabase/auth-helpers-react (indien gebruikt)
+```
+
+---
+
+## Fase 5: Environment Variables
+
+### Bestaand (al geconfigureerd)
+
+```
+✅ ELEVENLABS_API_KEY
+✅ HEYGEN_API_KEY
+✅ OPENAI_API_KEY
+✅ DATABASE_URL
+✅ SESSION_SECRET
+```
+
+### Toe te voegen voor Supabase
+
+```
+⬜ VITE_SUPABASE_URL (frontend)
+⬜ VITE_SUPABASE_ANON_KEY (frontend)
+⬜ SUPABASE_SERVICE_ROLE_KEY (backend only, optioneel)
+```
+
+---
+
+## Fase 6: Routing Updates
+
+### Toe te voegen aan `client/src/App.tsx`
+
+```tsx
+import TalkToHugo from "@/pages/talk-to-hugo";
+
+// In Router component:
+<Route path="/chat" component={TalkToHugo} />
+<Route path="/admin/chat">
+  {() => <TalkToHugo isAdmin={true} />}
+</Route>
+```
+
+---
+
+## Fase 7: Test Checklist
+
+| Test | Status |
+|------|--------|
+| User mode: nieuwe sessie starten | ⬜ |
+| User mode: context gathering doorlopen | ⬜ |
+| User mode: coach chat flow | ⬜ |
+| Admin mode: techniek selecteren | ⬜ |
+| Admin mode: debug panel openen | ⬜ |
+| Audio toggle: ElevenLabs activeren | ⬜ |
+| Video toggle: HeyGen activeren | ⬜ |
+| Session persistence: pagina refresh | ⬜ |
+| Streaming: tokens verschijnen live | ⬜ |
+| Supabase auth: login/logout | ⬜ |
+
+---
+
+## Migratie Volgorde (Aanbevolen)
+
+### Stap 1: Foundation
+1. **Supabase config** - Auth client setup
+2. **UserContext** - User state management
+3. **Routing** - Nieuwe routes registreren
+
+### Stap 2: Core Chat
+4. **TalkToHugoAI** - Hoofdcomponent (stripped, zonder audio/video eerst)
+5. **API integratie** - Koppeling met V2 backend endpoints
+6. **Streaming** - SSE/streaming responses werkend
+
+### Stap 3: Admin Features
+7. **AdminSidebar** - Techniek selectie panel
+8. **TranscriptDialog** - Debug panel
+9. **Config review** - SSOT config weergave
+
+### Stap 4: Media
+10. **Audio interface** - ElevenLabs integratie
+11. **Video interface** - HeyGen integratie
+
+### Stap 5: Polish
+12. **End-to-end test** - Volledige flow testen
+13. **Error handling** - Edge cases afvangen
+14. **UI polish** - Styling afstemmen op design guidelines
+
+---
+
+## Architectuur na Migratie
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    FRONTEND (React)                      │
+├─────────────────────────────────────────────────────────┤
+│  TalkToHugo.tsx                                         │
+│  ├── Chat interface (text)                              │
+│  ├── Audio interface (ElevenLabs)                       │
+│  ├── Video interface (HeyGen)                           │
+│  └── Admin sidebar (techniek selectie)                  │
+├─────────────────────────────────────────────────────────┤
+│  Supabase Auth → UserContext                            │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                 BACKEND (Express V2 Engine)              │
+├─────────────────────────────────────────────────────────┤
+│  /api/session/*           → Session management          │
+│  /api/v2/techniques       → SSOT technieken             │
+│  /api/user/context        → User preferences            │
+├─────────────────────────────────────────────────────────┤
+│  V2 Engine:                                             │
+│  ├── context_engine.ts    → CONTEXT_GATHERING           │
+│  ├── coach-engine.ts      → COACH_CHAT, FEEDBACK        │
+│  ├── roleplay-engine.ts   → ROLEPLAY                    │
+│  └── response-validator.ts → Stijl validatie            │
+├─────────────────────────────────────────────────────────┤
+│  Config (SSOT):                                         │
+│  ├── hugo_persona.json                                  │
+│  ├── technieken_index.json                              │
+│  ├── detectors.json                                     │
+│  └── klant_houdingen.json                               │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                    DATABASES                             │
+├─────────────────────────────────────────────────────────┤
+│  Supabase       → Auth, User profiles (toekomst: alles) │
+│  Neon Postgres  → v2_sessions, turns, evaluations       │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Open Vragen
+
+1. **Supabase credentials** - Heb je de URL en anon key beschikbaar?
+2. **User ID mapping** - Hoe koppelen we Supabase user ID aan sessies?
+3. **Admin detectie** - Hoe bepalen we of iemand admin is? (Supabase role?)
+4. **Audio/Video API keys** - Client-side of via backend proxy?
+
+---
+
+## Notities
+
+- **Geen auth migratie nodig** - Supabase blijft
+- **V2 backend is klaar** - Alle endpoints bestaan al
+- **Dependencies aanwezig** - ElevenLabs en HeyGen SDKs zijn al geïnstalleerd
+- **Design guidelines** - Volg `design_guidelines.md` voor styling
