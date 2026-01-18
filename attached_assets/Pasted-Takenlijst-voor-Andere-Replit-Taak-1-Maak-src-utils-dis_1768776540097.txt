@@ -1,0 +1,87 @@
+Takenlijst voor Andere Replit
+Taak 1: Maak src/utils/displayMappings.ts
+// Buying Clock vertalingen
+export const buyingClockToDisplay: Record<string, string> = {
+  situation_as_is: "Situatie zoals het is (00u-06u)",
+  field_of_tension: "Spanningsveld (06u-08u)",
+  market_research: "Marktonderzoek (08u-11u)",
+  hesitation: "Aarzeling (11u-12u)",
+  decision: "Beslissing (12u)"
+};
+// Gedragsstijlen (uit persona_templates.json)
+export const behaviorStyleToDisplay: Record<string, string> = {
+  promoverend: "Promoverend",
+  faciliterend: "Faciliterend",
+  controlerend: "Controlerend",
+  analyserend: "Analyserend"
+};
+// Difficulty levels
+export const difficultyToDisplay: Record<string, string> = {
+  onbewuste_onkunde: "Beginner (1/4)",
+  bewuste_onkunde: "Beginner+ (2/4)",
+  bewuste_kunde: "Gemiddeld (3/4)",
+  onbewuste_kunde: "Expert (4/4)"
+};
+// Helper om veilig te vertalen
+export function translate<T extends Record<string, string>>(
+  mapping: T, 
+  key: string | undefined, 
+  fallback = "N/A"
+): string {
+  return key ? (mapping[key] || key) : fallback;
+}
+Taak 2: Update AdminChatExpertMode.tsx
+Vervang alle hardcoded waarden:
+
+import { 
+  buyingClockToDisplay, 
+  behaviorStyleToDisplay, 
+  translate 
+} from '@/utils/displayMappings';
+// In de debugInfo constructie (regel 251-265, 351-365, etc.)
+const buildDebugInfo = (apiResponse: any) => ({
+  persona: {
+    gedragsstijl: translate(behaviorStyleToDisplay, apiResponse.debug?.persona?.behavior_style),
+    koopklok: translate(buyingClockToDisplay, apiResponse.debug?.persona?.buying_clock_stage),
+    moeilijkheid: apiResponse.debug?.persona?.difficulty_level || "N/A"
+  },
+  dynamics: apiResponse.debug?.dynamics || null,  // null als niet in ROLEPLAY
+  evaluatie: apiResponse.debug?.evaluation?.quality || "N/A"
+});
+Taak 3: Conditioneel tonen van dynamics
+// Alleen tonen als in ROLEPLAY mode
+{debugInfo.dynamics && (
+  <div className="dynamics-panel">
+    <span>Rapport: {(debugInfo.dynamics.rapport * 100).toFixed(0)}%</span>
+    <span>Value Tension: {(debugInfo.dynamics.valueTension * 100).toFixed(0)}%</span>
+    <span>Commit Readiness: {(debugInfo.dynamics.commitReadiness * 100).toFixed(0)}%</span>
+  </div>
+)}
+// Of toon "N/A" als niet beschikbaar
+{!debugInfo.dynamics && (
+  <span className="text-muted">Dynamics: Beschikbaar na start roleplay</span>
+)}
+Taak 4: Backend response check
+Zorg dat de API deze velden meestuurt in debug:
+
+// In api.ts message endpoint
+return res.json({
+  response: result.message,
+  phase: session.phase,
+  debug: {
+    persona: session.persona,           // { behavior_style, buying_clock_stage, ... }
+    dynamics: session.dynamics,         // { rapport, valueTension, commitReadiness }
+    evaluation: result.evaluation,      // { quality, detectedTechniques }
+    validatorInfo: result.validatorInfo
+  }
+});
+Samenvatting takenlijst
+#	Taak	Bestand	Status
+1	Maak displayMappings.ts	src/utils/	⬜
+2	Update AdminChatExpertMode.tsx	src/components/HH/	⬜
+3	Conditioneel dynamics tonen	AdminChatExpertMode.tsx	⬜
+4	Backend debug response checken	server/api.ts	⬜
+5	Test alle waarden	Frontend + curl	⬜
+Instructie voor andere Replit:
+
+"Ja, maak deze takenlijst. Begin met Taak 1 (displayMappings.ts), dan Taak 2 (vervang hardcoded waarden), dan test."

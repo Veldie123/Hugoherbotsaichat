@@ -43,6 +43,13 @@ import { getAllTechnieken } from "../../data/technieken-service";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { cn } from "../ui/utils";
+import { 
+  buyingClockToDisplay, 
+  behaviorStyleToDisplay, 
+  difficultyToDisplay,
+  translate,
+  buildDebugInfoFromResponse 
+} from "../../utils/displayMappings";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
 import { hugoApi } from "../../services/hugoApi";
 import { Loader2 } from "lucide-react";
@@ -155,6 +162,32 @@ export function AdminChatExpertMode({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Build default debugInfo (for initial messages or fallback)
+  const buildDefaultDebugInfo = (phase: number, apiResponse?: any): DebugInfo => {
+    const persona = apiResponse?.debug?.persona || {};
+    const dynamics = apiResponse?.debug?.dynamics || apiResponse?.debug?.customerDynamics;
+    
+    return {
+      persona: {
+        gedragsstijl: translate(behaviorStyleToDisplay, persona.behavior_style, "N/A"),
+        koopklok: translate(buyingClockToDisplay, persona.buying_clock_stage, "N/A"),
+        moeilijkheid: translate(difficultyToDisplay, persona.difficulty_level || difficultyLevel)
+      },
+      context: {
+        fase: apiResponse?.debug?.context?.fase || phase
+      },
+      customerDynamics: dynamics ? {
+        rapport: typeof dynamics.rapport === 'number' ? dynamics.rapport : 50,
+        valueTension: typeof dynamics.valueTension === 'number' ? dynamics.valueTension : 50,
+        commitReadiness: typeof dynamics.commitReadiness === 'number' ? dynamics.commitReadiness : 50
+      } : { rapport: 50, valueTension: 50, commitReadiness: 50 },
+      aiDecision: {
+        epicFase: apiResponse?.debug?.epicFase || `Fase ${phase}`,
+        evaluatie: (apiResponse?.debug?.evaluation?.quality || apiResponse?.debug?.evaluation || "neutraal") as "positief" | "gemist" | "neutraal"
+      }
+    };
+  };
+
   // Parse techniques by phase from technieken_index
   const techniquesByPhase: Record<number, any[]> = {};
   Object.values(technieken_index.technieken).forEach((technique: any) => {
@@ -246,25 +279,7 @@ export function AdminChatExpertMode({
         sender: "ai",
         text: session.initialMessage,
         timestamp: new Date(),
-        debugInfo: {
-          persona: {
-            gedragsstijl: "Analytisch",
-            koopklok: "Kleur groen",
-            moeilijkheid: difficultyLevel
-          },
-          context: {
-            fase: parseInt(technique.fase) || currentPhase
-          },
-          customerDynamics: {
-            rapport: 50,
-            valueTension: 50,
-            commitReadiness: 50
-          },
-          aiDecision: {
-            epicFase: `Fase ${technique.fase}`,
-            evaluatie: "neutraal"
-          }
-        }
+        debugInfo: buildDefaultDebugInfo(parseInt(technique.fase) || currentPhase, session)
       };
       setMessages([aiMessage]);
     } catch (error) {
@@ -277,25 +292,7 @@ export function AdminChatExpertMode({
         sender: "ai",
         text: `Er ging iets mis bij het starten van de sessie voor "${techniqueName}". Probeer het opnieuw.`,
         timestamp: new Date(),
-        debugInfo: {
-          persona: {
-            gedragsstijl: "Analytisch",
-            koopklok: "Onbekend",
-            moeilijkheid: difficultyLevel
-          },
-          context: {
-            fase: parseInt(technique.fase) || currentPhase
-          },
-          customerDynamics: {
-            rapport: 50,
-            valueTension: 50,
-            commitReadiness: 50
-          },
-          aiDecision: {
-            epicFase: `Fase ${technique.fase}`,
-            evaluatie: "neutraal"
-          }
-        }
+        debugInfo: buildDefaultDebugInfo(parseInt(technique.fase) || currentPhase)
       };
       setMessages([errorMessage]);
     } finally {
@@ -347,23 +344,7 @@ export function AdminChatExpertMode({
         expectedTechniqueForSeller: selectedTechniqueNumber || "N/A",
         detectedTechnique: selectedTechniqueNumber ? getTechniqueNameByNumber(selectedTechniqueNumber) : "Onbekend",
         score: 0,
-        persona: {
-          gedragsstijl: "Analytisch",
-          koopklok: "Kleur groen",
-          moeilijkheid: difficultyLevel
-        },
-        context: {
-          fase: currentPhase
-        },
-        customerDynamics: {
-          rapport: 50,
-          valueTension: 50,
-          commitReadiness: 50
-        },
-        aiDecision: {
-          epicFase: `Fase ${currentPhase}`,
-          evaluatie: "neutraal"
-        }
+        ...buildDefaultDebugInfo(currentPhase)
       }
     };
 
@@ -396,23 +377,7 @@ export function AdminChatExpertMode({
         debugInfo: {
           klantSignaal: signalMap[response.debug?.signal || "neutraal"] || "neutraal",
           expectedTechnique: response.debug?.detectedTechniques?.[0] || "N/A",
-          persona: {
-            gedragsstijl: "Analytisch",
-            koopklok: "Kleur groen",
-            moeilijkheid: difficultyLevel
-          },
-          context: {
-            fase: currentPhase
-          },
-          customerDynamics: {
-            rapport: response.debug?.evaluation === "goed" ? 70 : 55,
-            valueTension: 50,
-            commitReadiness: response.debug?.evaluation === "goed" ? 65 : 50
-          },
-          aiDecision: {
-            epicFase: `Fase ${currentPhase}`,
-            evaluatie: evalMap[response.debug?.evaluation || "neutraal"] || "neutraal"
-          }
+          ...buildDefaultDebugInfo(currentPhase, response)
         }
       };
       setMessages(prev => [...prev, aiMessage]);
@@ -425,23 +390,7 @@ export function AdminChatExpertMode({
         timestamp: new Date(),
         debugInfo: {
           klantSignaal: "neutraal",
-          persona: {
-            gedragsstijl: "Analytisch",
-            koopklok: "Onbekend",
-            moeilijkheid: difficultyLevel
-          },
-          context: {
-            fase: currentPhase
-          },
-          customerDynamics: {
-            rapport: 50,
-            valueTension: 50,
-            commitReadiness: 50
-          },
-          aiDecision: {
-            epicFase: `Fase ${currentPhase}`,
-            evaluatie: "neutraal"
-          }
+          ...buildDefaultDebugInfo(currentPhase)
         }
       };
       setMessages(prev => [...prev, errorMessage]);
