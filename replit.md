@@ -29,18 +29,33 @@ The application is built with React 18 and TypeScript, utilizing Vite for fast d
 - **Utility Functions:** Centralized in the `src/utils/` directory, including Supabase client interactions.
 
 ## Hugo Engine V2 Integration (January 2026)
-The Hugo V2 engine has been integrated with a dual-server architecture:
+The Hugo V2 engine has been fully activated with real AI responses:
 
 **Architecture:**
 - **Frontend:** Vite dev server on port 5000
 - **Backend API:** Express server on port 3001
 - **Proxy:** Vite forwards `/api/*` requests to the backend
+- **AI Integration:** OpenAI via Replit AI Integrations (gpt-4o model)
 
 **API Endpoints:**
-- `GET /api/health` - Health check
+- `GET /api/health` - Health check (shows V2-simplified engine status)
 - `GET /api/technieken` - Returns all sales techniques from SSOT config
-- `POST /api/v2/sessions` - Creates a new coach/roleplay session
+- `POST /api/v2/sessions` - Creates a new coach/roleplay session with AI opening message
 - `POST /api/v2/message` - Sends a message and receives AI response
+- `GET /api/v2/sessions/:id` - Retrieves session state
+- `DELETE /api/v2/sessions/:id` - Ends a session
+
+**V2 Engine Components:**
+- `server/v2/coach-engine-simple.ts` - Standalone coach engine with OpenAI, signal detection, and technique evaluation
+- `server/v2/context-engine-simple.ts` - Context gathering engine with heuristic extraction (sector, product, klant_type, verkoopkanaal)
+- `server/api.ts` - Express API server with in-memory session storage (2-hour auto-cleanup)
+
+**Session Flow:**
+1. Session creation starts in CONTEXT_GATHERING phase
+2. Engine extracts context (sector, product required; klant_type, verkoopkanaal optional)
+3. After required fields collected, transitions to COACH_CHAT phase
+4. Coaching provides personalized feedback based on technique and context
+5. Expert mode (isExpert: true) returns debug info with signal/technique detection
 
 **Key Files:**
 - `server/api.ts` - Express API server with V2 endpoints
