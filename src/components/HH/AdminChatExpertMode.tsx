@@ -180,7 +180,8 @@ export function AdminChatExpertMode({
     return {
       ...ssotResult,
       context: {
-        fase: ssotResult.context?.fase || phase
+        fase: ssotResult.context?.fase || phase,
+        gathered: ssotResult.context?.gathered || {}
       },
       customerDynamics: ssotResult.customerDynamics || { 
         rapport: 50, 

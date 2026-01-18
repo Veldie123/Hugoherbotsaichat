@@ -34,10 +34,10 @@ export const difficultyToDisplay: Record<string, string> = {
 
 // Difficulty level keys for UI selector (4 levels)
 export const difficultyLevels = [
-  { key: "onbewuste_onkunde", label: "Onbewust Onbekwaam", short: "1/4" },
-  { key: "bewuste_onkunde", label: "Bewust Onbekwaam", short: "2/4" },
-  { key: "bewuste_kunde", label: "Bewust Bekwaam", short: "3/4" },
-  { key: "onbewuste_kunde", label: "Onbewust Bekwaam", short: "4/4" }
+  { key: "onbewuste_onkunde", label: "Onbewust Onbekwaam", short: "1" },
+  { key: "bewuste_onkunde", label: "Bewust Onbekwaam", short: "2" },
+  { key: "bewuste_kunde", label: "Bewust Bekwaam", short: "3" },
+  { key: "onbewuste_kunde", label: "Onbewust Bekwaam", short: "4" }
 ];
 
 // Signal vertalingen
@@ -88,9 +88,9 @@ export function buildDebugInfoFromResponse(
       moeilijkheid: translate(difficultyToDisplay, persona.difficulty_level || fallbackDifficulty)
     },
     customerDynamics: dynamics ? {
-      rapport: typeof dynamics.rapport === 'number' ? dynamics.rapport : 50,
-      valueTension: typeof dynamics.valueTension === 'number' ? dynamics.valueTension : 50,
-      commitReadiness: typeof dynamics.commitReadiness === 'number' ? dynamics.commitReadiness : 50
+      rapport: typeof dynamics.rapport === 'number' ? Math.round(dynamics.rapport * (dynamics.rapport <= 1 ? 100 : 1)) : 50,
+      valueTension: typeof dynamics.valueTension === 'number' ? Math.round(dynamics.valueTension * (dynamics.valueTension <= 1 ? 100 : 1)) : 50,
+      commitReadiness: typeof dynamics.commitReadiness === 'number' ? Math.round(dynamics.commitReadiness * (dynamics.commitReadiness <= 1 ? 100 : 1)) : 50
     } : null,
     context: {
       fase: apiResponse?.debug?.context?.fase || apiResponse?.debug?.phase || 1,

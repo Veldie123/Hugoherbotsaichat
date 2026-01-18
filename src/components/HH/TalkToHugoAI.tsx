@@ -418,32 +418,10 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                 Selecteer een techniek in de sidebar om te beginnen met oefenen
               </p>
               
-              {/* Niveau selector - 4-level competence model */}
-              <div className="inline-flex flex-col items-center gap-2">
-                <span className="text-[12px] text-hh-muted">Kies je competentieniveau:</span>
-                <div className="flex gap-1 bg-hh-ui-100 rounded-lg p-1 border border-hh-border">
-                  {difficultyLevels.map((level) => (
-                    <button
-                      key={level.key}
-                      onClick={() => setDifficultyLevel(level.key)}
-                      style={difficultyLevel === level.key ? { backgroundColor: '#4F7396', color: 'white' } : {}}
-                      className={`px-3 py-2 rounded-md text-[12px] font-medium transition-all ${
-                        difficultyLevel === level.key 
-                          ? "shadow-sm" 
-                          : "text-hh-text hover:bg-hh-ui-50"
-                      }`}
-                      title={level.label}
-                    >
-                      {level.short}
-                    </button>
-                  ))}
-                </div>
-                {difficultyLevel === "onbewuste_kunde" && (
-                  <p className="text-[11px] text-hh-muted mt-1">
-                    Expert modus: geen sidebar hulp
-                  </p>
-                )}
-              </div>
+              {/* Niveau selector moved to header - show hint only */}
+              <p className="text-[12px] text-hh-muted">
+                Kies je niveau bovenaan en start met oefenen
+              </p>
             </div>
           </div>
         )}
@@ -508,7 +486,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && selectedTechnique && handleSendMessage()}
-            placeholder={selectedTechnique ? "Type je antwoord..." : "Selecteer eerst een techniek..."}
+            placeholder={selectedTechnique ? "Type je antwoord als verkoper..." : "Selecteer eerst een techniek..."}
             className="flex-1"
             disabled={!selectedTechnique || isStreaming}
           />
@@ -524,13 +502,14 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <Button
             onClick={handleSendMessage}
             disabled={!selectedTechnique || !inputText.trim() || isLoading || isStreaming}
-            className="bg-hh-ink hover:bg-hh-ink/90"
+            className="bg-hh-ink hover:bg-hh-ink/90 gap-2"
           >
             {isLoading || isStreaming ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />
             ) : (
               <Send className="w-4 h-4 text-white" />
             )}
+            <span className="text-white">{isLoading || isStreaming ? "Bezig..." : "Verzend"}</span>
           </Button>
         </div>
       </div>
@@ -755,7 +734,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         )}
 
         <div className="w-2/3 flex-1 flex flex-col bg-white overflow-hidden">
-          {/* Clean header - title left, mode toggle right */}
+          {/* Clean header - title left, niveau + mode toggle right */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-hh-border bg-white">
             {/* Left: Title + Timer */}
             <div className="flex items-center gap-4">
@@ -780,8 +759,32 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               )}
             </div>
             
-            {/* Right: Mode toggle + Stop */}
+            {/* Right: Niveau selector + Mode toggle + Stop */}
             <div className="flex items-center gap-3">
+              {/* Niveau selector - always visible */}
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-hh-muted">Niveau:</span>
+                <div className="flex gap-0.5 bg-hh-ui-50 rounded-lg p-0.5">
+                  {difficultyLevels.map((level) => (
+                    <button
+                      key={level.key}
+                      onClick={() => setDifficultyLevel(level.key)}
+                      style={difficultyLevel === level.key ? { backgroundColor: '#4F7396', color: 'white' } : {}}
+                      className={`w-7 h-7 rounded-md text-[12px] font-medium transition-all ${
+                        difficultyLevel === level.key 
+                          ? "shadow-sm" 
+                          : "text-hh-text hover:bg-white"
+                      }`}
+                      title={level.label}
+                    >
+                      {level.short}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-5 w-px bg-hh-border" />
+
               {/* Mode toggle - compact icon buttons */}
               <div className="flex items-center bg-hh-ui-50 rounded-lg p-1">
                 <button
