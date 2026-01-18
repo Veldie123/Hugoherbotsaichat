@@ -502,7 +502,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <Button
             onClick={handleSendMessage}
             disabled={!selectedTechnique || !inputText.trim() || isLoading || isStreaming}
-            className="bg-hh-ink hover:bg-hh-ink/90 gap-2"
+            className="bg-[#4F7396] hover:bg-[#4F7396]/90 gap-2"
           >
             {isLoading || isStreaming ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />
