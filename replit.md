@@ -28,8 +28,8 @@ The application is built with React 18 and TypeScript, utilizing Vite for fast d
 - **State Management:** Utilizes React Context API, e.g., `UserContext`.
 - **Utility Functions:** Centralized in the `src/utils/` directory, including Supabase client interactions.
 
-## Hugo Engine V2 Integration (January 2026)
-The Hugo V2 engine has been fully activated with real AI responses:
+## Hugo Engine V2 FULL Integration (January 2026)
+The Hugo V2 FULL engine is now active with advanced AI capabilities:
 
 **Architecture:**
 - **Frontend:** Vite dev server on port 5000
@@ -37,28 +37,40 @@ The Hugo V2 engine has been fully activated with real AI responses:
 - **Proxy:** Vite forwards `/api/*` requests to the backend
 - **AI Integration:** OpenAI via Replit AI Integrations (gpt-4o model)
 
+**Engine Features (V2-FULL):**
+- **Nested Prompts:** Multi-layer prompt architecture for nuanced responses
+- **RAG Grounding:** Responses grounded in Hugo's training materials via `rag-service.ts`
+- **Validation Loop:** Automatic response repair via `response-repair.ts` (max 2 attempts)
+- **Hugo Persona SSOT:** Personality loaded from `hugo_persona.json`
+- **Detector Patterns:** Advanced signal and technique detection
+
 **API Endpoints:**
-- `GET /api/health` - Health check (shows V2-simplified engine status)
+- `GET /api/health` - Health check (shows V2-FULL engine status with features)
 - `GET /api/technieken` - Returns all sales techniques from SSOT config
 - `POST /api/v2/sessions` - Creates a new coach/roleplay session with AI opening message
 - `POST /api/v2/message` - Sends a message and receives AI response
 - `GET /api/v2/sessions/:id` - Retrieves session state
 - `DELETE /api/v2/sessions/:id` - Ends a session
 
-**V2 Engine Components:**
-- `server/v2/coach-engine-simple.ts` - Standalone coach engine with OpenAI, signal detection, and technique evaluation
-- `server/v2/context-engine-simple.ts` - Context gathering engine with heuristic extraction (sector, product, klant_type, verkoopkanaal)
+**V2 FULL Engine Components:**
+- `server/v2/coach-engine.ts` - Full coach engine (1071 lines) with nested prompts, RAG, validation
+- `server/v2/context_engine.ts` - Slot-based progressive context gathering with BASE_SLOTS and LENS_SLOTS
+- `server/v2/rag-service.ts` - RAG service for grounding responses in training materials
+- `server/v2/response-repair.ts` - Validation and automatic repair loop
 - `server/api.ts` - Express API server with in-memory session storage (2-hour auto-cleanup)
 
 **Session Flow:**
 1. Session creation starts in CONTEXT_GATHERING phase
-2. Engine extracts context (sector, product required; klant_type, verkoopkanaal optional)
-3. After required fields collected, transitions to COACH_CHAT phase
-4. Coaching provides personalized feedback based on technique and context
-5. Expert mode (isExpert: true) returns debug info with signal/technique detection
+2. Engine uses generateQuestionForSlot() for BASE_SLOTS (sector, product, verkoopkanaal, klant_type, ervaring)
+3. After base slots collected, optional LENS_SLOTS may be gathered
+4. When isComplete=true, transitions to COACH_CHAT phase
+5. Coaching uses generateCoachResponse() with RAG grounding and validation loop
+6. Expert mode (isExpert: true) returns debug info: ragDocsFound, wasRepaired, repairAttempts, validatorInfo
 
 **Key Files:**
 - `server/api.ts` - Express API server with V2 endpoints
+- `server/v2/coach-engine.ts` - Full coaching engine with nested prompts
+- `server/v2/context_engine.ts` - Context gathering with slot management
 - `src/services/hugoApi.ts` - Frontend API service layer
 - `config/ssot/technieken_index.json` - Single Source of Truth for techniques
 - `config/ssot/coach_overlay.json` - Coach personality overlay
