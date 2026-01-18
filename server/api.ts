@@ -869,20 +869,48 @@ app.post("/api/heygen/token", async (req, res) => {
 });
 
 // ===========================================
-// ELEVENLABS API KEY (for client-side SDK)
+// ELEVENLABS SIGNED URL (secure session token)
 // ===========================================
-app.get("/api/elevenlabs/config", (req, res) => {
+app.post("/api/elevenlabs/signed-url", async (req, res) => {
   const apiKey = process.env.ELEVENLABS_API_KEY;
+  const agentId = process.env.ELEVENLABS_AGENT_ID;
+  
   if (!apiKey) {
     return res.status(500).json({ error: "ELEVENLABS_API_KEY not configured" });
   }
   
-  // Return the API key for client-side use
-  // Note: In production, use signed URLs or agent tokens instead
-  res.json({ 
-    apiKey,
-    agentId: process.env.ELEVENLABS_AGENT_ID || null
-  });
+  if (!agentId) {
+    return res.status(500).json({ 
+      error: "ELEVENLABS_AGENT_ID not configured",
+      message: "Create a conversational AI agent at elevenlabs.io and set ELEVENLABS_AGENT_ID"
+    });
+  }
+  
+  try {
+    // Get signed URL from ElevenLabs (short-lived session token)
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`,
+      {
+        method: "GET",
+        headers: {
+          "xi-api-key": apiKey
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[API] ElevenLabs signed URL error:", errorText);
+      return res.status(response.status).json({ error: "Failed to get ElevenLabs signed URL" });
+    }
+    
+    const data = await response.json();
+    console.log("[API] ElevenLabs signed URL created successfully");
+    res.json({ signedUrl: data.signed_url });
+  } catch (error: any) {
+    console.error("[API] ElevenLabs error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Health check - now shows FULL engine

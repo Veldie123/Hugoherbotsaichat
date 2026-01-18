@@ -113,6 +113,34 @@ The difficulty selection now uses a 4-level competence model based on learning p
 - **Auto-scroll:** Scrolls to latest message during streaming
 - **Fallback:** Graceful fallback to non-streaming if SSE fails
 
+**Fase 3 Audio/Video Integration (January 2026):**
+Multi-modal interaction modes for immersive roleplay training:
+
+*Audio Mode (ElevenLabs):*
+- **SDK:** `@elevenlabs/react` - useConversation hook for bidirectional audio
+- **Backend:** `POST /api/elevenlabs/signed-url` - Generates secure session tokens (never exposes raw API key)
+- **Session Flow:** Request mic permission → Get signed URL from backend → Start conversation session
+- **UI:** Full-screen call interface with waveform visualization, mute toggle, connection status
+- **Requirement:** Needs `ELEVENLABS_AGENT_ID` environment variable (create agent in ElevenLabs dashboard)
+
+*Video Mode (HeyGen):*
+- **SDK:** `@heygen/streaming-avatar` - StreamingAvatar class for WebRTC video
+- **Backend:** `POST /api/heygen/token` - Creates short-lived session tokens from HeyGen API
+- **Avatar:** Uses `monica_public_3` (public HeyGen avatar) with AvatarQuality.Medium
+- **Events:** AVATAR_START_TALKING, AVATAR_STOP_TALKING, STREAM_READY, STREAM_DISCONNECTED
+- **Speaking:** AI responses automatically trigger avatar speech (max 500 chars per utterance)
+- **Cleanup:** Proper MediaStream track cleanup on mode switch/unmount
+
+*Chat Mode Switcher:*
+- Located in header with icons: MessageCircle (chat), Mic (audio), Video (video)
+- Active mode highlighted with visual indicator
+- Mode switch triggers initialization of respective SDK session
+
+*Required Secrets:*
+- `HEYGEN_API_KEY` - HeyGen API key for avatar streaming
+- `ELEVENLABS_API_KEY` - ElevenLabs API key for audio
+- `ELEVENLABS_AGENT_ID` - ElevenLabs Conversational AI agent ID (optional, needed for audio mode)
+
 **Workflow:**
 - `npm run dev:full` starts both servers concurrently via `concurrently`
 

@@ -87,6 +87,7 @@ export function TalkToHugoAI({
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lastSpokenMessageIdRef = useRef<string | null>(null);
 
   // ElevenLabs Conversational AI state
   const [elevenLabsApiKey, setElevenLabsApiKey] = useState<string | null>(null);
@@ -191,6 +192,13 @@ export function TalkToHugoAI({
   
   // Stop HeyGen avatar session
   const stopHeygenAvatar = useCallback(async () => {
+    // Clean up video stream
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    
     if (avatarSession) {
       try {
         await avatarSession.stopAvatar();
@@ -223,25 +231,34 @@ export function TalkToHugoAI({
     setAudioError(null);
     
     try {
-      // Request microphone permission
+      // Request microphone permission first
       await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // For ElevenLabs Conversational AI, we need an agent ID
-      // For now, we'll show a message that the feature requires setup
-      setAudioError("ElevenLabs Agent ID niet geconfigureerd. Configureer een agent in de ElevenLabs dashboard.");
-      setIsAudioConnecting(false);
+      // Get signed URL from backend (secure token endpoint)
+      const response = await fetch("/api/elevenlabs/signed-url", { method: "POST" });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.error || "Kon ElevenLabs niet initialiseren");
+      }
+      
+      const { signedUrl } = await response.json();
+      
+      // Start conversation with signed URL
+      await conversation.startSession({ signedUrl });
+      console.log("[ElevenLabs] Session started with signed URL");
       
     } catch (error: any) {
       console.error("[ElevenLabs] Error:", error);
       setAudioError(error.message || "Kon audio niet starten. Controleer microfoontoegang.");
       setIsAudioConnecting(false);
     }
-  }, [conversation.status]);
+  }, [conversation]);
   
   // Stop ElevenLabs audio session
-  const stopElevenLabsAudio = useCallback(() => {
+  const stopElevenLabsAudio = useCallback(async () => {
     if (conversation.status === "connected") {
-      conversation.endSession();
+      await conversation.endSession();
     }
   }, [conversation]);
 
@@ -261,6 +278,20 @@ export function TalkToHugoAI({
       stopElevenLabsAudio();
     };
   }, [stopHeygenAvatar, stopElevenLabsAudio]);
+
+  // Wire avatar speaking to new AI messages in video mode
+  useEffect(() => {
+    if (chatMode !== "video" || !avatarSession || messages.length === 0) return;
+    
+    const lastMessage = messages[messages.length - 1];
+    // Only speak if this is a new AI message we haven't spoken yet
+    if (lastMessage.sender === "ai" && lastMessage.id !== lastSpokenMessageIdRef.current) {
+      lastSpokenMessageIdRef.current = lastMessage.id;
+      // Limit text length for avatar speech (HeyGen has limits)
+      const textToSpeak = lastMessage.text.slice(0, 500);
+      avatarSpeak(textToSpeak);
+    }
+  }, [messages, chatMode, avatarSession, avatarSpeak]);
 
   const techniquesByPhase: Record<number, any[]> = {};
   Object.values(technieken_index.technieken).forEach((technique: any) => {
