@@ -92,8 +92,20 @@ The Hugo V2 FULL engine is now active with advanced AI capabilities:
 The `src/utils/displayMappings.ts` file centralizes all backend-to-frontend translations:
 - `buyingClockToDisplay` - Koopklok fases naar Nederlandse labels
 - `behaviorStyleToDisplay` - Gedragsstijlen (promoverend, faciliterend, etc.)
-- `difficultyToDisplay` - Moeilijkheidsgraden (beginner → expert)
+- `difficultyLevels` - 4-level competentie model array (see below)
 - `buildDebugInfoFromResponse()` - Helper functie voor expert panel debug info
+
+**4-Level Competence Model (January 2026):**
+The difficulty selection now uses a 4-level competence model based on learning psychology:
+| Key | Short | Label | Description |
+|-----|-------|-------|-------------|
+| `onbewuste_onkunde` | 1/4 | Onbewust Onbekwaam | Beginner - unaware of gaps |
+| `bewuste_onkunde` | 2/4 | Bewust Onbekwaam | Aware of learning needs |
+| `bewuste_kunde` | 3/4 | Bewust Bekwaam | Competent with conscious effort |
+| `onbewuste_kunde` | 4/4 | Onbewust Bekwaam | Expert - unconscious competence |
+
+- Level 4 (`onbewuste_kunde`) triggers "Expert mode" - no sidebar assistance
+- Used in both AdminChatExpertMode and TalkToHugoAI components
 
 **Fase 3 Frontend Integration (January 2026):**
 - **Streaming Responses:** SSE-based token-by-token response display in TalkToHugoAI.tsx
