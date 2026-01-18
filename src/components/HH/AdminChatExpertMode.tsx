@@ -44,6 +44,8 @@ import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { cn } from "../ui/utils";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
+import { hugoApi } from "../../services/hugoApi";
+import { Loader2 } from "lucide-react";
 
 interface Message {
   id: string;
@@ -99,7 +101,9 @@ export function AdminChatExpertMode({
   const [isRecording, setIsRecording] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
-  const [selectedTechnique, setSelectedTechnique] = useState<string>("");
+  const [selectedTechnique, setSelectedTechnique] = useState<string>(""); // Display name
+  const [selectedTechniqueNumber, setSelectedTechniqueNumber] = useState<string>(""); // Actual technique ID
+  const [hasActiveSession, setHasActiveSession] = useState(false); // Track if session is active
   const [expandedDebug, setExpandedDebug] = useState<string | null>(null); // Track which message debug is expanded
   const [expandedDebugSections, setExpandedDebugSections] = useState<Record<string, string[]>>({}); // Track expanded sections per message
   const [currentPhase, setCurrentPhase] = useState(1);
@@ -123,6 +127,7 @@ export function AdminChatExpertMode({
   const [chatMode, setChatMode] = useState<"chat" | "audio" | "video">("chat"); // Multi-modal chat mode
   const [isMuted, setIsMuted] = useState(false); // Audio/video mute state
   const [sessionTimer, setSessionTimer] = useState(0); // Session timer
+  const [isLoading, setIsLoading] = useState(false); // Loading state for API calls
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -133,7 +138,7 @@ export function AdminChatExpertMode({
 
   // Session timer effect
   useEffect(() => {
-    if (selectedTechnique) {
+    if (hasActiveSession) {
       timerRef.current = setInterval(() => {
         setSessionTimer(prev => prev + 1);
       }, 1000);
@@ -141,7 +146,7 @@ export function AdminChatExpertMode({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [selectedTechnique]);
+  }, [hasActiveSession]);
 
   // Format time helper
   const formatTime = (seconds: number) => {
@@ -214,45 +219,89 @@ export function AdminChatExpertMode({
     }
   };
 
-  const startTechniqueChat = (techniqueNumber: string, techniqueName: string) => {
-    // Find full technique details
+  const startTechniqueChat = async (techniqueNumber: string, techniqueName: string) => {
     const technique = Object.values(technieken_index.technieken).find(
       (t: any) => t.nummer === techniqueNumber
     ) as any;
 
     if (!technique) return;
 
-    // Create an initial Hugo (system) message explaining the training mode
-    const systemMessage: Message = {
-      id: Date.now().toString(),
-      sender: "ai",
-      text: `Laten we de techniek "${techniqueName}" (${techniqueNumber}) oefenen. Ik zal de klant spelen en ik wil dat jij deze techniek toepast. Probeer de techniek correct uit te voeren zoals beschreven in de theorie.\n\nZodra je klaar bent, stuur je bericht en ik geef feedback met een ✓ (correct) of ✗ (verbeterpunt).`,
-      timestamp: new Date(),
-      debugInfo: {
-        persona: {
-          gedragsstijl: "Analytisch",
-          koopklok: "Kleur groen",
-          moeilijkheid: difficultyLevel
-        },
-        context: {
-          fase: parseInt(technique.fase) || currentPhase
-        },
-        customerDynamics: {
-          rapport: 50,
-          valueTension: 50,
-          commitReadiness: 50
-        },
-        aiDecision: {
-          epicFase: `Fase ${technique.fase}`,
-          evaluatie: "neutraal"
-        }
-      }
-    };
-
-    setMessages([systemMessage]);
     setSelectedTechnique(techniqueName);
-    
-    // Auto-scroll to chat
+    setSelectedTechniqueNumber(techniqueNumber);
+    setSessionTimer(0);
+    setIsLoading(true);
+
+    try {
+      const session = await hugoApi.startSession({
+        techniqueId: techniqueNumber,
+        mode: "COACH_CHAT",
+        isExpert: true,
+        modality: chatMode,
+      });
+      
+      setHasActiveSession(true);
+
+      const aiMessage: Message = {
+        id: Date.now().toString(),
+        sender: "ai",
+        text: session.initialMessage,
+        timestamp: new Date(),
+        debugInfo: {
+          persona: {
+            gedragsstijl: "Analytisch",
+            koopklok: "Kleur groen",
+            moeilijkheid: difficultyLevel
+          },
+          context: {
+            fase: parseInt(technique.fase) || currentPhase
+          },
+          customerDynamics: {
+            rapport: 50,
+            valueTension: 50,
+            commitReadiness: 50
+          },
+          aiDecision: {
+            epicFase: `Fase ${technique.fase}`,
+            evaluatie: "neutraal"
+          }
+        }
+      };
+      setMessages([aiMessage]);
+    } catch (error) {
+      console.error("Failed to start session:", error);
+      setSelectedTechnique("");
+      setSelectedTechniqueNumber("");
+      setHasActiveSession(false);
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        sender: "ai",
+        text: `Er ging iets mis bij het starten van de sessie voor "${techniqueName}". Probeer het opnieuw.`,
+        timestamp: new Date(),
+        debugInfo: {
+          persona: {
+            gedragsstijl: "Analytisch",
+            koopklok: "Onbekend",
+            moeilijkheid: difficultyLevel
+          },
+          context: {
+            fase: parseInt(technique.fase) || currentPhase
+          },
+          customerDynamics: {
+            rapport: 50,
+            valueTension: 50,
+            commitReadiness: 50
+          },
+          aiDecision: {
+            epicFase: `Fase ${technique.fase}`,
+            evaluatie: "neutraal"
+          }
+        }
+      };
+      setMessages([errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
@@ -284,20 +333,20 @@ export function AdminChatExpertMode({
     return (techniquesByPhase[phase] || []).filter((t: any) => t.parent === parentNumber);
   };
 
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isLoading || !hasActiveSession) return;
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       sender: "hugo",
       text: inputText,
       timestamp: new Date(),
       debugInfo: {
-        chosenTechniqueForSeller: selectedTechnique ? getTechniqueNameByNumber(selectedTechnique) : "Geen",
+        chosenTechniqueForSeller: selectedTechnique || "Geen",
         sellerSignaal: "neutraal",
-        expectedTechniqueForSeller: getTechniqueNameByNumber("2.1.2"), // Convert to name
-        detectedTechnique: selectedTechnique ? getTechniqueNameByNumber(selectedTechnique) : "Onbekend",
-        score: 75,
+        expectedTechniqueForSeller: selectedTechniqueNumber || "N/A",
+        detectedTechnique: selectedTechniqueNumber ? getTechniqueNameByNumber(selectedTechniqueNumber) : "Onbekend",
+        score: 0,
         persona: {
           gedragsstijl: "Analytisch",
           koopklok: "Kleur groen",
@@ -307,31 +356,46 @@ export function AdminChatExpertMode({
           fase: currentPhase
         },
         customerDynamics: {
-          rapport: 70,
-          valueTension: 60,
+          rapport: 50,
+          valueTension: 50,
           commitReadiness: 50
         },
         aiDecision: {
           epicFase: `Fase ${currentPhase}`,
-          evaluatie: "positief"
+          evaluatie: "neutraal"
         }
       }
     };
 
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputText("");
-    setSelectedTechnique("");
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const response = await hugoApi.sendMessage(inputText, true);
+      
+      const signalMap: Record<string, "positief" | "neutraal" | "negatief"> = {
+        positief: "positief",
+        neutral: "neutraal",
+        neutraal: "neutraal",
+        negatief: "negatief"
+      };
+      
+      const evalMap: Record<string, "positief" | "gemist" | "neutraal"> = {
+        goed: "positief",
+        positief: "positief",
+        gemist: "gemist",
+        neutraal: "neutraal"
+      };
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         sender: "ai",
-        text: "Goede vraag! Laat me daar eens over nadenken...",
+        text: response.response,
         timestamp: new Date(),
         debugInfo: {
-          klantSignaal: "positief",
-          expectedTechnique: "2.1.5",
+          klantSignaal: signalMap[response.debug?.signal || "neutraal"] || "neutraal",
+          expectedTechnique: response.debug?.detectedTechniques?.[0] || "N/A",
           persona: {
             gedragsstijl: "Analytisch",
             koopklok: "Kleur groen",
@@ -341,18 +405,49 @@ export function AdminChatExpertMode({
             fase: currentPhase
           },
           customerDynamics: {
-            rapport: 75,
-            valueTension: 55,
-            commitReadiness: 60
+            rapport: response.debug?.evaluation === "goed" ? 70 : 55,
+            valueTension: 50,
+            commitReadiness: response.debug?.evaluation === "goed" ? 65 : 50
           },
           aiDecision: {
             epicFase: `Fase ${currentPhase}`,
-            evaluatie: "positief"
+            evaluatie: evalMap[response.debug?.evaluation || "neutraal"] || "neutraal"
           }
         }
       };
       setMessages(prev => [...prev, aiMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: "ai",
+        text: "Sorry, er ging iets mis met de verbinding. Probeer het opnieuw.",
+        timestamp: new Date(),
+        debugInfo: {
+          klantSignaal: "neutraal",
+          persona: {
+            gedragsstijl: "Analytisch",
+            koopklok: "Onbekend",
+            moeilijkheid: difficultyLevel
+          },
+          context: {
+            fase: currentPhase
+          },
+          customerDynamics: {
+            rapport: 50,
+            valueTension: 50,
+            commitReadiness: 50
+          },
+          aiDecision: {
+            epicFase: `Fase ${currentPhase}`,
+            evaluatie: "neutraal"
+          }
+        }
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleStopRoleplay = () => {
@@ -365,6 +460,10 @@ export function AdminChatExpertMode({
     setMessages([]);
     setInputText("");
     setSelectedTechnique("");
+    setSelectedTechniqueNumber("");
+    setSessionTimer(0);
+    setHasActiveSession(false);
+    hugoApi.clearSession();
   };
   
   // Toggle section visibility in debug info
@@ -1342,7 +1441,7 @@ export function AdminChatExpertMode({
             )}
 
             {/* Beginner/Gemiddeld: Reminder to select from sidebar */}
-            {difficultyLevel !== "expert" && !selectedTechnique && (
+            {difficultyLevel !== "expert" && !hasActiveSession && (
               <div className="mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
                 <p className="text-[12px] text-amber-700 flex items-center gap-2">
                   <Lightbulb className="w-4 h-4" />
@@ -1353,15 +1452,15 @@ export function AdminChatExpertMode({
             )}
 
             {/* Selected technique indicator for non-expert modes */}
-            {difficultyLevel !== "expert" && selectedTechnique && (
+            {difficultyLevel !== "expert" && hasActiveSession && (
               <div className="mb-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                 <p className="text-[12px] text-emerald-700 flex items-center justify-between">
-                  <span>Geselecteerde techniek: {selectedTechnique}</span>
+                  <span>Geselecteerde techniek: {selectedTechnique} ({selectedTechniqueNumber})</span>
                   <button
-                    onClick={() => setSelectedTechnique("")}
+                    onClick={confirmStopRoleplay}
                     className="text-[11px] text-hh-muted hover:text-hh-text underline"
                   >
-                    Wijzig
+                    Stop sessie
                   </button>
                 </p>
               </div>
@@ -1372,20 +1471,20 @@ export function AdminChatExpertMode({
                 <Input
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && selectedTechnique && handleSendMessage()}
+                  onKeyPress={(e) => e.key === "Enter" && hasActiveSession && !isLoading && handleSendMessage()}
                   placeholder={
-                    selectedTechnique 
-                      ? "Type je antwoord als verkoper..." 
+                    hasActiveSession 
+                      ? (isLoading ? "Hugo denkt na..." : "Type je antwoord als verkoper...")
                       : "Selecteer eerst een techniek..."
                   }
                   className="pr-12"
-                  disabled={!selectedTechnique}
+                  disabled={!hasActiveSession || isLoading}
                 />
                 {/* Dictation button */}
                 <button
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
                   title="Dicteer"
-                  disabled={!selectedTechnique}
+                  disabled={!hasActiveSession || isLoading}
                 >
                   <Mic className="w-4 h-4" />
                 </button>
@@ -1393,10 +1492,14 @@ export function AdminChatExpertMode({
               <Button 
                 onClick={handleSendMessage} 
                 className="gap-2 bg-slate-800 hover:bg-slate-900 shrink-0"
-                disabled={!selectedTechnique || !inputText.trim()}
+                disabled={!hasActiveSession || !inputText.trim() || isLoading}
               >
-                <Send className="w-4 h-4" />
-                Verzend
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                {isLoading ? "Bezig..." : "Verzend"}
               </Button>
             </div>
           </div>

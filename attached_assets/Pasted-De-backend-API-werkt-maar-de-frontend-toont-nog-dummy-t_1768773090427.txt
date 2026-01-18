@@ -1,0 +1,59 @@
+De backend API werkt, maar de frontend toont nog dummy tekst. De volgende fase is Frontend → Backend koppeling.
+
+VOLGENDE FASE: Frontend Chat Koppelen
+Probleem: De chat component haalt nog hardcoded/dummy tekst op, niet van de API.
+
+Oplossing: De frontend moet deze calls maken:
+
+1. Bij opstarten chat pagina
+// Start sessie wanneer gebruiker techniek selecteert
+const startSession = async (techniqueId: string) => {
+  const res = await fetch("/api/v2/sessions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      techniqueId,
+      mode: "COACH_CHAT"
+    })
+  });
+  const { sessionId, initialMessage } = await res.json();
+  
+  // Sla sessionId op in state
+  setSessionId(sessionId);
+  
+  // Toon Hugo's eerste bericht
+  addMessage({ role: "assistant", content: initialMessage });
+};
+2. Bij verzenden bericht
+const sendMessage = async (userInput: string) => {
+  // Toon user bericht direct
+  addMessage({ role: "user", content: userInput });
+  
+  // Stuur naar backend
+  const res = await fetch("/api/v2/message", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      sessionId,      // Van stap 1
+      content: userInput,
+      isExpert: isAdminView  // true voor debug info
+    })
+  });
+  
+  const { response, debug } = await res.json();
+  
+  // Toon Hugo's antwoord
+  addMessage({ role: "assistant", content: response, debug });
+};
+3. Zoek in frontend code naar:
+Hardcoded berichten array
+Mock responses
+setTimeout met fake delays
+Functies die niet naar /api/v2/message posten
+4. Vervang door echte API calls
+Instructie voor andere Replit:
+
+"De backend API werkt (/api/v2/sessions en /api/v2/message), maar de frontend chat toont nog dummy tekst. Zoek het chat component dat berichten toont en vervang de mock data door echte fetch() calls naar de API endpoints. Zie UI_BACKEND_MAPPING.md voor de exacte request/response formats."
+
+Wil je dat ik dit als apart document toevoeg aan de zip?
+

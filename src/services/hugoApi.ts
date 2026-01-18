@@ -27,21 +27,19 @@ export interface SendMessageRequest {
 export interface SendMessageResponse {
   response: string;
   phase: string;
+  contextData?: {
+    sector?: string;
+    product?: string;
+    klant_type?: string;
+    verkoopkanaal?: string;
+  };
   debug?: {
+    phase?: string;
     signal?: string;
-    persona?: {
-      name: string;
-      behavior_style: string;
-      buying_clock_stage: string;
-    };
-    context?: {
-      sector?: string;
-      product?: string;
-    };
-    aiDecisions?: {
-      epicPhase?: number;
-      evaluation?: string;
-    };
+    detectedTechniques?: string[];
+    evaluation?: string;
+    contextComplete?: boolean;
+    gatheredFields?: string[];
   };
 }
 
