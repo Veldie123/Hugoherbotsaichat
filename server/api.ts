@@ -415,6 +415,21 @@ app.post("/api/v2/message", async (req, res) => {
       result.debug = {
         ...debug,
         engine: "V2-FULL",
+        persona: {
+          behavior_style: "analyserend",
+          buying_clock_stage: "market_research",
+          difficulty_level: session.isExpert ? "bewuste_kunde" : "onbewuste_onkunde"
+        },
+        dynamics: session.mode === "ROLEPLAY" ? {
+          rapport: 0.5,
+          valueTension: 0.5,
+          commitReadiness: 0.5
+        } : null,
+        context: {
+          fase: parseInt(session.techniqueId?.split('.')[0]) || 1,
+          sector: session.contextState.gathered.sector,
+          product: session.contextState.gathered.product
+        },
         validatorInfo: validatorInfo ? {
           mode: validatorInfo.mode,
           wasRepaired: validatorInfo.wasRepaired,

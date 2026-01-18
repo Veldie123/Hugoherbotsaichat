@@ -35,7 +35,7 @@ The Hugo V2 FULL engine is now active with advanced AI capabilities:
 - **Frontend:** Vite dev server on port 5000
 - **Backend API:** Express server on port 3001
 - **Proxy:** Vite forwards `/api/*` requests to the backend
-- **AI Integration:** OpenAI via Replit AI Integrations (gpt-4o model)
+- **AI Integration:** OpenAI via Replit AI Integrations (gpt-5.1 model)
 
 **Engine Features (V2-FULL):**
 - **Nested Prompts:** Multi-layer prompt architecture for nuanced responses
@@ -72,10 +72,18 @@ The Hugo V2 FULL engine is now active with advanced AI capabilities:
 - `server/v2/coach-engine.ts` - Full coaching engine with nested prompts
 - `server/v2/context_engine.ts` - Context gathering with slot management
 - `src/services/hugoApi.ts` - Frontend API service layer
+- `src/utils/displayMappings.ts` - SSOT display translations (backend keys → Dutch labels)
 - `config/ssot/technieken_index.json` - Single Source of Truth for techniques
 - `config/ssot/coach_overlay.json` - Coach personality overlay
 - `config/ssot/evaluator_overlay.json` - Evaluation criteria
 - `config/ssot/hugo_persona.json` - Hugo AI persona configuration
+
+**Display Mappings (SSOT):**
+The `src/utils/displayMappings.ts` file centralizes all backend-to-frontend translations:
+- `buyingClockToDisplay` - Koopklok fases naar Nederlandse labels
+- `behaviorStyleToDisplay` - Gedragsstijlen (promoverend, faciliterend, etc.)
+- `difficultyToDisplay` - Moeilijkheidsgraden (beginner → expert)
+- `buildDebugInfoFromResponse()` - Helper functie voor expert panel debug info
 
 **Workflow:**
 - `npm run dev:full` starts both servers concurrently via `concurrently`

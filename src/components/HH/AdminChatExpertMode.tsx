@@ -162,28 +162,26 @@ export function AdminChatExpertMode({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Build default debugInfo (for initial messages or fallback)
-  const buildDefaultDebugInfo = (phase: number, apiResponse?: any): DebugInfo => {
-    const persona = apiResponse?.debug?.persona || {};
-    const dynamics = apiResponse?.debug?.dynamics || apiResponse?.debug?.customerDynamics;
+  // Build debugInfo using centralized SSOT mapper with component-specific defaults
+  const buildDebugInfo = (phase: number, apiResponse?: any): DebugInfo => {
+    const ssotResult = buildDebugInfoFromResponse(apiResponse, difficultyLevel);
+    const evalValue = ssotResult.aiDecision?.evaluatie;
+    const typedEval: "positief" | "gemist" | "neutraal" = 
+      evalValue === "positief" || evalValue === "gemist" ? evalValue : "neutraal";
     
     return {
-      persona: {
-        gedragsstijl: translate(behaviorStyleToDisplay, persona.behavior_style, "N/A"),
-        koopklok: translate(buyingClockToDisplay, persona.buying_clock_stage, "N/A"),
-        moeilijkheid: translate(difficultyToDisplay, persona.difficulty_level || difficultyLevel)
-      },
+      ...ssotResult,
       context: {
-        fase: apiResponse?.debug?.context?.fase || phase
+        fase: ssotResult.context?.fase || phase
       },
-      customerDynamics: dynamics ? {
-        rapport: typeof dynamics.rapport === 'number' ? dynamics.rapport : 50,
-        valueTension: typeof dynamics.valueTension === 'number' ? dynamics.valueTension : 50,
-        commitReadiness: typeof dynamics.commitReadiness === 'number' ? dynamics.commitReadiness : 50
-      } : { rapport: 50, valueTension: 50, commitReadiness: 50 },
+      customerDynamics: ssotResult.customerDynamics || { 
+        rapport: 50, 
+        valueTension: 50, 
+        commitReadiness: 50 
+      },
       aiDecision: {
-        epicFase: apiResponse?.debug?.epicFase || `Fase ${phase}`,
-        evaluatie: (apiResponse?.debug?.evaluation?.quality || apiResponse?.debug?.evaluation || "neutraal") as "positief" | "gemist" | "neutraal"
+        epicFase: ssotResult.aiDecision?.epicFase || `Fase ${phase}`,
+        evaluatie: typedEval
       }
     };
   };
@@ -279,7 +277,7 @@ export function AdminChatExpertMode({
         sender: "ai",
         text: session.initialMessage,
         timestamp: new Date(),
-        debugInfo: buildDefaultDebugInfo(parseInt(technique.fase) || currentPhase, session)
+        debugInfo: buildDebugInfo(parseInt(technique.fase) || currentPhase, session)
       };
       setMessages([aiMessage]);
     } catch (error) {
@@ -292,7 +290,7 @@ export function AdminChatExpertMode({
         sender: "ai",
         text: `Er ging iets mis bij het starten van de sessie voor "${techniqueName}". Probeer het opnieuw.`,
         timestamp: new Date(),
-        debugInfo: buildDefaultDebugInfo(parseInt(technique.fase) || currentPhase)
+        debugInfo: buildDebugInfo(parseInt(technique.fase) || currentPhase)
       };
       setMessages([errorMessage]);
     } finally {
@@ -344,7 +342,7 @@ export function AdminChatExpertMode({
         expectedTechniqueForSeller: selectedTechniqueNumber || "N/A",
         detectedTechnique: selectedTechniqueNumber ? getTechniqueNameByNumber(selectedTechniqueNumber) : "Onbekend",
         score: 0,
-        ...buildDefaultDebugInfo(currentPhase)
+        ...buildDebugInfo(currentPhase)
       }
     };
 
@@ -377,7 +375,7 @@ export function AdminChatExpertMode({
         debugInfo: {
           klantSignaal: signalMap[response.debug?.signal || "neutraal"] || "neutraal",
           expectedTechnique: response.debug?.detectedTechniques?.[0] || "N/A",
-          ...buildDefaultDebugInfo(currentPhase, response)
+          ...buildDebugInfo(currentPhase, response)
         }
       };
       setMessages(prev => [...prev, aiMessage]);
@@ -390,7 +388,7 @@ export function AdminChatExpertMode({
         timestamp: new Date(),
         debugInfo: {
           klantSignaal: "neutraal",
-          ...buildDefaultDebugInfo(currentPhase)
+          ...buildDebugInfo(currentPhase)
         }
       };
       setMessages(prev => [...prev, errorMessage]);
