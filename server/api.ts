@@ -44,16 +44,17 @@ app.get("/api/technieken", async (req, res) => {
     const indexData = JSON.parse(fs.readFileSync(indexPath, "utf-8"));
     
     const techniques: any[] = [];
-    for (const [faseId, fase] of Object.entries(indexData.fases || {})) {
-      const faseData = fase as any;
-      for (const [techId, tech] of Object.entries(faseData.technieken || {})) {
-        techniques.push({
-          nummer: techId,
-          naam: (tech as any).naam,
-          fase: faseId,
-          ...(tech as any)
-        });
-      }
+    for (const [techId, tech] of Object.entries(indexData.technieken || {})) {
+      const techData = tech as any;
+      techniques.push({
+        nummer: techData.nummer || techId,
+        naam: techData.naam,
+        fase: techData.fase,
+        doel: techData.doel,
+        is_fase: techData.is_fase,
+        tags: techData.tags,
+        ...techData
+      });
     }
     res.json(techniques);
   } catch (error: any) {

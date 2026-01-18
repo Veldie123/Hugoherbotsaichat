@@ -19,10 +19,12 @@ import {
   X,
   Clock,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
+import { hugoApi } from "../../services/hugoApi";
 
 interface Message {
   id: string;
@@ -63,6 +65,7 @@ export function TalkToHugoAI({
   const [sessionTimer, setSessionTimer] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -141,18 +144,39 @@ export function TalkToHugoAI({
     }
   };
 
-  const startTechniqueChat = (techniqueNumber: string, techniqueName: string) => {
+  const startTechniqueChat = async (techniqueNumber: string, techniqueName: string) => {
     setSelectedTechnique(techniqueNumber);
     setSelectedTechniqueName(techniqueName);
     setSessionTimer(0);
+    setIsLoading(true);
     
-    const aiMessage: Message = {
-      id: Date.now().toString(),
-      sender: "ai",
-      text: `Hey! Klaar om ${techniqueName} te oefenen? Ik speel de klant, jij bent de verkoper. Start maar!`,
-      timestamp: new Date(),
-    };
-    setMessages([aiMessage]);
+    try {
+      const session = await hugoApi.startSession({
+        techniqueId: techniqueNumber,
+        mode: "COACH_CHAT",
+        isExpert: difficultyLevel === "expert",
+        modality: chatMode,
+      });
+      
+      const aiMessage: Message = {
+        id: Date.now().toString(),
+        sender: "ai",
+        text: session.initialMessage,
+        timestamp: new Date(),
+      };
+      setMessages([aiMessage]);
+    } catch (error) {
+      console.error("Failed to start session:", error);
+      const fallbackMessage: Message = {
+        id: Date.now().toString(),
+        sender: "ai",
+        text: `Hey! Klaar om ${techniqueName} te oefenen? Ik speel de klant, jij bent de verkoper. Start maar!`,
+        timestamp: new Date(),
+      };
+      setMessages([fallbackMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getFaseBadgeColor = (fase: number) => {
@@ -190,28 +214,42 @@ export function TalkToHugoAI({
     });
   };
 
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isLoading) return;
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       sender: "hugo",
       text: inputText,
       timestamp: new Date(),
     };
 
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputText("");
+    setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await hugoApi.sendMessage(inputText, difficultyLevel === "expert");
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         sender: "ai",
-        text: "Goede vraag! Laat me daar eens over nadenken...",
+        text: response.response,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: "ai",
+        text: "Sorry, er ging iets mis. Probeer het opnieuw.",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleStopRoleplay = () => {
@@ -225,6 +263,7 @@ export function TalkToHugoAI({
     setSelectedTechniqueName("");
     setSessionTimer(0);
     setChatMode("chat");
+    hugoApi.clearSession();
   };
 
   const handleDictation = () => {
@@ -303,6 +342,14 @@ export function TalkToHugoAI({
             </div>
           </div>
         ))}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-hh-ui-100 text-hh-text rounded-2xl rounded-bl-md p-3 flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-hh-muted" />
+              <span className="text-[14px] text-hh-muted">Hugo denkt na...</span>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -327,10 +374,14 @@ export function TalkToHugoAI({
           </Button>
           <Button
             onClick={handleSendMessage}
-            disabled={!selectedTechnique || !inputText.trim()}
+            disabled={!selectedTechnique || !inputText.trim() || isLoading}
             className="bg-hh-ink hover:bg-hh-ink/90"
           >
-            <Send className="w-4 h-4 text-white" />
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 text-white animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 text-white" />
+            )}
           </Button>
         </div>
       </div>
