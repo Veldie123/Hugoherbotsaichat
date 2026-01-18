@@ -88,9 +88,9 @@ export function buildDebugInfoFromResponse(
       moeilijkheid: translate(difficultyToDisplay, persona.difficulty_level || fallbackDifficulty)
     },
     customerDynamics: dynamics ? {
-      rapport: typeof dynamics.rapport === 'number' ? Math.round(dynamics.rapport * (dynamics.rapport <= 1 ? 100 : 1)) : 50,
-      valueTension: typeof dynamics.valueTension === 'number' ? Math.round(dynamics.valueTension * (dynamics.valueTension <= 1 ? 100 : 1)) : 50,
-      commitReadiness: typeof dynamics.commitReadiness === 'number' ? Math.round(dynamics.commitReadiness * (dynamics.commitReadiness <= 1 ? 100 : 1)) : 50
+      rapport: typeof dynamics.rapport === 'number' ? Math.round(dynamics.rapport <= 1 ? dynamics.rapport * 100 : dynamics.rapport) : 50,
+      valueTension: typeof dynamics.valueTension === 'number' ? Math.round(dynamics.valueTension <= 1 ? dynamics.valueTension * 100 : dynamics.valueTension) : 50,
+      commitReadiness: typeof dynamics.commitReadiness === 'number' ? Math.round(dynamics.commitReadiness <= 1 ? dynamics.commitReadiness * 100 : dynamics.commitReadiness) : 50
     } : null,
     context: {
       fase: apiResponse?.debug?.context?.fase || apiResponse?.debug?.phase || 1,
