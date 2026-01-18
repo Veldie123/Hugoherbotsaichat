@@ -95,6 +95,12 @@ The `src/utils/displayMappings.ts` file centralizes all backend-to-frontend tran
 - `difficultyToDisplay` - Moeilijkheidsgraden (beginner → expert)
 - `buildDebugInfoFromResponse()` - Helper functie voor expert panel debug info
 
+**Fase 3 Frontend Integration (January 2026):**
+- **Streaming Responses:** SSE-based token-by-token response display in TalkToHugoAI.tsx
+- **Session Controls:** Feedback and Evaluate buttons appear during active sessions
+- **Auto-scroll:** Scrolls to latest message during streaming
+- **Fallback:** Graceful fallback to non-streaming if SSE fails
+
 **Workflow:**
 - `npm run dev:full` starts both servers concurrently via `concurrently`
 

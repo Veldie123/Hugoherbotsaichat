@@ -20,6 +20,9 @@ import {
   Clock,
   Sparkles,
   Loader2,
+  MessageCircle,
+  Award,
+  RotateCcw,
 } from "lucide-react";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
@@ -66,12 +69,16 @@ export function TalkToHugoAI({
   const [isMuted, setIsMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingText, setStreamingText] = useState("");
+  const [useStreaming, setUseStreaming] = useState(true);
+  const streamingTextRef = useRef("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, streamingText]);
 
   useEffect(() => {
     if (selectedTechnique) {
@@ -215,7 +222,7 @@ export function TalkToHugoAI({
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isLoading) return;
+    if (!inputText.trim() || isLoading || isStreaming) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -224,29 +231,137 @@ export function TalkToHugoAI({
       timestamp: new Date(),
     };
 
+    const messageText = inputText;
     setMessages(prev => [...prev, userMessage]);
     setInputText("");
-    setIsLoading(true);
 
-    try {
-      const response = await hugoApi.sendMessage(inputText, difficultyLevel === "expert");
+    if (useStreaming) {
+      setIsStreaming(true);
+      setStreamingText("");
+      streamingTextRef.current = "";
       
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+      try {
+        await hugoApi.sendMessageStream(
+          messageText,
+          difficultyLevel === "expert",
+          (token) => {
+            streamingTextRef.current += token;
+            setStreamingText(streamingTextRef.current);
+          },
+          () => {
+            const finalText = streamingTextRef.current;
+            setIsStreaming(false);
+            if (finalText) {
+              setMessages(prev => [...prev, {
+                id: (Date.now() + 1).toString(),
+                sender: "ai",
+                text: finalText,
+                timestamp: new Date(),
+              }]);
+            }
+            setStreamingText("");
+            streamingTextRef.current = "";
+          }
+        );
+      } catch (error) {
+        console.error("Streaming failed, falling back:", error);
+        setIsStreaming(false);
+        setStreamingText("");
+        setIsLoading(true);
+        try {
+          const response = await hugoApi.sendMessage(messageText, difficultyLevel === "expert");
+          setMessages(prev => [...prev, {
+            id: (Date.now() + 1).toString(),
+            sender: "ai",
+            text: response.response,
+            timestamp: new Date(),
+          }]);
+        } catch (fallbackError) {
+          setMessages(prev => [...prev, {
+            id: (Date.now() + 1).toString(),
+            sender: "ai",
+            text: "Sorry, er ging iets mis. Probeer het opnieuw.",
+            timestamp: new Date(),
+          }]);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    } else {
+      setIsLoading(true);
+      try {
+        const response = await hugoApi.sendMessage(messageText, difficultyLevel === "expert");
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          sender: "ai",
+          text: response.response,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      } catch (error) {
+        console.error("Failed to send message:", error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          sender: "ai",
+          text: "Sorry, er ging iets mis. Probeer het opnieuw.",
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleRequestFeedback = async () => {
+    if (isLoading || isStreaming) return;
+    setIsLoading(true);
+    
+    try {
+      const result = await hugoApi.requestFeedback();
+      const feedbackMessage: Message = {
+        id: Date.now().toString(),
         sender: "ai",
-        text: response.response,
+        text: result.feedback,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages(prev => [...prev, feedbackMessage]);
     } catch (error) {
-      console.error("Failed to send message:", error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+      console.error("Failed to get feedback:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEvaluate = async () => {
+    if (isLoading || isStreaming) return;
+    setIsLoading(true);
+    
+    try {
+      const evaluation = await hugoApi.evaluate();
+      const evalText = `**Evaluatie - Score: ${evaluation.overallScore}/100**
+
+**Scores:**
+- Engagement: ${evaluation.scores.engagement}%
+- Technisch: ${evaluation.scores.technical}%
+- Context: ${evaluation.scores.contextGathering}%
+
+**Aanbeveling:**
+${evaluation.recommendation}
+
+**Volgende stappen:**
+${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
+
+      const evalMessage: Message = {
+        id: Date.now().toString(),
         sender: "ai",
-        text: "Sorry, er ging iets mis. Probeer het opnieuw.",
+        text: evalText,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, evalMessage]);
+    } catch (error) {
+      console.error("Failed to evaluate:", error);
     } finally {
       setIsLoading(false);
     }
@@ -342,7 +457,14 @@ export function TalkToHugoAI({
             </div>
           </div>
         ))}
-        {isLoading && (
+        {isStreaming && streamingText && (
+          <div className="flex justify-start">
+            <div className="max-w-[80%] p-3 rounded-2xl bg-hh-ui-100 text-hh-text rounded-bl-md">
+              <p className="text-[14px] leading-[20px]">{streamingText}<span className="animate-pulse">▌</span></p>
+            </div>
+          </div>
+        )}
+        {isLoading && !isStreaming && (
           <div className="flex justify-start">
             <div className="bg-hh-ui-100 text-hh-text rounded-2xl rounded-bl-md p-3 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-hh-muted" />
@@ -353,6 +475,31 @@ export function TalkToHugoAI({
         <div ref={messagesEndRef} />
       </div>
 
+      {selectedTechnique && messages.length > 0 && (
+        <div className="px-4 py-2 border-t border-hh-border bg-hh-ui-50 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRequestFeedback}
+            disabled={isLoading || isStreaming}
+            className="text-[12px] gap-1.5"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            Feedback
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEvaluate}
+            disabled={isLoading || isStreaming}
+            className="text-[12px] gap-1.5"
+          >
+            <Award className="w-3.5 h-3.5" />
+            Evaluatie
+          </Button>
+        </div>
+      )}
+
       <div className="p-4 border-t border-hh-border bg-white">
         <div className="flex gap-2 items-end">
           <Input
@@ -361,23 +508,23 @@ export function TalkToHugoAI({
             onKeyPress={(e) => e.key === "Enter" && selectedTechnique && handleSendMessage()}
             placeholder={selectedTechnique ? "Type je antwoord..." : "Selecteer eerst een techniek..."}
             className="flex-1"
-            disabled={!selectedTechnique}
+            disabled={!selectedTechnique || isStreaming}
           />
           <Button
             variant="outline"
             size="icon"
             onClick={handleDictation}
-            disabled={!selectedTechnique}
+            disabled={!selectedTechnique || isStreaming}
             className={`flex-shrink-0 ${isRecording ? "bg-red-50 border-red-300 text-red-600" : ""}`}
           >
             <Mic className="w-4 h-4 text-[#4F7396]" />
           </Button>
           <Button
             onClick={handleSendMessage}
-            disabled={!selectedTechnique || !inputText.trim() || isLoading}
+            disabled={!selectedTechnique || !inputText.trim() || isLoading || isStreaming}
             className="bg-hh-ink hover:bg-hh-ink/90"
           >
-            {isLoading ? (
+            {isLoading || isStreaming ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />
             ) : (
               <Send className="w-4 h-4 text-white" />

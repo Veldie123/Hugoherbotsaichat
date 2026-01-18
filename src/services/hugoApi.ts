@@ -139,6 +139,8 @@ class HugoApiService {
     const decoder = new TextDecoder();
     let buffer = "";
 
+    let receivedDone = false;
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -155,6 +157,7 @@ class HugoApiService {
               onToken(data.token);
             }
             if (data.done && onDone) {
+              receivedDone = true;
               onDone(data.debug);
             }
           } catch (e) {
@@ -162,6 +165,10 @@ class HugoApiService {
           }
         }
       }
+    }
+
+    if (!receivedDone && onDone) {
+      onDone();
     }
   }
 
