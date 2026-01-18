@@ -21,16 +21,24 @@ export const behaviorStyleToDisplay: Record<string, string> = {
   analyserend: "Analyserend"
 };
 
-// Difficulty levels (backend → display)
+// Difficulty levels (backend → display) - 4 competentie niveaus
 export const difficultyToDisplay: Record<string, string> = {
-  onbewuste_onkunde: "Beginner (1/4)",
-  bewuste_onkunde: "Beginner+ (2/4)",
-  bewuste_kunde: "Gemiddeld (3/4)",
-  onbewuste_kunde: "Expert (4/4)",
-  beginner: "Beginner",
-  gemiddeld: "Gemiddeld",
-  expert: "Expert"
+  onbewuste_onkunde: "Onbewust Onbekwaam (1/4)",
+  bewuste_onkunde: "Bewust Onbekwaam (2/4)",
+  bewuste_kunde: "Bewust Bekwaam (3/4)",
+  onbewuste_kunde: "Onbewust Bekwaam (4/4)",
+  beginner: "Onbewust Onbekwaam (1/4)",
+  gemiddeld: "Bewust Bekwaam (3/4)",
+  expert: "Onbewust Bekwaam (4/4)"
 };
+
+// Difficulty level keys for UI selector (4 levels)
+export const difficultyLevels = [
+  { key: "onbewuste_onkunde", label: "Onbewust Onbekwaam", short: "1/4" },
+  { key: "bewuste_onkunde", label: "Bewust Onbekwaam", short: "2/4" },
+  { key: "bewuste_kunde", label: "Bewust Bekwaam", short: "3/4" },
+  { key: "onbewuste_kunde", label: "Onbewust Bekwaam", short: "4/4" }
+];
 
 // Signal vertalingen
 export const signalToDisplay: Record<string, string> = {
@@ -67,15 +75,16 @@ export function translate<T extends Record<string, string>>(
  */
 export function buildDebugInfoFromResponse(
   apiResponse: any,
-  fallbackDifficulty: string = "beginner"
+  fallbackDifficulty: string = "onbewuste_onkunde"
 ) {
   const persona = apiResponse?.debug?.persona || {};
   const dynamics = apiResponse?.debug?.dynamics || apiResponse?.debug?.customerDynamics;
+  const contextData = apiResponse?.contextData || apiResponse?.debug?.contextData || {};
   
   return {
     persona: {
       gedragsstijl: translate(behaviorStyleToDisplay, persona.behavior_style, "Analytisch"),
-      koopklok: translate(buyingClockToDisplay, persona.buying_clock_stage, "N/A"),
+      koopklok: translate(buyingClockToDisplay, persona.buying_clock_stage || persona.koopklok, "Onbekend"),
       moeilijkheid: translate(difficultyToDisplay, persona.difficulty_level || fallbackDifficulty)
     },
     customerDynamics: dynamics ? {
@@ -84,7 +93,14 @@ export function buildDebugInfoFromResponse(
       commitReadiness: typeof dynamics.commitReadiness === 'number' ? dynamics.commitReadiness : 50
     } : null,
     context: {
-      fase: apiResponse?.debug?.context?.fase || apiResponse?.debug?.phase || 1
+      fase: apiResponse?.debug?.context?.fase || apiResponse?.debug?.phase || 1,
+      gathered: {
+        sector: contextData.sector || null,
+        product: contextData.product || null,
+        klantType: contextData.klant_type || contextData.klantType || null,
+        verkoopkanaal: contextData.verkoopkanaal || null,
+        ervaring: contextData.ervaring || null
+      }
     },
     aiDecision: {
       epicFase: apiResponse?.debug?.epicFase || `Fase ${apiResponse?.debug?.context?.fase || 1}`,

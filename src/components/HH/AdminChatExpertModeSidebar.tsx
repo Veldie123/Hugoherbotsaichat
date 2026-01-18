@@ -35,7 +35,7 @@ interface EPICSidebarProps {
     technieken: string[];
     recommended_technique_ids?: string[];
   }>;
-  difficultyLevel: "beginner" | "gemiddeld" | "expert";
+  difficultyLevel: string;
   isUserView?: boolean;
   completedTechniques?: string[];
   currentUnlockedPhase?: number;

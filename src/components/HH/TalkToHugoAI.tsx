@@ -62,7 +62,7 @@ export function TalkToHugoAI({
   const [houdingenAccordionOpen, setHoudingenAccordionOpen] = useState(false);
   const [activeHouding, setActiveHouding] = useState<string | null>(null);
   const [recommendedTechnique, setRecommendedTechnique] = useState<string | null>(null);
-  const [difficultyLevel, setDifficultyLevel] = useState<"beginner" | "gemiddeld" | "expert">("beginner");
+  const [difficultyLevel, setDifficultyLevel] = useState<string>("onbewuste_onkunde");
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>("chat");
   const [sessionTimer, setSessionTimer] = useState(0);

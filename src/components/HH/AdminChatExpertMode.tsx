@@ -47,6 +47,7 @@ import {
   buyingClockToDisplay, 
   behaviorStyleToDisplay, 
   difficultyToDisplay,
+  difficultyLevels,
   translate,
   buildDebugInfoFromResponse 
 } from "../../utils/displayMappings";
@@ -75,6 +76,13 @@ interface DebugInfo {
   };
   context: {
     fase: number;
+    gathered?: {
+      sector?: string | null;
+      product?: string | null;
+      klantType?: string | null;
+      verkoopkanaal?: string | null;
+      ervaring?: string | null;
+    };
   };
   customerDynamics: {
     rapport: number;
@@ -129,7 +137,7 @@ export function AdminChatExpertMode({
   const [houdingenAccordionOpen, setHoudingenAccordionOpen] = useState(false); // NEW: Accordion state for Houdingen section
   const [activeHouding, setActiveHouding] = useState<string | null>(null); // NEW: Currently active houding from AI
   const [recommendedTechnique, setRecommendedTechnique] = useState<string | null>(null); // NEW: Recommended technique to highlight
-  const [difficultyLevel, setDifficultyLevel] = useState<"beginner" | "gemiddeld" | "expert">("beginner"); // NEW: Difficulty level
+  const [difficultyLevel, setDifficultyLevel] = useState<string>("onbewuste_onkunde"); // Competentie niveau (4 levels)
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false); // NEW: Stop roleplay confirmation dialog
   const [chatMode, setChatMode] = useState<"chat" | "audio" | "video">("chat"); // Multi-modal chat mode
   const [isMuted, setIsMuted] = useState(false); // Audio/video mute state
@@ -436,7 +444,7 @@ export function AdminChatExpertMode({
     <AdminLayout currentPage="admin-chat-expert" navigate={navigate}>
       <div className="flex h-[calc(100vh-4rem)]">
         {/* Left Sidebar - EPIC Techniques (HIDDEN in Expert mode) */}
-        {difficultyLevel !== "expert" && (
+        {difficultyLevel !== "onbewuste_kunde" && (
           <div className="w-[320px] flex-shrink-0 overflow-y-auto h-full">
             <EPICSidebar
               fasesAccordionOpen={fasesAccordionOpen}
@@ -515,15 +523,16 @@ export function AdminChatExpertMode({
               <div className="flex items-center gap-2">
                 <span className="text-[12px] text-hh-muted">Niveau:</span>
                 <div className="flex gap-1">
-                  {(["beginner", "gemiddeld", "expert"] as const).map((level) => (
+                  {difficultyLevels.map((level) => (
                     <Button
-                      key={level}
-                      variant={difficultyLevel === level ? "default" : "outline"}
+                      key={level.key}
+                      variant={difficultyLevel === level.key ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setDifficultyLevel(level)}
-                      className={`h-7 text-[11px] px-3 ${difficultyLevel === level ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+                      onClick={() => setDifficultyLevel(level.key)}
+                      className={`h-7 text-[10px] px-2 ${difficultyLevel === level.key ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+                      title={level.label}
                     >
-                      {level === "beginner" ? "Beginner" : level === "gemiddeld" ? "Gemiddeld" : "Expert"}
+                      {level.short}
                     </Button>
                   ))}
                 </div>
@@ -1008,7 +1017,7 @@ export function AdminChatExpertMode({
                                 )}
                               </div>
 
-                              {/* Context */}
+                              {/* Verzamelde Context */}
                               <div>
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "context")}
@@ -1019,14 +1028,39 @@ export function AdminChatExpertMode({
                                   ) : (
                                     <ChevronRight className="w-3 h-3" />
                                   )}
-                                  Context
+                                  Verzamelde Context
                                 </button>
                                 {isDebugSectionExpanded(message.id, "context") && message.debugInfo.context && (
-                                  <div className="mt-2 ml-5 text-[12px]">
-                                    <div className="flex justify-between">
-                                      <span className="text-hh-muted">Fase:</span>
-                                      <p className="text-hh-text font-medium">{message.debugInfo.context.fase}</p>
-                                    </div>
+                                  <div className="mt-2 ml-5 space-y-1 text-[12px]">
+                                    {message.debugInfo.context.gathered?.sector && (
+                                      <div className="flex justify-between">
+                                        <span className="text-hh-muted">Sector:</span>
+                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.sector}</p>
+                                      </div>
+                                    )}
+                                    {message.debugInfo.context.gathered?.product && (
+                                      <div className="flex justify-between">
+                                        <span className="text-hh-muted">Product:</span>
+                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.product}</p>
+                                      </div>
+                                    )}
+                                    {message.debugInfo.context.gathered?.klantType && (
+                                      <div className="flex justify-between">
+                                        <span className="text-hh-muted">Klant Type:</span>
+                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.klantType}</p>
+                                      </div>
+                                    )}
+                                    {message.debugInfo.context.gathered?.verkoopkanaal && (
+                                      <div className="flex justify-between">
+                                        <span className="text-hh-muted">Verkoopkanaal:</span>
+                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.verkoopkanaal}</p>
+                                      </div>
+                                    )}
+                                    {!message.debugInfo.context.gathered?.sector && 
+                                     !message.debugInfo.context.gathered?.product && 
+                                     !message.debugInfo.context.gathered?.klantType && (
+                                      <p className="text-hh-muted italic">Nog geen context verzameld</p>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -1228,7 +1262,7 @@ export function AdminChatExpertMode({
                                 )}
                               </div>
 
-                              {/* Context */}
+                              {/* Verzamelde Context */}
                               <div>
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "context")}
@@ -1239,14 +1273,39 @@ export function AdminChatExpertMode({
                                   ) : (
                                     <ChevronRight className="w-3 h-3" />
                                   )}
-                                  Context
+                                  Verzamelde Context
                                 </button>
                                 {isDebugSectionExpanded(message.id, "context") && message.debugInfo.context && (
-                                  <div className="mt-2 ml-5 text-[12px]">
-                                    <div className="flex justify-between">
-                                      <span className="text-hh-muted">Fase:</span>
-                                      <p className="text-hh-text font-medium">{message.debugInfo.context.fase}</p>
-                                    </div>
+                                  <div className="mt-2 ml-5 space-y-1 text-[12px]">
+                                    {message.debugInfo.context.gathered?.sector && (
+                                      <div className="flex justify-between">
+                                        <span className="text-hh-muted">Sector:</span>
+                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.sector}</p>
+                                      </div>
+                                    )}
+                                    {message.debugInfo.context.gathered?.product && (
+                                      <div className="flex justify-between">
+                                        <span className="text-hh-muted">Product:</span>
+                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.product}</p>
+                                      </div>
+                                    )}
+                                    {message.debugInfo.context.gathered?.klantType && (
+                                      <div className="flex justify-between">
+                                        <span className="text-hh-muted">Klant Type:</span>
+                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.klantType}</p>
+                                      </div>
+                                    )}
+                                    {message.debugInfo.context.gathered?.verkoopkanaal && (
+                                      <div className="flex justify-between">
+                                        <span className="text-hh-muted">Verkoopkanaal:</span>
+                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.verkoopkanaal}</p>
+                                      </div>
+                                    )}
+                                    {!message.debugInfo.context.gathered?.sector && 
+                                     !message.debugInfo.context.gathered?.product && 
+                                     !message.debugInfo.context.gathered?.klantType && (
+                                      <p className="text-hh-muted italic">Nog geen context verzameld</p>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -1335,7 +1394,7 @@ export function AdminChatExpertMode({
           {chatMode === "chat" && (
           <div className="p-4 border-t border-hh-border">
             {/* Expert Mode: Technique Selector ABOVE input - CUSTOM STYLED */}
-            {difficultyLevel === "expert" && (
+            {difficultyLevel === "onbewuste_kunde" && (
               <div className="mb-3">
                 <label className="text-[12px] font-medium text-hh-text mb-2 block">
                   Selecteer techniek die je gaat toepassen:
@@ -1387,8 +1446,8 @@ export function AdminChatExpertMode({
               </div>
             )}
 
-            {/* Beginner/Gemiddeld: Reminder to select from sidebar */}
-            {difficultyLevel !== "expert" && !hasActiveSession && (
+            {/* Non-expert modes: Reminder to select from sidebar */}
+            {difficultyLevel !== "onbewuste_kunde" && !hasActiveSession && (
               <div className="mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
                 <p className="text-[12px] text-amber-700 flex items-center gap-2">
                   <Lightbulb className="w-4 h-4" />
@@ -1399,7 +1458,7 @@ export function AdminChatExpertMode({
             )}
 
             {/* Selected technique indicator for non-expert modes */}
-            {difficultyLevel !== "expert" && hasActiveSession && (
+            {difficultyLevel !== "onbewuste_kunde" && hasActiveSession && (
               <div className="mb-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                 <p className="text-[12px] text-emerald-700 flex items-center justify-between">
                   <span>Geselecteerde techniek: {selectedTechnique} ({selectedTechniqueNumber})</span>
