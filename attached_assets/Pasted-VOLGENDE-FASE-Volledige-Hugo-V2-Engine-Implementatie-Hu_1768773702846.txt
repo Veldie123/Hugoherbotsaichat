@@ -1,0 +1,74 @@
+VOLGENDE FASE: Volledige Hugo V2 Engine Implementatie
+Huidige situatie andere Replit:
+
+coach-engine-simple.ts → Basis OpenAI calls
+Geen config files
+Geen nested prompt architectuur
+Geen validation/repair loop
+Wat je wilt:
+
+Volledige coach-engine.ts met alle imports
+Alle config files (17+ JSON bestanden)
+Nested prompt architectuur (13+ secties per mode)
+Validation + Repair loop
+Hugo Persona SSOT
+Detector patterns
+RAG service (later)
+Instructie voor andere Replit:
+"De vereenvoudigde engine werkt, maar ik wil nu de VOLLEDIGE Hugo V2 architectuur overzetten. Dit vereist:
+
+1. Config files kopiëren (17 bestanden):
+
+config/
+├── ssot/
+│   ├── technieken_index.json    # SSOT voor alle technieken
+│   ├── hugo_persona.json        # Hugo's persona/waarden
+│   ├── evaluator_overlay.json   # Evaluatie criteria
+│   └── coach_overlay.json       # Coach extensies
+├── detectors.json               # Pattern matching voor techniek detectie
+├── klant_houdingen.json         # Klant attitudes
+├── persona_templates.json       # Klant persona's
+├── customer_dynamics.json       # Klant gedrag
+├── video_mapping.json           # Video referenties
+└── prompts/
+    ├── coach_prompt.json        # Coaching richtlijnen
+    ├── context_prompt.json      # Context gathering
+    ├── roleplay_prompt.json     # Roleplay mode
+    └── feedback_prompt.json     # Feedback/debrief
+2. Engine files kopiëren (16 bestanden):
+
+server/v2/
+├── coach-engine.ts              # Hoofdengine
+├── context_engine.ts            # Context gathering
+├── roleplay-engine.ts           # Roleplay mode
+├── customer_engine.ts           # Klant simulatie
+├── prompt-context.ts            # Shared prompt builders
+├── evaluator.ts                 # Techniek evaluatie
+├── response-validator.ts        # Validatie loop
+├── response-repair.ts           # Repair bij validatie falen
+├── rag-service.ts               # RAG corpus (optioneel)
+├── historical-context-service.ts # Historische data
+└── ...
+3. De nested prompt architectuur bevat deze secties:
+
+WIE JE BENT (Hugo Persona)
+VOLLEDIGE METHODOLOGIE (technieken_index.json)
+HOE TECHNIEKEN TE HERKENNEN (detectors.json)
+KLANT HOUDINGEN
+PERSONA TEMPLATES
+EVALUATIE CRITERIA
+HISTORISCHE CONTEXT
+JOUW WOORDEN EN STIJL (RAG)
+COACHING RICHTLIJN
+4. De AI Freedom Philosophy v4.0:
+
+Faciliteren, niet limiteren
+Geen hardcoded zinnen
+Richtlijnen (wat Hugo IS), geen geboden/verboden
+5. Validation + Repair Loop:
+
+Na elke AI response: valideer tegen richtlijn.tekst
+Bij INVALID: regenereer met feedback
+Max 2 repair attempts
+Gebruik de hugo-engine.zip als referentie en kopieer de volledige bestanden."
+
