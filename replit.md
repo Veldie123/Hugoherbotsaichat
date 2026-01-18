@@ -28,6 +28,31 @@ The application is built with React 18 and TypeScript, utilizing Vite for fast d
 - **State Management:** Utilizes React Context API, e.g., `UserContext`.
 - **Utility Functions:** Centralized in the `src/utils/` directory, including Supabase client interactions.
 
+## Hugo Engine V2 Integration (January 2026)
+The Hugo V2 engine has been integrated with a dual-server architecture:
+
+**Architecture:**
+- **Frontend:** Vite dev server on port 5000
+- **Backend API:** Express server on port 3001
+- **Proxy:** Vite forwards `/api/*` requests to the backend
+
+**API Endpoints:**
+- `GET /api/health` - Health check
+- `GET /api/technieken` - Returns all sales techniques from SSOT config
+- `POST /api/v2/sessions` - Creates a new coach/roleplay session
+- `POST /api/v2/message` - Sends a message and receives AI response
+
+**Key Files:**
+- `server/api.ts` - Express API server with V2 endpoints
+- `src/services/hugoApi.ts` - Frontend API service layer
+- `config/ssot/technieken_index.json` - Single Source of Truth for techniques
+- `config/ssot/coach_overlay.json` - Coach personality overlay
+- `config/ssot/evaluator_overlay.json` - Evaluation criteria
+- `config/ssot/hugo_persona.json` - Hugo AI persona configuration
+
+**Workflow:**
+- `npm run dev:full` starts both servers concurrently via `concurrently`
+
 **Feature Specifications:**
 - **Hugo a.i.:** Provides AI coaching sessions, a chat interface, and roleplay training. Includes multi-modal interaction (chat, audio, video) and an Epic Sales Flow progress bar.
 - **Gespreksanalyse:** Allows uploading audio for conversation analysis, with a unified `TranscriptDialog` for displaying analyzed content and AI feedback.
