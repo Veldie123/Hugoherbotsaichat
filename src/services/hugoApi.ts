@@ -51,6 +51,27 @@ export interface Technique {
   description?: string;
 }
 
+export interface UserContext {
+  sector?: string;
+  product?: string;
+  klantType?: string;
+  verkoopkanaal?: string;
+  ervaring?: string;
+  naam?: string;
+}
+
+export interface EvaluationResult {
+  overallScore: number;
+  scores: {
+    engagement: number;
+    technical: number;
+    contextGathering: number;
+  };
+  technique: string;
+  recommendation: string;
+  nextSteps: string[];
+}
+
 class HugoApiService {
   private currentSessionId: string | null = null;
 
@@ -92,10 +113,155 @@ class HugoApiService {
     return response.json();
   }
 
+  async sendMessageStream(
+    content: string, 
+    isExpert = false,
+    onToken: (token: string) => void,
+    onDone?: (debug?: any) => void
+  ): Promise<void> {
+    if (!this.currentSessionId) {
+      throw new Error("No active session. Call startSession first.");
+    }
+
+    const response = await fetch(`${API_BASE}/session/${this.currentSessionId}/message/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, isExpert }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to stream message: ${response.statusText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("No response body");
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.token) {
+              onToken(data.token);
+            }
+            if (data.done && onDone) {
+              onDone(data.debug);
+            }
+          } catch (e) {
+            console.error("Failed to parse SSE data:", e);
+          }
+        }
+      }
+    }
+  }
+
   async getTechnieken(): Promise<Technique[]> {
     const response = await fetch(`${API_BASE}/technieken`);
     if (!response.ok) {
       throw new Error(`Failed to load techniques: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async getUserContext(userId?: string): Promise<UserContext> {
+    const url = userId 
+      ? `${API_BASE}/user/context?userId=${userId}`
+      : `${API_BASE}/user/context`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to get user context: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.context;
+  }
+
+  async saveUserContext(context: UserContext, userId?: string): Promise<UserContext> {
+    const response = await fetch(`${API_BASE}/user/context`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, context }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to save user context: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.context;
+  }
+
+  async startRoleplay(): Promise<{ message: string; phase: string }> {
+    if (!this.currentSessionId) {
+      throw new Error("No active session.");
+    }
+    const response = await fetch(`${API_BASE}/session/${this.currentSessionId}/start-roleplay`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to start roleplay: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async requestFeedback(): Promise<{ feedback: string; stats: any }> {
+    if (!this.currentSessionId) {
+      throw new Error("No active session.");
+    }
+    const response = await fetch(`${API_BASE}/session/${this.currentSessionId}/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to get feedback: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async evaluate(): Promise<EvaluationResult> {
+    if (!this.currentSessionId) {
+      throw new Error("No active session.");
+    }
+    const response = await fetch(`${API_BASE}/session/${this.currentSessionId}/evaluate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to evaluate: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.evaluation;
+  }
+
+  async resetContext(): Promise<{ message: string }> {
+    if (!this.currentSessionId) {
+      throw new Error("No active session.");
+    }
+    const response = await fetch(`${API_BASE}/session/${this.currentSessionId}/reset-context`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to reset context: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async getSessionTurns(): Promise<{ turns: any[]; total: number }> {
+    if (!this.currentSessionId) {
+      throw new Error("No active session.");
+    }
+    const response = await fetch(`${API_BASE}/session/${this.currentSessionId}/turns`);
+    if (!response.ok) {
+      throw new Error(`Failed to get turns: ${response.statusText}`);
     }
     return response.json();
   }

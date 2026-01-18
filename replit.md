@@ -44,13 +44,23 @@ The Hugo V2 FULL engine is now active with advanced AI capabilities:
 - **Hugo Persona SSOT:** Personality loaded from `hugo_persona.json`
 - **Detector Patterns:** Advanced signal and technique detection
 
-**API Endpoints:**
+**API Endpoints (Core):**
 - `GET /api/health` - Health check (shows V2-FULL engine status with features)
 - `GET /api/technieken` - Returns all sales techniques from SSOT config
 - `POST /api/v2/sessions` - Creates a new coach/roleplay session with AI opening message
 - `POST /api/v2/message` - Sends a message and receives AI response
 - `GET /api/v2/sessions/:id` - Retrieves session state
 - `DELETE /api/v2/sessions/:id` - Ends a session
+
+**API Endpoints (Fase 2 - Session Control & Streaming):**
+- `GET /api/user/context` - Get user context (sector, product, etc.)
+- `POST /api/user/context` - Save/update user context
+- `POST /api/session/:id/start-roleplay` - Transition session to ROLEPLAY mode
+- `POST /api/session/:id/feedback` - Request mid-session feedback/debrief
+- `POST /api/session/:id/evaluate` - Get evaluation scores and recommendations
+- `POST /api/session/:id/reset-context` - Reset session to CONTEXT_GATHERING
+- `GET /api/session/:id/turns` - Get all conversation turns/history
+- `POST /api/session/:id/message/stream` - SSE streaming message endpoint
 
 **V2 FULL Engine Components:**
 - `server/v2/coach-engine.ts` - Full coach engine (1071 lines) with nested prompts, RAG, validation

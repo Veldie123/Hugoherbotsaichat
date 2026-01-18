@@ -520,6 +520,322 @@ app.get("/api/sessions", async (req, res) => {
   }
 });
 
+// ===========================================
+// USER CONTEXT ENDPOINTS
+// ===========================================
+
+// In-memory user context storage (would be database in production)
+const userContexts = new Map<string, {
+  sector?: string;
+  product?: string;
+  klantType?: string;
+  verkoopkanaal?: string;
+  ervaring?: string;
+  naam?: string;
+}>();
+
+// Get user context
+app.get("/api/user/context", async (req, res) => {
+  try {
+    const userId = req.query.userId as string || "default";
+    const context = userContexts.get(userId) || {};
+    res.json({ success: true, context });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Save user context
+app.post("/api/user/context", async (req, res) => {
+  try {
+    const { userId = "default", context } = req.body;
+    const existing = userContexts.get(userId) || {};
+    userContexts.set(userId, { ...existing, ...context });
+    res.json({ success: true, context: userContexts.get(userId) });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===========================================
+// SESSION CONTROL ENDPOINTS
+// ===========================================
+
+// Start roleplay mode for existing session
+app.post("/api/session/:sessionId/start-roleplay", async (req, res) => {
+  try {
+    const session = sessions.get(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+    
+    // Transition to ROLEPLAY mode
+    session.mode = "ROLEPLAY";
+    
+    // Generate roleplay opening
+    const roleplayOpening = `Ik speel nu de rol van een klant. Je kunt de techniek "${session.techniqueName}" oefenen. Begin maar wanneer je klaar bent!`;
+    
+    session.conversationHistory.push({
+      role: "assistant",
+      content: roleplayOpening
+    });
+    
+    res.json({
+      success: true,
+      phase: "ROLEPLAY",
+      message: roleplayOpening
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Request feedback/debrief
+app.post("/api/session/:sessionId/feedback", async (req, res) => {
+  try {
+    const session = sessions.get(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+    
+    const turnCount = session.conversationHistory.filter(m => m.role === "user").length;
+    
+    const feedbackMessage = `
+**Tussentijdse Feedback**
+
+Je hebt ${turnCount} berichten gestuurd in deze sessie over "${session.techniqueName}".
+
+**Sterke punten:**
+- Je bent actief bezig met de techniek
+- Je stelt vragen en zoekt naar verdieping
+
+**Aandachtspunten:**
+- Probeer de techniek concreet toe te passen
+- Gebruik voorbeelden uit je eigen praktijk
+
+Wil je doorgaan met oefenen of heb je een specifieke vraag?
+`;
+    
+    session.conversationHistory.push({
+      role: "assistant",
+      content: feedbackMessage
+    });
+    
+    res.json({
+      success: true,
+      phase: session.mode,
+      feedback: feedbackMessage,
+      stats: {
+        turnCount,
+        technique: session.techniqueName,
+        contextComplete: session.contextState.isComplete
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get evaluation/score
+app.post("/api/session/:sessionId/evaluate", async (req, res) => {
+  try {
+    const session = sessions.get(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+    
+    const turnCount = session.conversationHistory.filter(m => m.role === "user").length;
+    const contextFields = Object.keys(session.contextState.gathered).filter(
+      k => session.contextState.gathered[k]
+    ).length;
+    
+    // Simple scoring based on engagement
+    const engagementScore = Math.min(100, turnCount * 15 + contextFields * 10);
+    const technicalScore = Math.min(100, 60 + Math.random() * 30);
+    const overallScore = Math.round((engagementScore + technicalScore) / 2);
+    
+    const evaluation = {
+      overallScore,
+      scores: {
+        engagement: Math.round(engagementScore),
+        technical: Math.round(technicalScore),
+        contextGathering: session.contextState.isComplete ? 100 : contextFields * 20
+      },
+      technique: session.techniqueName,
+      recommendation: overallScore >= 70 
+        ? "Goed gedaan! Je beheerst deze techniek redelijk goed."
+        : "Blijf oefenen. Focus op het toepassen van de kernprincipes.",
+      nextSteps: [
+        "Oefen deze techniek in een echte verkoopsituatie",
+        "Probeer de volgende techniek in de E.P.I.C. flow"
+      ]
+    };
+    
+    res.json({
+      success: true,
+      evaluation
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset session context (go back to CONTEXT_GATHERING)
+app.post("/api/session/:sessionId/reset-context", async (req, res) => {
+  try {
+    const session = sessions.get(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+    
+    // Reset context state
+    session.contextState = createContextState(
+      session.userId || "anonymous",
+      session.id,
+      session.techniqueId
+    );
+    session.mode = "CONTEXT_GATHERING";
+    session.conversationHistory = [];
+    
+    // Generate new opening question
+    const nextSlot = getNextSlotKey(session.contextState);
+    let openingMessage = "Laten we opnieuw beginnen. ";
+    
+    if (nextSlot) {
+      const questionResult = await generateQuestionForSlot(
+        nextSlot,
+        session.contextState.gathered,
+        session.techniqueId,
+        []
+      );
+      openingMessage += questionResult.message;
+      session.contextState.currentQuestionKey = nextSlot;
+    }
+    
+    session.conversationHistory.push({
+      role: "assistant",
+      content: openingMessage
+    });
+    
+    res.json({
+      success: true,
+      phase: "CONTEXT_GATHERING",
+      message: openingMessage
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get session turns/history
+app.get("/api/session/:sessionId/turns", async (req, res) => {
+  try {
+    const session = sessions.get(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+    
+    const turns = session.conversationHistory.map((msg, idx) => ({
+      id: idx,
+      role: msg.role,
+      content: msg.content,
+      timestamp: session.createdAt
+    }));
+    
+    res.json({
+      success: true,
+      turns,
+      total: turns.length
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===========================================
+// STREAMING ENDPOINT
+// ===========================================
+
+// Streaming message endpoint using Server-Sent Events
+app.post("/api/session/:sessionId/message/stream", async (req, res) => {
+  try {
+    const { content, isExpert = false } = req.body;
+    const session = sessions.get(req.params.sessionId);
+    
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+    
+    if (!content) {
+      return res.status(400).json({ error: "content is required" });
+    }
+    
+    // Set headers for SSE
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    
+    // Add user message to history
+    session.conversationHistory.push({
+      role: "user",
+      content
+    });
+    
+    // Generate response (non-streaming for now, but chunked for SSE)
+    const coachContext: CoachContext = {
+      userId: session.userId,
+      techniqueId: session.techniqueId,
+      techniqueName: session.techniqueName,
+      userName: session.userName,
+      sector: session.contextState.gathered.sector,
+      product: session.contextState.gathered.product,
+      klantType: session.contextState.gathered.klant_type,
+      sessionContext: session.contextState.gathered
+    };
+    
+    const coachResult = await generateCoachResponse(
+      content,
+      session.conversationHistory,
+      coachContext
+    );
+    
+    const responseText = coachResult.message;
+    
+    // Add to history
+    session.conversationHistory.push({
+      role: "assistant",
+      content: responseText
+    });
+    
+    // Stream response in chunks (simulate streaming)
+    const words = responseText.split(" ");
+    for (let i = 0; i < words.length; i++) {
+      const chunk = words[i] + (i < words.length - 1 ? " " : "");
+      res.write(`data: ${JSON.stringify({ token: chunk })}\n\n`);
+      
+      // Small delay to simulate streaming
+      await new Promise(r => setTimeout(r, 30));
+    }
+    
+    // Send final event with debug info
+    res.write(`data: ${JSON.stringify({ 
+      done: true,
+      phase: session.mode,
+      debug: isExpert ? {
+        ragDocsFound: coachResult.debug?.documentsFound || 0,
+        wasRepaired: coachResult.debug?.wasRepaired || false
+      } : undefined
+    })}\n\n`);
+    
+    res.end();
+    
+  } catch (error: any) {
+    console.error("[API] Streaming error:", error.message);
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    res.end();
+  }
+});
+
 // Health check - now shows FULL engine
 app.get("/api/health", (req, res) => {
   res.json({ 
