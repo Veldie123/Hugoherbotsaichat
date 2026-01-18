@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { AppLayout } from "./AppLayout";
-import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -267,11 +266,10 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
       : <ArrowDown className="w-3 h-3 ml-1 text-hh-ink" />;
   };
 
-  // Choose layout based on isAdmin prop
-  const Layout = isAdmin ? AdminLayout : AppLayout;
-  const layoutProps = isAdmin 
-    ? { currentPage: "admin-sessions", navigate } 
-    : { currentPage: "hugo-overview", navigate, isAdmin };
+  // Always use AppLayout for user view - this is the USER overview page
+  // Admin view has its own separate component (AdminSessions)
+  const Layout = AppLayout;
+  const layoutProps = { currentPage: "hugo-overview", navigate, isAdmin };
 
   return (
     <Layout {...layoutProps}>

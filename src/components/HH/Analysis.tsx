@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import { AppLayout } from "./AppLayout";
-import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -256,11 +255,10 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
     return sum + mins;
   }, 0);
 
-  // Choose layout based on isAdmin prop
-  const Layout = isAdmin ? AdminLayout : AppLayout;
-  const layoutProps = isAdmin 
-    ? { currentPage: "admin-uploads", navigate } 
-    : { currentPage: "analysis", navigate, isAdmin };
+  // Always use AppLayout for user view - this is the USER analysis page
+  // Admin view has its own separate component (AdminUploadManagement)
+  const Layout = AppLayout;
+  const layoutProps = { currentPage: "analysis", navigate, isAdmin };
 
   return (
     <Layout {...layoutProps}>
