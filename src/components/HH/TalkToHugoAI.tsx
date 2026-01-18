@@ -28,6 +28,7 @@ import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
 import { hugoApi } from "../../services/hugoApi";
+import { difficultyLevels } from "../../utils/displayMappings";
 
 interface Message {
   id: string;
@@ -161,7 +162,7 @@ export function TalkToHugoAI({
       const session = await hugoApi.startSession({
         techniqueId: techniqueNumber,
         mode: "COACH_CHAT",
-        isExpert: difficultyLevel === "expert",
+        isExpert: difficultyLevel === "onbewuste_kunde",
         modality: chatMode,
       });
       
@@ -243,7 +244,7 @@ export function TalkToHugoAI({
       try {
         await hugoApi.sendMessageStream(
           messageText,
-          difficultyLevel === "expert",
+          difficultyLevel === "onbewuste_kunde",
           (token) => {
             streamingTextRef.current += token;
             setStreamingText(streamingTextRef.current);
@@ -269,7 +270,7 @@ export function TalkToHugoAI({
         setStreamingText("");
         setIsLoading(true);
         try {
-          const response = await hugoApi.sendMessage(messageText, difficultyLevel === "expert");
+          const response = await hugoApi.sendMessage(messageText, difficultyLevel === "onbewuste_kunde");
           setMessages(prev => [...prev, {
             id: (Date.now() + 1).toString(),
             sender: "ai",
@@ -290,7 +291,7 @@ export function TalkToHugoAI({
     } else {
       setIsLoading(true);
       try {
-        const response = await hugoApi.sendMessage(messageText, difficultyLevel === "expert");
+        const response = await hugoApi.sendMessage(messageText, difficultyLevel === "onbewuste_kunde");
         
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -417,26 +418,27 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                 Selecteer een techniek in de sidebar om te beginnen met oefenen
               </p>
               
-              {/* Niveau selector */}
+              {/* Niveau selector - 4-level competence model */}
               <div className="inline-flex flex-col items-center gap-2">
-                <span className="text-[12px] text-hh-muted">Kies je niveau:</span>
+                <span className="text-[12px] text-hh-muted">Kies je competentieniveau:</span>
                 <div className="flex gap-1 bg-hh-ui-100 rounded-lg p-1 border border-hh-border">
-                  {(["beginner", "gemiddeld", "expert"] as const).map((level) => (
+                  {difficultyLevels.map((level) => (
                     <button
-                      key={level}
-                      onClick={() => setDifficultyLevel(level)}
-                      style={difficultyLevel === level ? { backgroundColor: '#4F7396', color: 'white' } : {}}
-                      className={`px-4 py-2 rounded-md text-[13px] font-medium transition-all ${
-                        difficultyLevel === level 
+                      key={level.key}
+                      onClick={() => setDifficultyLevel(level.key)}
+                      style={difficultyLevel === level.key ? { backgroundColor: '#4F7396', color: 'white' } : {}}
+                      className={`px-3 py-2 rounded-md text-[12px] font-medium transition-all ${
+                        difficultyLevel === level.key 
                           ? "shadow-sm" 
                           : "text-hh-text hover:bg-hh-ui-50"
                       }`}
+                      title={level.label}
                     >
-                      {level === "beginner" ? "Beginner" : level === "gemiddeld" ? "Gemiddeld" : "Expert"}
+                      {level.short}
                     </button>
                   ))}
                 </div>
-                {difficultyLevel === "expert" && (
+                {difficultyLevel === "onbewuste_kunde" && (
                   <p className="text-[11px] text-hh-muted mt-1">
                     Expert modus: geen sidebar hulp
                   </p>
@@ -719,7 +721,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
   return (
     <AppLayout currentPage="talk-to-hugo" navigate={navigate} isAdmin={isAdmin}>
       <div className="flex h-[calc(100vh-4rem)]">
-        {difficultyLevel !== "expert" && (
+        {difficultyLevel !== "onbewuste_kunde" && (
           <div className="w-1/3 flex-shrink-0 overflow-y-auto h-full">
             <EPICSidebar
               fasesAccordionOpen={fasesAccordionOpen}
