@@ -92,6 +92,22 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
     navigate?.(page);
   };
 
+  // Helper to check if a nav item should be marked as active
+  // This handles sub-pages being highlighted under their parent menu item
+  const isNavItemActive = (itemId: string): boolean => {
+    if (currentPage === itemId) return true;
+    
+    // Map sub-pages to their parent menu items
+    const subPageMapping: Record<string, string> = {
+      "admin-chat-expert": "admin-sessions",
+      "admin-sessions-detail": "admin-sessions",
+      "admin-upload-detail": "admin-uploads",
+      "admin-transcript-detail": "admin-uploads",
+    };
+    
+    return subPageMapping[currentPage] === itemId;
+  };
+
   const markAsRead = (id: string) => {
     // Simulate marking a notification as read
     const newCount = unreadCount > 0 ? unreadCount - 1 : 0;
@@ -186,7 +202,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
               {/* Primary items */}
               {mainNavItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = currentPage === item.id;
+                const isActive = isNavItemActive(item.id);
 
                 return (
                   <button
@@ -213,7 +229,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
                 {/* Secondary items */}
                 {adminManagementItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = currentPage === item.id;
+                  const isActive = isNavItemActive(item.id);
 
                   return (
                     <button
@@ -277,7 +293,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
         <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
           {mainNavItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentPage === item.id;
+            const isActive = isNavItemActive(item.id);
 
             return (
               <button
@@ -302,7 +318,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
         <nav className="p-3 space-y-2 border-t border-hh-border flex-shrink-0">
           {adminManagementItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentPage === item.id;
+            const isActive = isNavItemActive(item.id);
 
             return (
               <button
