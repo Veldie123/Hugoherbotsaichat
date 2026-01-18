@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { AppLayout } from "./AppLayout";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -23,12 +23,15 @@ import {
   MessageCircle,
   Award,
   RotateCcw,
+  AlertCircle,
 } from "lucide-react";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
 import { hugoApi } from "../../services/hugoApi";
 import { difficultyLevels } from "../../utils/displayMappings";
+import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from "@heygen/streaming-avatar";
+import { useConversation } from "@elevenlabs/react";
 
 interface Message {
   id: string;
@@ -77,6 +80,38 @@ export function TalkToHugoAI({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // HeyGen Streaming Avatar state
+  const [heygenToken, setHeygenToken] = useState<string | null>(null);
+  const [avatarSession, setAvatarSession] = useState<StreamingAvatar | null>(null);
+  const [isAvatarLoading, setIsAvatarLoading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // ElevenLabs Conversational AI state
+  const [elevenLabsApiKey, setElevenLabsApiKey] = useState<string | null>(null);
+  const [isAudioConnecting, setIsAudioConnecting] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  
+  // ElevenLabs conversation hook
+  const conversation = useConversation({
+    onConnect: () => {
+      console.log("[ElevenLabs] Connected");
+      setIsAudioConnecting(false);
+    },
+    onDisconnect: () => {
+      console.log("[ElevenLabs] Disconnected");
+    },
+    onMessage: (data) => {
+      console.log("[ElevenLabs] Message:", data);
+    },
+    onError: (error) => {
+      console.error("[ElevenLabs] Error:", error);
+      setAudioError(String(error));
+      setIsAudioConnecting(false);
+    }
+  });
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingText]);
@@ -97,6 +132,135 @@ export function TalkToHugoAI({
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Initialize HeyGen avatar session
+  const initHeygenAvatar = useCallback(async () => {
+    if (avatarSession) return;
+    
+    setIsAvatarLoading(true);
+    setAvatarError(null);
+    
+    try {
+      // Fetch token from backend
+      const tokenResponse = await fetch("/api/heygen/token", { method: "POST" });
+      if (!tokenResponse.ok) {
+        throw new Error("Kon HeyGen token niet ophalen");
+      }
+      const { token } = await tokenResponse.json();
+      setHeygenToken(token);
+      
+      // Create avatar instance
+      const avatar = new StreamingAvatar({ token });
+      
+      // Setup event listeners
+      avatar.on(StreamingEvents.AVATAR_START_TALKING, () => {
+        setIsAvatarSpeaking(true);
+      });
+      
+      avatar.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
+        setIsAvatarSpeaking(false);
+      });
+      
+      avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
+        console.log("[HeyGen] Stream disconnected");
+        setAvatarSession(null);
+      });
+      
+      avatar.on(StreamingEvents.STREAM_READY, (event: any) => {
+        console.log("[HeyGen] Stream ready");
+        if (videoRef.current && event.detail?.stream) {
+          videoRef.current.srcObject = event.detail.stream;
+        }
+      });
+      
+      // Start avatar session with a public avatar
+      await avatar.createStartAvatar({
+        quality: AvatarQuality.Medium,
+        avatarName: "monica_public_3", // Public HeyGen avatar
+      });
+      
+      setAvatarSession(avatar);
+      console.log("[HeyGen] Avatar session started");
+    } catch (error: any) {
+      console.error("[HeyGen] Error:", error);
+      setAvatarError(error.message || "Kon video avatar niet starten");
+    } finally {
+      setIsAvatarLoading(false);
+    }
+  }, [avatarSession]);
+  
+  // Stop HeyGen avatar session
+  const stopHeygenAvatar = useCallback(async () => {
+    if (avatarSession) {
+      try {
+        await avatarSession.stopAvatar();
+      } catch (error) {
+        console.error("[HeyGen] Stop error:", error);
+      }
+      setAvatarSession(null);
+    }
+  }, [avatarSession]);
+  
+  // Make avatar speak
+  const avatarSpeak = useCallback(async (text: string) => {
+    if (!avatarSession) return;
+    
+    try {
+      await avatarSession.speak({
+        text,
+        taskType: TaskType.REPEAT,
+      });
+    } catch (error) {
+      console.error("[HeyGen] Speak error:", error);
+    }
+  }, [avatarSession]);
+
+  // Initialize ElevenLabs audio session
+  const initElevenLabsAudio = useCallback(async () => {
+    if (conversation.status === "connected") return;
+    
+    setIsAudioConnecting(true);
+    setAudioError(null);
+    
+    try {
+      // Request microphone permission
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // For ElevenLabs Conversational AI, we need an agent ID
+      // For now, we'll show a message that the feature requires setup
+      setAudioError("ElevenLabs Agent ID niet geconfigureerd. Configureer een agent in de ElevenLabs dashboard.");
+      setIsAudioConnecting(false);
+      
+    } catch (error: any) {
+      console.error("[ElevenLabs] Error:", error);
+      setAudioError(error.message || "Kon audio niet starten. Controleer microfoontoegang.");
+      setIsAudioConnecting(false);
+    }
+  }, [conversation.status]);
+  
+  // Stop ElevenLabs audio session
+  const stopElevenLabsAudio = useCallback(() => {
+    if (conversation.status === "connected") {
+      conversation.endSession();
+    }
+  }, [conversation]);
+
+  // Handle chat mode change
+  useEffect(() => {
+    if (chatMode === "video" && !avatarSession && !isAvatarLoading) {
+      initHeygenAvatar();
+    } else if (chatMode === "audio" && conversation.status === "disconnected" && !isAudioConnecting) {
+      initElevenLabsAudio();
+    }
+  }, [chatMode, avatarSession, isAvatarLoading, conversation.status, isAudioConnecting, initHeygenAvatar, initElevenLabsAudio]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopHeygenAvatar();
+      stopElevenLabsAudio();
+    };
+  }, [stopHeygenAvatar, stopElevenLabsAudio]);
 
   const techniquesByPhase: Record<number, any[]> = {};
   Object.values(technieken_index.technieken).forEach((technique: any) => {
@@ -518,6 +682,17 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
 
   const renderAudioInterface = () => (
     <div className="h-full w-full flex flex-col" style={{ background: 'linear-gradient(180deg, #059669 0%, #0d9488 50%, #0f766e 100%)' }}>
+      {/* Error message */}
+      {audioError && (
+        <div className="absolute top-4 left-4 right-4 bg-red-500/90 text-white p-3 rounded-lg flex items-center gap-2 z-10">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span className="text-[14px]">{audioError}</span>
+          <button onClick={() => setAudioError(null)} className="ml-auto">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+      
       {/* Top section - caller info with large avatar */}
       <div className="flex-1 flex flex-col items-center justify-center">
         {/* Large HH avatar */}
@@ -526,28 +701,44 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             className="rounded-full flex items-center justify-center"
             style={{ width: '180px', height: '180px', backgroundColor: 'rgba(255,255,255,0.25)' }}
           >
-            <span className="text-white font-bold" style={{ fontSize: '64px' }}>HH</span>
+            {isAudioConnecting ? (
+              <Loader2 className="w-16 h-16 text-white animate-spin" />
+            ) : (
+              <span className="text-white font-bold" style={{ fontSize: '64px' }}>HH</span>
+            )}
           </div>
+          {conversation.isSpeaking && (
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-full">
+              <span className="text-teal-700 text-[12px] font-medium">Spreekt...</span>
+            </div>
+          )}
         </div>
         
         <h3 className="text-white text-[26px] font-bold mb-1">Hugo AI Coach</h3>
-        <p className="text-[16px] mb-2" style={{ color: 'rgba(255,255,255,0.8)' }}>Bellen...</p>
+        <p className="text-[16px] mb-2" style={{ color: 'rgba(255,255,255,0.8)' }}>
+          {isAudioConnecting ? "Verbinden..." : conversation.status === "connected" ? "Verbonden" : "Audio modus"}
+        </p>
         <p className="text-[22px] font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>{formatTime(sessionTimer)}</p>
         
-        {/* Waveform visualization */}
+        {/* Waveform visualization - animate when speaking */}
         <div className="flex items-end justify-center gap-1.5 h-16 mt-8">
           {[...Array(15)].map((_, i) => (
             <div
               key={i}
-              className="rounded-full"
+              className={`rounded-full transition-all duration-150 ${conversation.isSpeaking ? 'animate-pulse' : ''}`}
               style={{
                 width: '6px',
                 backgroundColor: 'rgba(255,255,255,0.7)',
-                height: `${Math.random() * 40 + 15}px`,
+                height: conversation.isSpeaking ? `${Math.sin(Date.now() / 200 + i) * 20 + 35}px` : `${15 + (i % 3) * 10}px`,
               }}
             />
           ))}
         </div>
+        
+        {/* Status message */}
+        <p className="text-white/60 text-[14px] mt-4">
+          {audioError ? "Configuratie vereist" : "ElevenLabs audio - binnenkort beschikbaar"}
+        </p>
       </div>
 
       {/* Bottom controls - circular buttons with labels below */}
@@ -571,7 +762,10 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           
           <div className="flex flex-col items-center gap-2">
             <button 
-              onClick={handleStopRoleplay}
+              onClick={() => {
+                stopElevenLabsAudio();
+                setChatMode("chat");
+              }}
               className="flex items-center justify-center shadow-xl"
               style={{ 
                 width: '64px', 
@@ -606,25 +800,57 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
 
   const renderVideoInterface = () => (
     <div className="h-full w-full relative" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%)' }}>
-      {/* Main video area with large HH avatar */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div 
-          className="rounded-full flex items-center justify-center"
-          style={{ width: '220px', height: '220px', backgroundColor: '#6B7A92' }}
-        >
-          <span className="text-white font-bold" style={{ fontSize: '80px' }}>HH</span>
+      {/* Error message */}
+      {avatarError && (
+        <div className="absolute top-4 left-4 right-4 bg-red-500/90 text-white p-3 rounded-lg flex items-center gap-2 z-20">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span className="text-[14px]">{avatarError}</span>
+          <button onClick={() => setAvatarError(null)} className="ml-auto">
+            <X className="w-4 h-4" />
+          </button>
         </div>
+      )}
+      
+      {/* Main video area - HeyGen avatar stream or fallback */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {avatarSession ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div 
+            className="rounded-full flex items-center justify-center"
+            style={{ width: '220px', height: '220px', backgroundColor: '#6B7A92' }}
+          >
+            {isAvatarLoading ? (
+              <Loader2 className="w-16 h-16 text-white animate-spin" />
+            ) : (
+              <span className="text-white font-bold" style={{ fontSize: '80px' }}>HH</span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Top overlay with name */}
-      <div className="absolute top-0 left-0 right-0 p-4" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
-        <h3 className="text-white text-[18px] font-semibold">Hugo Herbots</h3>
+      {/* Top overlay with name and status */}
+      <div className="absolute top-0 left-0 right-0 p-4 z-10" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
+        <div className="flex items-center gap-2">
+          <h3 className="text-white text-[18px] font-semibold">Hugo Herbots</h3>
+          {isAvatarSpeaking && (
+            <span className="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full">Spreekt</span>
+          )}
+        </div>
         <p className="text-white/70 text-[14px]">{formatTime(sessionTimer)}</p>
+        {isAvatarLoading && (
+          <p className="text-white/60 text-[12px] mt-1">Avatar laden...</p>
+        )}
       </div>
 
       {/* PiP preview - user camera - circular */}
       <div 
-        className="absolute top-4 right-4 flex items-center justify-center border-2 border-white/30 shadow-xl"
+        className="absolute top-4 right-4 flex items-center justify-center border-2 border-white/30 shadow-xl z-10"
         style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#475569' }}
       >
         <div 
@@ -636,7 +862,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
       </div>
 
       {/* Bottom controls - circular buttons */}
-      <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
+      <div className="absolute bottom-0 left-0 right-0 p-6 z-10" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
         <div className="flex items-center justify-center gap-6">
           <div className="flex flex-col items-center gap-2">
             <button 
@@ -671,7 +897,10 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           
           <div className="flex flex-col items-center gap-2">
             <button 
-              onClick={handleStopRoleplay}
+              onClick={() => {
+                stopHeygenAvatar();
+                setChatMode("chat");
+              }}
               className="flex items-center justify-center shadow-xl"
               style={{ 
                 width: '56px', 

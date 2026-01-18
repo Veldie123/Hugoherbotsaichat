@@ -836,6 +836,55 @@ app.post("/api/session/:sessionId/message/stream", async (req, res) => {
   }
 });
 
+// ===========================================
+// HEYGEN STREAMING AVATAR TOKEN
+// ===========================================
+app.post("/api/heygen/token", async (req, res) => {
+  try {
+    const apiKey = process.env.HEYGEN_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "HEYGEN_API_KEY not configured" });
+    }
+
+    const response = await fetch("https://api.heygen.com/v1/streaming.create_token", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("[API] HeyGen token error:", errorData);
+      return res.status(response.status).json({ error: "Failed to create HeyGen token" });
+    }
+
+    const data = await response.json();
+    console.log("[API] HeyGen token created successfully");
+    res.json({ token: data.data?.token || data.token });
+  } catch (error: any) {
+    console.error("[API] HeyGen token error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===========================================
+// ELEVENLABS API KEY (for client-side SDK)
+// ===========================================
+app.get("/api/elevenlabs/config", (req, res) => {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: "ELEVENLABS_API_KEY not configured" });
+  }
+  
+  // Return the API key for client-side use
+  // Note: In production, use signed URLs or agent tokens instead
+  res.json({ 
+    apiKey,
+    agentId: process.env.ELEVENLABS_AGENT_ID || null
+  });
+});
+
 // Health check - now shows FULL engine
 app.get("/api/health", (req, res) => {
   res.json({ 
@@ -848,7 +897,9 @@ app.get("/api/health", (req, res) => {
       "rag-grounding",
       "validation-loop",
       "hugo-persona-ssot",
-      "detector-patterns"
+      "detector-patterns",
+      "elevenlabs-audio",
+      "heygen-video"
     ]
   });
 });
