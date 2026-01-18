@@ -242,7 +242,7 @@ Alleen je nieuwe response:`;
   
   try {
     const result = await client.chat.completions.create({
-      model: "gpt-5.1",
+      model: "gpt-4o",
       messages,
       max_completion_tokens: 2000,
     });

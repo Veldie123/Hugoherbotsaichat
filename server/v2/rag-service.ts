@@ -15,15 +15,28 @@ const EMBEDDING_DIMENSIONS = 1536;
 
 // Use direct OpenAI API for embeddings (Replit AI Integrations doesn't support embeddings)
 // Requires OPENAI_API_KEY secret to be set
-export function getOpenAIClient(): OpenAI | null {
+export function getOpenAIClientForEmbeddings(): OpenAI | null {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
+    console.log("[RAG] Embeddings not available (no OPENAI_API_KEY)");
     return null;
   }
   return new OpenAI({ apiKey });
 }
 
-// Check if RAG is available
+// Use Replit AI Integrations for chat completions
+export function getOpenAIClient(): OpenAI | null {
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  
+  if (!apiKey || !baseURL) {
+    console.log("[RAG] Chat completions not available (no AI Integrations configured)");
+    return null;
+  }
+  return new OpenAI({ apiKey, baseURL });
+}
+
+// Check if RAG (embeddings) is available
 export function isRagAvailable(): boolean {
   return !!process.env.OPENAI_API_KEY;
 }
@@ -45,10 +58,10 @@ export interface RagSearchResult {
 
 /**
  * Generate embedding for a text using OpenAI
- * Returns null if OpenAI API key is not available
+ * Returns null if OpenAI API key is not available (embeddings require direct API key)
  */
 export async function generateEmbedding(text: string): Promise<number[] | null> {
-  const client = getOpenAIClient();
+  const client = getOpenAIClientForEmbeddings();
   if (!client) {
     return null;
   }
