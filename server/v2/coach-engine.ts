@@ -565,7 +565,7 @@ export async function generateCoachResponse(
 
   try {
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5.1",
       messages: messages.map(m => ({
         role: m.role as "system" | "user" | "assistant",
         content: m.content,
@@ -727,7 +727,7 @@ export async function generateCoachOpening(context: CoachContext): Promise<Coach
   
   try {
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5.1",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: openingPrompt },
@@ -1032,7 +1032,7 @@ export async function generateHugoDebrief(context: DebriefContext): Promise<{
   
   try {
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5.1",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

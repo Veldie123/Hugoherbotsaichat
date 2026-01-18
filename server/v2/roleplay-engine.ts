@@ -1200,7 +1200,7 @@ INTENT: Zet kort de scene, zeg dat jij de klant speelt, en nodig uit om te start
     
     // AI Freedom: Use temperature for variation (requires reasoning_effort='none')
     const completionPromise = openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5.1",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
