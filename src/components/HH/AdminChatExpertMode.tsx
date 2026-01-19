@@ -972,11 +972,13 @@ export function AdminChatExpertMode({
                       <div
                         className={`p-3 rounded-lg relative ${
                           message.sender === "hugo"
-                            ? "bg-slate-800 text-white"
-                            : "bg-hh-ui-50 text-hh-text border border-hh-border"
+                            ? "bg-slate-800"
+                            : "bg-hh-ui-50 border border-hh-border"
                         }`}
                       >
-                        <p className="text-[13px] leading-[19px]">{message.text}</p>
+                        <p className={`text-[13px] leading-[19px] ${
+                          message.sender === "hugo" ? "text-white" : "text-slate-800"
+                        }`}>{message.text}</p>
                         
                         {/* Tip Button - INSIDE bubble for AI messages */}
                         {message.sender === "ai" && message.debugInfo && (
