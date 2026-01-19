@@ -53,3 +53,27 @@ The application is built with React 18, TypeScript, and Vite. Styling uses Tailw
 - **Deepgram Nova 3:** Speech-to-Text (STT) for audio mode.
 - **ElevenLabs:** Text-to-Speech (TTS) and STT proxy for audio mode.
 - **HeyGen:** Streaming Avatar SDK for video mode.
+
+## TODO Tracking
+
+Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
+
+**Huidige TODO's (januari 2026):**
+| TODO ID | Bestand | Status |
+|---------|---------|--------|
+| DEBUG-INFO-UITBREIDEN | src/components/HH/TranscriptDialog.tsx | Pending |
+| GOLDEN-STANDARD-OPSLAG | server/v2/reference-answers.ts | Pending |
+| GOLDEN-STANDARD-CONFLICTS | server/v2/config-consistency.ts | Pending |
+| ADMIN-CONFLICTS-PAGE | src/components/HH/AdminConflicts.tsx | Pending |
+| FEW-SHOT-LEARNING | server/v2/coach-engine.ts | Pending |
+
+**Afgeronde TODO's:**
+| TODO ID | Bestand | Status |
+|---------|---------|--------|
+| WITTE-TEKST-FIX | src/components/HH/AdminChatExpertMode.tsx | Done (text-slate-800 toegevoegd) |
+| HEYGEN-LIVEAVATAR | src/components/HH/LiveAvatarComponent.tsx | Done |
+| RAG-DATABASE-FIX | server/v2/rag-service.ts | Done |
+| RAG-CORPUS-VULLEN | server/v2/rag-service.ts | Done |
+| ROLEPLAY-API-ENDPOINTS | server/api.ts | Done |
+| HISTORICAL-CONTEXT-ACTIVEREN | server/v2/historical-context-service.ts | Done |
+| DATABASE-SCHEMA-CHECK | server/db.ts | Done

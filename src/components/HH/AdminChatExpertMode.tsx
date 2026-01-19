@@ -1,11 +1,9 @@
 /**
  * TODO[WITTE-TEKST-FIX]: User berichten niet zichtbaar in roleplay sidebar
- * Status: Pending
+ * Status: Done
  * Issue: Witte tekst op witte/lichte achtergrond in debug panel of sidebar
- * Bron: NIET IN ZIP - frontend styling bug, moet in dit bestand gefixed worden
- * Aanpak:
- *   1. Zoek styling voor user berichten in sidebar/debug panel
- *   2. Verander text color naar donkere kleur (text-hh-text of text-slate-800)
+ * Bron: NIET IN ZIP - frontend styling bug, gefixed in dit bestand
+ * Oplossing: text-slate-800 toegevoegd aan debug Card om donkere tekst te forceren
  * Frontend koppeling: N/A - dit component zelf
  */
 
@@ -921,11 +919,7 @@ export function AdminChatExpertMode({
                 {/* Debug Info (collapsible) - SMALLER WIDTH */}
                 {message.debugInfo && expandedDebug === message.id && (
                   <div className={`${message.sender === "hugo" ? "flex justify-end" : "ml-10"}`}>
-                    <Card className={`p-4 mt-2 border-2 border-dashed max-w-[280px] ${
-                        message.sender === "ai" 
-                          ? "border-slate-200 bg-slate-50/50" 
-                          : "border-slate-200 bg-slate-50/50"
-                      }`}>
+                    <Card className="p-4 mt-2 border-2 border-dashed max-w-[280px] border-slate-200 bg-slate-50/50 text-slate-800">
                         <div className="space-y-3 text-[13px] leading-[18px]">
                           {/* For Hugo/Seller messages */}
                           {message.sender === "hugo" && (
