@@ -1584,19 +1584,25 @@ export function AdminChatExpertMode({
                               {/* AI Beslissingen */}
                               <div className="pt-4 border-t border-slate-200/50">
                                 <h4 className="text-[13px] font-bold text-slate-800 mb-3">AI Beslissingen</h4>
-                                <div className="grid grid-cols-[120px_1fr] gap-y-2 gap-x-3 text-[12px]">
-                                  <span className="text-slate-600 font-medium">EPIC Fase:</span>
-                                  <span className="text-slate-800">{message.debugInfo.aiDecision.epicFase}</span>
-                                  <span className="text-slate-600 font-medium">Evaluatie:</span>
-                                  <Badge variant="outline" className={`text-[11px] w-fit ${
-                                    (message.debugInfo.aiDecision.evaluatie as string) === "positief" || (message.debugInfo.aiDecision.evaluatie as string) === "perfect"
-                                      ? "bg-green-100 text-green-700 border-green-300"
-                                      : message.debugInfo.aiDecision.evaluatie === "gemist"
-                                      ? "bg-red-100 text-red-700 border-red-300"
-                                      : "bg-gray-100 text-gray-700 border-gray-300"
-                                  }`}>
-                                    {message.debugInfo.aiDecision.evaluatie}
-                                  </Badge>
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-[120px_1fr] gap-x-3 items-center text-[12px]">
+                                    <span className="text-slate-600 font-medium">EPIC Fase:</span>
+                                    <Badge variant="outline" className="text-[11px] w-fit bg-slate-100 text-slate-700 border-slate-300">
+                                      {message.debugInfo.aiDecision.epicFase}
+                                    </Badge>
+                                  </div>
+                                  <div className="grid grid-cols-[120px_1fr] gap-x-3 items-center text-[12px]">
+                                    <span className="text-slate-600 font-medium">Evaluatie:</span>
+                                    <Badge variant="outline" className={`text-[11px] w-fit ${
+                                      (message.debugInfo.aiDecision.evaluatie as string) === "positief" || (message.debugInfo.aiDecision.evaluatie as string) === "perfect"
+                                        ? "bg-green-100 text-green-700 border-green-300"
+                                        : message.debugInfo.aiDecision.evaluatie === "gemist"
+                                        ? "bg-red-100 text-red-700 border-red-300"
+                                        : "bg-gray-100 text-gray-700 border-gray-300"
+                                    }`}>
+                                      {message.debugInfo.aiDecision.evaluatie}
+                                    </Badge>
+                                  </div>
                                 </div>
                               </div>
                               
@@ -1647,7 +1653,7 @@ export function AdminChatExpertMode({
                                         )}
                                       </>
                                     ) : (
-                                      <p className="text-slate-500 italic">Geen prompt data beschikbaar voor dit bericht</p>
+                                      <p className="text-[11px] text-slate-500 italic">Geen prompt data beschikbaar</p>
                                     )}
                                   </div>
                                 )}
