@@ -174,12 +174,12 @@ Alle openstaande taken staan als expliciete TODO stubs direct in de relevante be
 **Huidige TODO's (januari 2026):**
 | TODO ID | Bestand | Status |
 |---------|---------|--------|
-| HEYGEN-VIDEO-FIX | src/components/HH/TalkToHugoAI.tsx | In Progress |
-| RAG-DATABASE-FIX | server/v2/rag-service.ts | Pending |
-| RAG-CORPUS-VULLEN | server/v2/rag-service.ts | Pending |
-| ROLEPLAY-API-ENDPOINTS | server/api.ts | Pending |
+| HEYGEN-VIDEO-FIX | src/components/HH/TalkToHugoAI.tsx | Skipped (user fixing elsewhere) |
+| RAG-DATABASE-FIX | server/v2/rag-service.ts | Done |
+| RAG-CORPUS-VULLEN | server/v2/rag-service.ts | Pending (needs training material) |
+| ROLEPLAY-API-ENDPOINTS | server/api.ts | Done |
 | HISTORICAL-CONTEXT-ACTIVEREN | server/v2/historical-context-service.ts | Pending |
-| DATABASE-SCHEMA-CHECK | server/db.ts | Pending |
+| DATABASE-SCHEMA-CHECK | server/db.ts | Done |
 
 **Conventie:**
 - Hoofd-TODO's in bestand header: `TODO: UPPERCASE-SLUG`

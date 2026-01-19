@@ -7,22 +7,12 @@
  * TODO: RAG-DATABASE-FIX
  * ----------------------
  * Issue: Database error "type vector does not exist"
- * Status: Pending
+ * Status: Done (januari 2026)
  * 
- * Oorzaak: pgvector extensie niet geïnstalleerd in Neon database
- * 
- * Aanpak:
- * 1. Run in Supabase/Neon SQL editor: CREATE EXTENSION IF NOT EXISTS vector;
- * 2. Maak rag_documents tabel met vector kolom:
- *    CREATE TABLE rag_documents (
- *      id TEXT PRIMARY KEY,
- *      doc_type TEXT,
- *      title TEXT,
- *      content TEXT,
- *      technique_id TEXT,
- *      embedding vector(1536)
- *    );
- * 3. Verifieer met: SELECT * FROM pg_extension WHERE extname = 'vector';
+ * Oplossing:
+ * - pgvector extensie geïnstalleerd: CREATE EXTENSION IF NOT EXISTS vector;
+ * - rag_documents tabel aangemaakt met vector(1536) kolom
+ * - ivfflat index aangemaakt voor snelle similarity search
  * 
  * TODO: RAG-CORPUS-VULLEN
  * -----------------------

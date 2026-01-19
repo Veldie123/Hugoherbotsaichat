@@ -2,22 +2,20 @@
  * API Server for Hugo Engine V2 - FULL ENGINE
  * Uses complete engine with nested prompts, RAG, and validation loop
  * 
- * TODO: ROLEPLAY-API-ENDPOINTS
- * ----------------------------
- * Issue: Roleplay mode endpoints nog niet geïmplementeerd
- * Status: Pending
+ * ROLEPLAY-API-ENDPOINTS
+ * ----------------------
+ * Status: Done (januari 2026)
  * 
- * Benodigde endpoints:
- * - POST /api/v2/roleplay/start - Start roleplay sessie met klant persona
- * - POST /api/v2/roleplay/message - Stuur bericht in roleplay mode
- * - POST /api/v2/roleplay/end - Beëindig roleplay met debrief
+ * Beschikbare endpoints (via routes.ts):
+ * - POST /api/session/:id/start-roleplay - Transition to ROLEPLAY mode
+ * - POST /api/session/:id/message - Process roleplay messages  
+ * - POST /api/session/:id/feedback - Get mid-session feedback
+ * - POST /api/session/:id/evaluate - Get evaluation scores
  * 
- * Aanpak:
- * 1. Import roleplay-engine.ts en customer_engine.ts
- * 2. Implementeer session state machine voor ROLEPLAY mode
- * 3. Koppel aan frontend TalkToHugoAI component
- * 
- * Zie: server/v2/roleplay-engine.ts voor engine logica
+ * V2 endpoints (via api.ts):
+ * - POST /api/v2/roleplay/start - Full V2 roleplay session
+ * - POST /api/v2/roleplay/message - V2 roleplay message processing
+ * - POST /api/v2/roleplay/end - End with debrief
  */
 
 import express, { type Request, Response, NextFunction } from "express";
@@ -48,6 +46,18 @@ import {
 import { getTechnique } from "./ssot-loader";
 import { AccessToken } from "livekit-server-sdk";
 import { setupScribeWebSocket } from "./elevenlabs-stt";
+
+// Roleplay Engine imports
+import {
+  initSession as initRoleplaySession,
+  getOpeningMessage,
+  processInput,
+  endRoleplay,
+  isInRoleplay,
+  getSessionSummary,
+  type V2SessionState,
+  type EngineResponse
+} from "./v2/roleplay-engine";
 
 const app = express();
 
@@ -933,6 +943,198 @@ app.post("/api/livekit/token", async (req, res) => {
     console.error("[API] LiveKit token error:", error.message);
     res.status(500).json({ error: error.message });
   }
+});
+
+// ===========================================
+// ROLEPLAY ENGINE ENDPOINTS (V2 Full)
+// ===========================================
+
+// Roleplay session with metadata wrapper
+interface RoleplaySessionEntry {
+  state: V2SessionState;
+  createdAt: Date;
+  isActive: boolean;
+}
+
+// Roleplay session storage (separate from coach sessions)
+const roleplaySessions = new Map<string, RoleplaySessionEntry>();
+
+// Clean up old roleplay sessions
+setInterval(() => {
+  const now = Date.now();
+  const twoHours = 2 * 60 * 60 * 1000;
+  for (const [id, entry] of roleplaySessions.entries()) {
+    if (!entry.isActive || (now - entry.createdAt.getTime() > twoHours)) {
+      roleplaySessions.delete(id);
+      console.log(`[API] Cleaned up roleplay session: ${id}`);
+    }
+  }
+}, 30 * 60 * 1000);
+
+// Start a new roleplay session
+app.post("/api/v2/roleplay/start", async (req, res) => {
+  try {
+    const { techniqueId, userId = "demo-user", existingContext } = req.body;
+    
+    if (!techniqueId) {
+      return res.status(400).json({ error: "techniqueId is required" });
+    }
+    
+    // Get technique info
+    const technique = getTechnique(techniqueId);
+    if (!technique) {
+      return res.status(404).json({ error: `Technique ${techniqueId} not found` });
+    }
+    
+    // Generate session ID
+    const sessionId = `rp-${Date.now()}-${nanoid(6)}`;
+    
+    // Initialize roleplay session
+    const sessionState = initRoleplaySession(userId, sessionId, techniqueId, existingContext);
+    
+    // Store session with metadata
+    const entry: RoleplaySessionEntry = {
+      state: sessionState,
+      createdAt: new Date(),
+      isActive: true
+    };
+    roleplaySessions.set(sessionId, entry);
+    
+    // Get opening message (context question or roleplay intro)
+    const openingResponse = await getOpeningMessage(sessionState, userId);
+    
+    // Update stored session with any state changes
+    entry.state = openingResponse.sessionState;
+    roleplaySessions.set(sessionId, entry);
+    
+    console.log(`[API] Created roleplay session ${sessionId} for technique ${techniqueId}`);
+    console.log(`[API] Mode: ${openingResponse.sessionState.currentMode}, Type: ${openingResponse.type}`);
+    
+    res.json({
+      sessionId,
+      phase: openingResponse.sessionState.currentMode,
+      message: openingResponse.message,
+      type: openingResponse.type,
+      debug: openingResponse.debug
+    });
+    
+  } catch (error: any) {
+    console.error("[API] Error starting roleplay:", error.message, error.stack);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Send message in roleplay session
+app.post("/api/v2/roleplay/message", async (req, res) => {
+  try {
+    const { sessionId, content, isExpert = false } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+    if (!content) {
+      return res.status(400).json({ error: "content is required" });
+    }
+    
+    const entry = roleplaySessions.get(sessionId);
+    if (!entry) {
+      return res.status(404).json({ error: "Roleplay session not found. Please start a new session." });
+    }
+    
+    // Set expert mode if requested
+    if (isExpert) {
+      entry.state.expertMode = true;
+    }
+    
+    // Process input through roleplay engine
+    const response = await processInput(entry.state, content);
+    
+    // Update stored session
+    entry.state = response.sessionState;
+    roleplaySessions.set(sessionId, entry);
+    
+    console.log(`[API] Roleplay message processed - Mode: ${response.sessionState.currentMode}, Turn: ${response.sessionState.turnNumber}`);
+    
+    res.json({
+      message: response.message,
+      type: response.type,
+      phase: response.sessionState.currentMode,
+      signal: response.signal,
+      evaluation: response.evaluation,
+      epicPhase: response.sessionState.epicPhase,
+      epicMilestones: response.sessionState.epicMilestones,
+      turnNumber: response.sessionState.turnNumber,
+      debug: isExpert ? response.debug : undefined
+    });
+    
+  } catch (error: any) {
+    console.error("[API] Error processing roleplay message:", error.message, error.stack);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// End roleplay session with debrief
+app.post("/api/v2/roleplay/end", async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+    
+    const entry = roleplaySessions.get(sessionId);
+    if (!entry) {
+      return res.status(404).json({ error: "Roleplay session not found" });
+    }
+    
+    // End roleplay and get debrief
+    const debriefResponse = await endRoleplay(entry.state);
+    
+    // Get session summary
+    const summary = getSessionSummary(entry.state);
+    
+    // Mark session as ended
+    entry.isActive = false;
+    roleplaySessions.set(sessionId, entry);
+    
+    console.log(`[API] Roleplay session ${sessionId} ended - Score: ${summary.score}`);
+    
+    res.json({
+      message: debriefResponse.message,
+      type: "debrief",
+      summary: {
+        score: summary.score,
+        turns: summary.turns
+      }
+    });
+    
+  } catch (error: any) {
+    console.error("[API] Error ending roleplay:", error.message, error.stack);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get roleplay session status
+app.get("/api/v2/roleplay/:sessionId", (req, res) => {
+  const { sessionId } = req.params;
+  
+  const entry = roleplaySessions.get(sessionId);
+  if (!entry) {
+    return res.status(404).json({ error: "Session not found" });
+  }
+  
+  const summary = getSessionSummary(entry.state);
+  
+  res.json({
+    sessionId,
+    phase: entry.state.currentMode,
+    isActive: entry.isActive,
+    techniqueId: entry.state.techniqueId,
+    epicPhase: entry.state.epicPhase,
+    epicMilestones: entry.state.epicMilestones,
+    turnNumber: entry.state.turnNumber,
+    summary
+  });
 });
 
 // Health check - now shows FULL engine

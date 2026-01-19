@@ -4,7 +4,7 @@
  * TODO: DATABASE-SCHEMA-CHECK
  * ---------------------------
  * Issue: Verifieer dat alle V2 tabellen aanwezig zijn
- * Status: Pending
+ * Status: Done (januari 2026)
  * 
  * Vereiste tabellen voor V2 engine:
  * - users (id, username, password)
