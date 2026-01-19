@@ -1,10 +1,11 @@
 /**
- * TODO[WITTE-TEKST-FIX]: User berichten niet zichtbaar in roleplay sidebar
- * Status: Done
- * Issue: Witte tekst op witte/lichte achtergrond in debug panel of sidebar
- * Bron: NIET IN ZIP - frontend styling bug, gefixed in dit bestand
- * Oplossing: text-slate-800 toegevoegd aan debug Card om donkere tekst te forceren
- * Frontend koppeling: N/A - dit component zelf
+ * AdminChatExpertMode - Expert training interface for Hugo a.i.
+ * 
+ * Features:
+ * - AI roleplay with customer simulation
+ * - Multi-modal: chat, audio (LiveKit), video (HeyGen)
+ * - Debug panel with prompt visibility
+ * - Golden Standard save functionality
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
