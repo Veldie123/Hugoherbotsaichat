@@ -31,7 +31,7 @@ import { EPICSidebar } from "./AdminChatExpertModeSidebar";
 import { hugoApi } from "../../services/hugoApi";
 import { difficultyLevels } from "../../utils/displayMappings";
 import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from "@heygen/streaming-avatar";
-import { useConversation } from "@elevenlabs/react";
+import { Room, RoomEvent, Track, ConnectionState } from "livekit-client";
 
 interface Message {
   id: string;
@@ -89,29 +89,13 @@ export function TalkToHugoAI({
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastSpokenMessageIdRef = useRef<string | null>(null);
 
-  // ElevenLabs Conversational AI state
-  const [elevenLabsApiKey, setElevenLabsApiKey] = useState<string | null>(null);
+  // LiveKit Audio state
+  const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
   const [isAudioConnecting, setIsAudioConnecting] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
-  
-  // ElevenLabs conversation hook
-  const conversation = useConversation({
-    onConnect: () => {
-      console.log("[ElevenLabs] Connected");
-      setIsAudioConnecting(false);
-    },
-    onDisconnect: () => {
-      console.log("[ElevenLabs] Disconnected");
-    },
-    onMessage: (data) => {
-      console.log("[ElevenLabs] Message:", data);
-    },
-    onError: (error) => {
-      console.error("[ElevenLabs] Error:", error);
-      setAudioError(String(error));
-      setIsAudioConnecting(false);
-    }
-  });
+  const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
+  const [audioConnectionState, setAudioConnectionState] = useState<ConnectionState>(ConnectionState.Disconnected);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -223,9 +207,9 @@ export function TalkToHugoAI({
     }
   }, [avatarSession]);
 
-  // Initialize ElevenLabs audio session
-  const initElevenLabsAudio = useCallback(async () => {
-    if (conversation.status === "connected") return;
+  // Initialize LiveKit audio session
+  const initLiveKitAudio = useCallback(async () => {
+    if (liveKitRoom?.state === ConnectionState.Connected) return;
     
     setIsAudioConnecting(true);
     setAudioError(null);
@@ -234,50 +218,115 @@ export function TalkToHugoAI({
       // Request microphone permission first
       await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Get signed URL from backend (secure token endpoint)
-      const response = await fetch("/api/elevenlabs/signed-url", { method: "POST" });
+      // Get token from backend
+      const response = await fetch("/api/livekit/token", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ techniqueId: selectedTechnique || "general" })
+      });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || errorData.error || "Kon ElevenLabs niet initialiseren");
+        throw new Error(errorData.message || errorData.error || "Kon LiveKit niet initialiseren");
       }
       
-      const { signedUrl } = await response.json();
+      const { token, url } = await response.json();
       
-      // Start conversation with signed URL
-      await conversation.startSession({ signedUrl });
-      console.log("[ElevenLabs] Session started with signed URL");
+      // Create and connect room
+      const room = new Room();
+      
+      // Setup event listeners
+      room.on(RoomEvent.ConnectionStateChanged, (state) => {
+        console.log("[LiveKit] Connection state:", state);
+        setAudioConnectionState(state);
+        if (state === ConnectionState.Connected) {
+          setIsAudioConnecting(false);
+        }
+      });
+      
+      room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        console.log("[LiveKit] Track subscribed:", track.kind);
+        if (track.kind === Track.Kind.Audio) {
+          // Attach audio track
+          const audioElement = track.attach();
+          audioElement.id = "livekit-agent-audio";
+          document.body.appendChild(audioElement);
+          audioElementRef.current = audioElement;
+        }
+      });
+      
+      room.on(RoomEvent.TrackUnsubscribed, (track) => {
+        if (track.kind === Track.Kind.Audio) {
+          track.detach();
+        }
+      });
+      
+      room.on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
+        // Check if agent is speaking (any remote participant)
+        const agentSpeaking = speakers.some(s => !s.isLocal);
+        setIsAgentSpeaking(agentSpeaking);
+      });
+      
+      room.on(RoomEvent.Disconnected, () => {
+        console.log("[LiveKit] Disconnected");
+        setAudioConnectionState(ConnectionState.Disconnected);
+      });
+      
+      // Connect to room
+      await room.connect(url, token);
+      console.log("[LiveKit] Connected to room");
+      
+      // Enable microphone
+      await room.localParticipant.setMicrophoneEnabled(true);
+      console.log("[LiveKit] Microphone enabled");
+      
+      setLiveKitRoom(room);
       
     } catch (error: any) {
-      console.error("[ElevenLabs] Error:", error);
+      console.error("[LiveKit] Error:", error);
       setAudioError(error.message || "Kon audio niet starten. Controleer microfoontoegang.");
       setIsAudioConnecting(false);
     }
-  }, [conversation]);
+  }, [liveKitRoom, selectedTechnique]);
   
-  // Stop ElevenLabs audio session
-  const stopElevenLabsAudio = useCallback(async () => {
-    if (conversation.status === "connected") {
-      await conversation.endSession();
+  // Stop LiveKit audio session
+  const stopLiveKitAudio = useCallback(async () => {
+    // Clean up audio element
+    if (audioElementRef.current) {
+      audioElementRef.current.remove();
+      audioElementRef.current = null;
     }
-  }, [conversation]);
+    
+    if (liveKitRoom) {
+      await liveKitRoom.disconnect();
+      setLiveKitRoom(null);
+      setAudioConnectionState(ConnectionState.Disconnected);
+    }
+  }, [liveKitRoom]);
 
   // Handle chat mode change
   useEffect(() => {
     if (chatMode === "video" && !avatarSession && !isAvatarLoading) {
       initHeygenAvatar();
-    } else if (chatMode === "audio" && conversation.status === "disconnected" && !isAudioConnecting) {
-      initElevenLabsAudio();
+    } else if (chatMode === "audio" && audioConnectionState === ConnectionState.Disconnected && !isAudioConnecting) {
+      initLiveKitAudio();
     }
-  }, [chatMode, avatarSession, isAvatarLoading, conversation.status, isAudioConnecting, initHeygenAvatar, initElevenLabsAudio]);
+  }, [chatMode, avatarSession, isAvatarLoading, audioConnectionState, isAudioConnecting, initHeygenAvatar, initLiveKitAudio]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopHeygenAvatar();
-      stopElevenLabsAudio();
+      stopLiveKitAudio();
     };
-  }, [stopHeygenAvatar, stopElevenLabsAudio]);
+  }, [stopHeygenAvatar, stopLiveKitAudio]);
+  
+  // Handle mute toggle for LiveKit
+  useEffect(() => {
+    if (liveKitRoom && liveKitRoom.state === ConnectionState.Connected) {
+      liveKitRoom.localParticipant.setMicrophoneEnabled(!isMuted);
+    }
+  }, [isMuted, liveKitRoom]);
 
   // Wire avatar speaking to new AI messages in video mode
   useEffect(() => {
@@ -738,7 +787,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               <span className="text-white font-bold" style={{ fontSize: '64px' }}>HH</span>
             )}
           </div>
-          {conversation.isSpeaking && (
+          {isAgentSpeaking && (
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-full">
               <span className="text-teal-700 text-[12px] font-medium">Spreekt...</span>
             </div>
@@ -747,7 +796,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         
         <h3 className="text-white text-[26px] font-bold mb-1">Hugo AI Coach</h3>
         <p className="text-[16px] mb-2" style={{ color: 'rgba(255,255,255,0.8)' }}>
-          {isAudioConnecting ? "Verbinden..." : conversation.status === "connected" ? "Verbonden" : "Audio modus"}
+          {isAudioConnecting ? "Verbinden..." : audioConnectionState === ConnectionState.Connected ? "Verbonden" : "Audio modus"}
         </p>
         <p className="text-[22px] font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>{formatTime(sessionTimer)}</p>
         
@@ -756,11 +805,11 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           {[...Array(15)].map((_, i) => (
             <div
               key={i}
-              className={`rounded-full transition-all duration-150 ${conversation.isSpeaking ? 'animate-pulse' : ''}`}
+              className={`rounded-full transition-all duration-150 ${isAgentSpeaking ? 'animate-pulse' : ''}`}
               style={{
                 width: '6px',
                 backgroundColor: 'rgba(255,255,255,0.7)',
-                height: conversation.isSpeaking ? `${Math.sin(Date.now() / 200 + i) * 20 + 35}px` : `${15 + (i % 3) * 10}px`,
+                height: isAgentSpeaking ? `${Math.sin(Date.now() / 200 + i) * 20 + 35}px` : `${15 + (i % 3) * 10}px`,
               }}
             />
           ))}
@@ -768,7 +817,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         
         {/* Status message */}
         <p className="text-white/60 text-[14px] mt-4">
-          {audioError ? "Configuratie vereist" : "ElevenLabs audio - binnenkort beschikbaar"}
+          {audioError ? "Configuratie vereist" : audioConnectionState === ConnectionState.Connected ? "Spraakcoaching actief" : "LiveKit audio verbinding"}
         </p>
       </div>
 
@@ -794,7 +843,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <div className="flex flex-col items-center gap-2">
             <button 
               onClick={() => {
-                stopElevenLabsAudio();
+                stopLiveKitAudio();
                 setChatMode("chat");
               }}
               className="flex items-center justify-center shadow-xl"
