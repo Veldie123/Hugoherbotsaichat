@@ -138,7 +138,7 @@ export default function App() {
           {currentPage === "pricing" && <Pricing navigate={navigate} />}
           {currentPage === "onboarding" && <Onboarding navigate={navigate} />}
 
-          {/* User View - Hugo a.i. */}
+          {/* User View - Talk to Hugo AI */}
           {currentPage === "hugo-overview" && <HugoAIOverview navigate={navigate} isAdmin={isAdmin} />}
           {currentPage === "roleplay" && <HugoAIOverview navigate={navigate} isAdmin={isAdmin} />}
           {currentPage === "roleplays" && <HugoAIOverview navigate={navigate} isAdmin={isAdmin} />}
@@ -152,7 +152,7 @@ export default function App() {
           {/* Admin View - Gespreksanalyse */}
           {currentPage === "admin-uploads" && <AdminUploadManagement navigate={navigate} />}
 
-          {/* Admin View - Hugo a.i. Sessions */}
+          {/* Admin View - Talk to Hugo AI Sessions */}
           {currentPage === "admin-sessions" && <AdminSessions navigate={navigate} />}
           {currentPage === "admin-chat-expert" && (
             <AdminChatExpertMode 

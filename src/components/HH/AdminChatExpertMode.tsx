@@ -1,5 +1,5 @@
 /**
- * AdminChatExpertMode - Expert training interface for Hugo a.i.
+ * AdminChatExpertMode - Expert training interface for Talk to Hugo AI
  * 
  * Features:
  * - AI roleplay with customer simulation

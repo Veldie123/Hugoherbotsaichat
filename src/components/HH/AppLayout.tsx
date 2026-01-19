@@ -26,7 +26,7 @@ interface AppLayoutProps {
 // Primary navigation items (top section) - Simplified to 2 core features
 const mainNavItems = [
   { id: "analysis", label: "Gespreksanalyse", icon: FileSearch },
-  { id: "roleplay", label: "Hugo a.i.", icon: MessageSquare },
+  { id: "roleplay", label: "Talk to Hugo AI", icon: MessageSquare },
 ];
 
 export function AppLayout({ children, currentPage = "home", navigate, onOpenFlowDrawer, isAdmin }: AppLayoutProps) {

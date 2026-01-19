@@ -436,7 +436,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
-              Hugo a.i.
+              Talk to Hugo <sup className="text-[18px]">AI</sup>
             </h1>
             <p className="text-[16px] leading-[24px] text-hh-muted">
               Alle training sessies: AI roleplay, uploads en live analyses

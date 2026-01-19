@@ -81,7 +81,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
   // Primary navigation items - Simplified to 2 core features
   const mainNavItems = [
     { id: "admin-uploads", label: "Gespreksanalyse", icon: Upload },
-    { id: "admin-sessions", label: "Hugo a.i.", icon: MessageSquare },
+    { id: "admin-sessions", label: "Talk to Hugo AI", icon: MessageSquare },
   ];
 
   // Secondary navigation items removed - keeping empty for structure
