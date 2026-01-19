@@ -1,3 +1,14 @@
+/**
+ * TODO[WITTE-TEKST-FIX]: User berichten niet zichtbaar in roleplay sidebar
+ * Status: Pending
+ * Issue: Witte tekst op witte/lichte achtergrond in debug panel of sidebar
+ * Bron: NIET IN ZIP - frontend styling bug, moet in dit bestand gefixed worden
+ * Aanpak:
+ *   1. Zoek styling voor user berichten in sidebar/debug panel
+ *   2. Verander text color naar donkere kleur (text-hh-text of text-slate-800)
+ * Frontend koppeling: N/A - dit component zelf
+ */
+
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Button } from "../ui/button";

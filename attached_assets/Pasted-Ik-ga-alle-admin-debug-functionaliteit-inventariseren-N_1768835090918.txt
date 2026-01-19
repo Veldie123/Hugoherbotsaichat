@@ -1,0 +1,72 @@
+Ik ga alle admin/debug functionaliteit inventariseren:
+Nu heb ik een volledig overzicht. Hier is de complete inventaris van alle Admin/Debug functionaliteit:
+
+Admin & Debug Functionaliteit Overzicht
+1. EXPERT MODE (roleplay-v2.tsx)
+Activatie: altijd actief in admin view (zowel in chat zelf als bij list of card view details van een specifieke sessie in detail)
+In admin mode chat: 
+Feature	Beschrijving
+Techniek Selectie	Voor elk bericht kiezen welke techniek je toepast
+Debug Panel	Klikbaar per bericht → uitklapbaar debug info
+AI Prompt Viewer	"AI" knop → toont volledige system + user prompt
+Match Status	Groen ✓ / Rood ✗ voor match/mismatch
+Save Reference	Antwoord opslaan als “golden standard”
+2. DEBUG PANEL (per bericht)
+Sectie	Velden
+Klant Signaal	signal, attitude, sampledAttitude
+Gedetecteerde techniek	moveId, moveLabel, score
+Expected Moves	Lijst van verwachte technieken
+Persona	name, behavior_style, buying_clock_stage, difficulty_level
+Context	sector, product, klant_type, phase
+Customer Dynamics	rapport %, valueTension %, commitReadiness %
+AI Beslissingen	epicPhase, evaluationQuality, houding correctie
+Validator Results	mode, initialValidation (label, confidence, reasoning, violations), repairAttempts, wasRepaired, configSectionsUsed
+3. AI PROMPT ZICHTBAARHEID
+Via msg.debug.promptsUsed:
+* System Prompt: Volledige systeem instructies (nested prompts)
+* User Prompt: De gebruiker input + context
+Dialog modal met scrollbare pre-formatted tekst.
+4. FEEDBACK/FLAG SYSTEEM
+Endpoint	Actie
+POST /api/v2/session/flag-customer-response	Flag klant antwoord als incorrect
+POST /api/v2/session/flag-evaluation	Flag AI evaluatie als incorrect
+POST /api/v2/session/save-reference	Sla op als golden standard
+POST /api/golden-standard/save-reference	Alternatieve route voor golden standard
+Feedback Flow:
+1. Klik op ✓ (confirm) of ✗ (reject) bij debug lijn
+2. Bij ✗ → vul commentaar in
+3. Submit → Creëert conflict in database
+4. Conflict verschijnt in Admin Conflicts pagina
+5. ADMIN CONFLICTS PAGE (admin-conflicts.tsx)
+Route: /admin/conflicts
+Feature	Beschrijving
+Conflict Lijst	Alle geflaggerde items
+Severity Filter	High / Medium / Low
+Sort Order	Newest / Oldest
+Show Resolved	Toggle resolved/unresolved
+View Patch	Bekijk gesuggereerde config change
+Apply Patch (✓)	Pas patch toe op config
+Reject Patch (✗)	Markeer als afgehandeld zonder apply
+Session Context	Toon conversatie historie bij conflict
+6. BACKEND ADMIN ENDPOINTS
+Endpoint	Beschrijving
+GET /api/v2/admin/config-conflicts	Lijst alle conflicts
+GET /api/v2/admin/config-conflicts/:id/patch	Krijg suggested patch
+POST /api/v2/admin/config-conflicts/:id/apply	Apply patch
+POST /api/v2/admin/config-conflicts/:id/reject	Reject patch
+POST /api/v2/admin/config-conflicts/:id/resolve	Mark resolved
+7. VALIDATOR DEBUG INFO
+Specifieke velden van de Validation + Repair Loop:
+interface ValidatorDebugInfo {
+mode: string; // ROLEPLAY, COACH_CHAT, etc.
+initialValidation: {
+label: string; // VALID, WRONG_MODE, TOO_DIRECTIVE, etc.
+confidence: number;
+reasoning: string;
+violations?: string[];
+};
+finalValidation?: {...}; // Na repair
+repairAttempts: number;
+wasRepaired: boolean;
+configSectionsUsed: string[]; // Welke config secties gebruikt
+}

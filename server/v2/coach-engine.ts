@@ -13,6 +13,17 @@
  * 
  * v8.1 - Simplified config: only coaching_richtlijn, doel, role from config
  *        All prompt structure/templates built inline
+ * 
+ * TODO[FEW-SHOT-LEARNING]: Golden Standard examples injecteren in prompts
+ * Status: Pending
+ * Issue: Few-shot learning nog niet actief - golden standards worden niet gebruikt
+ * Bron: hugo-engine_(4).zip → server/reference-answers.ts (getExamplesForTechnique)
+ * Aanpak:
+ *   1. Import getExamplesForTechnique uit reference-answers.ts
+ *   2. Bij generateCoachResponse/generateRoleplayResponse: haal examples op voor huidige techniek
+ *   3. Voeg examples toe aan system prompt als few-shot voorbeelden
+ *   4. Correcties (isCorrection=true) krijgen prioriteit
+ * Frontend koppeling: N/A - backend only
  */
 
 import { getOpenAIClient, searchRag, type RagDocument } from "./rag-service";

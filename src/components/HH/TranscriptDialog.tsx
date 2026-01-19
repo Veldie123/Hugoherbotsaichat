@@ -1,3 +1,15 @@
+/**
+ * TODO[DEBUG-INFO-UITBREIDEN]: TranscriptDialog toont alleen hardcoded "Signaal: positief"
+ * Status: Pending
+ * Issue: Debug info is placeholder - toont geen echte data uit V2 engine responses
+ * Bron: hugo-engine_(4).zip → debug velden komen uit coach-engine.ts response
+ * Aanpak:
+ *   1. TranscriptMessage interface uitbreiden met debugInfo veld
+ *   2. API response debug data koppelen (signal, attitude, persona, context, customerDynamics, aiDecisions, validatorResults)
+ *   3. Collapsible sectie renderen met alle debug velden per bericht
+ * Frontend koppeling: AdminSessions.tsx, HugoAIOverview.tsx transcript dialogs
+ */
+
 import { useState } from "react";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";

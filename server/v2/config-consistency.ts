@@ -6,6 +6,17 @@
  * 
  * When an expert disagrees with AI detection, this service analyzes WHY the conflict
  * occurred and suggests specific config changes to improve future detection.
+ * 
+ * TODO[GOLDEN-STANDARD-CONFLICTS]: Admin Conflicts pagina koppelen
+ * Status: Pending
+ * Issue: Conflicts worden wel gegenereerd maar frontend pagina ontbreekt
+ * Bron: hugo-engine_(4).zip → server/config-consistency.ts (dit bestand, al compleet)
+ * Aanpak:
+ *   1. API endpoints toevoegen: GET /api/v2/admin/config-conflicts, POST .../apply, POST .../reject
+ *   2. AdminConflicts.tsx component maken met conflict lijst
+ *   3. View Patch, Apply Patch, Reject Patch knoppen implementeren
+ *   4. Session context tonen bij elk conflict
+ * Frontend koppeling: AdminConflicts.tsx (moet nog gemaakt worden)
  */
 
 import fs from "fs";

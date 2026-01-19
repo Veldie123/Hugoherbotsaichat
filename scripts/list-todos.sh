@@ -8,20 +8,19 @@ echo "=============================================="
 echo ""
 
 echo "=== HOOFD TODO's (afgebakende taken) ==="
-grep -rn "TODO:" server/ src/ --include="*.ts" --include="*.tsx" 2>/dev/null | \
-  grep -E "^\s*\*?\s*TODO: [A-Z]" | \
-  sed 's/.*TODO:/TODO:/' | \
+grep -rn "TODO\[" server/ src/ --include="*.ts" --include="*.tsx" 2>/dev/null | \
+  sed 's/.*TODO\[/TODO[/' | \
   sort -u
-
 echo ""
+
 echo "=== ALLE TODO's per bestand ==="
 echo ""
 
-for file in $(grep -rl "TODO:" server/ src/ --include="*.ts" --include="*.tsx" 2>/dev/null | sort -u); do
-  count=$(grep -c "TODO:" "$file" 2>/dev/null || echo 0)
+for file in $(grep -rl "TODO" server/ src/ --include="*.ts" --include="*.tsx" 2>/dev/null | sort -u); do
+  count=$(grep -cE "TODO[:\[]" "$file" 2>/dev/null || echo 0)
   if [ "$count" -gt 0 ]; then
     echo "📄 $file ($count TODO's)"
-    grep -n "TODO:" "$file" 2>/dev/null | head -5 | sed 's/^/   /'
+    grep -nE "TODO[:\[]" "$file" 2>/dev/null | head -5 | sed 's/^/   /'
     if [ "$count" -gt 5 ]; then
       echo "   ... en $(($count - 5)) meer"
     fi
@@ -30,5 +29,5 @@ for file in $(grep -rl "TODO:" server/ src/ --include="*.ts" --include="*.tsx" 2
 done
 
 echo "=============================================="
-echo "Totaal aantal TODO's: $(grep -r "TODO:" server/ src/ --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l)"
+echo "Totaal aantal TODO's: $(grep -rE "TODO[:\[]" server/ src/ --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l)"
 echo "=============================================="

@@ -4,6 +4,17 @@
  * Stores "golden standard" answers from expert sessions.
  * When Hugo (the human) records a roleplay, his seller responses
  * are saved here as the correct reference for coaching.
+ * 
+ * TODO[GOLDEN-STANDARD-OPSLAG]: Frontend "Save Reference" knop koppelen
+ * Status: Pending
+ * Issue: AdminChatExpertMode heeft Save knop maar die slaat nog niet op naar backend
+ * Bron: hugo-engine_(4).zip → server/reference-answers.ts (dit bestand, al compleet)
+ * Aanpak:
+ *   1. API endpoint POST /api/v2/golden-standard/save-reference toevoegen in api.ts
+ *   2. Frontend Save knop in AdminChatExpertMode.tsx koppelen aan endpoint
+ *   3. isCorrection veld populeren: AI detectie != Expert keuze
+ *   4. Bij isCorrection=true: trigger analyzeCorrection uit config-consistency.ts
+ * Frontend koppeling: AdminChatExpertMode.tsx → Save Reference knop
  */
 
 import fs from "fs";

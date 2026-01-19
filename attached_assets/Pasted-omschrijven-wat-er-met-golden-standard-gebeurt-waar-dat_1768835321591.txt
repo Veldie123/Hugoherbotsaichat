@@ -1,0 +1,109 @@
+omschrijven wat er met golden standard gebeurt? waar dat naar toe gaat? hoe dat het model traint?
+
+Laat me uitzoeken hoe de Golden Standard flow werkt:
+
+Nu begrijp ik de volledige Golden Standard flow. Hier is hoe het werkt:
+
+Golden Standard Systeem - Complete Flow
+1. DATA OPSLAG
+Locatie: data/reference_answers.json (JSON bestand op disk)
+
+interface ReferenceAnswer {
+  id: string;
+  techniqueId: string;           // Expert's keuze (ground truth)
+  customerSignal: string;
+  customerMessage: string;
+  sellerResponse: string;
+  context: { sector, product, klantType };
+  recordedAt: string;
+  recordedBy: string;
+  
+  // Voortschrijdend Inzicht velden
+  detectedTechnique?: string;    // Wat AI detecteerde
+  detectedConfidence?: number;   // AI confidence (0-1)
+  isCorrection?: boolean;        // TRUE als expert niet akkoord
+  correctionNote?: string;       // Uitleg van de correctie
+}
+2. OPNAME FLOW
+Expert Mode ON → Roleplay → Selecteer techniek per beurt
+                          → AI detecteert (mogelijk anders)
+                          → Expert klikt "Save" op antwoord
+                          → isCorrection = (AI detectie ≠ Expert keuze)
+                          → Opgeslagen in reference_answers.json
+3. WAT GEBEURT ER BIJ EEN CORRECTIE?
+Wanneer isCorrection = true:
+
+// reference-answers.ts lijn 72-82
+if (newAnswer.isCorrection) {
+  import('./config-consistency').then(({ analyzeCorrection }) => {
+    const conflicts = analyzeCorrection(newAnswer);
+    // Conflicts worden opgeslagen in data/config_conflicts.json
+  });
+}
+Config Consistency Analyse checkt:
+
+Pattern overlap in detectors.json
+Missing definitions in technieken_index.json
+Conceptual ambiguity tussen technieken
+Detector mismatch
+4. CONFLICT STORE
+Locatie: data/config_conflicts.json
+
+Bevat alle gevonden inconsistenties met:
+
+Severity (high/medium/low)
+ConfigFile die aangepast moet worden
+Suggested change
+Session context (volledige conversatie)
+5. HOE "TRAINT" HET HET MODEL?
+BELANGRIJK: Dit traint NIET het OpenAI model zelf!
+
+Het werkt via Few-Shot Learning in de prompts:
+
+// reference-answers.ts lijn 179-191
+export function getExamplesForTechnique(techniqueId: string, limit: number = 5) {
+  // Sorteer: CORRECTIONS FIRST (meest waardevolle edge cases)
+  // Dan op recentheid
+  return matching.slice(0, limit);
+}
+De flow:
+
+Expert maakt correcties
+Correcties worden opgeslagen als "golden examples"
+Bij volgende evaluatie → getExamplesForTechnique() haalt ze op
+Examples worden in de prompt geïnjecteerd als few-shot voorbeelden
+LLM leert van de voorbeelden in-context (geen fine-tuning)
+6. MISCLASSIFICATION RAPPORT
+// Toont waar AI systematisch fouten maakt
+{
+  totalAnswers: 50,
+  totalCorrections: 8,
+  correctionRate: 0.16,  // 16% wordt gecorrigeerd
+  byMisclassification: {
+    "2.3 → 2.1": {       // AI detecteerde 2.3, expert zei 2.1
+      count: 3,
+      examples: [...]
+    }
+  }
+}
+7. ADMIN REVIEW FLOW
+Conflict in data/config_conflicts.json
+        ↓
+Admin Conflicts Page (/admin/conflicts)
+        ↓
+View Patch → Zie suggested config change
+        ↓
+Apply (✓) → Config bestand wordt aangepast
+  of
+Reject (✗) → Markeer als afgehandeld
+Samenvatting
+Stap	Wat gebeurt
+1. Opname	Expert speelt roleplay in Expert Mode
+2. Selectie	Expert kiest techniek per beurt
+3. Compare	Systeem vergelijkt met AI detectie
+4. Opslag	→ data/reference_answers.json
+5. Analyse	Bij mismatch → config-consistency.ts
+6. Conflicts	→ data/config_conflicts.json
+7. Review	Admin bekijkt en past config aan
+8. Learning	Few-shot examples in volgende prompts
+Het model wordt NIET gefinetuned - de voorbeelden worden in de prompt geïnjecteerd voor in-context learning.
