@@ -61,15 +61,15 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
 **Huidige TODO's (januari 2026):**
 | TODO ID | Bestand | Status |
 |---------|---------|--------|
-| GOLDEN-STANDARD-OPSLAG | server/v2/reference-answers.ts | Pending |
-| GOLDEN-STANDARD-CONFLICTS | server/v2/config-consistency.ts | Pending |
-| ADMIN-CONFLICTS-PAGE | src/components/HH/AdminConflicts.tsx | Pending |
-| FEW-SHOT-LEARNING | server/v2/coach-engine.ts | Pending |
+| DEBUG-INFO-UITBREIDEN | src/components/HH/TranscriptDialog.tsx | Partial (UI klaar, backend pending) |
 
 **Afgeronde TODO's:**
 | TODO ID | Bestand | Status |
 |---------|---------|--------|
-| DEBUG-INFO-UITBREIDEN | src/components/HH/TranscriptDialog.tsx | Partial (UI klaar, backend pending) |
+| GOLDEN-STANDARD-OPSLAG | server/v2/reference-answers.ts | Done (complete opslag + learning) |
+| GOLDEN-STANDARD-CONFLICTS | server/v2/config-consistency.ts | Done (834 regels conflict analyse) |
+| ADMIN-CONFLICTS-PAGE | client/src/pages/admin-conflicts.tsx | Done (patch review UI) |
+| FEW-SHOT-LEARNING | server/v2/reference-answers.ts | Done (getExamplesForTechnique()) |
 | WITTE-TEKST-FIX | src/components/HH/AdminChatExpertMode.tsx | Done (text-slate-800 toegevoegd) |
 | HEYGEN-LIVEAVATAR | src/components/HH/LiveAvatarComponent.tsx | Done |
 | RAG-DATABASE-FIX | server/v2/rag-service.ts | Done |
