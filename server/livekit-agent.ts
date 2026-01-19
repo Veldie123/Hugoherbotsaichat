@@ -52,9 +52,10 @@ async function startV2Session(techniqueId: string): Promise<{ sessionId: string;
   }
   
   const data = await response.json();
+  console.log('[LiveKit Agent] V2 session response:', JSON.stringify(data).substring(0, 200));
   return {
     sessionId: data.sessionId,
-    greeting: data.openingMessage || data.message || 'Hallo, welkom bij de training sessie.'
+    greeting: data.initialMessage || data.openingMessage || data.message || 'Hallo, welkom bij de training sessie.'
   };
 }
 
@@ -244,6 +245,9 @@ export default defineAgent({
     await session.start({
       agent: minimalAgent,
       room: ctx.room,
+      outputOptions: {
+        transcriptionEnabled: true,
+      },
     });
     console.log('[LiveKit Agent] Voice session started');
     
