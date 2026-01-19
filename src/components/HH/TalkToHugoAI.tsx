@@ -156,16 +156,19 @@ export function TalkToHugoAI({
       
       avatar.on(StreamingEvents.STREAM_READY, (event: any) => {
         console.log("[HeyGen] Stream ready, event:", event);
-        // Stream can be in event.detail.stream or event.detail directly
-        const stream = event.detail?.stream || event.detail;
-        console.log("[HeyGen] Stream object:", stream);
+        // Try multiple ways to get the stream
+        const stream = event.detail?.stream || event.detail || (avatar as any).mediaStream;
+        console.log("[HeyGen] Stream object:", stream, "typeof:", typeof stream);
+        console.log("[HeyGen] Avatar properties:", Object.keys(avatar));
+        
         if (videoRef.current && stream instanceof MediaStream) {
+          console.log("[HeyGen] Attaching MediaStream to video element");
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
             videoRef.current?.play().catch(e => console.error("[HeyGen] Play error:", e));
           };
         } else {
-          console.error("[HeyGen] No valid MediaStream found in event");
+          console.warn("[HeyGen] MediaStream not found in event, will try from avatar instance after start");
         }
       });
       
@@ -173,10 +176,23 @@ export function TalkToHugoAI({
       const avatarName = avatarId || "Shawn_Therapist_public";
       console.log("[HeyGen] Starting avatar session with:", avatarName);
       
-      await avatar.createStartAvatar({
+      const sessionData = await avatar.createStartAvatar({
         quality: AvatarQuality.Medium,
         avatarName: avatarName,
       });
+      
+      console.log("[HeyGen] Session data:", sessionData);
+      console.log("[HeyGen] Avatar after start:", Object.keys(avatar));
+      
+      // Try to get stream from avatar instance if not already set
+      const avatarStream = (avatar as any).mediaStream || (avatar as any).stream;
+      if (videoRef.current && avatarStream instanceof MediaStream) {
+        console.log("[HeyGen] Got MediaStream from avatar instance");
+        videoRef.current.srcObject = avatarStream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(e => console.error("[HeyGen] Play error:", e));
+        };
+      }
       
       setAvatarSession(avatar);
       console.log("[HeyGen] Avatar session started successfully");
