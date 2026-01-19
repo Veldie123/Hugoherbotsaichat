@@ -12,23 +12,6 @@
  * - "Je scoorde vorige keer 6/10 op Impactvragen"
  * - "Vorige keer had je moeite met commitment vragen"
  * - "Hoe ging het in de praktijk sinds ons laatste gesprek?"
- * 
- * TODO: HISTORICAL-CONTEXT-ACTIVEREN
- * -----------------------------------
- * Issue: Historical context service nog niet actief in coach-engine
- * Status: Pending
- * 
- * Bron: hugo-engine_(4).zip → hugo-engine-export/server/v2/historical-context-service.ts
- * Dit bestand is al geëxtraheerd en aanwezig - alleen activeren nodig.
- * 
- * Aanpak (alleen koppelen, niet schrijven):
- * 1. Database tabellen zijn aangemaakt (v2_sessions, technique_mastery, user_training_profile) ✅
- * 2. Activeer getHistoricalContext() calls in coach-engine.ts
- * 3. Inject historische context in prompt via HISTORISCHE_CONTEXT sectie
- * 4. Test met user die meerdere sessies heeft gehad
- * 
- * Frontend koppeling: N/A - backend-only, resultaten komen via coach responses
- * Dependencies: Minimaal 1 voltooide sessie nodig voor data
  */
 
 import { v2Sessions, techniqueMastery, userTrainingProfile } from '@shared/schema';
