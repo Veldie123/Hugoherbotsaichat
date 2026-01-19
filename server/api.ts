@@ -65,6 +65,15 @@ import {
   type EngineResponse
 } from "./v2/roleplay-engine";
 
+import {
+  saveReferenceAnswer,
+  getReferenceAnswers,
+  getExamplesForTechnique,
+  generateMisclassificationReport,
+  getAllReferenceAnswersGrouped,
+  type ReferenceAnswer
+} from "./v2/reference-answers";
+
 const app = express();
 
 app.use(express.json({ limit: "10mb" }));
@@ -1533,6 +1542,142 @@ app.get("/api/v2/roleplay/:sessionId", (req, res) => {
     turnNumber: entry.state.turnNumber,
     summary
   });
+});
+
+// ============================================
+// GOLDEN STANDARD ENDPOINTS
+// ============================================
+
+// POST /api/v2/session/save-reference - Save seller message as reference answer
+app.post("/api/v2/session/save-reference", async (req, res) => {
+  try {
+    const { 
+      sessionId, 
+      techniqueId, 
+      message, 
+      context, 
+      matchStatus, 
+      signal, 
+      detectedTechnique 
+    } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+    if (!message) {
+      return res.status(400).json({ error: "message is required" });
+    }
+    
+    // Save as reference answer
+    const referenceAnswer = saveReferenceAnswer({
+      techniqueId: techniqueId || "unknown",
+      customerSignal: signal || "neutraal",
+      customerMessage: context?.customerMessage || "",
+      sellerResponse: message,
+      context: {
+        sector: context?.sector,
+        product: context?.product,
+        klantType: context?.klantType
+      },
+      recordedBy: context?.recordedBy || "admin",
+      detectedTechnique: detectedTechnique,
+      isCorrection: matchStatus === "incorrect" || (detectedTechnique && detectedTechnique !== techniqueId),
+      correctionNote: matchStatus === "incorrect" ? `Expert disagreed: detected ${detectedTechnique}, should be ${techniqueId}` : undefined
+    });
+    
+    console.log(`[save-reference] Saved reference for session ${sessionId}, technique ${techniqueId}`);
+    
+    res.json({ 
+      success: true, 
+      referenceId: referenceAnswer.id,
+      isCorrection: referenceAnswer.isCorrection
+    });
+    
+  } catch (error: any) {
+    console.error("[save-reference] Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/session/flag-customer-response - Flag a customer response as incorrect
+app.post("/api/v2/session/flag-customer-response", async (req, res) => {
+  try {
+    const { 
+      sessionId, 
+      messageId, 
+      feedback, 
+      expectedBehavior, 
+      context 
+    } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+    if (!feedback) {
+      return res.status(400).json({ error: "feedback is required" });
+    }
+    
+    // Log the flag for config consistency analysis
+    console.log(`[flag-response] Session ${sessionId}, Message ${messageId}: ${feedback}`);
+    
+    // Could integrate with config-consistency.ts here if needed
+    
+    res.json({ 
+      success: true,
+      message: "Feedback recorded for analysis"
+    });
+    
+  } catch (error: any) {
+    console.error("[flag-response] Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/golden-standard/examples/:techniqueId - Get examples for few-shot learning
+app.get("/api/v2/golden-standard/examples/:techniqueId", (req, res) => {
+  try {
+    const { techniqueId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 5;
+    
+    const examples = getExamplesForTechnique(techniqueId, limit);
+    
+    res.json({ 
+      techniqueId,
+      count: examples.length,
+      examples
+    });
+    
+  } catch (error: any) {
+    console.error("[golden-standard/examples] Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/golden-standard/report - Get misclassification report
+app.get("/api/v2/golden-standard/report", (req, res) => {
+  try {
+    const report = generateMisclassificationReport();
+    res.json(report);
+  } catch (error: any) {
+    console.error("[golden-standard/report] Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/golden-standard/all - Get all reference answers grouped
+app.get("/api/v2/golden-standard/all", (req, res) => {
+  try {
+    const grouped = getAllReferenceAnswersGrouped();
+    const allAnswers = getReferenceAnswers();
+    
+    res.json({
+      total: allAnswers.length,
+      grouped
+    });
+  } catch (error: any) {
+    console.error("[golden-standard/all] Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Health check - now shows FULL engine

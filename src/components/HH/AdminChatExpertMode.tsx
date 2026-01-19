@@ -66,6 +66,7 @@ import {
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
 import { hugoApi } from "../../services/hugoApi";
 import { Loader2 } from "lucide-react";
+import { LiveAvatarComponent } from "./LiveAvatarComponent";
 
 interface Message {
   id: string;
@@ -873,69 +874,51 @@ export function AdminChatExpertMode({
             </div>
           )}
 
-          {/* Video Mode Interface */}
+          {/* Video Mode Interface - HeyGen LiveAvatar */}
           {chatMode === "video" && (
-            <div className="flex-1 relative" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%)' }}>
-              {/* Main video area with large HH avatar */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div 
-                  className="rounded-full flex items-center justify-center"
-                  style={{ width: '220px', height: '220px', backgroundColor: '#6B7A92' }}
-                >
-                  <span className="text-white font-bold" style={{ fontSize: '80px' }}>HH</span>
-                </div>
-              </div>
-
-              {/* Top overlay with name */}
-              <div className="absolute top-0 left-0 right-0 p-4" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
+            <div className="flex-1 relative flex flex-col" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%)' }}>
+              {/* Top overlay with name and timer */}
+              <div className="absolute top-0 left-0 right-0 p-4 z-10" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
                 <h3 className="text-white text-[18px] font-semibold">Hugo Herbots</h3>
                 <p className="text-white/70 text-[14px]">{formatTime(sessionTimer)}</p>
               </div>
 
-              {/* PiP preview - user camera - circular */}
-              <div 
-                className="absolute top-4 right-4 flex items-center justify-center border-2 border-white/30 shadow-xl"
-                style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#475569' }}
-              >
-                <div 
-                  className="flex items-center justify-center"
-                  style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundColor: '#e2e8f0' }}
-                >
-                  <span className="text-slate-700 text-[12px] font-medium">JIJ</span>
-                </div>
+              {/* LiveAvatar Component - fills the main area */}
+              <div className="flex-1 flex items-center justify-center p-4 pt-16">
+                <LiveAvatarComponent
+                  v2SessionId={sessionId}
+                  onAvatarSpeech={(text) => {
+                    setMessages(prev => [...prev, {
+                      id: Date.now().toString(),
+                      sender: "ai",
+                      text,
+                      timestamp: new Date()
+                    }]);
+                  }}
+                  onUserSpeech={(text) => {
+                    setMessages(prev => [...prev, {
+                      id: Date.now().toString(),
+                      sender: "hugo",
+                      text,
+                      timestamp: new Date()
+                    }]);
+                  }}
+                  language="nl"
+                />
               </div>
 
-              {/* Bottom controls - circular buttons */}
-              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
+              {/* Bottom controls - back to chat button */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 z-10" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
                 <div className="flex items-center justify-center gap-6">
                   <div className="flex flex-col items-center gap-2">
                     <button 
-                      onClick={() => setIsMuted(!isMuted)}
-                      className="flex items-center justify-center transition-colors"
-                      style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: isMuted ? 'white' : 'rgba(255,255,255,0.2)' }}
-                    >
-                      {isMuted ? <MicOff className="w-5 h-5 text-slate-800" /> : <Mic className="w-5 h-5 text-white" />}
-                    </button>
-                    <span className="text-white/70 text-[11px]">{isMuted ? "Unmute" : "Mute"}</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <button 
-                      className="flex items-center justify-center"
-                      style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)' }}
-                    >
-                      <Video className="w-5 h-5 text-white" />
-                    </button>
-                    <span className="text-white/70 text-[11px]">Camera</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <button 
-                      onClick={handleStopRoleplay}
+                      onClick={() => setChatMode("chat")}
                       className="flex items-center justify-center shadow-xl"
-                      style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#ef4444' }}
+                      style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#6B7A92' }}
                     >
-                      <X className="w-5 h-5 text-white" />
+                      <MessageSquare className="w-5 h-5 text-white" />
                     </button>
-                    <span className="text-white/70 text-[11px]">Ophangen</span>
+                    <span className="text-white/70 text-[11px]">Terug naar chat</span>
                   </div>
                 </div>
               </div>

@@ -112,6 +112,7 @@ export function buildDebugInfoFromResponse(
     aiDecision: {
       epicFase: apiResponse?.debug?.epicFase || `Fase ${apiResponse?.debug?.context?.fase || 1}`,
       evaluatie: translate(evaluationToDisplay, apiResponse?.debug?.evaluation?.quality || apiResponse?.debug?.evaluation, "neutraal")
-    }
+    },
+    promptsUsed: apiResponse?.debug?.promptsUsed || apiResponse?.promptsUsed || []
   };
 }
