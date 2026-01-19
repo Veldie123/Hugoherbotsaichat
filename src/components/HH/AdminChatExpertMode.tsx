@@ -1136,8 +1136,8 @@ export function AdminChatExpertMode({
                               <div>
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="flex-1">
-                                    <p className="text-[11px] text-hh-muted mb-1.5">Gedetecteerde techniek:</p>
-                                    <p className="text-hh-text font-medium text-[13px]">
+                                    <p className="text-[12px] text-slate-600 font-medium mb-1">Gedetecteerde techniek:</p>
+                                    <p className="text-slate-800 text-[12px]">
                                       {message.debugInfo.detectedTechnique || "N/A"}
                                       {message.debugInfo.score && (
                                         <span className="ml-2 text-green-600 font-semibold">
@@ -1233,23 +1233,23 @@ export function AdminChatExpertMode({
                               <div className="pt-4 border-t border-slate-200/50">
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "persona")}
-                                  className="flex items-center gap-2 text-[12px] font-semibold text-hh-text hover:text-hh-primary w-full"
+                                  className="flex items-center gap-2 text-[13px] font-bold text-slate-800 hover:text-purple-600 w-full"
                                 >
                                   {isDebugSectionExpanded(message.id, "persona") ? (
-                                    <ChevronDown className="w-3 h-3" />
+                                    <ChevronDown className="w-4 h-4" />
                                   ) : (
-                                    <ChevronRight className="w-3 h-3" />
+                                    <ChevronRight className="w-4 h-4" />
                                   )}
                                   Persona
                                 </button>
                                 {isDebugSectionExpanded(message.id, "persona") && (
-                                  <div className="mt-2 ml-5 grid grid-cols-[120px_1fr] gap-y-1 gap-x-2 text-[12px]">
-                                    <span className="text-slate-700 font-semibold">Gedragsstijl:</span>
-                                    <p className="text-slate-600">{message.debugInfo.persona.gedragsstijl}</p>
-                                    <span className="text-slate-700 font-semibold">Buying Clock:</span>
-                                    <p className="text-slate-600">{message.debugInfo.persona.koopklok}</p>
-                                    <span className="text-slate-700 font-semibold">Difficulty:</span>
-                                    <p className="text-slate-600">{message.debugInfo.persona.moeilijkheid}</p>
+                                  <div className="mt-3 ml-6 grid grid-cols-[120px_1fr] gap-y-2 gap-x-3 text-[12px]">
+                                    <span className="text-slate-600 font-medium">Gedragsstijl:</span>
+                                    <span className="text-slate-800">{message.debugInfo.persona.gedragsstijl}</span>
+                                    <span className="text-slate-600 font-medium">Buying Clock:</span>
+                                    <span className="text-slate-800">{message.debugInfo.persona.koopklok}</span>
+                                    <span className="text-slate-600 font-medium">Difficulty:</span>
+                                    <span className="text-slate-800">{message.debugInfo.persona.moeilijkheid}</span>
                                   </div>
                                 )}
                               </div>
@@ -1258,45 +1258,45 @@ export function AdminChatExpertMode({
                               <div>
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "context")}
-                                  className="flex items-center gap-2 text-[12px] font-semibold text-hh-text hover:text-hh-primary w-full"
+                                  className="flex items-center gap-2 text-[13px] font-bold text-slate-800 hover:text-purple-600 w-full"
                                 >
                                   {isDebugSectionExpanded(message.id, "context") ? (
-                                    <ChevronDown className="w-3 h-3" />
+                                    <ChevronDown className="w-4 h-4" />
                                   ) : (
-                                    <ChevronRight className="w-3 h-3" />
+                                    <ChevronRight className="w-4 h-4" />
                                   )}
                                   Verzamelde Context
                                 </button>
                                 {isDebugSectionExpanded(message.id, "context") && message.debugInfo.context && (
-                                  <div className="mt-2 ml-5 space-y-1 text-[12px]">
+                                  <div className="mt-3 ml-6 grid grid-cols-[120px_1fr] gap-y-2 gap-x-3 text-[12px]">
                                     {message.debugInfo.context.gathered?.sector && (
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-700 font-semibold">Sector:</span>
-                                        <p className="text-slate-600">{message.debugInfo.context.gathered.sector}</p>
-                                      </div>
+                                      <>
+                                        <span className="text-slate-600 font-medium">Sector:</span>
+                                        <span className="text-slate-800">{message.debugInfo.context.gathered.sector}</span>
+                                      </>
                                     )}
                                     {message.debugInfo.context.gathered?.product && (
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-700 font-semibold">Product:</span>
-                                        <p className="text-slate-600">{message.debugInfo.context.gathered.product}</p>
-                                      </div>
+                                      <>
+                                        <span className="text-slate-600 font-medium">Product:</span>
+                                        <span className="text-slate-800">{message.debugInfo.context.gathered.product}</span>
+                                      </>
                                     )}
                                     {message.debugInfo.context.gathered?.klantType && (
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-700 font-semibold">Klant Type:</span>
-                                        <p className="text-slate-600">{message.debugInfo.context.gathered.klantType}</p>
-                                      </div>
+                                      <>
+                                        <span className="text-slate-600 font-medium">Klant Type:</span>
+                                        <span className="text-slate-800">{message.debugInfo.context.gathered.klantType}</span>
+                                      </>
                                     )}
                                     {message.debugInfo.context.gathered?.verkoopkanaal && (
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-700 font-semibold">Verkoopkanaal:</span>
-                                        <p className="text-slate-600">{message.debugInfo.context.gathered.verkoopkanaal}</p>
-                                      </div>
+                                      <>
+                                        <span className="text-slate-600 font-medium">Verkoopkanaal:</span>
+                                        <span className="text-slate-800">{message.debugInfo.context.gathered.verkoopkanaal}</span>
+                                      </>
                                     )}
                                     {!message.debugInfo.context.gathered?.sector && 
                                      !message.debugInfo.context.gathered?.product && 
                                      !message.debugInfo.context.gathered?.klantType && (
-                                      <p className="text-slate-500 italic">Nog geen context verzameld</p>
+                                      <span className="col-span-2 text-slate-500 italic">Nog geen context verzameld</span>
                                     )}
                                   </div>
                                 )}
@@ -1306,44 +1306,38 @@ export function AdminChatExpertMode({
                               <div>
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "dynamics")}
-                                  className="flex items-center gap-2 text-[12px] font-semibold text-hh-text hover:text-hh-primary w-full"
+                                  className="flex items-center gap-2 text-[13px] font-bold text-slate-800 hover:text-purple-600 w-full"
                                 >
                                   {isDebugSectionExpanded(message.id, "dynamics") ? (
-                                    <ChevronDown className="w-3 h-3" />
+                                    <ChevronDown className="w-4 h-4" />
                                   ) : (
-                                    <ChevronRight className="w-3 h-3" />
+                                    <ChevronRight className="w-4 h-4" />
                                   )}
                                   Customer Dynamics
                                 </button>
                                 {isDebugSectionExpanded(message.id, "dynamics") && (
-                                  <div className="mt-2 ml-5 space-y-1 text-[12px]">
-                                    <div className="flex justify-between">
-                                      <span className="text-slate-700 font-semibold">Rapport:</span>
-                                      <span className="text-slate-600">
-                                        {message.debugInfo.customerDynamics.rapport}%
-                                        <span className="text-slate-500 ml-1">
-                                          ({message.debugInfo.customerDynamics.rapport >= 60 ? "hoog" : message.debugInfo.customerDynamics.rapport >= 40 ? "midden" : "laag"})
-                                        </span>
+                                  <div className="mt-3 ml-6 grid grid-cols-[120px_1fr] gap-y-2 gap-x-3 text-[12px]">
+                                    <span className="text-slate-600 font-medium">Rapport:</span>
+                                    <span className="text-slate-800">
+                                      {message.debugInfo.customerDynamics.rapport}%
+                                      <span className="text-slate-500 ml-1">
+                                        ({message.debugInfo.customerDynamics.rapport >= 60 ? "hoog" : message.debugInfo.customerDynamics.rapport >= 40 ? "midden" : "laag"})
                                       </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-slate-700 font-semibold">Value Tension:</span>
-                                      <span className="text-slate-600">
-                                        {message.debugInfo.customerDynamics.valueTension}%
-                                        <span className="text-slate-500 ml-1">
-                                          ({message.debugInfo.customerDynamics.valueTension >= 60 ? "hoog" : message.debugInfo.customerDynamics.valueTension >= 40 ? "midden" : "laag"})
-                                        </span>
+                                    </span>
+                                    <span className="text-slate-600 font-medium">Value Tension:</span>
+                                    <span className="text-slate-800">
+                                      {message.debugInfo.customerDynamics.valueTension}%
+                                      <span className="text-slate-500 ml-1">
+                                        ({message.debugInfo.customerDynamics.valueTension >= 60 ? "hoog" : message.debugInfo.customerDynamics.valueTension >= 40 ? "midden" : "laag"})
                                       </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-slate-700 font-semibold">Commit Readiness:</span>
-                                      <span className="text-slate-600">
-                                        {message.debugInfo.customerDynamics.commitReadiness}%
-                                        <span className="text-slate-500 ml-1">
-                                          ({message.debugInfo.customerDynamics.commitReadiness >= 60 ? "hoog" : message.debugInfo.customerDynamics.commitReadiness >= 40 ? "midden" : "laag"})
-                                        </span>
+                                    </span>
+                                    <span className="text-slate-600 font-medium">Commit Readiness:</span>
+                                    <span className="text-slate-800">
+                                      {message.debugInfo.customerDynamics.commitReadiness}%
+                                      <span className="text-slate-500 ml-1">
+                                        ({message.debugInfo.customerDynamics.commitReadiness >= 60 ? "hoog" : message.debugInfo.customerDynamics.commitReadiness >= 40 ? "midden" : "laag"})
                                       </span>
-                                    </div>
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -1354,9 +1348,9 @@ export function AdminChatExpertMode({
                           {message.sender === "ai" && (
                             <div className="space-y-4">
                               {/* Klant Signaal */}
-                              <div>
-                                <p className="text-[12px] text-slate-700 font-semibold mb-1.5">Klant Signaal:</p>
-                                <Badge className={`text-[11px] ${
+                              <div className="grid grid-cols-[120px_1fr] gap-x-3 items-center text-[12px]">
+                                <span className="text-slate-600 font-medium">Klant Signaal:</span>
+                                <Badge className={`text-[11px] w-fit ${
                                   message.debugInfo.klantSignaal === "positief" 
                                     ? "bg-green-100 text-green-700 border-green-300"
                                     : message.debugInfo.klantSignaal === "negatief"
@@ -1372,8 +1366,8 @@ export function AdminChatExpertMode({
                                 <div>
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 pb-3 border-b border-purple-200">
-                                      <p className="text-[12px] text-slate-700 font-semibold mb-1">Verwachte techniek:</p>
-                                      <p className="text-slate-600 text-[13px]">
+                                      <p className="text-[12px] text-slate-600 font-medium mb-1">Verwachte techniek:</p>
+                                      <p className="text-slate-800 text-[12px]">
                                         {message.debugInfo.expectedTechnique}
                                       </p>
                                     </div>
@@ -1462,14 +1456,14 @@ export function AdminChatExpertMode({
 
                               {/* Gedetecteerde techniek (for AI messages) */}
                               {message.debugInfo.expectedTechnique && (
-                                <div className="pb-3 border-b border-slate-200">
-                                  <p className="text-[12px] text-hh-muted mb-1">Gedetecteerde techniek:</p>
-                                  <p className="text-hh-text font-medium text-[13px]">
+                                <div className="grid grid-cols-[120px_1fr] gap-x-3 text-[12px] pb-3 border-b border-slate-200">
+                                  <span className="text-slate-600 font-medium">Gedetecteerde techniek:</span>
+                                  <span className="text-slate-800">
                                     {message.debugInfo.expectedTechnique}
                                     <span className="ml-2 text-green-600 font-semibold">
                                       (+10)
                                     </span>
-                                  </p>
+                                  </span>
                                 </div>
                               )}
 
@@ -1478,23 +1472,23 @@ export function AdminChatExpertMode({
                               <div>
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "persona")}
-                                  className="flex items-center gap-2 text-[12px] font-semibold text-hh-text hover:text-hh-primary w-full"
+                                  className="flex items-center gap-2 text-[13px] font-bold text-slate-800 hover:text-purple-600 w-full"
                                 >
                                   {isDebugSectionExpanded(message.id, "persona") ? (
-                                    <ChevronDown className="w-3 h-3" />
+                                    <ChevronDown className="w-4 h-4" />
                                   ) : (
-                                    <ChevronRight className="w-3 h-3" />
+                                    <ChevronRight className="w-4 h-4" />
                                   )}
                                   Persona
                                 </button>
                                 {isDebugSectionExpanded(message.id, "persona") && (
-                                  <div className="mt-2 ml-5 grid grid-cols-[120px_1fr] gap-y-1 gap-x-2 text-[12px]">
-                                    <span className="text-slate-700 font-semibold">Gedragsstijl:</span>
-                                    <p className="text-slate-600">{message.debugInfo.persona.gedragsstijl}</p>
-                                    <span className="text-slate-700 font-semibold">Buying Clock:</span>
-                                    <p className="text-slate-600">{message.debugInfo.persona.koopklok}</p>
-                                    <span className="text-slate-700 font-semibold">Difficulty:</span>
-                                    <p className="text-slate-600">{message.debugInfo.persona.moeilijkheid}</p>
+                                  <div className="mt-3 ml-6 grid grid-cols-[120px_1fr] gap-y-2 gap-x-3 text-[12px]">
+                                    <span className="text-slate-600 font-medium">Gedragsstijl:</span>
+                                    <span className="text-slate-800">{message.debugInfo.persona.gedragsstijl}</span>
+                                    <span className="text-slate-600 font-medium">Buying Clock:</span>
+                                    <span className="text-slate-800">{message.debugInfo.persona.koopklok}</span>
+                                    <span className="text-slate-600 font-medium">Difficulty:</span>
+                                    <span className="text-slate-800">{message.debugInfo.persona.moeilijkheid}</span>
                                   </div>
                                 )}
                               </div>
@@ -1503,45 +1497,45 @@ export function AdminChatExpertMode({
                               <div>
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "context")}
-                                  className="flex items-center gap-2 text-[12px] font-semibold text-hh-text hover:text-hh-primary w-full"
+                                  className="flex items-center gap-2 text-[13px] font-bold text-slate-800 hover:text-purple-600 w-full"
                                 >
                                   {isDebugSectionExpanded(message.id, "context") ? (
-                                    <ChevronDown className="w-3 h-3" />
+                                    <ChevronDown className="w-4 h-4" />
                                   ) : (
-                                    <ChevronRight className="w-3 h-3" />
+                                    <ChevronRight className="w-4 h-4" />
                                   )}
                                   Verzamelde Context
                                 </button>
                                 {isDebugSectionExpanded(message.id, "context") && message.debugInfo.context && (
-                                  <div className="mt-2 ml-5 space-y-1 text-[12px]">
+                                  <div className="mt-3 ml-6 grid grid-cols-[120px_1fr] gap-y-2 gap-x-3 text-[12px]">
                                     {message.debugInfo.context.gathered?.sector && (
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-700 font-semibold">Sector:</span>
-                                        <p className="text-slate-600">{message.debugInfo.context.gathered.sector}</p>
-                                      </div>
+                                      <>
+                                        <span className="text-slate-600 font-medium">Sector:</span>
+                                        <span className="text-slate-800">{message.debugInfo.context.gathered.sector}</span>
+                                      </>
                                     )}
                                     {message.debugInfo.context.gathered?.product && (
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-700 font-semibold">Product:</span>
-                                        <p className="text-slate-600">{message.debugInfo.context.gathered.product}</p>
-                                      </div>
+                                      <>
+                                        <span className="text-slate-600 font-medium">Product:</span>
+                                        <span className="text-slate-800">{message.debugInfo.context.gathered.product}</span>
+                                      </>
                                     )}
                                     {message.debugInfo.context.gathered?.klantType && (
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-700 font-semibold">Klant Type:</span>
-                                        <p className="text-slate-600">{message.debugInfo.context.gathered.klantType}</p>
-                                      </div>
+                                      <>
+                                        <span className="text-slate-600 font-medium">Klant Type:</span>
+                                        <span className="text-slate-800">{message.debugInfo.context.gathered.klantType}</span>
+                                      </>
                                     )}
                                     {message.debugInfo.context.gathered?.verkoopkanaal && (
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-700 font-semibold">Verkoopkanaal:</span>
-                                        <p className="text-slate-600">{message.debugInfo.context.gathered.verkoopkanaal}</p>
-                                      </div>
+                                      <>
+                                        <span className="text-slate-600 font-medium">Verkoopkanaal:</span>
+                                        <span className="text-slate-800">{message.debugInfo.context.gathered.verkoopkanaal}</span>
+                                      </>
                                     )}
                                     {!message.debugInfo.context.gathered?.sector && 
                                      !message.debugInfo.context.gathered?.product && 
                                      !message.debugInfo.context.gathered?.klantType && (
-                                      <p className="text-slate-500 italic">Nog geen context verzameld</p>
+                                      <span className="col-span-2 text-slate-500 italic">Nog geen context verzameld</span>
                                     )}
                                   </div>
                                 )}
@@ -1551,68 +1545,58 @@ export function AdminChatExpertMode({
                               <div>
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "dynamics")}
-                                  className="flex items-center gap-2 text-[12px] font-semibold text-hh-text hover:text-hh-primary w-full"
+                                  className="flex items-center gap-2 text-[13px] font-bold text-slate-800 hover:text-purple-600 w-full"
                                 >
                                   {isDebugSectionExpanded(message.id, "dynamics") ? (
-                                    <ChevronDown className="w-3 h-3" />
+                                    <ChevronDown className="w-4 h-4" />
                                   ) : (
-                                    <ChevronRight className="w-3 h-3" />
+                                    <ChevronRight className="w-4 h-4" />
                                   )}
                                   Customer Dynamics
                                 </button>
                                 {isDebugSectionExpanded(message.id, "dynamics") && (
-                                  <div className="mt-2 ml-5 space-y-1 text-[12px]">
-                                    <div className="flex justify-between">
-                                      <span className="text-slate-700 font-semibold">Rapport:</span>
-                                      <span className="text-slate-600">
-                                        {message.debugInfo.customerDynamics.rapport}%
-                                        <span className="text-slate-500 ml-1">
-                                          ({message.debugInfo.customerDynamics.rapport >= 60 ? "hoog" : message.debugInfo.customerDynamics.rapport >= 40 ? "midden" : "laag"})
-                                        </span>
+                                  <div className="mt-3 ml-6 grid grid-cols-[120px_1fr] gap-y-2 gap-x-3 text-[12px]">
+                                    <span className="text-slate-600 font-medium">Rapport:</span>
+                                    <span className="text-slate-800">
+                                      {message.debugInfo.customerDynamics.rapport}%
+                                      <span className="text-slate-500 ml-1">
+                                        ({message.debugInfo.customerDynamics.rapport >= 60 ? "hoog" : message.debugInfo.customerDynamics.rapport >= 40 ? "midden" : "laag"})
                                       </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-slate-700 font-semibold">Value Tension:</span>
-                                      <span className="text-slate-600">
-                                        {message.debugInfo.customerDynamics.valueTension}%
-                                        <span className="text-slate-500 ml-1">
-                                          ({message.debugInfo.customerDynamics.valueTension >= 60 ? "hoog" : message.debugInfo.customerDynamics.valueTension >= 40 ? "midden" : "laag"})
-                                        </span>
+                                    </span>
+                                    <span className="text-slate-600 font-medium">Value Tension:</span>
+                                    <span className="text-slate-800">
+                                      {message.debugInfo.customerDynamics.valueTension}%
+                                      <span className="text-slate-500 ml-1">
+                                        ({message.debugInfo.customerDynamics.valueTension >= 60 ? "hoog" : message.debugInfo.customerDynamics.valueTension >= 40 ? "midden" : "laag"})
                                       </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-slate-700 font-semibold">Commit Readiness:</span>
-                                      <span className="text-slate-600">
-                                        {message.debugInfo.customerDynamics.commitReadiness}%
-                                        <span className="text-slate-500 ml-1">
-                                          ({message.debugInfo.customerDynamics.commitReadiness >= 60 ? "hoog" : message.debugInfo.customerDynamics.commitReadiness >= 40 ? "midden" : "laag"})
-                                        </span>
+                                    </span>
+                                    <span className="text-slate-600 font-medium">Commit Readiness:</span>
+                                    <span className="text-slate-800">
+                                      {message.debugInfo.customerDynamics.commitReadiness}%
+                                      <span className="text-slate-500 ml-1">
+                                        ({message.debugInfo.customerDynamics.commitReadiness >= 60 ? "hoog" : message.debugInfo.customerDynamics.commitReadiness >= 40 ? "midden" : "laag"})
                                       </span>
-                                    </div>
+                                    </span>
                                   </div>
                                 )}
                               </div>
 
                               {/* AI Beslissingen */}
                               <div className="pt-4 border-t border-slate-200/50">
-                                <h4 className="text-[12px] font-bold text-slate-800 mb-3">AI Beslissingen</h4>
-                                <div className="space-y-2 text-[12px]">
-                                  <div className="flex justify-between">
-                                    <span className="text-slate-700 font-semibold">EPIC Fase:</span>
-                                    <p className="text-slate-600">{message.debugInfo.aiDecision.epicFase}</p>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-slate-700 font-semibold">Evaluatie:</span>
-                                    <Badge variant="outline" className={`text-[10px] ${
-                                      (message.debugInfo.aiDecision.evaluatie as string) === "positief" || (message.debugInfo.aiDecision.evaluatie as string) === "perfect"
-                                        ? "bg-green-100 text-green-700 border-green-300"
-                                        : message.debugInfo.aiDecision.evaluatie === "gemist"
-                                        ? "bg-red-100 text-red-700 border-red-300"
-                                        : "bg-gray-100 text-gray-700 border-gray-300"
-                                    }`}>
-                                      {message.debugInfo.aiDecision.evaluatie}
-                                    </Badge>
-                                  </div>
+                                <h4 className="text-[13px] font-bold text-slate-800 mb-3">AI Beslissingen</h4>
+                                <div className="grid grid-cols-[120px_1fr] gap-y-2 gap-x-3 text-[12px]">
+                                  <span className="text-slate-600 font-medium">EPIC Fase:</span>
+                                  <span className="text-slate-800">{message.debugInfo.aiDecision.epicFase}</span>
+                                  <span className="text-slate-600 font-medium">Evaluatie:</span>
+                                  <Badge variant="outline" className={`text-[11px] w-fit ${
+                                    (message.debugInfo.aiDecision.evaluatie as string) === "positief" || (message.debugInfo.aiDecision.evaluatie as string) === "perfect"
+                                      ? "bg-green-100 text-green-700 border-green-300"
+                                      : message.debugInfo.aiDecision.evaluatie === "gemist"
+                                      ? "bg-red-100 text-red-700 border-red-300"
+                                      : "bg-gray-100 text-gray-700 border-gray-300"
+                                  }`}>
+                                    {message.debugInfo.aiDecision.evaluatie}
+                                  </Badge>
                                 </div>
                               </div>
                               
@@ -1620,41 +1604,41 @@ export function AdminChatExpertMode({
                               <div>
                                 <button
                                   onClick={() => toggleDebugSection(message.id, "aiPrompt")}
-                                  className="flex items-center gap-2 text-[12px] font-semibold text-hh-text hover:text-hh-primary w-full"
+                                  className="flex items-center gap-2 text-[13px] font-bold text-slate-800 hover:text-purple-600 w-full"
                                 >
                                   {isDebugSectionExpanded(message.id, "aiPrompt") ? (
-                                    <ChevronDown className="w-3 h-3" />
+                                    <ChevronDown className="w-4 h-4" />
                                   ) : (
-                                    <ChevronRight className="w-3 h-3" />
+                                    <ChevronRight className="w-4 h-4" />
                                   )}
                                   AI Prompt & Grounding
                                 </button>
                                 {isDebugSectionExpanded(message.id, "aiPrompt") && (
-                                  <div className="mt-2 ml-5 space-y-3 text-[11px]">
+                                  <div className="mt-3 ml-6 space-y-3 text-[12px]">
                                     {message.debugInfo.promptsUsed?.systemPrompt ? (
                                       <>
                                         <div>
-                                          <p className="text-hh-muted font-semibold mb-1">System Prompt:</p>
-                                          <pre className="bg-slate-100 p-2 rounded text-[10px] max-h-[200px] overflow-auto whitespace-pre-wrap break-words text-slate-700">
+                                          <p className="text-slate-600 font-medium mb-1">System Prompt:</p>
+                                          <pre className="bg-slate-100 p-2 rounded text-[11px] max-h-[200px] overflow-auto whitespace-pre-wrap break-words text-slate-700">
                                             {message.debugInfo.promptsUsed.systemPrompt.slice(0, 2000)}
                                             {message.debugInfo.promptsUsed.systemPrompt.length > 2000 && "... [truncated]"}
                                           </pre>
                                         </div>
                                         {message.debugInfo.promptsUsed.userPrompt && (
                                           <div>
-                                            <p className="text-hh-muted font-semibold mb-1">User Prompt:</p>
-                                            <pre className="bg-slate-100 p-2 rounded text-[10px] max-h-[100px] overflow-auto whitespace-pre-wrap break-words text-slate-700">
+                                            <p className="text-slate-600 font-medium mb-1">User Prompt:</p>
+                                            <pre className="bg-slate-100 p-2 rounded text-[11px] max-h-[100px] overflow-auto whitespace-pre-wrap break-words text-slate-700">
                                               {message.debugInfo.promptsUsed.userPrompt}
                                             </pre>
                                           </div>
                                         )}
                                         {message.debugInfo.ragDocuments && message.debugInfo.ragDocuments.length > 0 && (
                                           <div>
-                                            <p className="text-hh-muted font-semibold mb-1">RAG Documents ({message.debugInfo.ragDocuments.length}):</p>
+                                            <p className="text-slate-600 font-medium mb-1">RAG Documents ({message.debugInfo.ragDocuments.length}):</p>
                                             <div className="space-y-1">
                                               {message.debugInfo.ragDocuments.map((doc, idx) => (
                                                 <div key={idx} className="bg-blue-50 p-2 rounded border border-blue-200">
-                                                  <p className="font-medium text-blue-800">{doc.title || `Document ${idx + 1}`}</p>
+                                                  <p className="font-medium text-blue-800 text-[11px]">{doc.title || `Document ${idx + 1}`}</p>
                                                   <p className="text-blue-600 text-[10px]">{doc.content?.slice(0, 200)}...</p>
                                                 </div>
                                               ))}
@@ -1663,7 +1647,7 @@ export function AdminChatExpertMode({
                                         )}
                                       </>
                                     ) : (
-                                      <p className="text-hh-muted italic">Geen prompt data beschikbaar voor dit bericht</p>
+                                      <p className="text-slate-500 italic">Geen prompt data beschikbaar voor dit bericht</p>
                                     )}
                                   </div>
                                 )}
