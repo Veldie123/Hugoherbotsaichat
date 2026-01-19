@@ -65,7 +65,7 @@ async function sendMessageToV2(sessionId: string, message: string): Promise<stri
   const response = await fetch(`${baseUrl}/api/v2/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sessionId, message })
+    body: JSON.stringify({ sessionId, content: message })
   });
   
   if (!response.ok) {
