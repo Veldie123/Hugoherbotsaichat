@@ -61,9 +61,16 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
 **Huidige TODO's (januari 2026):**
 | TODO ID | Bestand | Status |
 |---------|---------|--------|
-| DEBUG-INFO-UITBREIDEN | src/components/HH/TranscriptDialog.tsx | Partial (UI klaar, backend pending) |
+| (geen actieve TODO's) | - | - |
 
 **Recent Toegevoegd (januari 2026):**
+- **TranscriptDialog Golden Standard Integratie**: Uitgebreid debug paneel met bewerkfunctionaliteit
+  - ✓ Validatieknoppen (✓/✗) per transcript bericht voor admin review
+  - ✓ Bewerkknop opent edit mode met dropdowns voor signaal, verwachte techniek, gedetecteerde techniek
+  - ✓ Feedback input formulier voor het flaggen van incorrecte responses
+  - ✓ Koppeling naar save-reference en flag-customer-response APIs
+  - ✓ Toast notificaties voor succes/fout feedback
+  - ✓ Visuele indicators (ring borders) voor gevalideerde/geflagde berichten
 - **Golden Standard Frontend Koppeling**: AdminChatExpertMode.tsx nu gekoppeld aan backend APIs
   - ✓ knop roept `/api/v2/session/save-reference` aan om antwoord als golden standard op te slaan
   - ✗ + feedback roept `/api/v2/session/flag-customer-response` aan voor conflict analyse
@@ -72,6 +79,7 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
 **Afgeronde TODO's:**
 | TODO ID | Bestand | Status |
 |---------|---------|--------|
+| DEBUG-INFO-UITBREIDEN | src/components/HH/TranscriptDialog.tsx | Done (complete met Golden Standard integratie) |
 | GOLDEN-STANDARD-OPSLAG | server/v2/reference-answers.ts | Done (complete opslag + learning) |
 | GOLDEN-STANDARD-CONFLICTS | server/v2/config-consistency.ts | Done (834 regels conflict analyse) |
 | ADMIN-CONFLICTS-PAGE | client/src/pages/admin-conflicts.tsx | Done (patch review UI) |
