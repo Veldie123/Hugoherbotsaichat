@@ -1,5 +1,5 @@
 import { AdminLayout } from "./AdminLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -69,7 +69,7 @@ interface AdminSessionsProps {
 type SessionType = "ai-audio" | "ai-video" | "ai-chat" | "upload-audio" | "upload-video" | "live-analysis";
 
 interface Session {
-  id: number;
+  id: string;
   user: string;
   userEmail: string;
   workspace?: string;
@@ -105,13 +105,71 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const selectionMode = selectedIds.length > 0;
   const [expandedDebug, setExpandedDebug] = useState<string | null>(null);
   const [techniqueValidation, setTechniqueValidation] = useState<Record<string, boolean | null>>({});
   const [showFeedbackInput, setShowFeedbackInput] = useState<Record<string, boolean>>({});
   const [feedbackText, setFeedbackText] = useState<Record<string, string>>({});
+  
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    async function fetchSessions() {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/sessions');
+        if (!response.ok) throw new Error('Failed to fetch sessions');
+        const data = await response.json();
+        
+        const mappedSessions: Session[] = data.sessions.map((s: any) => {
+          const createdDate = s.createdAt ? new Date(s.createdAt) : new Date();
+          return {
+            id: s.id,
+            user: s.userId || 'Onbekend',
+            userEmail: `${s.userId || 'user'}@example.com`,
+            workspace: 'HugoHerbots',
+            techniek: `${s.techniqueNummer || s.techniqueId} - ${s.techniqueName || 'Techniek'}`,
+            fase: getFaseLabel(s.fase),
+            type: 'ai-chat' as SessionType,
+            duration: s.duration || '0:00',
+            score: s.score || 0,
+            quality: s.quality || 'needs-improvement',
+            date: createdDate.toLocaleString('nl-NL'),
+            flagged: false,
+            transcript: s.transcript || [],
+            feedback: {
+              strengths: [],
+              improvements: []
+            }
+          };
+        });
+        
+        setSessions(mappedSessions);
+      } catch (err: any) {
+        console.error('Error fetching sessions:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchSessions();
+  }, []);
+  
+  function getFaseLabel(fase: number | string): string {
+    const faseNum = typeof fase === 'string' ? parseInt(fase) : fase;
+    switch (faseNum) {
+      case 1: return 'Openingsfase';
+      case 2: return 'Ontdekkingsfase';
+      case 3: return 'Presentatiefase';
+      case 4: return 'Beslissingsfase';
+      default: return 'Onbekend';
+    }
+  }
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -133,7 +191,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
     );
   };
 
-  const toggleSelection = (id: number) => {
+  const toggleSelection = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
@@ -154,192 +212,10 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
     }
   };
 
-  const sessions: Session[] = [
-    // AI Roleplay Sessions (from old Transcripts)
-    {
-      id: 1,
-      user: "Jan de Vries",
-      userEmail: "jan@techcorp.nl",
-      workspace: "TechCorp BV",
-      techniek: "2.1.1 - Feitgerichte vragen",
-      fase: "Ontdekkingsfase",
-      type: "ai-audio",
-      duration: "18:45",
-      score: 88,
-      quality: "excellent",
-      date: "2025-01-15 14:23",
-      flagged: false,
-      transcript: [
-        { speaker: "AI Coach", time: "00:00", text: "Goedemiddag! Vandaag gaan we oefenen met feitgerichte vragen. Ben je er klaar voor?" },
-        { speaker: "Jan", time: "00:05", text: "Ja, ik ben er klaar voor. Ik wil graag beter worden in het stellen van de juiste vragen." },
-        { speaker: "AI Coach", time: "00:12", text: "Perfect! Stel je voor: je belt een prospect die interesse heeft getoond in jullie software. Begin maar met je opening." },
-        { speaker: "Jan", time: "00:20", text: "Goedemiddag, met Jan van TechCorp. Ik bel naar aanleiding van uw interesse in onze CRM oplossing. Klopt het dat jullie momenteel uitdagingen ervaren met klantendata?" },
-        { speaker: "AI Coach", time: "00:35", text: "Goede opening! Je gaat direct in op hun situatie. Ja, dat klopt. We hebben inderdaad moeite met het centraliseren van klantinformatie." },
-        { speaker: "Jan", time: "00:45", text: "Wat zijn de gevolgen hiervan voor jullie team? Merken jullie dat bepaalde processen hierdoor trager verlopen?" },
-        { speaker: "AI Coach", time: "00:55", text: "Uitstekende Problem vraag! Ja, onze salesmedewerkers verliezen veel tijd met zoeken naar klantgeschiedenis. Soms bellen we zelfs dezelfde klant twee keer." },
-      ],
-      feedback: {
-        strengths: ["Goede opening", "Sterke feitgerichte vragen", "Actief luisteren"],
-        improvements: ["Meer doorvragen na antwoord", "Pauzes inbouwen"],
-      },
-    },
-    {
-      id: 2,
-      user: "Sarah van Dijk",
-      userEmail: "sarah@growco.nl",
-      workspace: "GrowCo",
-      techniek: "4.2.4 - Bezwaren behandelen",
-      fase: "Beslissingsfase",
-      type: "ai-video",
-      duration: "24:12",
-      score: 76,
-      quality: "good",
-      date: "2025-01-15 10:45",
-      flagged: false,
-      transcript: [
-        { speaker: "AI Coach", time: "00:00", text: "Vandaag oefenen we met bezwaar afhandeling. Ik zal de rol spelen van een sceptische klant. Klaar?" },
-        { speaker: "Sarah", time: "00:06", text: "Ja, laten we beginnen." },
-        { speaker: "AI Coach", time: "00:08", text: "Jullie prijs is veel te hoog vergeleken met de concurrent. Waarom zou ik voor jullie kiezen?" },
-        { speaker: "Sarah", time: "00:15", text: "Ik begrijp uw bezorgdheid over de prijs. Mag ik vragen met welke concurrent u ons vergelijkt?" },
-      ],
-      feedback: {
-        strengths: ["Kalm blijven bij bezwaar", "Doorvragen"],
-        improvements: ["Meer empathie tonen", "Value proposition versterken"],
-      },
-    },
-    {
-      id: 3,
-      user: "Mark Peters",
-      userEmail: "mark@startup.io",
-      workspace: "ScaleUp BV",
-      techniek: "1.2 - Gentleman's Agreement",
-      fase: "Openingsfase",
-      type: "ai-chat",
-      duration: "12:30",
-      score: 68,
-      quality: "needs-improvement",
-      date: "2025-01-14 16:20",
-      flagged: true,
-      transcript: [
-        { speaker: "AI Coach", time: "00:00", text: "Laten we oefenen met het openen van een gesprek en het gentleman's agreement. Begin maar!" },
-        { speaker: "Mark", time: "00:05", text: "Hoi, ik ben Mark. Kan ik u iets vertellen over ons product?" },
-        { speaker: "AI Coach", time: "00:10", text: "Dat klopt niet helemaal. Probeer eerst een gentleman's agreement te maken voordat je begint met pitchen." },
-      ],
-      feedback: {
-        strengths: ["Enthousiasme"],
-        improvements: ["Structuur verbeteren", "Gentleman's agreement toepassen", "Minder direct pitchen"],
-      },
-    },
-    // Upload Sessions (from old Uploads)
-    {
-      id: 4,
-      user: "Lisa de Jong",
-      userEmail: "lisa@salesforce.nl",
-      workspace: "SalesForce NL",
-      title: "Ontdekking call - Acme Inc",
-      techniek: "2.1.2 - Meningsgerichte vragen",
-      fase: "Ontdekkingsfase",
-      type: "upload-audio",
-      duration: "32:15",
-      score: 82,
-      quality: "excellent",
-      date: "2025-01-15 14:23",
-      uploadDate: "2025-01-15 14:23",
-      fileSize: "45.2 MB",
-      flagged: false,
-      transcript: [
-        { speaker: "Lisa", time: "00:00", text: "Goedemiddag, met Lisa van SalesForce. Bedankt dat u tijd hebt vrijgemaakt voor dit gesprek." },
-        { speaker: "Klant", time: "00:06", text: "Graag gedaan. Ik ben benieuwd naar jullie oplossing." },
-        { speaker: "Lisa", time: "00:10", text: "Perfect! Voordat we beginnen, mag ik vragen hoe jullie huidige CRM proces eruitziet?" },
-      ],
-      feedback: {
-        strengths: ["Goede open vragen", "Actief luisteren", "Empathie tonen"],
-        improvements: ["Meer doorvragen", "Pauzes inbouwen", "EPIC structuur toepassen"],
-      },
-      techniqueScores: [
-        { technique: "2.1.1", name: "Feitgerichte vragen", score: 85, count: 12 },
-        { technique: "2.1.2", name: "Meningsgerichte vragen", score: 88, count: 8 },
-        { technique: "2.1.6", name: "Actief luisteren", score: 79, count: 15 },
-      ],
-      insights: {
-        strengths: ["Goede open vragen", "Actief luisteren", "Empathie tonen"],
-        improvements: ["Meer doorvragen", "Pauzes inbouwen", "EPIC structuur toepassen"],
-      },
-    },
-    {
-      id: 5,
-      user: "Tom Bakker",
-      userEmail: "tom@example.com",
-      workspace: "TechStart",
-      title: "Closing call - Beta Corp",
-      techniek: "4.1 - Proefafsluiting",
-      fase: "Beslissingsfase",
-      type: "upload-video",
-      duration: "48:30",
-      score: 76,
-      quality: "good",
-      date: "2025-01-15 10:12",
-      uploadDate: "2025-01-15 10:12",
-      fileSize: "234.8 MB",
-      flagged: false,
-      transcript: [
-        { speaker: "Tom", time: "00:00", text: "Goedemiddag, zullen we even de belangrijkste punten van ons voorstel doornemen?" },
-        { speaker: "Klant", time: "00:06", text: "Ja, dat is goed. Ik heb nog wel wat vragen." },
-      ],
-      feedback: {
-        strengths: ["Goed timing voor afsluiting", "Rustig bij bezwaren"],
-        improvements: ["Duidelijker baten koppelen", "Concreter in voorbeelden"],
-      },
-      techniqueScores: [
-        { technique: "4.1", name: "Proefafsluiting", score: 82, count: 6 },
-        { technique: "4.2.4", name: "Bezwaren", score: 74, count: 8 },
-        { technique: "3.3", name: "Voordeel", score: 71, count: 10 },
-      ],
-      insights: {
-        strengths: ["Goed timing voor afsluiting", "Rustig bij bezwaren"],
-        improvements: ["Duidelijker baten koppelen", "Concreter in voorbeelden"],
-      },
-    },
-    {
-      id: 6,
-      user: "Jan de Vries",
-      userEmail: "jan@techcorp.nl",
-      workspace: "TechCorp BV",
-      title: "Demo call - Epsilon Corp",
-      techniek: "3.2 - Oplossing",
-      fase: "Aanbevelingsfase",
-      type: "live-analysis",
-      duration: "56:12",
-      score: 91,
-      quality: "excellent",
-      date: "2025-01-13 09:30",
-      uploadDate: "2025-01-13 09:30",
-      fileSize: "312.5 MB",
-      flagged: false,
-      transcript: [
-        { speaker: "Jan", time: "00:00", text: "Laat me jullie even een demo geven van hoe onze oplossing jullie probleem kan oplossen." },
-        { speaker: "Klant", time: "00:08", text: "Ik ben benieuwd!" },
-      ],
-      feedback: {
-        strengths: ["Excellente product demo", "Sterke baten focus", "Goede voorbeelden"],
-        improvements: ["Kortere monologen", "Meer check-in vragen"],
-      },
-      techniqueScores: [
-        { technique: "3.2", name: "Oplossing", score: 93, count: 14 },
-        { technique: "3.4", name: "Baat", score: 90, count: 11 },
-        { technique: "2.1.6", name: "Actief luisteren", score: 89, count: 18 },
-      ],
-      insights: {
-        strengths: ["Excellente product demo", "Sterke baten focus", "Goede voorbeelden"],
-        improvements: ["Kortere monologen", "Meer check-in vragen"],
-      },
-    },
-  ];
-
   // Statistics
   const stats = {
     totalSessions: sessions.length,
-    avgScore: Math.round(sessions.reduce((acc, s) => acc + s.score, 0) / sessions.length),
+    avgScore: sessions.length > 0 ? Math.round(sessions.reduce((acc, s) => acc + s.score, 0) / sessions.length) : 0,
     excellentCount: sessions.filter(s => s.quality === "excellent").length,
     needsWorkCount: sessions.filter(s => s.quality === "needs-improvement").length,
   };
@@ -479,6 +355,33 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
     }
     return sortDirection === "asc" ? comparison : -comparison;
   });
+
+  if (loading) {
+    return (
+      <AdminLayout currentPage="admin-sessions" navigate={navigate}>
+        <div className="p-6 flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-hh-muted">Sessies laden...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout currentPage="admin-sessions" navigate={navigate}>
+        <div className="p-6">
+          <Card className="p-8 text-center">
+            <AlertTriangle className="w-12 h-12 text-hh-warn mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Fout bij laden</h2>
+            <p className="text-hh-muted">{error}</p>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout currentPage="admin-sessions" navigate={navigate}>

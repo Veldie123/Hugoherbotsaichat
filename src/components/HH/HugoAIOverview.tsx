@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -48,7 +48,7 @@ interface HugoAIOverviewProps {
 type SessionType = "ai-audio" | "ai-video" | "ai-chat" | "upload-audio";
 
 interface Session {
-  id: number;
+  id: string;
   nummer: string;
   naam: string;
   fase: string;
@@ -61,79 +61,6 @@ interface Session {
   transcript: Array<{ speaker: string; time: string; text: string }>;
 }
 
-const sessions: Session[] = [
-  {
-    id: 1,
-    nummer: "2.1.1",
-    naam: "Feitgerichte vragen",
-    fase: "2",
-    type: "ai-audio",
-    score: 88,
-    quality: "excellent",
-    duration: "18:45",
-    date: "2025-01-15",
-    time: "14:23",
-    transcript: [
-      { speaker: "AI Coach", time: "00:00", text: "Goedemiddag! Vandaag gaan we oefenen met feitgerichte vragen. Ben je er klaar voor?" },
-      { speaker: "Jan", time: "00:05", text: "Ja, ik ben er klaar voor. Ik wil graag beter worden in het stellen van de juiste vragen." },
-      { speaker: "AI Coach", time: "00:12", text: "Perfect! Stel je voor: je belt een prospect die interesse heeft getoond in jullie software. Begin maar met je opening." },
-      { speaker: "Jan", time: "00:20", text: "Goedemiddag, met Jan van TechCorp. Ik bel naar aanleiding van uw interesse in onze CRM oplossing. Klopt het dat jullie momenteel uitdagingen ervaren met klantendata?" },
-      { speaker: "AI Coach", time: "00:35", text: "Goede opening! Je gaat direct in op hun situatie. Ja, dat klopt. We hebben inderdaad moeite met het centraliseren van klantinformatie." },
-    ],
-  },
-  {
-    id: 2,
-    nummer: "4.2.4",
-    naam: "Bezwaren behandelen",
-    fase: "4",
-    type: "ai-video",
-    score: 76,
-    quality: "good",
-    duration: "24:12",
-    date: "2025-01-15",
-    time: "10:45",
-    transcript: [
-      { speaker: "AI Coach", time: "00:00", text: "Vandaag oefenen we met bezwaar afhandeling. Ik zal de rol spelen van een sceptische klant. Klaar?" },
-      { speaker: "Sarah", time: "00:06", text: "Ja, laten we beginnen." },
-      { speaker: "AI Coach", time: "00:08", text: "Jullie prijs is veel te hoog vergeleken met de concurrent. Waarom zou ik voor jullie kiezen?" },
-      { speaker: "Sarah", time: "00:15", text: "Ik begrijp uw bezorgdheid over de prijs. Mag ik vragen met welke concurrent u ons vergelijkt?" },
-    ],
-  },
-  {
-    id: 3,
-    nummer: "1.2",
-    naam: "Gentleman's Agreement",
-    fase: "1",
-    type: "ai-chat",
-    score: 68,
-    quality: "needs-improvement",
-    duration: "12:30",
-    date: "2025-01-14",
-    time: "16:20",
-    transcript: [
-      { speaker: "AI Coach", time: "00:00", text: "Laten we oefenen met het openen van een gesprek en het gentleman's agreement. Begin maar!" },
-      { speaker: "Mark", time: "00:05", text: "Hoi, ik ben Mark. Kan ik u iets vertellen over ons product?" },
-      { speaker: "AI Coach", time: "00:10", text: "Dat klopt niet helemaal. Probeer eerst een gentleman's agreement te maken voordat je begint met pitchen." },
-    ],
-  },
-  {
-    id: 4,
-    nummer: "2.1.2",
-    naam: "Meningsgerichte vragen",
-    fase: "2",
-    type: "upload-audio",
-    score: 82,
-    quality: "excellent",
-    duration: "32:15",
-    date: "2025-01-15",
-    time: "14:23",
-    transcript: [
-      { speaker: "AI Coach", time: "00:00", text: "Vandaag analyseren we je gesprek over meningsgerichte vragen." },
-      { speaker: "Lisa", time: "00:08", text: "Wat vindt u van de huidige manier waarop jullie team leads opvolgt?" },
-      { speaker: "AI Coach", time: "00:15", text: "Goede meningsgerichte vraag! Je vraagt naar hun mening, niet alleen naar feiten." },
-    ],
-  },
-];
 
 const getTypeIcon = (type: SessionType) => {
   switch (type) {
@@ -196,6 +123,45 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [transcriptSession, setTranscriptSession] = useState<TranscriptSession | null>(null);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
+  
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    async function fetchSessions() {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch('/api/user/sessions');
+        if (!response.ok) throw new Error('Failed to fetch sessions');
+        const data = await response.json();
+        
+        const mappedSessions: Session[] = data.sessions.map((s: any) => ({
+          id: s.id,
+          nummer: s.nummer || s.techniqueId || '1.1',
+          naam: s.naam || s.techniqueName || 'Techniek',
+          fase: String(s.fase || '1'),
+          type: s.type || 'ai-chat' as SessionType,
+          score: s.score || 0,
+          quality: s.quality || 'needs-improvement',
+          duration: s.duration || '0:00',
+          date: s.date || new Date().toISOString().split('T')[0],
+          time: s.time,
+          transcript: s.transcript || []
+        }));
+        
+        setSessions(mappedSessions);
+      } catch (err: any) {
+        console.error('Error fetching sessions:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchSessions();
+  }, []);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -270,6 +236,33 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   // Admin view has its own separate component (AdminSessions)
   const Layout = AppLayout;
   const layoutProps = { currentPage: "hugo-overview", navigate, isAdmin };
+
+  if (loading) {
+    return (
+      <Layout {...layoutProps}>
+        <div className="p-6 flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4F7396] mx-auto mb-4"></div>
+            <p className="text-hh-muted">Sessies laden...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout {...layoutProps}>
+        <div className="p-6">
+          <Card className="p-8 text-center">
+            <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Fout bij laden</h2>
+            <p className="text-hh-muted">{error}</p>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout {...layoutProps}>
