@@ -3573,9 +3573,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // SEQUENCE ENFORCEMENT: Check if user can access this technique
-      // Expert mode and demo-user bypass sequence check
+      // Expert mode, demo-user, and livekit-user bypass sequence check
       const isDemoUser = userId === "demo-user" || userId.startsWith("demo-");
-      if (!expertMode && !isDemoUser) {
+      const isLiveKitUser = userId === "livekit-user" || userId.startsWith("livekit-");
+      if (!expertMode && !isDemoUser && !isLiveKitUser) {
         const accessCheck = await canAccessTechnique(userId, techniqueId);
         if (!accessCheck.canAccess) {
           console.log(`[V2] Sequence blocked: User ${userId} cannot access ${techniqueId}, missing: ${accessCheck.missingTechniques.length} techniques`);
@@ -3591,6 +3592,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[V2] Expert mode: Bypassing sequence check for ${techniqueId}`);
       } else if (isDemoUser) {
         console.log(`[V2] Demo user: Bypassing sequence check for ${techniqueId}`);
+      } else if (isLiveKitUser) {
+        console.log(`[V2] LiveKit user: Bypassing sequence check for ${techniqueId}`);
       }
       
       const sessionId = `v2-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
