@@ -155,9 +155,17 @@ export function TalkToHugoAI({
       });
       
       avatar.on(StreamingEvents.STREAM_READY, (event: any) => {
-        console.log("[HeyGen] Stream ready");
-        if (videoRef.current && event.detail?.stream) {
-          videoRef.current.srcObject = event.detail.stream;
+        console.log("[HeyGen] Stream ready, event:", event);
+        // Stream can be in event.detail.stream or event.detail directly
+        const stream = event.detail?.stream || event.detail;
+        console.log("[HeyGen] Stream object:", stream);
+        if (videoRef.current && stream instanceof MediaStream) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(e => console.error("[HeyGen] Play error:", e));
+          };
+        } else {
+          console.error("[HeyGen] No valid MediaStream found in event");
         }
       });
       
