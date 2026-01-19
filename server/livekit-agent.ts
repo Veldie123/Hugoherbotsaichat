@@ -74,7 +74,8 @@ async function sendMessageToV2(sessionId: string, message: string): Promise<stri
   }
   
   const data = await response.json();
-  return data.message || 'Ik begrijp het.';
+  console.log('[LiveKit Agent] V2 message response:', JSON.stringify(data).substring(0, 200));
+  return data.response || data.message || 'Ik begrijp het.';
 }
 
 async function endV2Session(sessionId: string): Promise<void> {
