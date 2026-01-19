@@ -49,6 +49,7 @@ import {
   Volume2,
   Clock,
 } from "lucide-react";
+import { toast } from "sonner";
 import { getAllTechnieken } from "../../data/technieken-service";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
@@ -187,6 +188,97 @@ export function AdminChatExpertMode({
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Golden Standard API Functions
+  const saveAsGoldenStandard = async (message: Message, isForSeller: boolean = true): Promise<boolean> => {
+    try {
+      const expectedTechnique = isForSeller 
+        ? message.debugInfo?.expectedTechniqueForSeller || selectedTechniqueNumber
+        : message.debugInfo?.expectedTechnique || selectedTechniqueNumber;
+      
+      const detectedTechnique = message.debugInfo?.detectedTechnique;
+      const isCorrection = detectedTechnique && detectedTechnique !== expectedTechnique;
+      
+      const prevCustomerMessage = messages
+        .slice(0, messages.findIndex(m => m.id === message.id))
+        .reverse()
+        .find(m => m.sender === 'ai');
+      
+      const response = await fetch('/api/v2/session/save-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          techniqueId: expectedTechnique,
+          message: message.text,
+          context: message.debugInfo?.context?.gathered || {},
+          matchStatus: isCorrection ? 'mismatch' : 'match',
+          signal: prevCustomerMessage?.debugInfo?.klantSignaal || 'neutraal',
+          detectedTechnique: isCorrection ? detectedTechnique : undefined
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save reference');
+      }
+      
+      const result = await response.json();
+      console.log('[Golden Standard] Saved:', result.message, isCorrection ? '(CORRECTION)' : '');
+      toast.success(isCorrection ? 'Correctie opgeslagen als Golden Standard' : 'Opgeslagen als Golden Standard');
+      return true;
+    } catch (error) {
+      console.error('[Golden Standard] Error saving reference:', error);
+      toast.error('Opslaan mislukt');
+      return false;
+    }
+  };
+
+  const flagAsIncorrect = async (message: Message, expertComment: string, isForSeller: boolean = true): Promise<boolean> => {
+    try {
+      const techniqueId = isForSeller 
+        ? message.debugInfo?.expectedTechniqueForSeller || selectedTechniqueNumber
+        : message.debugInfo?.expectedTechnique || selectedTechniqueNumber;
+      
+      const prevCustomerMessage = messages
+        .slice(0, messages.findIndex(m => m.id === message.id))
+        .reverse()
+        .find(m => m.sender === 'ai');
+      
+      const response = await fetch('/api/v2/session/flag-customer-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          turnNumber: messages.findIndex(m => m.id === message.id),
+          customerMessage: isForSeller ? (prevCustomerMessage?.text || '') : message.text,
+          customerSignal: isForSeller 
+            ? (prevCustomerMessage?.debugInfo?.klantSignaal || 'neutraal')
+            : (message.debugInfo?.klantSignaal || 'neutraal'),
+          currentPhase: message.debugInfo?.context?.fase || currentPhase,
+          techniqueId,
+          expertComment,
+          context: message.debugInfo?.context?.gathered || {},
+          conversationHistory: messages.map(m => ({
+            role: m.sender === 'hugo' ? 'seller' : 'customer',
+            content: m.text
+          }))
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to flag response');
+      }
+      
+      const result = await response.json();
+      console.log('[Golden Standard] Flagged:', result.message);
+      toast.success(`Feedback opgeslagen (${result.conflictsFound || 0} conflicts)`);
+      return true;
+    } catch (error) {
+      console.error('[Golden Standard] Error flagging response:', error);
+      toast.error('Feedback opslaan mislukt');
+      return false;
+    }
   };
 
   // LiveKit Audio Functions
@@ -958,9 +1050,12 @@ export function AdminChatExpertMode({
                                             ? "bg-green-500 text-white hover:bg-green-600"
                                             : "hover:bg-green-100 hover:text-green-700 border border-green-300"
                                         }`}
-                                        onClick={() => {
-                                          setTechniqueValidation((prev) => ({ ...prev, [message.id]: true }));
-                                          setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
+                                        onClick={async () => {
+                                          const success = await saveAsGoldenStandard(message, true);
+                                          if (success) {
+                                            setTechniqueValidation((prev) => ({ ...prev, [message.id]: true }));
+                                            setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
+                                          }
                                         }}
                                       >
                                         <Check className="w-4 h-4" />
@@ -1010,9 +1105,12 @@ export function AdminChatExpertMode({
                                         size="sm"
                                         variant="outline"
                                         className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50"
-                                        onClick={() => {
-                                          console.log("Feedback submitted:", feedbackText[message.id]);
-                                          setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
+                                        onClick={async () => {
+                                          const success = await flagAsIncorrect(message, feedbackText[message.id], true);
+                                          if (success) {
+                                            setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
+                                            setFeedbackText((prev) => ({ ...prev, [message.id]: "" }));
+                                          }
                                         }}
                                         disabled={!feedbackText[message.id]?.trim()}
                                       >
@@ -1048,9 +1146,12 @@ export function AdminChatExpertMode({
                                             ? "bg-green-500 text-white hover:bg-green-600"
                                             : "hover:bg-green-100 hover:text-green-700 border border-green-300"
                                         }`}
-                                        onClick={() => {
-                                          setTechniqueValidation((prev) => ({ ...prev, [message.id + "_detected"]: true }));
-                                          setShowFeedbackInput((prev) => ({ ...prev, [message.id + "_detected"]: false }));
+                                        onClick={async () => {
+                                          const success = await saveAsGoldenStandard(message, true);
+                                          if (success) {
+                                            setTechniqueValidation((prev) => ({ ...prev, [message.id + "_detected"]: true }));
+                                            setShowFeedbackInput((prev) => ({ ...prev, [message.id + "_detected"]: false }));
+                                          }
                                         }}
                                       >
                                         <Check className="w-4 h-4" />
@@ -1100,9 +1201,12 @@ export function AdminChatExpertMode({
                                         size="sm"
                                         variant="outline"
                                         className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50"
-                                        onClick={() => {
-                                          console.log("Feedback submitted:", feedbackText[message.id + "_detected"]);
-                                          setShowFeedbackInput((prev) => ({ ...prev, [message.id + "_detected"]: false }));
+                                        onClick={async () => {
+                                          const success = await flagAsIncorrect(message, feedbackText[message.id + "_detected"], true);
+                                          if (success) {
+                                            setShowFeedbackInput((prev) => ({ ...prev, [message.id + "_detected"]: false }));
+                                            setFeedbackText((prev) => ({ ...prev, [message.id + "_detected"]: "" }));
+                                          }
                                         }}
                                         disabled={!feedbackText[message.id + "_detected"]?.trim()}
                                       >
@@ -1279,9 +1383,12 @@ export function AdminChatExpertMode({
                                               ? "bg-green-500 text-white hover:bg-green-600"
                                               : "hover:bg-green-100 hover:text-green-700 border border-green-300"
                                           }`}
-                                          onClick={() => {
-                                            setTechniqueValidation((prev) => ({ ...prev, [message.id]: true }));
-                                            setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
+                                          onClick={async () => {
+                                            const success = await saveAsGoldenStandard(message, false);
+                                            if (success) {
+                                              setTechniqueValidation((prev) => ({ ...prev, [message.id]: true }));
+                                              setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
+                                            }
                                           }}
                                         >
                                           <Check className="w-4 h-4" />
@@ -1331,9 +1438,12 @@ export function AdminChatExpertMode({
                                           size="sm"
                                           variant="outline"
                                           className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50"
-                                          onClick={() => {
-                                            console.log("Feedback submitted:", feedbackText[message.id]);
-                                            setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
+                                          onClick={async () => {
+                                            const success = await flagAsIncorrect(message, feedbackText[message.id], false);
+                                            if (success) {
+                                              setShowFeedbackInput((prev) => ({ ...prev, [message.id]: false }));
+                                              setFeedbackText((prev) => ({ ...prev, [message.id]: "" }));
+                                            }
                                           }}
                                           disabled={!feedbackText[message.id]?.trim()}
                                         >

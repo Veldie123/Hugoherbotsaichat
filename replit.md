@@ -63,6 +63,12 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
 |---------|---------|--------|
 | DEBUG-INFO-UITBREIDEN | src/components/HH/TranscriptDialog.tsx | Partial (UI klaar, backend pending) |
 
+**Recent Toegevoegd (januari 2026):**
+- **Golden Standard Frontend Koppeling**: AdminChatExpertMode.tsx nu gekoppeld aan backend APIs
+  - ✓ knop roept `/api/v2/session/save-reference` aan om antwoord als golden standard op te slaan
+  - ✗ + feedback roept `/api/v2/session/flag-customer-response` aan voor conflict analyse
+  - Beide seller (Hugo) en AI (klant) berichten ondersteunen validatie
+
 **Afgeronde TODO's:**
 | TODO ID | Bestand | Status |
 |---------|---------|--------|
