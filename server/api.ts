@@ -51,6 +51,7 @@ import {
 import { getTechnique } from "./ssot-loader";
 import { AccessToken } from "livekit-server-sdk";
 import { setupScribeWebSocket } from "./elevenlabs-stt";
+import { pool } from "./db";
 
 // Roleplay Engine imports
 import {
@@ -92,7 +93,7 @@ app.use((req, res, next) => {
 });
 
 // ===========================================
-// SESSION STORAGE (in-memory for development)
+// SESSION STORAGE (database-backed with in-memory cache)
 // ===========================================
 
 interface Session {
@@ -110,14 +111,105 @@ interface Session {
 
 const sessions = new Map<string, Session>();
 
-// Clean up old sessions (older than 2 hours)
+// Helper: Save session to database
+async function saveSessionToDb(session: Session): Promise<void> {
+  try {
+    await pool.query(
+      `INSERT INTO v2_sessions (
+        id, user_id, technique_id, mode, current_mode, phase, epic_phase, epic_milestones,
+        context, dialogue_state, persona, turn_number, conversation_history, 
+        customer_dynamics, events, total_score, expert_mode, is_active, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW())
+      ON CONFLICT (id) DO UPDATE SET
+        current_mode = $5,
+        phase = $6,
+        context = $9,
+        dialogue_state = $10,
+        turn_number = $12,
+        conversation_history = $13,
+        total_score = $16,
+        is_active = $18,
+        updated_at = NOW()`,
+      [
+        session.id,
+        session.userId || 'anonymous',
+        session.techniqueId,
+        session.mode,
+        session.mode,
+        session.contextState.isComplete ? 2 : 1, // phase: 1=gathering, 2=coaching
+        'OPENING', // epic_phase
+        JSON.stringify({}), // epic_milestones
+        JSON.stringify(session.contextState.gathered), // context
+        JSON.stringify({ questionsAsked: session.contextState.questionsAsked, questionsAnswered: session.contextState.questionsAnswered }), // dialogue_state
+        JSON.stringify({ name: session.userName }), // persona
+        session.conversationHistory.length, // turn_number
+        JSON.stringify(session.conversationHistory), // conversation_history
+        JSON.stringify({}), // customer_dynamics
+        JSON.stringify([]), // events
+        0, // total_score
+        session.isExpert ? 1 : 0, // expert_mode
+        1, // is_active
+        session.createdAt
+      ]
+    );
+  } catch (error: any) {
+    console.error("[API] Error saving session to DB:", error.message);
+  }
+}
+
+// Helper: Load session from database
+async function loadSessionFromDb(sessionId: string): Promise<Session | null> {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM v2_sessions WHERE id = $1`,
+      [sessionId]
+    );
+    
+    if (result.rows.length === 0) return null;
+    
+    const row = result.rows[0];
+    const conversationHistory = row.conversation_history || [];
+    const context = row.context || {};
+    const dialogueState = row.dialogue_state || {};
+    
+    return {
+      id: row.id,
+      mode: row.current_mode as Session['mode'],
+      techniqueId: row.technique_id,
+      techniqueName: getTechnique(row.technique_id)?.naam || row.technique_id,
+      conversationHistory,
+      contextState: {
+        userId: row.user_id,
+        sessionId: row.id,
+        techniqueId: row.technique_id,
+        gathered: context,
+        questionsAsked: dialogueState.questionsAsked || [],
+        questionsAnswered: dialogueState.questionsAnswered || [],
+        isComplete: row.phase >= 2,
+        currentQuestionKey: null,
+        lensPhase: false,
+        lensQuestionsAsked: []
+      },
+      isExpert: row.expert_mode === 1,
+      createdAt: new Date(row.created_at),
+      userId: row.user_id,
+      userName: row.persona?.name
+    };
+  } catch (error: any) {
+    console.error("[API] Error loading session from DB:", error.message);
+    return null;
+  }
+}
+
+// Clean up old sessions from memory (older than 2 hours)
+// Database sessions persist and can be loaded on demand
 setInterval(() => {
   const now = Date.now();
   const twoHours = 2 * 60 * 60 * 1000;
   for (const [id, session] of sessions.entries()) {
     if (now - session.createdAt.getTime() > twoHours) {
       sessions.delete(id);
-      console.log(`[API] Cleaned up expired session: ${id}`);
+      console.log(`[API] Cleaned up expired in-memory session: ${id}`);
     }
   }
 }, 30 * 60 * 1000); // Run every 30 minutes
@@ -172,6 +264,47 @@ app.post("/api/v2/sessions", async (req, res) => {
     // Create context state for context gathering
     const contextState = createContextState(userId || 'anonymous', sessionId, techniqueId);
     
+    // Load existing user context from database and pre-fill gathered slots
+    const userIdForContext = userId || 'anonymous';
+    try {
+      const existingContextResult = await pool.query(
+        `SELECT sector, product, klant_type, setting, additional_context 
+         FROM user_context WHERE user_id = $1`,
+        [userIdForContext]
+      );
+      
+      if (existingContextResult.rows.length > 0) {
+        const row = existingContextResult.rows[0];
+        // Pre-fill context state with existing values
+        if (row.sector) {
+          contextState.gathered.sector = row.sector;
+          contextState.questionsAnswered.push('sector');
+        }
+        if (row.product) {
+          contextState.gathered.product = row.product;
+          contextState.questionsAnswered.push('product');
+        }
+        if (row.klant_type) {
+          contextState.gathered.klant_type = row.klant_type;
+          contextState.questionsAnswered.push('klant_type');
+        }
+        // Check additional_context for verkoopkanaal and ervaring
+        const additional = row.additional_context || {};
+        if (additional.verkoopkanaal) {
+          contextState.gathered.verkoopkanaal = additional.verkoopkanaal;
+          contextState.questionsAnswered.push('verkoopkanaal');
+        }
+        if (additional.ervaring) {
+          contextState.gathered.ervaring = additional.ervaring;
+          contextState.questionsAnswered.push('ervaring');
+        }
+        
+        console.log(`[API] Pre-filled context for user ${userIdForContext}:`, Object.keys(contextState.gathered).join(', '));
+      }
+    } catch (contextError: any) {
+      console.warn("[API] Could not load existing context:", contextError.message);
+    }
+    
     // Create session - always start with context gathering
     const session: Session = {
       id: sessionId,
@@ -221,6 +354,9 @@ app.post("/api/v2/sessions", async (req, res) => {
       role: "assistant",
       content: initialMessage
     });
+    
+    // Save session to database for persistence
+    await saveSessionToDb(session);
     
     console.log(`[API] Created FULL session ${sessionId} for technique ${techniqueId} (${techniqueName})`);
     console.log(`[API] Mode: ${session.mode}, Next slot: ${nextSlot || 'N/A'}`);
@@ -287,6 +423,35 @@ app.post("/api/v2/message", async (req, res) => {
             content,
             session.isExpert ? 2 : undefined // Expert mode: limit to 2 slots
           );
+          
+          // Save updated context to database for persistence
+          const userIdToSave = session.userId || 'anonymous';
+          const gathered = session.contextState.gathered;
+          try {
+            await pool.query(
+              `INSERT INTO user_context (id, user_id, sector, product, klant_type, additional_context, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, NOW())
+               ON CONFLICT (user_id) DO UPDATE SET
+                 sector = COALESCE($3, user_context.sector),
+                 product = COALESCE($4, user_context.product),
+                 klant_type = COALESCE($5, user_context.klant_type),
+                 additional_context = COALESCE($6, user_context.additional_context),
+                 updated_at = NOW()`,
+              [
+                nanoid(), 
+                userIdToSave, 
+                gathered.sector || null, 
+                gathered.product || null, 
+                gathered.klant_type || null,
+                gathered.verkoopkanaal || gathered.ervaring 
+                  ? { verkoopkanaal: gathered.verkoopkanaal, ervaring: gathered.ervaring }
+                  : null
+              ]
+            );
+            console.log(`[API] Saved context for user ${userIdToSave}: ${currentSlot}=${gathered[currentSlot]}`);
+          } catch (saveError: any) {
+            console.warn("[API] Could not save context:", saveError.message);
+          }
         }
         
         // Check if context gathering is complete
@@ -473,6 +638,9 @@ app.post("/api/v2/message", async (req, res) => {
       };
     }
     
+    // Save updated session to database
+    await saveSessionToDb(session);
+    
     res.json(result);
     
   } catch (error: any) {
@@ -484,7 +652,16 @@ app.post("/api/v2/message", async (req, res) => {
 // Get session info
 app.get("/api/v2/sessions/:sessionId", async (req, res) => {
   try {
-    const session = sessions.get(req.params.sessionId);
+    let session = sessions.get(req.params.sessionId);
+    
+    // Try to load from database if not in memory
+    if (!session) {
+      session = await loadSessionFromDb(req.params.sessionId) ?? undefined;
+      if (session) {
+        sessions.set(session.id, session);
+      }
+    }
+    
     if (!session) {
       return res.status(404).json({ error: "Session not found" });
     }
@@ -533,60 +710,210 @@ app.get("/api/sessions/stats", async (req, res) => {
   }
 });
 
-// Get sessions list
+// Get all sessions list (from database)
 app.get("/api/sessions", async (req, res) => {
   try {
-    const sessionList = Array.from(sessions.values()).map(s => ({
-      id: s.id,
-      mode: s.mode,
-      techniqueId: s.techniqueId,
-      techniqueName: s.techniqueName,
-      messageCount: s.conversationHistory.length,
-      createdAt: s.createdAt
-    }));
+    const userId = req.query.userId as string;
+    
+    // Query database for sessions
+    let query = `
+      SELECT id, user_id, technique_id, current_mode, phase, turn_number, 
+             conversation_history, context, total_score, expert_mode, 
+             created_at, updated_at, is_active
+      FROM v2_sessions 
+      WHERE is_active = 1
+    `;
+    const params: any[] = [];
+    
+    if (userId) {
+      query += ` AND user_id = $1`;
+      params.push(userId);
+    }
+    
+    query += ` ORDER BY created_at DESC LIMIT 100`;
+    
+    const result = await pool.query(query, params);
+    
+    const sessionList = result.rows.map(row => {
+      const conversationHistory = row.conversation_history || [];
+      const context = row.context || {};
+      
+      // Calculate duration from first to last message if available
+      const duration = conversationHistory.length > 0 
+        ? `${Math.ceil(conversationHistory.length * 0.5)}:00`
+        : "0:00";
+      
+      // Calculate score (0-100 based on turn count and phase)
+      const score = Math.min(100, Math.round(50 + row.turn_number * 5 + (row.phase >= 2 ? 20 : 0)));
+      
+      return {
+        id: row.id,
+        mode: row.current_mode,
+        techniqueId: row.technique_id,
+        techniqueName: getTechnique(row.technique_id)?.naam || row.technique_id,
+        techniqueNummer: getTechnique(row.technique_id)?.nummer || row.technique_id.split('.').slice(0, 2).join('.'),
+        fase: getTechnique(row.technique_id)?.fase || parseInt(row.technique_id?.split('.')[0]) || 1,
+        messageCount: conversationHistory.length,
+        turnNumber: row.turn_number,
+        context: context,
+        score,
+        duration,
+        quality: score >= 80 ? 'excellent' : score >= 60 ? 'good' : 'needs-improvement',
+        isExpert: row.expert_mode === 1,
+        isActive: row.is_active === 1,
+        userId: row.user_id,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        transcript: conversationHistory.map((msg: any, idx: number) => ({
+          speaker: msg.role === 'assistant' ? 'AI Coach' : 'Verkoper',
+          time: `${Math.floor(idx * 5 / 60)}:${String(idx * 5 % 60).padStart(2, '0')}`,
+          text: msg.content
+        }))
+      };
+    });
     
     res.json({
       sessions: sessionList,
       total: sessionList.length
     });
   } catch (error: any) {
+    console.error("[API] Error fetching sessions:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get sessions for a specific user (user view)
+app.get("/api/user/sessions", async (req, res) => {
+  try {
+    const userId = req.query.userId as string || 'anonymous';
+    
+    const result = await pool.query(`
+      SELECT id, technique_id, current_mode, phase, turn_number, 
+             conversation_history, context, total_score, created_at, updated_at
+      FROM v2_sessions 
+      WHERE user_id = $1 AND is_active = 1
+      ORDER BY created_at DESC
+      LIMIT 50
+    `, [userId]);
+    
+    const sessionList = result.rows.map(row => {
+      const conversationHistory = row.conversation_history || [];
+      const context = row.context || {};
+      const technique = getTechnique(row.technique_id);
+      
+      const duration = conversationHistory.length > 0 
+        ? `${Math.ceil(conversationHistory.length * 0.5)}:00`
+        : "0:00";
+      
+      const score = Math.min(100, Math.round(50 + row.turn_number * 5 + (row.phase >= 2 ? 20 : 0)));
+      
+      return {
+        id: row.id,
+        nummer: technique?.nummer || row.technique_id,
+        naam: technique?.naam || row.technique_id,
+        fase: technique?.fase || parseInt(row.technique_id?.split('.')[0]) || 1,
+        type: 'ai-chat' as const, // TODO: detect from session metadata
+        score,
+        quality: score >= 80 ? 'excellent' : score >= 60 ? 'good' : 'needs-improvement',
+        duration,
+        date: new Date(row.created_at).toISOString().split('T')[0],
+        time: new Date(row.created_at).toTimeString().split(' ')[0].substring(0, 5),
+        transcript: conversationHistory.map((msg: any, idx: number) => ({
+          speaker: msg.role === 'assistant' ? 'AI Coach' : 'Verkoper',
+          time: `${Math.floor(idx * 5 / 60)}:${String(idx * 5 % 60).padStart(2, '0')}`,
+          text: msg.content
+        }))
+      };
+    });
+    
+    res.json({
+      sessions: sessionList,
+      total: sessionList.length
+    });
+  } catch (error: any) {
+    console.error("[API] Error fetching user sessions:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
 // ===========================================
-// USER CONTEXT ENDPOINTS
+// USER CONTEXT ENDPOINTS - DATABASE BACKED
 // ===========================================
 
-// In-memory user context storage (would be database in production)
-const userContexts = new Map<string, {
-  sector?: string;
-  product?: string;
-  klantType?: string;
-  verkoopkanaal?: string;
-  ervaring?: string;
-  naam?: string;
-}>();
-
-// Get user context
+// Get user context from database
 app.get("/api/user/context", async (req, res) => {
   try {
     const userId = req.query.userId as string || "default";
-    const context = userContexts.get(userId) || {};
+    
+    const result = await pool.query(
+      `SELECT sector, product, klant_type, setting, additional_context 
+       FROM user_context WHERE user_id = $1`,
+      [userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json({ success: true, context: {} });
+    }
+    
+    const row = result.rows[0];
+    const context = {
+      sector: row.sector,
+      product: row.product,
+      klantType: row.klant_type,
+      setting: row.setting,
+      ...(row.additional_context || {})
+    };
+    
+    console.log("[API] Loaded user context for", userId, ":", Object.keys(context).filter(k => context[k as keyof typeof context]).join(", "));
     res.json({ success: true, context });
   } catch (error: any) {
+    console.error("[API] Error loading user context:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Save user context
+// Save user context to database
 app.post("/api/user/context", async (req, res) => {
   try {
     const { userId = "default", context } = req.body;
-    const existing = userContexts.get(userId) || {};
-    userContexts.set(userId, { ...existing, ...context });
-    res.json({ success: true, context: userContexts.get(userId) });
+    
+    // Extract known fields and additional context
+    const { sector, product, klantType, setting, ...additional } = context;
+    
+    // Upsert the context
+    await pool.query(
+      `INSERT INTO user_context (id, user_id, sector, product, klant_type, setting, additional_context, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         sector = COALESCE($3, user_context.sector),
+         product = COALESCE($4, user_context.product),
+         klant_type = COALESCE($5, user_context.klant_type),
+         setting = COALESCE($6, user_context.setting),
+         additional_context = COALESCE($7, user_context.additional_context),
+         updated_at = NOW()`,
+      [nanoid(), userId, sector, product, klantType, setting, Object.keys(additional).length > 0 ? additional : null]
+    );
+    
+    // Fetch updated context
+    const result = await pool.query(
+      `SELECT sector, product, klant_type, setting, additional_context 
+       FROM user_context WHERE user_id = $1`,
+      [userId]
+    );
+    
+    const row = result.rows[0] || {};
+    const updatedContext = {
+      sector: row.sector,
+      product: row.product,
+      klantType: row.klant_type,
+      setting: row.setting,
+      ...(row.additional_context || {})
+    };
+    
+    console.log("[API] Saved user context for", userId);
+    res.json({ success: true, context: updatedContext });
   } catch (error: any) {
+    console.error("[API] Error saving user context:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -875,7 +1202,12 @@ app.post("/api/session/:sessionId/message/stream", async (req, res) => {
 // ===========================================
 app.post("/api/heygen/token", async (req, res) => {
   try {
-    const apiKey = process.env.HEYGEN_API_KEY;
+    // Use the dedicated streaming avatar API key for proper avatar access
+    const streamingApiKey = process.env.API_Heygen_streaming_interactive_avatar_ID;
+    const streamingAvatarId = process.env.Heygen_streaming_interactive_avatar_ID;
+    
+    // Fallback to generic HEYGEN_API_KEY if streaming key not available
+    const apiKey = streamingApiKey || process.env.HEYGEN_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: "HEYGEN_API_KEY not configured" });
     }
@@ -894,8 +1226,15 @@ app.post("/api/heygen/token", async (req, res) => {
     }
 
     const data = await response.json();
-    console.log("[API] HeyGen token created successfully");
-    res.json({ token: data.data?.token || data.token });
+    const token = data.data?.token || data.token;
+    
+    console.log("[API] HeyGen token created successfully, avatarId:", streamingAvatarId || "using default");
+    
+    // Return both token and avatarId for the frontend
+    res.json({ 
+      token, 
+      avatarId: streamingAvatarId || null 
+    });
   } catch (error: any) {
     console.error("[API] HeyGen token error:", error.message);
     res.status(500).json({ error: error.message });
