@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { StopRoleplayDialog } from "./StopRoleplayDialog";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
+import { Room, RoomEvent, ConnectionState, Track, RemoteTrack, RemoteTrackPublication, RemoteParticipant } from "livekit-client";
 import {
   Dialog,
   DialogContent,
@@ -143,6 +144,15 @@ export function AdminChatExpertMode({
   const [isMuted, setIsMuted] = useState(false); // Audio/video mute state
   const [sessionTimer, setSessionTimer] = useState(0); // Session timer
   const [isLoading, setIsLoading] = useState(false); // Loading state for API calls
+  
+  // LiveKit Audio State
+  const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
+  const [audioConnectionState, setAudioConnectionState] = useState<ConnectionState>(ConnectionState.Disconnected);
+  const [isAudioConnecting, setIsAudioConnecting] = useState(false);
+  const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -169,6 +179,100 @@ export function AdminChatExpertMode({
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // LiveKit Audio Functions
+  const initLiveKitAudio = useCallback(async () => {
+    if (isAudioConnecting || audioConnectionState === ConnectionState.Connected) return;
+    
+    setIsAudioConnecting(true);
+    setAudioError(null);
+    
+    try {
+      const response = await fetch('/api/livekit/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName: `hugo-admin-${Date.now()}` })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get LiveKit token');
+      }
+      
+      const { token, url } = await response.json();
+      
+      const room = new Room();
+      
+      room.on(RoomEvent.ConnectionStateChanged, (state: ConnectionState) => {
+        console.log('[LiveKit] Connection state:', state);
+        setAudioConnectionState(state);
+        if (state === ConnectionState.Connected) {
+          console.log('[LiveKit] Connected to room');
+        } else if (state === ConnectionState.Disconnected) {
+          console.log('[LiveKit] Disconnected');
+        }
+      });
+      
+      room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack, publication: RemoteTrackPublication, participant: RemoteParticipant) => {
+        if (track.kind === Track.Kind.Audio) {
+          console.log('[LiveKit] Track subscribed:', track.kind);
+          const audioElement = track.attach();
+          audioElementRef.current = audioElement;
+          document.body.appendChild(audioElement);
+        }
+      });
+      
+      room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
+        if (track.kind === Track.Kind.Audio) {
+          track.detach().forEach(el => el.remove());
+        }
+      });
+      
+      room.on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
+        const agentSpeaking = speakers.some(s => s.identity.startsWith('agent'));
+        setIsAgentSpeaking(agentSpeaking);
+      });
+      
+      await room.connect(url, token);
+      await room.localParticipant.setMicrophoneEnabled(true);
+      console.log('[LiveKit] Microphone enabled');
+      
+      setLiveKitRoom(room);
+    } catch (error) {
+      console.error('[LiveKit] Error:', error);
+      setAudioError(error instanceof Error ? error.message : 'Connection failed');
+    } finally {
+      setIsAudioConnecting(false);
+    }
+  }, [isAudioConnecting, audioConnectionState]);
+  
+  const stopLiveKitAudio = useCallback(() => {
+    if (liveKitRoom) {
+      liveKitRoom.disconnect();
+      setLiveKitRoom(null);
+      setAudioConnectionState(ConnectionState.Disconnected);
+    }
+  }, [liveKitRoom]);
+  
+  // Handle chat mode change for audio
+  useEffect(() => {
+    if (chatMode === "audio" && audioConnectionState === ConnectionState.Disconnected && !isAudioConnecting) {
+      initLiveKitAudio();
+    }
+  }, [chatMode, audioConnectionState, isAudioConnecting, initLiveKitAudio]);
+  
+  // Cleanup LiveKit on unmount
+  useEffect(() => {
+    return () => {
+      stopLiveKitAudio();
+    };
+  }, [stopLiveKitAudio]);
+  
+  // Handle mute toggle for LiveKit
+  useEffect(() => {
+    if (liveKitRoom && liveKitRoom.state === ConnectionState.Connected) {
+      liveKitRoom.localParticipant.setMicrophoneEnabled(!isMuted);
+    }
+  }, [isMuted, liveKitRoom]);
 
   // Build debugInfo using centralized SSOT mapper with component-specific defaults
   const buildDebugInfo = (phase: number, apiResponse?: any): DebugInfo => {
@@ -577,29 +681,44 @@ export function AdminChatExpertMode({
           {/* Audio Mode Interface */}
           {chatMode === "audio" && (
             <div className="flex-1 flex flex-col items-center justify-center" style={{ background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #0d9488 100%)' }}>
-              <div 
-                className="rounded-full flex items-center justify-center shadow-2xl mb-6"
-                style={{ width: '180px', height: '180px', backgroundColor: '#6B7A92' }}
-              >
-                <span className="text-white font-bold" style={{ fontSize: '64px' }}>HH</span>
+              <div className="relative">
+                <div 
+                  className="rounded-full flex items-center justify-center shadow-2xl mb-6"
+                  style={{ width: '180px', height: '180px', backgroundColor: '#6B7A92' }}
+                >
+                  <span className="text-white font-bold" style={{ fontSize: '64px' }}>HH</span>
+                </div>
+                {isAgentSpeaking && (
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-full">
+                    <span className="text-teal-700 text-[12px] font-medium">Spreekt...</span>
+                  </div>
+                )}
               </div>
               <h3 className="text-white text-[20px] font-semibold mb-1">Hugo Herbots</h3>
+              <p className="text-[16px] mb-2" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                {isAudioConnecting ? "Verbinden..." : audioConnectionState === ConnectionState.Connected ? "Verbonden" : "Audio modus"}
+              </p>
               <p className="text-[22px] font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>{formatTime(sessionTimer)}</p>
               
-              {/* Waveform visualization */}
+              {/* Waveform visualization - animate when speaking */}
               <div className="flex items-end justify-center gap-1.5 h-16 mt-8">
                 {[...Array(15)].map((_, i) => (
                   <div
                     key={i}
-                    className="rounded-full"
+                    className={`rounded-full transition-all duration-150 ${isAgentSpeaking ? 'animate-pulse' : ''}`}
                     style={{
                       width: '6px',
                       backgroundColor: 'rgba(255,255,255,0.7)',
-                      height: `${Math.random() * 40 + 15}px`,
+                      height: isAgentSpeaking ? `${Math.sin(Date.now() / 200 + i) * 20 + 35}px` : `${15 + (i % 3) * 10}px`,
                     }}
                   />
                 ))}
               </div>
+              
+              {/* Status message */}
+              <p className="text-white/60 text-[14px] mt-4">
+                {audioError ? "Configuratie vereist" : audioConnectionState === ConnectionState.Connected ? "Spraakcoaching actief" : "LiveKit audio verbinding"}
+              </p>
               
               {/* Audio controls */}
               <div className="mt-auto pb-8 pt-4">
@@ -616,7 +735,10 @@ export function AdminChatExpertMode({
                   </div>
                   <div className="flex flex-col items-center gap-2">
                     <button 
-                      onClick={handleStopRoleplay}
+                      onClick={() => {
+                        stopLiveKitAudio();
+                        setChatMode("chat");
+                      }}
                       className="flex items-center justify-center shadow-xl"
                       style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#ef4444' }}
                     >

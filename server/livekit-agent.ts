@@ -40,7 +40,7 @@ async function getBaseUrl(): Promise<string> {
 async function startV2Session(techniqueId: string): Promise<{ sessionId: string; greeting: string }> {
   const baseUrl = await getBaseUrl();
   
-  const response = await fetch(`${baseUrl}/api/v2/session/start`, {
+  const response = await fetch(`${baseUrl}/api/v2/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ techniqueId, userId: 'livekit-user' })
@@ -54,14 +54,14 @@ async function startV2Session(techniqueId: string): Promise<{ sessionId: string;
   const data = await response.json();
   return {
     sessionId: data.sessionId,
-    greeting: data.message || 'Hallo, welkom bij de training sessie.'
+    greeting: data.openingMessage || data.message || 'Hallo, welkom bij de training sessie.'
   };
 }
 
 async function sendMessageToV2(sessionId: string, message: string): Promise<string> {
   const baseUrl = await getBaseUrl();
   
-  const response = await fetch(`${baseUrl}/api/v2/session/message`, {
+  const response = await fetch(`${baseUrl}/api/v2/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sessionId, message })
@@ -79,10 +79,9 @@ async function sendMessageToV2(sessionId: string, message: string): Promise<stri
 async function endV2Session(sessionId: string): Promise<void> {
   const baseUrl = await getBaseUrl();
   
-  await fetch(`${baseUrl}/api/v2/session/end`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sessionId })
+  await fetch(`${baseUrl}/api/v2/sessions/${sessionId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' }
   }).catch(err => {
     console.error('[LiveKit Agent] Failed to end session:', err);
   });
