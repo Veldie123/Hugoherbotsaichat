@@ -1,5 +1,5 @@
 import { AdminLayout } from "./AdminLayout";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -11,19 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "../ui/dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { TranscriptDialog, TranscriptSession } from "./TranscriptDialog";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
   Search,
@@ -123,6 +117,47 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
   const [techniqueValidation, setTechniqueValidation] = useState<Record<string, boolean | null>>({});
   const [showFeedbackInput, setShowFeedbackInput] = useState<Record<string, boolean>>({});
   const [feedbackText, setFeedbackText] = useState<Record<string, string>>({});
+  
+  // Convert Session to TranscriptSession for the TranscriptDialog component
+  const transcriptSession: TranscriptSession | null = useMemo(() => {
+    if (!selectedSession) return null;
+    
+    // Extract technique number from techniek (e.g., "1.1 - Koopklimaat creëren" -> "1.1")
+    const techniqueNumber = selectedSession.techniek.split(' - ')[0] || selectedSession.techniek;
+    const techniqueName = selectedSession.techniek.split(' - ')[1] || selectedSession.techniek;
+    
+    return {
+      id: parseInt(selectedSession.id) || 0,
+      sessionId: selectedSession.id,
+      userName: selectedSession.user,
+      userWorkspace: selectedSession.workspace,
+      techniqueNumber,
+      techniqueName,
+      type: selectedSession.type,
+      date: selectedSession.date,
+      duration: selectedSession.duration,
+      score: selectedSession.score,
+      quality: selectedSession.quality as TranscriptSession['quality'],
+      transcript: selectedSession.transcript.map(line => ({
+        speaker: line.speaker,
+        time: line.time,
+        text: line.text,
+        debugInfo: line.debugInfo ? {
+          signal: line.debugInfo.signal,
+          expectedTechnique: line.debugInfo.expectedTechnique,
+          detectedTechnique: line.debugInfo.detectedTechnique || undefined,
+          context: line.debugInfo.context,
+          customerDynamics: line.debugInfo.customerDynamics,
+          aiDecision: line.debugInfo.aiDecision ? {
+            epicFase: line.debugInfo.aiDecision.epicFase,
+            evaluatie: line.debugInfo.aiDecision.evaluatie ?? undefined
+          } : undefined
+        } : undefined
+      })),
+      strengths: selectedSession.feedback?.strengths,
+      improvements: selectedSession.feedback?.improvements
+    };
+  }, [selectedSession]);
   
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -936,370 +971,13 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
         )}
       </div>
 
-      {/* Transcript Modal */}
-      <Dialog open={transcriptDialogOpen} onOpenChange={setTranscriptDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <span>{selectedSession?.title || selectedSession?.user || "Session Details"}</span>
-              {selectedSession && (
-                <>
-                  <Badge variant="outline" className="text-[11px]">
-                    {selectedSession.techniek}
-                  </Badge>
-                  {getQualityBadge(selectedSession.quality)}
-                </>
-              )}
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              Bekijk de volledige transcript en details van de sessie
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedSession && (
-            <div className="space-y-6">
-              {/* Session Info */}
-              <div className="flex items-center gap-4 text-[14px] leading-[20px] text-hh-muted">
-                <span>{selectedSession.user}</span>
-                <span>•</span>
-                <span>{selectedSession.workspace}</span>
-                <span>•</span>
-                <span>{getTypeLabel(selectedSession.type)}</span>
-                <span>•</span>
-                <span>{selectedSession.date}</span>
-              </div>
-
-              {/* Overall Score (for uploads with detailed scores) */}
-              {selectedSession.techniqueScores && (
-                <Card className="p-6 border-red-600/20 bg-red-50/30">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-[16px] leading-[24px] text-hh-text">
-                      Overall Score
-                    </h4>
-                  </div>
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-[48px] leading-[56px] text-red-600">
-                      {selectedSession.score}
-                    </span>
-                    <span className="text-[24px] leading-[32px] text-hh-muted">
-                      /100
-                    </span>
-                  </div>
-                  <p className="text-[14px] leading-[20px] text-hh-muted">
-                    {selectedSession.fase}
-                  </p>
-                </Card>
-              )}
-
-              {/* Technique Scores (for uploads) */}
-              {selectedSession.techniqueScores && (
-                <div>
-                  <h4 className="text-[16px] leading-[24px] text-hh-text mb-3">
-                    Techniek Scores
-                  </h4>
-                  <div className="space-y-3">
-                    {selectedSession.techniqueScores.map((tech, idx) => (
-                      <Card key={idx} className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="text-[14px] leading-[20px] text-hh-text">
-                              {tech.technique} - {tech.name}
-                            </p>
-                            <p className="text-[12px] leading-[16px] text-hh-muted">
-                              {tech.count}x gebruikt
-                            </p>
-                          </div>
-                          <div className="text-[18px] leading-[26px] text-purple-600">
-                            {tech.score}%
-                          </div>
-                        </div>
-                        <div className="w-full bg-hh-ui-100 rounded-full h-2">
-                          <div
-                            className="bg-purple-600 h-2 rounded-full transition-all"
-                            style={{ width: `${tech.score}%` }}
-                          />
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Transcript */}
-              <Card className="p-4 rounded-[16px] border-hh-border">
-                <h3 className="text-[16px] leading-[22px] text-hh-text font-medium mb-3">
-                  Transcript
-                </h3>
-                <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {selectedSession.transcript.map((line, index) => {
-                    const isAICoach = line.speaker === "AI Coach" || line.speaker.includes("Coach");
-                    const lineId = `${selectedSession.id}-${index}`;
-                    
-                    return (
-                      <div key={index} className="space-y-2">
-                        <div
-                          className={`flex gap-3 p-3 rounded-lg ${
-                            isAICoach ? "bg-purple-50" : "bg-blue-50"
-                          }`}
-                        >
-                          <div className="flex-shrink-0">
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] ${
-                                isAICoach
-                                  ? "bg-purple-600/10 text-purple-600 border-purple-600/20"
-                                  : "bg-blue-600/10 text-blue-600 border-blue-600/20"
-                              }`}
-                            >
-                              {line.time}
-                            </Badge>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-[13px] leading-[18px] font-medium text-hh-text mb-1">
-                              {line.speaker}:
-                            </p>
-                            <p className="text-[14px] leading-[20px] text-hh-text">
-                              {line.text}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Debug toggle - only for AI Coach messages */}
-                        {isAICoach && (
-                          <div className="ml-11">
-                            <button
-                              onClick={() => toggleDebug(lineId)}
-                              className="flex items-center gap-2 text-[12px] leading-[16px] text-hh-muted hover:text-hh-text transition-colors"
-                            >
-                              {expandedDebug === lineId ? (
-                                <ChevronDown className="w-3 h-3" />
-                              ) : (
-                                <ChevronRight className="w-3 h-3" />
-                              )}
-                              Debug Info
-                            </button>
-
-                            {expandedDebug === lineId && (
-                              <Card className="mt-2 p-4 border-2 border-dashed border-purple-200 bg-purple-50/30">
-                                <div className="space-y-3 text-[13px] leading-[18px]">
-                                  {/* EPIC Fase */}
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-hh-muted">EPIC Fase:</span>
-                                    <Badge className="bg-purple-100 text-purple-700 border-purple-300">
-                                      {line.debugInfo?.aiDecision?.epicFase || 'explore'}
-                                    </Badge>
-                                  </div>
-                                  {/* Customer Dynamics */}
-                                  {line.debugInfo?.customerDynamics && (
-                                    <div className="flex items-center gap-3 flex-wrap">
-                                      <span className="text-hh-muted">Rapport:</span>
-                                      <Badge variant="outline">{line.debugInfo.customerDynamics.rapport || 50}%</Badge>
-                                      <span className="text-hh-muted">Value Tension:</span>
-                                      <Badge variant="outline">{line.debugInfo.customerDynamics.valueTension || 50}%</Badge>
-                                      <span className="text-hh-muted">Commit:</span>
-                                      <Badge variant="outline">{line.debugInfo.customerDynamics.commitReadiness || 0}%</Badge>
-                                    </div>
-                                  )}
-                                  {/* Evaluatie */}
-                                  {line.debugInfo?.aiDecision?.evaluatie && (
-                                    <div>
-                                      <span className="text-hh-muted">Evaluatie:</span>
-                                      <p className="text-hh-text mt-1">{line.debugInfo.aiDecision.evaluatie}</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </Card>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Debug toggle - only for User/Verkoper messages */}
-                        {!isAICoach && (
-                          <div className="ml-11">
-                            <button
-                              onClick={() => toggleDebug(lineId)}
-                              className="flex items-center gap-2 text-[12px] leading-[16px] text-hh-muted hover:text-hh-text transition-colors"
-                            >
-                              {expandedDebug === lineId ? (
-                                <ChevronDown className="w-3 h-3" />
-                              ) : (
-                                <ChevronRight className="w-3 h-3" />
-                              )}
-                              Debug Info
-                            </button>
-
-                            {expandedDebug === lineId && (
-                              <Card className="mt-2 p-4 border-2 border-dashed border-blue-200 bg-blue-50/30">
-                                <div className="space-y-3 text-[13px] leading-[18px]">
-                                  {/* Signaal */}
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-hh-muted">Signaal:</span>
-                                    <Badge className={`${
-                                      line.debugInfo?.signal === "positief" 
-                                        ? "bg-green-100 text-green-700 border-green-300"
-                                        : line.debugInfo?.signal === "negatief"
-                                          ? "bg-red-100 text-red-700 border-red-300"
-                                          : "bg-yellow-100 text-yellow-700 border-yellow-300"
-                                    }`}>
-                                      {line.debugInfo?.signal || 'neutraal'}
-                                    </Badge>
-                                  </div>
-                                  {/* Verwachte techniek met validation */}
-                                  <div>
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="flex-1">
-                                        <p className="text-[12px] text-hh-muted mb-1">Verwachte techniek:</p>
-                                        <p className="text-hh-text font-medium">
-                                          {line.debugInfo?.expectedTechnique || selectedSession.techniek}
-                                        </p>
-                                      </div>
-                                      {!showFeedbackInput[lineId] && (
-                                        <div className="flex items-center gap-1 flex-shrink-0">
-                                          <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className={`h-6 w-6 transition-all ${
-                                              techniqueValidation[lineId] === true
-                                                ? "bg-green-500 text-white hover:bg-green-600"
-                                                : "hover:bg-green-100 hover:text-green-700"
-                                            }`}
-                                            onClick={() => handleValidateTechnique(lineId, true)}
-                                          >
-                                            <Check className="w-3.5 h-3.5" />
-                                          </Button>
-                                          <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className={`h-6 w-6 transition-all ${
-                                              techniqueValidation[lineId] === false
-                                                ? "bg-red-500 text-white hover:bg-red-600"
-                                                : "hover:bg-red-100 hover:text-red-700"
-                                            }`}
-                                            onClick={() => handleValidateTechnique(lineId, false)}
-                                          >
-                                            <X className="w-3.5 h-3.5" />
-                                          </Button>
-                                        </div>
-                                      )}
-                                    </div>
-                                    {showFeedbackInput[lineId] && (
-                                      <div className="space-y-2 mt-3">
-                                        <Input
-                                          placeholder="Waarom is de verwachte techniek incorrect?"
-                                          value={feedbackText[lineId] || ""}
-                                          onChange={(e) =>
-                                            setFeedbackText((prev) => ({ ...prev, [lineId]: e.target.value }))
-                                          }
-                                          className="text-[13px] border-hh-border"
-                                        />
-                                        <div className="flex items-center gap-2">
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="flex-1 text-hh-muted hover:text-hh-text"
-                                            onClick={() => {
-                                              setShowFeedbackInput((prev) => ({ ...prev, [lineId]: false }));
-                                              setTechniqueValidation((prev) => ({ ...prev, [lineId]: null }));
-                                              setFeedbackText((prev) => ({ ...prev, [lineId]: "" }));
-                                            }}
-                                          >
-                                            Annuleer
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50"
-                                            onClick={() => handleSubmitFeedback(lineId)}
-                                            disabled={!feedbackText[lineId]?.trim()}
-                                          >
-                                            Verzend
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Gedetecteerde techniek met score */}
-                                  <div className="pt-3 border-t border-blue-200">
-                                    <p className="text-[12px] text-hh-muted mb-1">Gedetecteerde techniek:</p>
-                                    <p className="text-hh-text font-medium">
-                                      {line.debugInfo?.detectedTechnique || 'Niet gedetecteerd'}
-                                    </p>
-                                  </div>
-                                  {/* Context info */}
-                                  {line.debugInfo?.context && (
-                                    <div className="pt-2">
-                                      <span className="text-hh-muted text-[12px]">Fase: {line.debugInfo.context.fase || 1}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </Card>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
-
-              {/* AI Feedback */}
-              <Card className="p-4 rounded-[16px] border-hh-border">
-                <h3 className="text-[16px] leading-[22px] text-hh-text font-medium mb-3">
-                  AI Feedback
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-[13px] leading-[18px] text-hh-success font-medium mb-2 flex items-center gap-2">
-                      <ThumbsUp className="w-4 h-4" />
-                      Strengths:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1">
-                      {selectedSession.feedback.strengths.map((item, i) => (
-                        <li key={i} className="text-[14px] leading-[20px] text-hh-text">
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="text-[13px] leading-[18px] text-hh-warn font-medium mb-2 flex items-center gap-2">
-                      <ThumbsDown className="w-4 h-4" />
-                      Areas for Improvement:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1">
-                      {selectedSession.feedback.improvements.map((item, i) => (
-                        <li key={i} className="text-[14px] leading-[20px] text-hh-text">
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Actions */}
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 gap-2">
-                  <Download className="w-4 h-4" />
-                  Download Transcript
-                </Button>
-                <Button
-                  variant="outline"
-                  className={`flex-1 gap-2 ${
-                    selectedSession.flagged
-                      ? "text-hh-success border-hh-success"
-                      : "text-red-600 border-red-600"
-                  }`}
-                >
-                  <Flag className="w-4 h-4" />
-                  {selectedSession.flagged ? "Unflag Session" : "Flag for Review"}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Transcript Modal - using TranscriptDialog with admin edit capabilities */}
+      <TranscriptDialog
+        open={transcriptDialogOpen}
+        onOpenChange={setTranscriptDialogOpen}
+        session={transcriptSession}
+        isAdmin={true}
+      />
     </AdminLayout>
   );
 }
