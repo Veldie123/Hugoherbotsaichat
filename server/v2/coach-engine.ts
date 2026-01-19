@@ -1015,6 +1015,10 @@ export async function generateHugoDebrief(context: DebriefContext): Promise<{
   message: string;
   ragContext?: RagDocument[];
   validatorInfo?: ValidatorDebugInfo;
+  promptsUsed?: {
+    systemPrompt: string;
+    userPrompt: string;
+  };
 }> {
   const client = getOpenAIClient();
   if (!client) {
@@ -1073,7 +1077,11 @@ export async function generateHugoDebrief(context: DebriefContext): Promise<{
     return {
       message: repairResult.repairedResponse,
       ragContext: ragResult.documents,
-      validatorInfo
+      validatorInfo,
+      promptsUsed: {
+        systemPrompt,
+        userPrompt
+      }
     };
   } catch (error) {
     console.error("[COACH] Error generating debrief:", error);

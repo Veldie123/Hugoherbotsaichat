@@ -1006,6 +1006,10 @@ export interface HugoResponseOptions {
 export interface HugoResponseResult {
   message: string;
   validatorInfo?: ValidatorDebugInfo;
+  promptsUsed?: {
+    systemPrompt: string;
+    userPrompt: string;
+  };
 }
 
 /**
@@ -1095,7 +1099,11 @@ INSTRUCTIE: Reageer als Hugo Herbots. Kort, to the point, persoonlijk. Stel maxi
     
     return {
       message: repairResult.repairedResponse,
-      validatorInfo
+      validatorInfo,
+      promptsUsed: {
+        systemPrompt: hugoPrompt,
+        userPrompt
+      }
     };
     
   } catch (error) {

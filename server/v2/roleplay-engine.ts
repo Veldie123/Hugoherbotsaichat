@@ -532,7 +532,8 @@ export async function getOpeningMessage(state: V2SessionState, userId: string = 
           ...state,
           context: { ...state.context, currentQuestionKey: nextSlotKey },
           conversationHistory: updatedHistory
-        }
+        },
+        promptsUsed: result.promptsUsed
       };
     }
   }
@@ -719,7 +720,8 @@ async function processContextAnswer(
               ...newState,
               context: { ...newContext, currentQuestionKey: nextSlotKey, lensPhase: true },
               conversationHistory: updatedHistory
-            }
+            },
+            promptsUsed: result.promptsUsed
           };
         }
         
@@ -745,7 +747,8 @@ async function processContextAnswer(
             ...newState,
             context: { ...newContext, currentQuestionKey: nextSlotKey, lensPhase: true },
             conversationHistory: updatedHistory
-          }
+          },
+          promptsUsed: lensResult.promptsUsed
         };
       }
       
@@ -791,7 +794,8 @@ async function processContextAnswer(
             context: { ...newContext, currentQuestionKey: nextQ.key },
             conversationHistory: updatedHistory
           },
-          debug: hugoResult.validatorInfo ? { validatorInfo: hugoResult.validatorInfo } : undefined
+          debug: hugoResult.validatorInfo ? { validatorInfo: hugoResult.validatorInfo } : undefined,
+          promptsUsed: hugoResult.promptsUsed
         };
       }
     }
@@ -884,7 +888,8 @@ async function processContextAnswer(
             { role: 'seller' as const, content: answer },
             { role: 'customer' as const, content: lensQuestion }
           ]
-        }
+        },
+        promptsUsed: lensResult.promptsUsed
       };
     }
     
@@ -925,7 +930,8 @@ async function processContextAnswer(
           { role: 'customer' as const, content: hugoResult.message }
         ]
       },
-      debug: hugoResult.validatorInfo ? { validatorInfo: hugoResult.validatorInfo } : undefined
+      debug: hugoResult.validatorInfo ? { validatorInfo: hugoResult.validatorInfo } : undefined,
+      promptsUsed: hugoResult.promptsUsed
     };
   }
   
@@ -1647,7 +1653,8 @@ export async function endRoleplay(state: V2SessionState): Promise<EngineResponse
       currentMode: 'DEBRIEF'
     },
     // Pass through validatorInfo from debrief for debug panel
-    debug: hugoDebrief.validatorInfo ? { validatorInfo: hugoDebrief.validatorInfo } : undefined
+    debug: hugoDebrief.validatorInfo ? { validatorInfo: hugoDebrief.validatorInfo } : undefined,
+    promptsUsed: hugoDebrief.promptsUsed
   };
 }
 
