@@ -6,7 +6,10 @@
  * ----------------------
  * Status: Done (januari 2026)
  * 
- * Beschikbare endpoints (via routes.ts):
+ * Bron: hugo-engine_(4).zip → hugo-engine-export/server/routes.ts
+ * Endpoints zijn al geëxtraheerd en werkend.
+ * 
+ * Beschikbare endpoints (via routes.ts - uit ZIP):
  * - POST /api/session/:id/start-roleplay - Transition to ROLEPLAY mode
  * - POST /api/session/:id/message - Process roleplay messages  
  * - POST /api/session/:id/feedback - Get mid-session feedback
@@ -16,6 +19,8 @@
  * - POST /api/v2/roleplay/start - Full V2 roleplay session
  * - POST /api/v2/roleplay/message - V2 roleplay message processing
  * - POST /api/v2/roleplay/end - End with debrief
+ * 
+ * Frontend koppeling: src/services/hugoApi.ts roept deze endpoints aan
  */
 
 import express, { type Request, Response, NextFunction } from "express";

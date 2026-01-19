@@ -6,19 +6,19 @@
  * Issue: Verifieer dat alle V2 tabellen aanwezig zijn
  * Status: Done (januari 2026)
  * 
- * Vereiste tabellen voor V2 engine:
- * - users (id, username, password)
- * - v2_sessions (id, user_id, technique_id, mode, phase, context_data, etc.)
- * - technique_sessions (id, user_id, technique_id, context, timestamps)
- * - user_context (id, user_id, product, klant_type, sector, setting)
- * - turns (id, session_id, role, mode, text, technique_id, meta)
- * - technique_mastery (user_id, technique_id, scores, etc.)
- * - user_training_profile (user_id, struggle_patterns, etc.)
+ * Bron: hugo-engine_(4).zip → hugo-engine-export/shared/schema.ts
+ * Schema is al geëxtraheerd naar shared/schema.ts en tabellen zijn aangemaakt.
  * 
- * Verificatie:
- * 1. Check schema: SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
- * 2. Run migrations: npm run db:push
- * 3. Vergelijk met shared/schema.ts
+ * Aangemaakte tabellen (20 totaal):
+ * - users, sessions, turns, lock_events
+ * - v2_sessions, technique_sessions, user_context
+ * - technique_mastery, user_training_profile, persona_history
+ * - videos, video_progress, user_stats, activity_log
+ * - live_sessions, live_session_attendees, live_chat_messages
+ * - live_polls, live_poll_options, live_poll_votes
+ * - rag_documents (met pgvector)
+ * 
+ * Frontend koppeling: N/A - database layer
  */
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';

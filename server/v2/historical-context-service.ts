@@ -18,15 +18,17 @@
  * Issue: Historical context service nog niet actief in coach-engine
  * Status: Pending
  * 
- * Aanpak:
- * 1. Verifieer database tabellen: v2_sessions, technique_mastery, user_training_profile
+ * Bron: hugo-engine_(4).zip → hugo-engine-export/server/v2/historical-context-service.ts
+ * Dit bestand is al geëxtraheerd en aanwezig - alleen activeren nodig.
+ * 
+ * Aanpak (alleen koppelen, niet schrijven):
+ * 1. Database tabellen zijn aangemaakt (v2_sessions, technique_mastery, user_training_profile) ✅
  * 2. Activeer getHistoricalContext() calls in coach-engine.ts
  * 3. Inject historische context in prompt via HISTORISCHE_CONTEXT sectie
  * 4. Test met user die meerdere sessies heeft gehad
  * 
- * Dependencies:
- * - Database schema moet up-to-date zijn (zie TODO: DATABASE-SCHEMA-CHECK)
- * - Minimaal 1 voltooide sessie nodig voor data
+ * Frontend koppeling: N/A - backend-only, resultaten komen via coach responses
+ * Dependencies: Minimaal 1 voltooide sessie nodig voor data
  */
 
 import { v2Sessions, techniqueMastery, userTrainingProfile } from '@shared/schema';

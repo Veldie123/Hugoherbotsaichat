@@ -9,20 +9,30 @@
  * Issue: Database error "type vector does not exist"
  * Status: Done (januari 2026)
  * 
+ * Bron: hugo-engine_(4).zip → hugo-engine-export/server/v2/rag-service.ts
+ * Service is al geëxtraheerd, database setup was handmatig.
+ * 
  * Oplossing:
  * - pgvector extensie geïnstalleerd: CREATE EXTENSION IF NOT EXISTS vector;
  * - rag_documents tabel aangemaakt met vector(1536) kolom
  * - ivfflat index aangemaakt voor snelle similarity search
+ * 
+ * Frontend koppeling: N/A - backend-only, RAG grounding gebeurt in coach responses
  * 
  * TODO: RAG-CORPUS-VULLEN
  * -----------------------
  * Issue: RAG corpus is leeg - geen trainingsmateriaal geïndexeerd
  * Status: Pending
  * 
+ * Bron: NIET IN ZIP - trainingsmateriaal moet door gebruiker aangeleverd worden
+ * 
  * Aanpak:
- * 1. Maak rag/corpus/ directory met trainingsmateriaal (.md/.txt files)
- * 2. Run indexeer script: npm run rag:index
- * 3. Verifieer: SELECT COUNT(*) FROM rag_documents;
+ * 1. Gebruiker levert trainingsmateriaal aan (.md/.txt files)
+ * 2. Plaats in rag/corpus/ directory
+ * 3. Maak indexeer script: npm run rag:index (NIET IN ZIP - moet geschreven worden)
+ * 4. Verifieer: SELECT COUNT(*) FROM rag_documents;
+ * 
+ * Frontend koppeling: N/A - backend-only functionaliteit
  */
 
 import OpenAI from "openai";

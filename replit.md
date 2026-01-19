@@ -183,8 +183,15 @@ Alle openstaande taken staan als expliciete TODO stubs direct in de relevante be
 
 **Conventie:**
 - Hoofd-TODO's in bestand header: `TODO: UPPERCASE-SLUG`
-- Elke TODO bevat: Issue, Status, Aanpak stappen
+- Elke TODO bevat:
+  - **Issue:** Wat het probleem is
+  - **Status:** Pending / In Progress / Done / Skipped
+  - **Bron:** `hugo-engine_(4).zip → pad/naar/bestand` OF `NIET IN ZIP - moet geschreven worden`
+  - **Aanpak:** Concrete stappen (alleen koppelen, niet schrijven als in ZIP)
+  - **Frontend koppeling:** Welk frontend component dit gebruikt OF `N/A`
 - Kleine inline TODO's: `// TODO: beschrijving`
+
+**Belangrijke regel:** Alles komt uit de ZIP. Agent schrijft geen nieuwe engine code, alleen koppelen aan frontend.
 
 ## External Dependencies
 - **Supabase:** Used for user authentication (Supabase Auth) and as a Backend-as-a-Service (BaaS) for database functionalities.
