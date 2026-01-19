@@ -163,6 +163,29 @@ Multi-modal interaction modes for immersive roleplay training:
 - **Gespreksanalyse:** Allows uploading audio for conversation analysis, with a unified `TranscriptDialog` for displaying analyzed content and AI feedback.
 - **Public Pages:** Essential marketing and authentication pages (Landing, Pricing, About, Login, Signup, Onboarding) are maintained for user acquisition and registration.
 
+## TODO Tracking (Codebase as Source of Truth)
+Alle openstaande taken staan als expliciete TODO stubs direct in de relevante bestanden.
+
+**Script om TODO's te bekijken:**
+```bash
+./scripts/list-todos.sh
+```
+
+**Huidige TODO's (januari 2026):**
+| TODO ID | Bestand | Status |
+|---------|---------|--------|
+| HEYGEN-VIDEO-FIX | src/components/HH/TalkToHugoAI.tsx | In Progress |
+| RAG-DATABASE-FIX | server/v2/rag-service.ts | Pending |
+| RAG-CORPUS-VULLEN | server/v2/rag-service.ts | Pending |
+| ROLEPLAY-API-ENDPOINTS | server/api.ts | Pending |
+| HISTORICAL-CONTEXT-ACTIVEREN | server/v2/historical-context-service.ts | Pending |
+| DATABASE-SCHEMA-CHECK | server/db.ts | Pending |
+
+**Conventie:**
+- Hoofd-TODO's in bestand header: `TODO: UPPERCASE-SLUG`
+- Elke TODO bevat: Issue, Status, Aanpak stappen
+- Kleine inline TODO's: `// TODO: beschrijving`
+
 ## External Dependencies
 - **Supabase:** Used for user authentication (Supabase Auth) and as a Backend-as-a-Service (BaaS) for database functionalities.
 - **Tailwind CSS:** A utility-first CSS framework for styling.

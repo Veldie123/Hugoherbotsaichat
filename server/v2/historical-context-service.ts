@@ -12,6 +12,21 @@
  * - "Je scoorde vorige keer 6/10 op Impactvragen"
  * - "Vorige keer had je moeite met commitment vragen"
  * - "Hoe ging het in de praktijk sinds ons laatste gesprek?"
+ * 
+ * TODO: HISTORICAL-CONTEXT-ACTIVEREN
+ * -----------------------------------
+ * Issue: Historical context service nog niet actief in coach-engine
+ * Status: Pending
+ * 
+ * Aanpak:
+ * 1. Verifieer database tabellen: v2_sessions, technique_mastery, user_training_profile
+ * 2. Activeer getHistoricalContext() calls in coach-engine.ts
+ * 3. Inject historische context in prompt via HISTORISCHE_CONTEXT sectie
+ * 4. Test met user die meerdere sessies heeft gehad
+ * 
+ * Dependencies:
+ * - Database schema moet up-to-date zijn (zie TODO: DATABASE-SCHEMA-CHECK)
+ * - Minimaal 1 voltooide sessie nodig voor data
  */
 
 import { v2Sessions, techniqueMastery, userTrainingProfile } from '@shared/schema';

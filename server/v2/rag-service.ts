@@ -3,6 +3,36 @@
  * 
  * Provides semantic search over Hugo's training materials
  * using OpenAI embeddings and pgvector similarity search.
+ * 
+ * TODO: RAG-DATABASE-FIX
+ * ----------------------
+ * Issue: Database error "type vector does not exist"
+ * Status: Pending
+ * 
+ * Oorzaak: pgvector extensie niet geïnstalleerd in Neon database
+ * 
+ * Aanpak:
+ * 1. Run in Supabase/Neon SQL editor: CREATE EXTENSION IF NOT EXISTS vector;
+ * 2. Maak rag_documents tabel met vector kolom:
+ *    CREATE TABLE rag_documents (
+ *      id TEXT PRIMARY KEY,
+ *      doc_type TEXT,
+ *      title TEXT,
+ *      content TEXT,
+ *      technique_id TEXT,
+ *      embedding vector(1536)
+ *    );
+ * 3. Verifieer met: SELECT * FROM pg_extension WHERE extname = 'vector';
+ * 
+ * TODO: RAG-CORPUS-VULLEN
+ * -----------------------
+ * Issue: RAG corpus is leeg - geen trainingsmateriaal geïndexeerd
+ * Status: Pending
+ * 
+ * Aanpak:
+ * 1. Maak rag/corpus/ directory met trainingsmateriaal (.md/.txt files)
+ * 2. Run indexeer script: npm run rag:index
+ * 3. Verifieer: SELECT COUNT(*) FROM rag_documents;
  */
 
 import OpenAI from "openai";

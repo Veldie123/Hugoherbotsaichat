@@ -1,6 +1,23 @@
 /**
  * API Server for Hugo Engine V2 - FULL ENGINE
  * Uses complete engine with nested prompts, RAG, and validation loop
+ * 
+ * TODO: ROLEPLAY-API-ENDPOINTS
+ * ----------------------------
+ * Issue: Roleplay mode endpoints nog niet geïmplementeerd
+ * Status: Pending
+ * 
+ * Benodigde endpoints:
+ * - POST /api/v2/roleplay/start - Start roleplay sessie met klant persona
+ * - POST /api/v2/roleplay/message - Stuur bericht in roleplay mode
+ * - POST /api/v2/roleplay/end - Beëindig roleplay met debrief
+ * 
+ * Aanpak:
+ * 1. Import roleplay-engine.ts en customer_engine.ts
+ * 2. Implementeer session state machine voor ROLEPLAY mode
+ * 3. Koppel aan frontend TalkToHugoAI component
+ * 
+ * Zie: server/v2/roleplay-engine.ts voor engine logica
  */
 
 import express, { type Request, Response, NextFunction } from "express";

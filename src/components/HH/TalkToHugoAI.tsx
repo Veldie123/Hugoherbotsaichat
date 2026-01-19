@@ -1,3 +1,22 @@
+/**
+ * TODO: HEYGEN-VIDEO-FIX
+ * ----------------------
+ * Issue: MediaStream van HeyGen avatar wordt niet correct aan video element gekoppeld.
+ * Status: In Progress
+ * 
+ * Symptomen:
+ * - STREAM_READY event fires maar event.detail is leeg
+ * - avatar.mediaStream property bestaat maar video toont niet
+ * - "Spreekt" badge verschijnt maar geen audio/video output
+ * 
+ * Aanpak:
+ * 1. Check of avatar.mediaStream een valid MediaStream is na createStartAvatar()
+ * 2. Explicit play() call na metadata loaded
+ * 3. Mogelijk SDK bug - overweeg upgrade naar LiveAvatar API (nieuwere versie)
+ * 
+ * Zie ook: docs/AUDIO_INTEGRATION_GUIDE.md
+ */
+
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AppLayout } from "./AppLayout";
 import { Button } from "../ui/button";
