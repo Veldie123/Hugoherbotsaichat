@@ -43,15 +43,25 @@ import * as path from "path";
 const EMBEDDING_MODEL = "text-embedding-3-small";
 const EMBEDDING_DIMENSIONS = 1536;
 
-// Use direct OpenAI API for embeddings (Replit AI Integrations doesn't support embeddings)
-// Requires OPENAI_API_KEY secret to be set
+// Use OpenAI API for embeddings
+// First tries OPENAI_API_KEY, falls back to AI_INTEGRATIONS_OPENAI_API_KEY
 export function getOpenAIClientForEmbeddings(): OpenAI | null {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.log("[RAG] Embeddings not available (no OPENAI_API_KEY)");
-    return null;
+  // Try direct OpenAI API key first
+  const directKey = process.env.OPENAI_API_KEY;
+  if (directKey) {
+    return new OpenAI({ apiKey: directKey });
   }
-  return new OpenAI({ apiKey });
+  
+  // Fall back to Replit AI Integrations
+  const integrationKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  if (integrationKey && baseURL) {
+    console.log("[RAG] Using AI Integrations for embeddings");
+    return new OpenAI({ apiKey: integrationKey, baseURL });
+  }
+  
+  console.log("[RAG] Embeddings not available (no OPENAI_API_KEY or AI Integrations)");
+  return null;
 }
 
 // Use Replit AI Integrations for chat completions
@@ -68,7 +78,7 @@ export function getOpenAIClient(): OpenAI | null {
 
 // Check if RAG (embeddings) is available
 export function isRagAvailable(): boolean {
-  return !!process.env.OPENAI_API_KEY;
+  return !!process.env.OPENAI_API_KEY || !!(process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL);
 }
 
 export interface RagDocument {
@@ -116,7 +126,7 @@ export async function searchRag(
   } = {}
 ): Promise<RagSearchResult> {
   const startTime = Date.now();
-  const { limit = 5, threshold = 0.65, docType, technikId } = options;
+  const { limit = 5, threshold = 0.3, docType, technikId } = options;
 
   try {
     const queryEmbedding = await generateEmbedding(query);
