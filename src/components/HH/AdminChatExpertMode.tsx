@@ -955,13 +955,14 @@ export function AdminChatExpertMode({
                       <div
                         className={`p-3 rounded-lg relative ${
                           message.sender === "hugo"
-                            ? "bg-slate-800"
-                            : "bg-hh-ui-50 border border-hh-border"
+                            ? "bg-[#1E2A3B]"
+                            : "bg-white border border-slate-200"
                         }`}
                       >
-                        <p className={`text-[13px] leading-[19px] ${
-                          message.sender === "hugo" ? "text-white" : "text-slate-800"
-                        }`}>{message.text}</p>
+                        <p 
+                          className="text-[13px] leading-[19px]"
+                          style={{ color: message.sender === "hugo" ? '#FFFFFF' : '#1E293B' }}
+                        >{message.text}</p>
                         
                         {/* Tip Button - INSIDE bubble for AI messages */}
                         {message.sender === "ai" && message.debugInfo && (
@@ -974,8 +975,8 @@ export function AdminChatExpertMode({
                           </button>
                         )}
                         
-                        <div className="flex items-center justify-between gap-2 mt-2 text-[10px] opacity-70">
-                          <span>{message.timestamp.toLocaleTimeString()}</span>
+                        <div className="flex items-center justify-between gap-2 mt-2 text-[10px]">
+                          <span style={{ color: message.sender === "hugo" ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)' }}>{message.timestamp.toLocaleTimeString()}</span>
                           
                           {/* Debug Info Button - RECHTS ONDERAAN */}
                           {message.debugInfo && (
