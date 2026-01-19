@@ -1,22 +1,21 @@
 /**
- * TODO[DEBUG-INFO-UITBREIDEN]: TranscriptDialog debug info uitbreiding
- * Status: Partial (Frontend UI klaar, backend koppeling pending)
- * Issue: Debug info was hardcoded placeholder - nu dynamisch maar backend levert nog geen data
- * Bron: hugo-engine_(4).zip → debug velden komen uit coach-engine.ts response
- * Oplossing Frontend (Done):
- *   1. TranscriptDebugInfo interface toegevoegd met alle engine debug velden
- *   2. TranscriptMessage interface uitgebreid met optionele debugInfo
- *   3. Collapsible debug sectie rendert nu echte data wanneer beschikbaar
- *   4. Fallback naar "neutraal" / "Geen debug data" wanneer data ontbreekt
- * Backend koppeling (Pending):
- *   - API /api/sessions moet debug data includeren per transcript message
- *   - AdminSessions.tsx mapping moet debugInfo veld doorgeven
+ * TranscriptDialog - Admin transcript review with Golden Standard integration
+ * 
+ * Features:
+ *   - Collapsible debug info panel per message (signal, detected/expected technique, etc.)
+ *   - Edit mode for correcting AI evaluations
+ *   - Golden Standard validation buttons (✓/✗) for saving reference answers
+ *   - Integration with save-reference and flag-customer-response APIs
+ * 
  * Frontend koppeling: AdminSessions.tsx, HugoAIOverview.tsx transcript dialogs
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import { Card } from "../ui/card";
+import { Textarea } from "../ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -25,12 +24,24 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {
   ChevronRight,
   ChevronDown,
   CheckCircle2,
   AlertTriangle,
+  Pencil,
+  Check,
+  X,
+  MessageSquare,
 } from "lucide-react";
 import { getCodeBadgeColors } from "../../utils/phaseColors";
+import { getAllTechnieken } from "../../data/technieken-service";
 
 export interface TranscriptDebugInfo {
   signal?: "positief" | "neutraal" | "negatief";
@@ -70,6 +81,7 @@ export interface TranscriptMessage {
 
 export interface TranscriptSession {
   id: number;
+  sessionId?: string;
   userName?: string;
   userWorkspace?: string;
   techniqueNumber: string;
@@ -83,6 +95,14 @@ export interface TranscriptSession {
   transcript: TranscriptMessage[];
   strengths?: string[];
   improvements?: string[];
+}
+
+interface EditState {
+  lineId: string;
+  lineIndex: number;
+  signal: "positief" | "neutraal" | "negatief";
+  expectedTechnique: string;
+  detectedTechnique: string;
 }
 
 interface TranscriptDialogProps {
@@ -124,10 +144,145 @@ const getQualityBadge = (quality: string) => {
 
 export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false }: TranscriptDialogProps) {
   const [expandedDebug, setExpandedDebug] = useState<string | null>(null);
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const [validatedLines, setValidatedLines] = useState<Set<string>>(new Set());
+  const [flaggedLines, setFlaggedLines] = useState<Set<string>>(new Set());
+  const [showFeedbackInput, setShowFeedbackInput] = useState<string | null>(null);
+  const [feedbackText, setFeedbackText] = useState("");
+  
+  const allTechnieken = getAllTechnieken();
 
   const toggleDebug = (lineId: string) => {
     setExpandedDebug(expandedDebug === lineId ? null : lineId);
   };
+
+  const startEdit = (lineId: string, lineIndex: number, line: TranscriptMessage) => {
+    setEditState({
+      lineId,
+      lineIndex,
+      signal: line.debugInfo?.signal || "neutraal",
+      expectedTechnique: line.debugInfo?.expectedTechnique || session?.techniqueNumber || "",
+      detectedTechnique: line.debugInfo?.detectedTechnique || "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditState(null);
+  };
+
+  const saveAsGoldenStandard = useCallback(async (line: TranscriptMessage, lineIndex: number) => {
+    if (!session?.sessionId) {
+      toast.error("Geen sessie ID beschikbaar");
+      return;
+    }
+
+    const techniqueId = line.debugInfo?.expectedTechnique || session.techniqueNumber;
+    const detectedTechnique = line.debugInfo?.detectedTechnique;
+    const isCorrection = detectedTechnique && detectedTechnique !== techniqueId;
+
+    try {
+      const response = await fetch('/api/v2/session/save-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: session.sessionId,
+          techniqueId,
+          message: line.text,
+          context: line.debugInfo?.context?.gathered || {},
+          matchStatus: isCorrection ? 'mismatch' : 'match',
+          signal: line.debugInfo?.signal || 'neutraal',
+          detectedTechnique: isCorrection ? detectedTechnique : undefined
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to save reference');
+      
+      const lineId = `${session.id}-${lineIndex}`;
+      setValidatedLines(prev => new Set(prev).add(lineId));
+      toast.success(isCorrection ? 'Correctie opgeslagen als Golden Standard' : 'Opgeslagen als Golden Standard');
+    } catch (error) {
+      console.error('[Golden Standard] Error:', error);
+      toast.error('Opslaan mislukt');
+    }
+  }, [session]);
+
+  const flagAsIncorrect = useCallback(async (line: TranscriptMessage, lineIndex: number, expertComment: string) => {
+    if (!session?.sessionId || !expertComment.trim()) {
+      toast.error("Sessie ID en feedback zijn vereist");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/v2/session/flag-customer-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: session.sessionId,
+          turnNumber: lineIndex,
+          customerMessage: line.text,
+          customerSignal: line.debugInfo?.signal || 'neutraal',
+          currentPhase: line.debugInfo?.context?.fase || 2,
+          techniqueId: line.debugInfo?.expectedTechnique || session.techniqueNumber,
+          expertComment,
+          context: line.debugInfo?.context?.gathered || {},
+          conversationHistory: session.transcript.map(t => ({
+            role: t.speaker.includes('Coach') ? 'assistant' : 'user',
+            content: t.text
+          }))
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to flag response');
+      
+      const result = await response.json();
+      const lineId = `${session.id}-${lineIndex}`;
+      setFlaggedLines(prev => new Set(prev).add(lineId));
+      setShowFeedbackInput(null);
+      setFeedbackText("");
+      toast.success(`Feedback opgeslagen (${result.conflictsFound || 0} conflicts)`);
+    } catch (error) {
+      console.error('[Golden Standard] Error:', error);
+      toast.error('Feedback opslaan mislukt');
+    }
+  }, [session]);
+
+  const saveEdit = useCallback(async () => {
+    if (!editState || !session?.sessionId) return;
+
+    const line = session.transcript[editState.lineIndex];
+    
+    if (!line) {
+      cancelEdit();
+      return;
+    }
+
+    const isCorrection = editState.detectedTechnique && editState.detectedTechnique !== editState.expectedTechnique;
+
+    try {
+      const response = await fetch('/api/v2/session/save-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: session.sessionId,
+          techniqueId: editState.expectedTechnique,
+          message: line.text,
+          context: line.debugInfo?.context?.gathered || {},
+          matchStatus: isCorrection ? 'mismatch' : 'match',
+          signal: editState.signal,
+          detectedTechnique: isCorrection ? editState.detectedTechnique : undefined
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to save edit');
+      
+      setValidatedLines(prev => new Set(prev).add(editState.lineId));
+      toast.success('Bewerking opgeslagen');
+      cancelEdit();
+    } catch (error) {
+      console.error('[Golden Standard] Edit error:', error);
+      toast.error('Bewerking opslaan mislukt');
+    }
+  }, [editState, session]);
 
   if (!session) return null;
 
@@ -184,7 +339,7 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                         isAICoach 
                           ? "bg-cyan-50 border border-cyan-200" 
                           : "bg-fuchsia-50 border border-fuchsia-200"
-                      }`}
+                      } ${validatedLines.has(lineId) ? "ring-2 ring-green-400" : ""} ${flaggedLines.has(lineId) ? "ring-2 ring-red-400" : ""}`}
                     >
                       <div className="flex-shrink-0">
                         <Badge
@@ -198,14 +353,82 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                         </Badge>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[13px] leading-[18px] font-medium text-hh-text mb-1">
-                          {line.speaker}:
-                        </p>
-                        <p className="text-[14px] leading-[20px] text-hh-text">
-                          {line.text}
-                        </p>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-[13px] leading-[18px] font-medium text-hh-text mb-1">
+                              {line.speaker}:
+                            </p>
+                            <p className="text-[14px] leading-[20px] text-hh-text">
+                              {line.text}
+                            </p>
+                          </div>
+                          {isAdmin && (
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-7 w-7 p-0 ${validatedLines.has(lineId) ? "bg-green-100 text-green-700" : "hover:bg-green-100 hover:text-green-700"}`}
+                                onClick={() => saveAsGoldenStandard(line, index)}
+                                disabled={validatedLines.has(lineId)}
+                                title="Markeer als correct (Golden Standard)"
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-7 w-7 p-0 ${flaggedLines.has(lineId) ? "bg-red-100 text-red-700" : "hover:bg-red-100 hover:text-red-700"}`}
+                                onClick={() => setShowFeedbackInput(showFeedbackInput === lineId ? null : lineId)}
+                                disabled={flaggedLines.has(lineId)}
+                                title="Markeer als incorrect (+ feedback)"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 hover:bg-purple-100 hover:text-purple-700"
+                                onClick={() => startEdit(lineId, index, line)}
+                                title="Bewerk debug info"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    
+                    {/* Feedback input for flagging */}
+                    {showFeedbackInput === lineId && (
+                      <div className="ml-11 mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-[12px] text-red-700 mb-2 font-medium">Wat is er mis met dit antwoord?</p>
+                        <Textarea
+                          value={feedbackText}
+                          onChange={(e) => setFeedbackText(e.target.value)}
+                          placeholder="Beschrijf de fout of verbeterpunt..."
+                          className="text-[13px] bg-white border-red-200 focus:border-red-400 min-h-[60px]"
+                        />
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            size="sm"
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            onClick={() => flagAsIncorrect(line, index, feedbackText)}
+                            disabled={!feedbackText.trim()}
+                          >
+                            <MessageSquare className="w-3 h-3 mr-1" />
+                            Verstuur Feedback
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => { setShowFeedbackInput(null); setFeedbackText(""); }}
+                          >
+                            Annuleren
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Debug toggle */}
                     <div className="ml-11">
@@ -334,6 +557,90 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                             {/* Geen debug data */}
                             {!line.debugInfo && (
                               <p className="text-hh-muted italic">Geen debug data beschikbaar</p>
+                            )}
+                            
+                            {/* Edit Mode */}
+                            {isAdmin && editState?.lineId === lineId && (
+                              <div className="pt-3 mt-3 border-t-2 border-purple-300">
+                                <p className="text-[11px] text-purple-700 mb-3 font-semibold">Bewerk Debug Info</p>
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="text-[11px] text-hh-muted block mb-1">Signaal</label>
+                                    <Select
+                                      value={editState.signal}
+                                      onValueChange={(value: "positief" | "neutraal" | "negatief") => 
+                                        setEditState({...editState, signal: value})
+                                      }
+                                    >
+                                      <SelectTrigger className="h-8 text-[12px]">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="positief">Positief</SelectItem>
+                                        <SelectItem value="neutraal">Neutraal</SelectItem>
+                                        <SelectItem value="negatief">Negatief</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  
+                                  <div>
+                                    <label className="text-[11px] text-hh-muted block mb-1">Verwachte Techniek (Correct)</label>
+                                    <Select
+                                      value={editState.expectedTechnique}
+                                      onValueChange={(value: string) => setEditState({...editState, expectedTechnique: value})}
+                                    >
+                                      <SelectTrigger className="h-8 text-[12px]">
+                                        <SelectValue placeholder="Selecteer techniek" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {allTechnieken.map((tech) => (
+                                          <SelectItem key={tech.nummer} value={tech.nummer}>
+                                            {tech.nummer} - {tech.naam}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  
+                                  <div>
+                                    <label className="text-[11px] text-hh-muted block mb-1">AI Gedetecteerde Techniek (optioneel)</label>
+                                    <Select
+                                      value={editState.detectedTechnique || "none"}
+                                      onValueChange={(value: string) => setEditState({...editState, detectedTechnique: value === "none" ? "" : value})}
+                                    >
+                                      <SelectTrigger className="h-8 text-[12px]">
+                                        <SelectValue placeholder="Geen / Onbekend" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="none">Geen / Onbekend</SelectItem>
+                                        {allTechnieken.map((tech) => (
+                                          <SelectItem key={tech.nummer} value={tech.nummer}>
+                                            {tech.nummer} - {tech.naam}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  
+                                  <div className="flex gap-2 pt-2">
+                                    <Button
+                                      size="sm"
+                                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                                      onClick={saveEdit}
+                                    >
+                                      <Check className="w-3 h-3 mr-1" />
+                                      Opslaan
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={cancelEdit}
+                                    >
+                                      Annuleren
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
                             )}
                           </div>
                         </Card>
