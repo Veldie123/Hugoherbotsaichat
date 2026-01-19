@@ -1348,9 +1348,9 @@ export function AdminChatExpertMode({
                           {message.sender === "ai" && (
                             <div className="space-y-4">
                               {/* Klant Signaal */}
-                              <div className="grid grid-cols-[120px_1fr] gap-x-3 items-center text-[12px]">
+                              <div className="flex items-center gap-2 text-[12px]">
                                 <span className="text-slate-600 font-medium">Klant Signaal:</span>
-                                <Badge className={`text-[11px] w-fit ${
+                                <Badge className={`text-[11px] ${
                                   message.debugInfo.klantSignaal === "positief" 
                                     ? "bg-green-100 text-green-700 border-green-300"
                                     : message.debugInfo.klantSignaal === "negatief"
@@ -1584,16 +1584,16 @@ export function AdminChatExpertMode({
                               {/* AI Beslissingen */}
                               <div className="pt-4 border-t border-slate-200/50">
                                 <h4 className="text-[13px] font-bold text-slate-800 mb-3">AI Beslissingen</h4>
-                                <div className="space-y-2">
-                                  <div className="grid grid-cols-[120px_1fr] gap-x-3 items-center text-[12px]">
+                                <div className="flex flex-wrap gap-x-6 gap-y-2 text-[12px]">
+                                  <div className="flex items-center gap-2">
                                     <span className="text-slate-600 font-medium">EPIC Fase:</span>
-                                    <Badge variant="outline" className="text-[11px] w-fit bg-slate-100 text-slate-700 border-slate-300">
+                                    <Badge variant="outline" className="text-[11px] bg-slate-100 text-slate-700 border-slate-300">
                                       {message.debugInfo.aiDecision.epicFase}
                                     </Badge>
                                   </div>
-                                  <div className="grid grid-cols-[120px_1fr] gap-x-3 items-center text-[12px]">
+                                  <div className="flex items-center gap-2">
                                     <span className="text-slate-600 font-medium">Evaluatie:</span>
-                                    <Badge variant="outline" className={`text-[11px] w-fit ${
+                                    <Badge variant="outline" className={`text-[11px] ${
                                       (message.debugInfo.aiDecision.evaluatie as string) === "positief" || (message.debugInfo.aiDecision.evaluatie as string) === "perfect"
                                         ? "bg-green-100 text-green-700 border-green-300"
                                         : message.debugInfo.aiDecision.evaluatie === "gemist"
