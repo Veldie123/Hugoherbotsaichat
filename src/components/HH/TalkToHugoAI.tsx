@@ -955,16 +955,17 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
       
       {/* Main video area - HeyGen avatar stream or fallback */}
       <div className="absolute inset-0 flex items-center justify-center">
-        {avatarSession ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          />
-        ) : (
+        {/* Video element always rendered so ref is available for stream attachment */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className={`w-full h-full object-cover ${avatarSession ? '' : 'hidden'}`}
+        />
+        {/* Fallback avatar when no session */}
+        {!avatarSession && (
           <div 
-            className="rounded-full flex items-center justify-center"
+            className="rounded-full flex items-center justify-center absolute"
             style={{ width: '220px', height: '220px', backgroundColor: '#6B7A92' }}
           >
             {isAvatarLoading ? (
