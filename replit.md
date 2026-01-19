@@ -62,6 +62,20 @@ The Hugo V2 FULL engine is now active with advanced AI capabilities:
 - `GET /api/session/:id/turns` - Get all conversation turns/history
 - `POST /api/session/:id/message/stream` - SSE streaming message endpoint
 
+**API Endpoints (Fase 3 - Session Persistence & Lists):**
+- `GET /api/sessions` - Admin: list all sessions with score, quality, duration, transcript
+- `GET /api/user/sessions` - User: list own sessions with translated labels
+
+**Session Persistence (January 2026):**
+- V2 sessions saved to PostgreSQL `v2_sessions` table with:
+  - `id` (nanoid string), `user_id`, `technique_nummer`, `technique_name`, `phase`
+  - `context` (JSONB: collected slots), `conversation_history` (JSONB: all turns)
+  - `total_score`, `created_at`, `updated_at`
+- User context persists across sessions via `user_context` table (sector, product, klant_type)
+- New sessions auto-load previous context and pre-fill known slots
+- AdminSessions.tsx and HugoAIOverview.tsx fetch real session data from API
+- Both components have loading and error states for better UX
+
 **V2 FULL Engine Components:**
 - `server/v2/coach-engine.ts` - Full coach engine (1071 lines) with nested prompts, RAG, validation
 - `server/v2/context_engine.ts` - Slot-based progressive context gathering with BASE_SLOTS and LENS_SLOTS
