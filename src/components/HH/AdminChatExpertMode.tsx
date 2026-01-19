@@ -962,7 +962,7 @@ export function AdminChatExpertMode({
                   <div className={`max-w-[70%] ${message.sender === "hugo" ? "" : "flex gap-2"}`}>
                     {message.sender === "ai" && (
                       <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarFallback className="bg-hh-primary text-white text-[12px]">
+                        <AvatarFallback className="bg-purple-600 text-white text-[12px]">
                           AI
                         </AvatarFallback>
                       </Avatar>
@@ -1244,12 +1244,12 @@ export function AdminChatExpertMode({
                                 </button>
                                 {isDebugSectionExpanded(message.id, "persona") && (
                                   <div className="mt-2 ml-5 grid grid-cols-[120px_1fr] gap-y-1 gap-x-2 text-[12px]">
-                                    <span className="text-hh-muted">Gedragsstijl:</span>
-                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.gedragsstijl}</p>
-                                    <span className="text-hh-muted">Buying Clock:</span>
-                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.koopklok}</p>
-                                    <span className="text-hh-muted">Difficulty:</span>
-                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.moeilijkheid}</p>
+                                    <span className="text-slate-700 font-semibold">Gedragsstijl:</span>
+                                    <p className="text-slate-600">{message.debugInfo.persona.gedragsstijl}</p>
+                                    <span className="text-slate-700 font-semibold">Buying Clock:</span>
+                                    <p className="text-slate-600">{message.debugInfo.persona.koopklok}</p>
+                                    <span className="text-slate-700 font-semibold">Difficulty:</span>
+                                    <p className="text-slate-600">{message.debugInfo.persona.moeilijkheid}</p>
                                   </div>
                                 )}
                               </div>
@@ -1271,32 +1271,32 @@ export function AdminChatExpertMode({
                                   <div className="mt-2 ml-5 space-y-1 text-[12px]">
                                     {message.debugInfo.context.gathered?.sector && (
                                       <div className="flex justify-between">
-                                        <span className="text-hh-muted">Sector:</span>
-                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.sector}</p>
+                                        <span className="text-slate-700 font-semibold">Sector:</span>
+                                        <p className="text-slate-600">{message.debugInfo.context.gathered.sector}</p>
                                       </div>
                                     )}
                                     {message.debugInfo.context.gathered?.product && (
                                       <div className="flex justify-between">
-                                        <span className="text-hh-muted">Product:</span>
-                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.product}</p>
+                                        <span className="text-slate-700 font-semibold">Product:</span>
+                                        <p className="text-slate-600">{message.debugInfo.context.gathered.product}</p>
                                       </div>
                                     )}
                                     {message.debugInfo.context.gathered?.klantType && (
                                       <div className="flex justify-between">
-                                        <span className="text-hh-muted">Klant Type:</span>
-                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.klantType}</p>
+                                        <span className="text-slate-700 font-semibold">Klant Type:</span>
+                                        <p className="text-slate-600">{message.debugInfo.context.gathered.klantType}</p>
                                       </div>
                                     )}
                                     {message.debugInfo.context.gathered?.verkoopkanaal && (
                                       <div className="flex justify-between">
-                                        <span className="text-hh-muted">Verkoopkanaal:</span>
-                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.verkoopkanaal}</p>
+                                        <span className="text-slate-700 font-semibold">Verkoopkanaal:</span>
+                                        <p className="text-slate-600">{message.debugInfo.context.gathered.verkoopkanaal}</p>
                                       </div>
                                     )}
                                     {!message.debugInfo.context.gathered?.sector && 
                                      !message.debugInfo.context.gathered?.product && 
                                      !message.debugInfo.context.gathered?.klantType && (
-                                      <p className="text-hh-muted italic">Nog geen context verzameld</p>
+                                      <p className="text-slate-500 italic">Nog geen context verzameld</p>
                                     )}
                                   </div>
                                 )}
@@ -1318,28 +1318,28 @@ export function AdminChatExpertMode({
                                 {isDebugSectionExpanded(message.id, "dynamics") && (
                                   <div className="mt-2 ml-5 space-y-1 text-[12px]">
                                     <div className="flex justify-between">
-                                      <span className="text-hh-muted">Rapport:</span>
-                                      <span className="text-hh-text font-medium">
+                                      <span className="text-slate-700 font-semibold">Rapport:</span>
+                                      <span className="text-slate-600">
                                         {message.debugInfo.customerDynamics.rapport}%
-                                        <span className="text-hh-muted ml-1">
+                                        <span className="text-slate-500 ml-1">
                                           ({message.debugInfo.customerDynamics.rapport >= 60 ? "hoog" : message.debugInfo.customerDynamics.rapport >= 40 ? "midden" : "laag"})
                                         </span>
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-hh-muted">Value Tension:</span>
-                                      <span className="text-hh-text font-medium">
+                                      <span className="text-slate-700 font-semibold">Value Tension:</span>
+                                      <span className="text-slate-600">
                                         {message.debugInfo.customerDynamics.valueTension}%
-                                        <span className="text-hh-muted ml-1">
+                                        <span className="text-slate-500 ml-1">
                                           ({message.debugInfo.customerDynamics.valueTension >= 60 ? "hoog" : message.debugInfo.customerDynamics.valueTension >= 40 ? "midden" : "laag"})
                                         </span>
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-hh-muted">Commit Readiness:</span>
-                                      <span className="text-hh-text font-medium">
+                                      <span className="text-slate-700 font-semibold">Commit Readiness:</span>
+                                      <span className="text-slate-600">
                                         {message.debugInfo.customerDynamics.commitReadiness}%
-                                        <span className="text-hh-muted ml-1">
+                                        <span className="text-slate-500 ml-1">
                                           ({message.debugInfo.customerDynamics.commitReadiness >= 60 ? "hoog" : message.debugInfo.customerDynamics.commitReadiness >= 40 ? "midden" : "laag"})
                                         </span>
                                       </span>
@@ -1489,12 +1489,12 @@ export function AdminChatExpertMode({
                                 </button>
                                 {isDebugSectionExpanded(message.id, "persona") && (
                                   <div className="mt-2 ml-5 grid grid-cols-[120px_1fr] gap-y-1 gap-x-2 text-[12px]">
-                                    <span className="text-hh-muted">Gedragsstijl:</span>
-                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.gedragsstijl}</p>
-                                    <span className="text-hh-muted">Buying Clock:</span>
-                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.koopklok}</p>
-                                    <span className="text-hh-muted">Difficulty:</span>
-                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.moeilijkheid}</p>
+                                    <span className="text-slate-700 font-semibold">Gedragsstijl:</span>
+                                    <p className="text-slate-600">{message.debugInfo.persona.gedragsstijl}</p>
+                                    <span className="text-slate-700 font-semibold">Buying Clock:</span>
+                                    <p className="text-slate-600">{message.debugInfo.persona.koopklok}</p>
+                                    <span className="text-slate-700 font-semibold">Difficulty:</span>
+                                    <p className="text-slate-600">{message.debugInfo.persona.moeilijkheid}</p>
                                   </div>
                                 )}
                               </div>
@@ -1516,32 +1516,32 @@ export function AdminChatExpertMode({
                                   <div className="mt-2 ml-5 space-y-1 text-[12px]">
                                     {message.debugInfo.context.gathered?.sector && (
                                       <div className="flex justify-between">
-                                        <span className="text-hh-muted">Sector:</span>
-                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.sector}</p>
+                                        <span className="text-slate-700 font-semibold">Sector:</span>
+                                        <p className="text-slate-600">{message.debugInfo.context.gathered.sector}</p>
                                       </div>
                                     )}
                                     {message.debugInfo.context.gathered?.product && (
                                       <div className="flex justify-between">
-                                        <span className="text-hh-muted">Product:</span>
-                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.product}</p>
+                                        <span className="text-slate-700 font-semibold">Product:</span>
+                                        <p className="text-slate-600">{message.debugInfo.context.gathered.product}</p>
                                       </div>
                                     )}
                                     {message.debugInfo.context.gathered?.klantType && (
                                       <div className="flex justify-between">
-                                        <span className="text-hh-muted">Klant Type:</span>
-                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.klantType}</p>
+                                        <span className="text-slate-700 font-semibold">Klant Type:</span>
+                                        <p className="text-slate-600">{message.debugInfo.context.gathered.klantType}</p>
                                       </div>
                                     )}
                                     {message.debugInfo.context.gathered?.verkoopkanaal && (
                                       <div className="flex justify-between">
-                                        <span className="text-hh-muted">Verkoopkanaal:</span>
-                                        <p className="text-hh-text font-medium">{message.debugInfo.context.gathered.verkoopkanaal}</p>
+                                        <span className="text-slate-700 font-semibold">Verkoopkanaal:</span>
+                                        <p className="text-slate-600">{message.debugInfo.context.gathered.verkoopkanaal}</p>
                                       </div>
                                     )}
                                     {!message.debugInfo.context.gathered?.sector && 
                                      !message.debugInfo.context.gathered?.product && 
                                      !message.debugInfo.context.gathered?.klantType && (
-                                      <p className="text-hh-muted italic">Nog geen context verzameld</p>
+                                      <p className="text-slate-500 italic">Nog geen context verzameld</p>
                                     )}
                                   </div>
                                 )}
@@ -1563,28 +1563,28 @@ export function AdminChatExpertMode({
                                 {isDebugSectionExpanded(message.id, "dynamics") && (
                                   <div className="mt-2 ml-5 space-y-1 text-[12px]">
                                     <div className="flex justify-between">
-                                      <span className="text-hh-muted">Rapport:</span>
-                                      <span className="text-hh-text font-medium">
+                                      <span className="text-slate-700 font-semibold">Rapport:</span>
+                                      <span className="text-slate-600">
                                         {message.debugInfo.customerDynamics.rapport}%
-                                        <span className="text-hh-muted ml-1">
+                                        <span className="text-slate-500 ml-1">
                                           ({message.debugInfo.customerDynamics.rapport >= 60 ? "hoog" : message.debugInfo.customerDynamics.rapport >= 40 ? "midden" : "laag"})
                                         </span>
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-hh-muted">Value Tension:</span>
-                                      <span className="text-hh-text font-medium">
+                                      <span className="text-slate-700 font-semibold">Value Tension:</span>
+                                      <span className="text-slate-600">
                                         {message.debugInfo.customerDynamics.valueTension}%
-                                        <span className="text-hh-muted ml-1">
+                                        <span className="text-slate-500 ml-1">
                                           ({message.debugInfo.customerDynamics.valueTension >= 60 ? "hoog" : message.debugInfo.customerDynamics.valueTension >= 40 ? "midden" : "laag"})
                                         </span>
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-hh-muted">Commit Readiness:</span>
-                                      <span className="text-hh-text font-medium">
+                                      <span className="text-slate-700 font-semibold">Commit Readiness:</span>
+                                      <span className="text-slate-600">
                                         {message.debugInfo.customerDynamics.commitReadiness}%
-                                        <span className="text-hh-muted ml-1">
+                                        <span className="text-slate-500 ml-1">
                                           ({message.debugInfo.customerDynamics.commitReadiness >= 60 ? "hoog" : message.debugInfo.customerDynamics.commitReadiness >= 40 ? "midden" : "laag"})
                                         </span>
                                       </span>
