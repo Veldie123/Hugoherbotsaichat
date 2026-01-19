@@ -184,14 +184,24 @@ export function TalkToHugoAI({
       console.log("[HeyGen] Session data:", sessionData);
       console.log("[HeyGen] Avatar after start:", Object.keys(avatar));
       
-      // Try to get stream from avatar instance if not already set
-      const avatarStream = (avatar as any).mediaStream || (avatar as any).stream;
-      if (videoRef.current && avatarStream instanceof MediaStream) {
-        console.log("[HeyGen] Got MediaStream from avatar instance");
+      // Get mediaStream from avatar instance - this is how HeyGen SDK exposes the stream
+      const avatarStream = (avatar as any).mediaStream;
+      console.log("[HeyGen] Avatar mediaStream:", avatarStream);
+      console.log("[HeyGen] Is MediaStream?", avatarStream instanceof MediaStream);
+      
+      if (videoRef.current && avatarStream) {
+        console.log("[HeyGen] Attaching mediaStream to video element");
         videoRef.current.srcObject = avatarStream;
         videoRef.current.onloadedmetadata = () => {
+          console.log("[HeyGen] Video metadata loaded, calling play()");
           videoRef.current?.play().catch(e => console.error("[HeyGen] Play error:", e));
         };
+      } else {
+        console.error("[HeyGen] Failed to get mediaStream from avatar:", { 
+          hasVideoRef: !!videoRef.current, 
+          hasStream: !!avatarStream,
+          avatarKeys: Object.keys(avatar)
+        });
       }
       
       setAvatarSession(avatar);
