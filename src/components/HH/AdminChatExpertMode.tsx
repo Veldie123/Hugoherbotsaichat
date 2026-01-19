@@ -1355,7 +1355,7 @@ export function AdminChatExpertMode({
                             <div className="space-y-4">
                               {/* Klant Signaal */}
                               <div>
-                                <p className="text-[11px] text-hh-muted mb-1.5">Klant Signaal:</p>
+                                <p className="text-[12px] text-slate-700 font-semibold mb-1.5">Klant Signaal:</p>
                                 <Badge className={`text-[11px] ${
                                   message.debugInfo.klantSignaal === "positief" 
                                     ? "bg-green-100 text-green-700 border-green-300"
@@ -1372,8 +1372,8 @@ export function AdminChatExpertMode({
                                 <div>
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 pb-3 border-b border-purple-200">
-                                      <p className="text-[12px] text-hh-muted mb-1">Verwachte techniek:</p>
-                                      <p className="text-hh-text font-medium text-[13px]">
+                                      <p className="text-[12px] text-slate-700 font-semibold mb-1">Verwachte techniek:</p>
+                                      <p className="text-slate-600 text-[13px]">
                                         {message.debugInfo.expectedTechnique}
                                       </p>
                                     </div>
@@ -1595,14 +1595,14 @@ export function AdminChatExpertMode({
 
                               {/* AI Beslissingen */}
                               <div className="pt-4 border-t border-slate-200/50">
-                                <h4 className="text-[11px] font-semibold text-hh-text mb-3">AI Beslissingen</h4>
+                                <h4 className="text-[12px] font-bold text-slate-800 mb-3">AI Beslissingen</h4>
                                 <div className="space-y-2 text-[12px]">
                                   <div className="flex justify-between">
-                                    <span className="text-hh-muted">EPIC Fase:</span>
-                                    <p className="text-hh-text font-medium">{message.debugInfo.aiDecision.epicFase}</p>
+                                    <span className="text-slate-700 font-semibold">EPIC Fase:</span>
+                                    <p className="text-slate-600">{message.debugInfo.aiDecision.epicFase}</p>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-hh-muted">Evaluatie:</span>
+                                    <span className="text-slate-700 font-semibold">Evaluatie:</span>
                                     <Badge variant="outline" className={`text-[10px] ${
                                       (message.debugInfo.aiDecision.evaluatie as string) === "positief" || (message.debugInfo.aiDecision.evaluatie as string) === "perfect"
                                         ? "bg-green-100 text-green-700 border-green-300"

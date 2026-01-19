@@ -79,21 +79,28 @@ export function buildDebugInfoFromResponse(
 ) {
   const persona = apiResponse?.debug?.persona || {};
   const dynamics = apiResponse?.debug?.dynamics || apiResponse?.debug?.customerDynamics;
-  const contextData = apiResponse?.contextData || apiResponse?.debug?.contextData || {};
+  const contextData = apiResponse?.contextData || apiResponse?.debug?.contextData || apiResponse?.debug?.contextState?.gathered || {};
+  const phase = apiResponse?.debug?.phase || apiResponse?.phase || "CONTEXT_GATHERING";
+  
+  // During context gathering, show "Wordt bepaald" for buying clock
+  const isContextGathering = phase === "CONTEXT_GATHERING" || !persona.buying_clock_stage;
+  const buyingClockDisplay = isContextGathering 
+    ? "Wordt bepaald..." 
+    : translate(buyingClockToDisplay, persona.buying_clock_stage || persona.koopklok, "Onbekend");
   
   return {
     persona: {
       gedragsstijl: translate(behaviorStyleToDisplay, persona.behavior_style, "Analytisch"),
-      koopklok: translate(buyingClockToDisplay, persona.buying_clock_stage || persona.koopklok, "Onbekend"),
+      koopklok: buyingClockDisplay,
       moeilijkheid: translate(difficultyToDisplay, persona.difficulty_level || fallbackDifficulty)
     },
     customerDynamics: dynamics ? {
       rapport: typeof dynamics.rapport === 'number' ? Math.round(dynamics.rapport <= 1 ? dynamics.rapport * 100 : dynamics.rapport) : 50,
       valueTension: typeof dynamics.valueTension === 'number' ? Math.round(dynamics.valueTension <= 1 ? dynamics.valueTension * 100 : dynamics.valueTension) : 50,
       commitReadiness: typeof dynamics.commitReadiness === 'number' ? Math.round(dynamics.commitReadiness <= 1 ? dynamics.commitReadiness * 100 : dynamics.commitReadiness) : 50
-    } : null,
+    } : { rapport: 50, valueTension: 50, commitReadiness: 50 },
     context: {
-      fase: apiResponse?.debug?.context?.fase || apiResponse?.debug?.phase || 1,
+      fase: apiResponse?.debug?.context?.fase || parseInt(phase) || 1,
       gathered: {
         sector: contextData.sector || null,
         product: contextData.product || null,
