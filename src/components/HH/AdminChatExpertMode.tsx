@@ -663,7 +663,7 @@ export function AdminChatExpertMode({
       <div className="flex h-[calc(100vh-4rem)]">
         {/* Left Sidebar - EPIC Techniques (HIDDEN in Expert mode) */}
         {difficultyLevel !== "onbewuste_kunde" && (
-          <div className="w-[320px] flex-shrink-0 overflow-y-auto h-full">
+          <div className="w-[280px] flex-shrink-0 overflow-y-auto h-full">
             <EPICSidebar
               fasesAccordionOpen={fasesAccordionOpen}
               setFasesAccordionOpen={setFasesAccordionOpen}
@@ -1585,25 +1585,21 @@ export function AdminChatExpertMode({
                               {/* AI Beslissingen */}
                               <div className="pt-4 border-t border-slate-200/50">
                                 <h4 className="text-[13px] font-bold text-slate-800 mb-3">AI Beslissingen</h4>
-                                <div className="flex flex-wrap gap-x-6 gap-y-2 text-[12px]">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-slate-600 font-medium">EPIC Fase:</span>
-                                    <Badge variant="outline" className="text-[11px] bg-slate-100 text-slate-700 border-slate-300">
-                                      {message.debugInfo.aiDecision.epicFase}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-slate-600 font-medium">Evaluatie:</span>
-                                    <Badge variant="outline" className={`text-[11px] ${
-                                      (message.debugInfo.aiDecision.evaluatie as string) === "positief" || (message.debugInfo.aiDecision.evaluatie as string) === "perfect"
-                                        ? "bg-green-100 text-green-700 border-green-300"
-                                        : message.debugInfo.aiDecision.evaluatie === "gemist"
-                                        ? "bg-red-100 text-red-700 border-red-300"
-                                        : "bg-gray-100 text-gray-700 border-gray-300"
-                                    }`}>
-                                      {message.debugInfo.aiDecision.evaluatie}
-                                    </Badge>
-                                  </div>
+                                <div className="grid grid-cols-[100px_1fr] gap-y-2 gap-x-2 text-[12px]">
+                                  <span className="text-slate-600 font-medium">EPIC Fase:</span>
+                                  <Badge variant="outline" className="text-[11px] bg-slate-100 text-slate-700 border-slate-300 w-fit">
+                                    {message.debugInfo.aiDecision.epicFase}
+                                  </Badge>
+                                  <span className="text-slate-600 font-medium">Evaluatie:</span>
+                                  <Badge variant="outline" className={`text-[11px] w-fit ${
+                                    (message.debugInfo.aiDecision.evaluatie as string) === "positief" || (message.debugInfo.aiDecision.evaluatie as string) === "perfect"
+                                      ? "bg-green-100 text-green-700 border-green-300"
+                                      : message.debugInfo.aiDecision.evaluatie === "gemist"
+                                      ? "bg-red-100 text-red-700 border-red-300"
+                                      : "bg-gray-100 text-gray-700 border-gray-300"
+                                  }`}>
+                                    {message.debugInfo.aiDecision.evaluatie}
+                                  </Badge>
                                 </div>
                               </div>
                               
@@ -1754,39 +1750,30 @@ export function AdminChatExpertMode({
             )}
             
             <div className="flex gap-2 items-center">
-              <div className="flex-1 min-w-0 relative">
-                <Input
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && hasActiveSession && !isLoading && handleSendMessage()}
-                  placeholder={
-                    hasActiveSession 
-                      ? (isLoading ? "Hugo denkt na..." : "Type je antwoord als verkoper...")
-                      : "Selecteer eerst een techniek..."
-                  }
-                  className="pr-12"
-                  disabled={!hasActiveSession || isLoading}
-                />
-                {/* Dictation button */}
-                <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                  title="Dicteer"
-                  disabled={!hasActiveSession || isLoading}
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-              </div>
+              <Input
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && hasActiveSession && !isLoading && handleSendMessage()}
+                placeholder={
+                  hasActiveSession 
+                    ? (isLoading ? "Hugo denkt na..." : "Type je antwoord als verkoper...")
+                    : "Selecteer eerst een techniek..."
+                }
+                className="flex-1 min-w-0"
+                disabled={!hasActiveSession || isLoading}
+              />
               <Button 
                 onClick={handleSendMessage} 
-                className="gap-2 bg-slate-800 hover:bg-slate-900 shrink-0"
+                size="icon"
+                className="flex-shrink-0 bg-[#4F7396] hover:bg-[#4F7396]/90 text-white"
                 disabled={!hasActiveSession || !inputText.trim() || isLoading}
+                title="Verzend"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                {isLoading ? "Bezig..." : "Verzend"}
               </Button>
             </div>
           </div>
