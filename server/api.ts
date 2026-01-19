@@ -29,6 +29,8 @@ import {
 } from "./v2/context_engine";
 
 import { getTechnique } from "./ssot-loader";
+import { AccessToken } from "livekit-server-sdk";
+import { setupScribeWebSocket } from "./elevenlabs-stt";
 
 const app = express();
 
@@ -869,46 +871,49 @@ app.post("/api/heygen/token", async (req, res) => {
 });
 
 // ===========================================
-// ELEVENLABS SIGNED URL (secure session token)
+// LIVEKIT TOKEN ENDPOINT (for voice sessions)
 // ===========================================
-app.post("/api/elevenlabs/signed-url", async (req, res) => {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  const agentId = process.env.ELEVENLABS_AGENT_ID;
-  
-  if (!apiKey) {
-    return res.status(500).json({ error: "ELEVENLABS_API_KEY not configured" });
-  }
-  
-  if (!agentId) {
-    return res.status(500).json({ 
-      error: "ELEVENLABS_AGENT_ID not configured",
-      message: "Create a conversational AI agent at elevenlabs.io and set ELEVENLABS_AGENT_ID"
-    });
-  }
-  
+app.post("/api/livekit/token", async (req, res) => {
   try {
-    // Get signed URL from ElevenLabs (short-lived session token)
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`,
-      {
-        method: "GET",
-        headers: {
-          "xi-api-key": apiKey
-        }
-      }
-    );
+    const { techniqueId } = req.body;
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[API] ElevenLabs signed URL error:", errorText);
-      return res.status(response.status).json({ error: "Failed to get ElevenLabs signed URL" });
+    const livekitUrl = process.env.LIVEKIT_URL;
+    const apiKey = process.env.LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET;
+    
+    if (!livekitUrl || !apiKey || !apiSecret) {
+      return res.status(500).json({ 
+        error: "LiveKit not configured",
+        message: "Set LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET"
+      });
     }
     
-    const data = await response.json();
-    console.log("[API] ElevenLabs signed URL created successfully");
-    res.json({ signedUrl: data.signed_url });
+    const roomName = `hugo-${techniqueId || 'general'}-${Date.now()}`;
+    const identity = `user-${Date.now()}`;
+    
+    const token = new AccessToken(apiKey, apiSecret, {
+      identity,
+      name: 'Trainee'
+    });
+    
+    token.addGrant({
+      room: roomName,
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true
+    });
+    
+    const jwt = await token.toJwt();
+    
+    console.log(`[API] LiveKit token created for room: ${roomName}`);
+    res.json({
+      token: jwt,
+      url: livekitUrl,
+      roomName,
+      identity
+    });
   } catch (error: any) {
-    console.error("[API] ElevenLabs error:", error.message);
+    console.error("[API] LiveKit token error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -926,7 +931,7 @@ app.get("/api/health", (req, res) => {
       "validation-loop",
       "hugo-persona-ssot",
       "detector-patterns",
-      "elevenlabs-audio",
+      "livekit-audio",
       "heygen-video"
     ]
   });
@@ -943,9 +948,12 @@ const PORT = parseInt(process.env.API_PORT || "3001", 10);
 
 const server = createServer(app);
 
+// Setup ElevenLabs Scribe WebSocket for STT
+setupScribeWebSocket(server);
+
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`[API] Hugo Engine V2 FULL API running on port ${PORT}`);
-  console.log(`[API] Features: nested-prompts, rag-grounding, validation-loop`);
+  console.log(`[API] Features: nested-prompts, rag-grounding, validation-loop, livekit-audio`);
 });
 
 export { app, server };

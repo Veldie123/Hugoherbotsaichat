@@ -132,7 +132,7 @@ export function setupScribeWebSocket(server: Server) {
             }
           } catch {
             // Not valid JSON, treat as binary
-            const base64Audio = Buffer.from(data as Buffer).toString("base64");
+            const base64Audio = Buffer.from(data as unknown as Buffer).toString("base64");
             elevenLabsWs.send(JSON.stringify({
               message_type: "input_audio_chunk",
               audio_base_64: base64Audio,

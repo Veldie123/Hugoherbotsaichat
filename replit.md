@@ -116,12 +116,21 @@ The difficulty selection now uses a 4-level competence model based on learning p
 **Fase 3 Audio/Video Integration (January 2026):**
 Multi-modal interaction modes for immersive roleplay training:
 
-*Audio Mode (ElevenLabs):*
-- **SDK:** `@elevenlabs/react` - useConversation hook for bidirectional audio
-- **Backend:** `POST /api/elevenlabs/signed-url` - Generates secure session tokens (never exposes raw API key)
-- **Session Flow:** Request mic permission → Get signed URL from backend → Start conversation session
-- **UI:** Full-screen call interface with waveform visualization, mute toggle, connection status
-- **Requirement:** Needs `ELEVENLABS_AGENT_ID` environment variable (create agent in ElevenLabs dashboard)
+*Audio Mode (LiveKit + Deepgram + ElevenLabs):*
+- **Architecture:** LiveKit Cloud (WebRTC transport) + Deepgram Nova 3 (STT, Nederlands) + ElevenLabs (TTS only)
+- **Backend Endpoints:**
+  - `POST /api/livekit/token` - Generates LiveKit room token for voice sessions
+  - `WebSocket /ws/scribe` - ElevenLabs Scribe STT proxy (server-side, API key never exposed)
+- **LiveKit Agent:** `server/livekit-agent.ts` - Handles voice sessions, routes to V2 Engine for conversation logic
+- **STT Service:** `server/elevenlabs-stt.ts` - WebSocket proxy for ElevenLabs Scribe realtime STT
+- **Session Flow:** 
+  1. Frontend requests token from `/api/livekit/token`
+  2. Frontend connects to LiveKit room with token
+  3. LiveKit dispatches job to agent
+  4. Agent starts V2 session (conversation logic)
+  5. Deepgram transcribes user speech → V2 Engine → ElevenLabs TTS
+- **ElevenLabs TTS Voice:** `wqDY19Brqhu7UCoLadPh` (Dutch male)
+- **Packages:** `livekit-client`, `@livekit/components-react`, `livekit-server-sdk`, `@livekit/agents`, `@livekit/rtc-node`
 
 *Video Mode (HeyGen):*
 - **SDK:** `@heygen/streaming-avatar` - StreamingAvatar class for WebRTC video
@@ -137,9 +146,11 @@ Multi-modal interaction modes for immersive roleplay training:
 - Mode switch triggers initialization of respective SDK session
 
 *Required Secrets:*
+- `LIVEKIT_URL` - LiveKit Cloud WebRTC server URL
+- `LIVEKIT_API_KEY` - LiveKit API authentication
+- `LIVEKIT_API_SECRET` - LiveKit token signing secret
+- `ELEVENLABS_API_KEY` - ElevenLabs API key for STT + TTS
 - `HEYGEN_API_KEY` - HeyGen API key for avatar streaming
-- `ELEVENLABS_API_KEY` - ElevenLabs API key for audio
-- `ELEVENLABS_AGENT_ID` - ElevenLabs Conversational AI agent ID (optional, needed for audio mode)
 
 **Workflow:**
 - `npm run dev:full` starts both servers concurrently via `concurrently`
