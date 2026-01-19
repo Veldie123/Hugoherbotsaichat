@@ -74,6 +74,8 @@ import {
   type ReferenceAnswer
 } from "./v2/reference-answers";
 
+import { indexCorpus, getDocumentCount } from "./v2/rag-service";
+
 const app = express();
 
 app.use(express.json({ limit: "10mb" }));
@@ -1676,6 +1678,33 @@ app.get("/api/v2/golden-standard/all", (req, res) => {
     });
   } catch (error: any) {
     console.error("[golden-standard/all] Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/rag/index - Index the RAG corpus (admin only)
+app.post("/api/v2/rag/index", async (req, res) => {
+  try {
+    console.log("[RAG] Starting corpus indexing...");
+    const result = await indexCorpus();
+    console.log("[RAG] Indexing complete:", result);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[RAG] Index error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/rag/status - Get RAG corpus status
+app.get("/api/v2/rag/status", async (req, res) => {
+  try {
+    const count = await getDocumentCount();
+    res.json({ 
+      documentCount: count,
+      status: count > 0 ? "indexed" : "empty"
+    });
+  } catch (error: any) {
+    console.error("[RAG] Status error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

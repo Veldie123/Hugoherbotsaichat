@@ -87,7 +87,7 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
 | WITTE-TEKST-FIX | src/components/HH/AdminChatExpertMode.tsx | Done (text-slate-800 toegevoegd) |
 | HEYGEN-LIVEAVATAR | src/components/HH/LiveAvatarComponent.tsx | Done |
 | RAG-DATABASE-FIX | server/v2/rag-service.ts | Done |
-| RAG-CORPUS-VULLEN | server/v2/rag-service.ts | Done |
+| RAG-CORPUS-VULLEN | server/v2/rag-service.ts | Done (559 documenten geïndexeerd) |
 | ROLEPLAY-API-ENDPOINTS | server/api.ts | Done |
 | HISTORICAL-CONTEXT-ACTIVEREN | server/v2/historical-context-service.ts | Done |
 | DATABASE-SCHEMA-CHECK | server/db.ts | Done
