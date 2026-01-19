@@ -15,7 +15,35 @@ export interface StartSessionRequest {
 export interface StartSessionResponse {
   sessionId: string;
   phase: string;
-  initialMessage: string;
+  message: string;
+  initialMessage?: string; // Alias for backwards compatibility
+  type?: string;
+  signal?: string;
+  coachMode?: boolean;
+  ragDocuments?: any[];
+  contextLoaded?: boolean;
+  debug?: {
+    persona?: any;
+    attitude?: string | null;
+    signal?: string | null;
+    context?: {
+      sector?: string;
+      product?: string;
+      klant_type?: string;
+      isComplete?: boolean;
+      turnNumber?: number;
+      phase?: string;
+      techniqueId?: string;
+    };
+    attitudeConfig?: any;
+    expectedMoves?: string[];
+    promptUsed?: string;
+    promptsUsed?: {
+      systemPrompt?: string;
+      userPrompt?: string;
+    };
+  };
+  state?: any;
 }
 
 export interface SendMessageRequest {

@@ -475,7 +475,7 @@ export function TalkToHugoAI({
       const aiMessage: Message = {
         id: Date.now().toString(),
         sender: "ai",
-        text: session.initialMessage,
+        text: session.message || session.initialMessage || "",
         timestamp: new Date(),
       };
       setMessages([aiMessage]);

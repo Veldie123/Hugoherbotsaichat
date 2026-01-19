@@ -501,7 +501,7 @@ export function AdminChatExpertMode({
       const aiMessage: Message = {
         id: Date.now().toString(),
         sender: "ai",
-        text: session.initialMessage,
+        text: session.message || session.initialMessage || "",
         timestamp: new Date(),
         debugInfo: buildDebugInfo(parseInt(technique.fase) || currentPhase, session)
       };
