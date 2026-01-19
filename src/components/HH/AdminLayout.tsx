@@ -216,7 +216,9 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     <span className="text-[16px] leading-[24px] font-normal">
-                      {item.label}
+                      {item.label === "Talk to Hugo AI" ? (
+                        <>Talk to Hugo <sup className="text-[11px]">AI</sup></>
+                      ) : item.label}
                     </span>
                   </button>
                 );
@@ -307,7 +309,11 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
                 {!collapsed && (
-                  <span className="text-[14px] leading-[20px]">{item.label}</span>
+                  <span className="text-[14px] leading-[20px]">
+                    {item.label === "Talk to Hugo AI" ? (
+                      <>Talk to Hugo <sup className="text-[10px]">AI</sup></>
+                    ) : item.label}
+                  </span>
                 )}
               </button>
             );
@@ -332,7 +338,11 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
                 {!collapsed && (
-                  <span className="text-[14px] leading-[20px]">{item.label}</span>
+                  <span className="text-[14px] leading-[20px]">
+                    {item.label === "Talk to Hugo AI" ? (
+                      <>Talk to Hugo <sup className="text-[10px]">AI</sup></>
+                    ) : item.label}
+                  </span>
                 )}
               </button>
             );

@@ -637,13 +637,13 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                                         setEditState({...editState, signal: value})
                                       }
                                     >
-                                      <SelectTrigger className="h-8 text-[12px]">
+                                      <SelectTrigger className="h-8 text-[12px] bg-white border-slate-300 text-slate-800 cursor-pointer hover:border-purple-400">
                                         <SelectValue />
                                       </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="positief">Positief</SelectItem>
-                                        <SelectItem value="neutraal">Neutraal</SelectItem>
-                                        <SelectItem value="negatief">Negatief</SelectItem>
+                                      <SelectContent className="bg-white border-slate-300">
+                                        <SelectItem value="positief" className="cursor-pointer">Positief</SelectItem>
+                                        <SelectItem value="neutraal" className="cursor-pointer">Neutraal</SelectItem>
+                                        <SelectItem value="negatief" className="cursor-pointer">Negatief</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -654,12 +654,12 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                                       value={editState.expectedTechnique}
                                       onValueChange={(value: string) => setEditState({...editState, expectedTechnique: value})}
                                     >
-                                      <SelectTrigger className="h-8 text-[12px]">
+                                      <SelectTrigger className="h-8 text-[12px] bg-white border-slate-300 text-slate-800 cursor-pointer hover:border-purple-400">
                                         <SelectValue placeholder="Selecteer techniek" />
                                       </SelectTrigger>
-                                      <SelectContent>
+                                      <SelectContent className="bg-white border-slate-300 max-h-[300px]">
                                         {allTechnieken.map((tech) => (
-                                          <SelectItem key={tech.nummer} value={tech.nummer}>
+                                          <SelectItem key={tech.nummer} value={tech.nummer} className="cursor-pointer">
                                             {tech.nummer} - {tech.naam}
                                           </SelectItem>
                                         ))}
@@ -673,13 +673,13 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                                       value={editState.detectedTechnique || "none"}
                                       onValueChange={(value: string) => setEditState({...editState, detectedTechnique: value === "none" ? "" : value})}
                                     >
-                                      <SelectTrigger className="h-8 text-[12px]">
+                                      <SelectTrigger className="h-8 text-[12px] bg-white border-slate-300 text-slate-800 cursor-pointer hover:border-purple-400">
                                         <SelectValue placeholder="Geen / Onbekend" />
                                       </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="none">Geen / Onbekend</SelectItem>
+                                      <SelectContent className="bg-white border-slate-300 max-h-[300px]">
+                                        <SelectItem value="none" className="cursor-pointer">Geen / Onbekend</SelectItem>
                                         {allTechnieken.map((tech) => (
-                                          <SelectItem key={tech.nummer} value={tech.nummer}>
+                                          <SelectItem key={tech.nummer} value={tech.nummer} className="cursor-pointer">
                                             {tech.nummer} - {tech.naam}
                                           </SelectItem>
                                         ))}

@@ -68,6 +68,15 @@ export interface SendMessageResponse {
     evaluation?: string;
     contextComplete?: boolean;
     gatheredFields?: string[];
+    persona?: any;
+    context?: any;
+    customerDynamics?: any;
+    aiDecision?: any;
+    ragDocuments?: any[];
+  };
+  promptsUsed?: {
+    systemPrompt?: string;
+    userPrompt?: string;
   };
 }
 
@@ -124,13 +133,14 @@ class HugoApiService {
       throw new Error("No active session. Call startSession first.");
     }
 
-    const response = await fetch(`${API_BASE}/v2/message`, {
+    const response = await fetch(`${API_BASE}/v2/session/message`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sessionId: this.currentSessionId,
-        content,
-        isExpert,
+        message: content,
+        debug: true,
+        expertMode: isExpert,
       }),
     });
 

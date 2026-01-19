@@ -149,7 +149,9 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   {!collapsed && (
                     <span className="text-[14px] leading-[20px] font-light whitespace-nowrap">
-                      {item.label}
+                      {item.label === "Talk to Hugo AI" ? (
+                        <>Talk to Hugo <sup className="text-[10px]">AI</sup></>
+                      ) : item.label}
                     </span>
                   )}
                 </button>
