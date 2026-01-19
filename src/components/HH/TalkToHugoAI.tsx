@@ -1045,25 +1045,27 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         <div className="w-2/3 flex-1 flex flex-col bg-white overflow-hidden">
           {/* Clean header - title left, niveau + mode toggle right */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-hh-border bg-white">
-            {/* Left: Title + Timer */}
-            <div className="flex items-center gap-4">
-              <h2 className="text-[20px] leading-[28px] text-hh-text font-semibold">
-                Hugo AI Coach
-              </h2>
+            {/* Left: Title + Technique info (hide clock in audio/video mode) */}
+            <div className="flex items-center gap-3 min-w-0">
+              <h2 className="text-[18px] text-hh-text font-semibold whitespace-nowrap">Hugo AI</h2>
               {selectedTechnique && (
                 <>
-                  <div className="h-5 w-px bg-hh-border" />
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="rounded-full bg-hh-ink/10 text-hh-ink border-hh-ink/20 font-mono text-[12px] px-2.5 py-0.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Badge variant="outline" className="shrink-0 rounded-full bg-hh-ink/10 text-hh-ink border-hh-ink/20 font-mono text-[11px] px-2 py-0.5">
                       {selectedTechnique}
                     </Badge>
-                    <span className="text-[14px] text-hh-text">{selectedTechniqueName}</span>
+                    <span className="text-[13px] text-hh-text truncate max-w-[150px]">{selectedTechniqueName}</span>
                   </div>
-                  <div className="h-5 w-px bg-hh-border" />
-                  <div className="flex items-center gap-1.5 text-[14px] text-hh-muted">
-                    <Clock className="w-4 h-4 text-[#4F7396]" />
-                    <span className="font-mono">{formatTime(sessionTimer)}</span>
-                  </div>
+                  {/* Only show clock in chat mode - audio/video have their own timer */}
+                  {chatMode === "chat" && (
+                    <>
+                      <div className="h-4 w-px bg-hh-border shrink-0" />
+                      <div className="flex items-center gap-1 text-[13px] text-hh-muted shrink-0">
+                        <Clock className="w-3.5 h-3.5 text-[#4F7396]" />
+                        <span className="font-mono">{formatTime(sessionTimer)}</span>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -1119,8 +1121,8 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                 </button>
               </div>
               
-              {/* Stop button when technique active */}
-              {selectedTechnique && (
+              {/* Stop button when technique active - hide in audio/video mode (red phone handles it) */}
+              {selectedTechnique && chatMode === "chat" && (
                 <button
                   onClick={handleStopRoleplay}
                   className="h-8 px-3 rounded-md border border-hh-border bg-white hover:bg-hh-ui-50 transition-colors flex items-center gap-1.5"
