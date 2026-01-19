@@ -201,6 +201,7 @@ export function TalkToHugoAI({
       const sessionData = await avatar.createStartAvatar({
         quality: AvatarQuality.Medium,
         avatarName: avatarName,
+        language: "nl",
       });
       
       console.log("[HeyGen] Session data:", sessionData);
