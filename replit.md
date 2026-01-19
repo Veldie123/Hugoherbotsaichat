@@ -134,11 +134,14 @@ Multi-modal interaction modes for immersive roleplay training:
 
 *Video Mode (HeyGen):*
 - **SDK:** `@heygen/streaming-avatar` - StreamingAvatar class for WebRTC video
-- **Backend:** `POST /api/heygen/token` - Creates short-lived session tokens from HeyGen API
-- **Avatar:** Uses `monica_public_3` (public HeyGen avatar) with AvatarQuality.Medium
+- **Backend Endpoints:**
+  - `POST /api/heygen/token` - Creates streaming avatar token, returns `{ token, avatarId }`
+  - `POST /api/liveavatar/session` - Alternative LiveAvatar API endpoint
+- **Avatar:** Uses custom avatar from `Heygen_streaming_interactive_avatar_ID` env var, fallback to `Shawn_Therapist_public`
 - **Events:** AVATAR_START_TALKING, AVATAR_STOP_TALKING, STREAM_READY, STREAM_DISCONNECTED
-- **Speaking:** AI responses automatically trigger avatar speech (max 500 chars per utterance)
+- **Speaking:** AI responses automatically trigger avatar speech via `avatarSession.speak()`
 - **Cleanup:** Proper MediaStream track cleanup on mode switch/unmount
+- **Required Env Vars:** `API_Heygen_streaming_interactive_avatar_ID`, `Heygen_streaming_interactive_avatar_ID`, `HEYGEN_API_KEY`
 
 *Chat Mode Switcher:*
 - Located in header with icons: MessageCircle (chat), Mic (audio), Video (video)

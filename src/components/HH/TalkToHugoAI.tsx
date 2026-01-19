@@ -126,13 +126,16 @@ export function TalkToHugoAI({
     setAvatarError(null);
     
     try {
-      // Fetch token from backend
+      // Fetch token and avatarId from backend
       const tokenResponse = await fetch("/api/heygen/token", { method: "POST" });
       if (!tokenResponse.ok) {
-        throw new Error("Kon HeyGen token niet ophalen");
+        const errorData = await tokenResponse.json().catch(() => ({}));
+        throw new Error(errorData.details || "Kon HeyGen token niet ophalen");
       }
-      const { token } = await tokenResponse.json();
+      const { token, avatarId } = await tokenResponse.json();
       setHeygenToken(token);
+      
+      console.log("[HeyGen] Token received, avatarId:", avatarId || "not configured");
       
       // Create avatar instance
       const avatar = new StreamingAvatar({ token });
@@ -158,14 +161,17 @@ export function TalkToHugoAI({
         }
       });
       
-      // Start avatar session with a public avatar
+      // Start avatar session - use custom avatar from backend or fallback to public avatar
+      const avatarName = avatarId || "Shawn_Therapist_public";
+      console.log("[HeyGen] Starting avatar session with:", avatarName);
+      
       await avatar.createStartAvatar({
         quality: AvatarQuality.Medium,
-        avatarName: "monica_public_3", // Public HeyGen avatar
+        avatarName: avatarName,
       });
       
       setAvatarSession(avatar);
-      console.log("[HeyGen] Avatar session started");
+      console.log("[HeyGen] Avatar session started successfully");
     } catch (error: any) {
       console.error("[HeyGen] Error:", error);
       setAvatarError(error.message || "Kon video avatar niet starten");
