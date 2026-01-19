@@ -715,10 +715,11 @@ app.get("/api/sessions", async (req, res) => {
   try {
     const userId = req.query.userId as string;
     
-    // Query database for sessions
+    // Query database for sessions - include events and customer_dynamics for debug info
     let query = `
       SELECT id, user_id, technique_id, current_mode, phase, turn_number, 
              conversation_history, context, total_score, expert_mode, 
+             events, customer_dynamics, epic_phase,
              created_at, updated_at, is_active
       FROM v2_sessions 
       WHERE is_active = 1
@@ -737,6 +738,10 @@ app.get("/api/sessions", async (req, res) => {
     const sessionList = result.rows.map(row => {
       const conversationHistory = row.conversation_history || [];
       const context = row.context || {};
+      const events = row.events || [];
+      const customerDynamics = row.customer_dynamics || {};
+      const epicPhase = row.epic_phase || 'explore';
+      const technique = getTechnique(row.technique_id);
       
       // Calculate duration from first to last message if available
       const duration = conversationHistory.length > 0 
@@ -746,13 +751,62 @@ app.get("/api/sessions", async (req, res) => {
       // Calculate score (0-100 based on turn count and phase)
       const score = Math.min(100, Math.round(50 + row.turn_number * 5 + (row.phase >= 2 ? 20 : 0)));
       
+      // Build debug info per message by matching with events
+      const transcript = conversationHistory.map((msg: any, idx: number) => {
+        // Find matching event for this message index (seller messages are odd indices in roleplay)
+        const turnNumber = Math.floor(idx / 2) + 1;
+        const matchingEvent = events.find((e: any) => e.turnNumber === turnNumber);
+        
+        // Determine signal based on evaluation or default
+        let signal: "positief" | "neutraal" | "negatief" = "neutraal";
+        if (matchingEvent) {
+          if (matchingEvent.moveRating === 'positive' || matchingEvent.correct) signal = "positief";
+          else if (matchingEvent.moveRating === 'negative' || matchingEvent.incorrect) signal = "negatief";
+        }
+        
+        // Build debug info
+        const debugInfo: any = {
+          signal,
+          expectedTechnique: technique?.nummer || row.technique_id,
+          detectedTechnique: matchingEvent?.moveId || matchingEvent?.techniqueId || null,
+          context: {
+            fase: row.phase,
+            gathered: context.gathered || {}
+          },
+          customerDynamics: {
+            rapport: customerDynamics.rapport || 50,
+            valueTension: customerDynamics.valueTension || 50,
+            commitReadiness: customerDynamics.commitReadiness || 0
+          },
+          aiDecision: {
+            epicFase: epicPhase,
+            evaluatie: matchingEvent?.feedback || matchingEvent?.evaluation || null
+          }
+        };
+        
+        return {
+          speaker: msg.role === 'assistant' || msg.role === 'customer' ? 'AI Coach' : 'Verkoper',
+          time: `${Math.floor(idx * 5 / 60)}:${String(idx * 5 % 60).padStart(2, '0')}`,
+          text: msg.content,
+          debugInfo
+        };
+      });
+      
+      // Extract feedback from events
+      const strengths: string[] = [];
+      const improvements: string[] = [];
+      events.forEach((e: any) => {
+        if (e.feedback && e.correct) strengths.push(e.feedback);
+        if (e.feedback && !e.correct) improvements.push(e.feedback);
+      });
+      
       return {
         id: row.id,
         mode: row.current_mode,
         techniqueId: row.technique_id,
-        techniqueName: getTechnique(row.technique_id)?.naam || row.technique_id,
-        techniqueNummer: getTechnique(row.technique_id)?.nummer || row.technique_id.split('.').slice(0, 2).join('.'),
-        fase: getTechnique(row.technique_id)?.fase || parseInt(row.technique_id?.split('.')[0]) || 1,
+        techniqueName: technique?.naam || row.technique_id,
+        techniqueNummer: technique?.nummer || row.technique_id.split('.').slice(0, 2).join('.'),
+        fase: technique?.fase || parseInt(row.technique_id?.split('.')[0]) || 1,
         messageCount: conversationHistory.length,
         turnNumber: row.turn_number,
         context: context,
@@ -764,11 +818,11 @@ app.get("/api/sessions", async (req, res) => {
         userId: row.user_id,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        transcript: conversationHistory.map((msg: any, idx: number) => ({
-          speaker: msg.role === 'assistant' ? 'AI Coach' : 'Verkoper',
-          time: `${Math.floor(idx * 5 / 60)}:${String(idx * 5 % 60).padStart(2, '0')}`,
-          text: msg.content
-        }))
+        transcript,
+        feedback: {
+          strengths: strengths.slice(0, 5),
+          improvements: improvements.slice(0, 5)
+        }
       };
     });
     

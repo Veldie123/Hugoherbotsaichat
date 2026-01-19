@@ -83,7 +83,19 @@ interface Session {
   flagged: boolean;
   fileSize?: string;
   uploadDate?: string;
-  transcript: Array<{ speaker: string; time: string; text: string }>;
+  transcript: Array<{ 
+    speaker: string; 
+    time: string; 
+    text: string;
+    debugInfo?: {
+      signal?: "positief" | "neutraal" | "negatief";
+      expectedTechnique?: string;
+      detectedTechnique?: string | null;
+      context?: { fase?: number; gathered?: Record<string, any> };
+      customerDynamics?: { rapport?: number; valueTension?: number; commitReadiness?: number };
+      aiDecision?: { epicFase?: string; evaluatie?: string | null };
+    };
+  }>;
   feedback: {
     strengths: string[];
     improvements: string[];
@@ -1070,13 +1082,31 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                             {expandedDebug === lineId && (
                               <Card className="mt-2 p-4 border-2 border-dashed border-purple-200 bg-purple-50/30">
                                 <div className="space-y-3 text-[13px] leading-[18px]">
-                                  {/* Signaal - alleen voor AI Coach */}
+                                  {/* EPIC Fase */}
                                   <div className="flex items-center gap-2">
-                                    <span className="text-hh-muted">Signaal:</span>
-                                    <Badge className="bg-green-100 text-green-700 border-green-300">
-                                      positief
+                                    <span className="text-hh-muted">EPIC Fase:</span>
+                                    <Badge className="bg-purple-100 text-purple-700 border-purple-300">
+                                      {line.debugInfo?.aiDecision?.epicFase || 'explore'}
                                     </Badge>
                                   </div>
+                                  {/* Customer Dynamics */}
+                                  {line.debugInfo?.customerDynamics && (
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                      <span className="text-hh-muted">Rapport:</span>
+                                      <Badge variant="outline">{line.debugInfo.customerDynamics.rapport || 50}%</Badge>
+                                      <span className="text-hh-muted">Value Tension:</span>
+                                      <Badge variant="outline">{line.debugInfo.customerDynamics.valueTension || 50}%</Badge>
+                                      <span className="text-hh-muted">Commit:</span>
+                                      <Badge variant="outline">{line.debugInfo.customerDynamics.commitReadiness || 0}%</Badge>
+                                    </div>
+                                  )}
+                                  {/* Evaluatie */}
+                                  {line.debugInfo?.aiDecision?.evaluatie && (
+                                    <div>
+                                      <span className="text-hh-muted">Evaluatie:</span>
+                                      <p className="text-hh-text mt-1">{line.debugInfo.aiDecision.evaluatie}</p>
+                                    </div>
+                                  )}
                                 </div>
                               </Card>
                             )}
@@ -1101,13 +1131,26 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                             {expandedDebug === lineId && (
                               <Card className="mt-2 p-4 border-2 border-dashed border-blue-200 bg-blue-50/30">
                                 <div className="space-y-3 text-[13px] leading-[18px]">
+                                  {/* Signaal */}
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-hh-muted">Signaal:</span>
+                                    <Badge className={`${
+                                      line.debugInfo?.signal === "positief" 
+                                        ? "bg-green-100 text-green-700 border-green-300"
+                                        : line.debugInfo?.signal === "negatief"
+                                          ? "bg-red-100 text-red-700 border-red-300"
+                                          : "bg-yellow-100 text-yellow-700 border-yellow-300"
+                                    }`}>
+                                      {line.debugInfo?.signal || 'neutraal'}
+                                    </Badge>
+                                  </div>
                                   {/* Verwachte techniek met validation */}
                                   <div>
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="flex-1">
                                         <p className="text-[12px] text-hh-muted mb-1">Verwachte techniek:</p>
                                         <p className="text-hh-text font-medium">
-                                          2.1.2 - Meningsgerichte vragen
+                                          {line.debugInfo?.expectedTechnique || selectedSession.techniek}
                                         </p>
                                       </div>
                                       {!showFeedbackInput[lineId] && (
@@ -1180,12 +1223,15 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                                   <div className="pt-3 border-t border-blue-200">
                                     <p className="text-[12px] text-hh-muted mb-1">Gedetecteerde techniek:</p>
                                     <p className="text-hh-text font-medium">
-                                      2.1.1 - Feitgerichte vragen
-                                      <span className="ml-2 text-green-600 font-semibold">
-                                        (+8)
-                                      </span>
+                                      {line.debugInfo?.detectedTechnique || 'Niet gedetecteerd'}
                                     </p>
                                   </div>
+                                  {/* Context info */}
+                                  {line.debugInfo?.context && (
+                                    <div className="pt-2">
+                                      <span className="text-hh-muted text-[12px]">Fase: {line.debugInfo.context.fase || 1}</span>
+                                    </div>
+                                  )}
                                 </div>
                               </Card>
                             )}
