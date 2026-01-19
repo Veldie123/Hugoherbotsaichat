@@ -61,7 +61,6 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
 **Huidige TODO's (januari 2026):**
 | TODO ID | Bestand | Status |
 |---------|---------|--------|
-| DEBUG-INFO-UITBREIDEN | src/components/HH/TranscriptDialog.tsx | Pending |
 | GOLDEN-STANDARD-OPSLAG | server/v2/reference-answers.ts | Pending |
 | GOLDEN-STANDARD-CONFLICTS | server/v2/config-consistency.ts | Pending |
 | ADMIN-CONFLICTS-PAGE | src/components/HH/AdminConflicts.tsx | Pending |
@@ -70,6 +69,7 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
 **Afgeronde TODO's:**
 | TODO ID | Bestand | Status |
 |---------|---------|--------|
+| DEBUG-INFO-UITBREIDEN | src/components/HH/TranscriptDialog.tsx | Partial (UI klaar, backend pending) |
 | WITTE-TEKST-FIX | src/components/HH/AdminChatExpertMode.tsx | Done (text-slate-800 toegevoegd) |
 | HEYGEN-LIVEAVATAR | src/components/HH/LiveAvatarComponent.tsx | Done |
 | RAG-DATABASE-FIX | server/v2/rag-service.ts | Done |

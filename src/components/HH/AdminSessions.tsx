@@ -59,7 +59,6 @@ import {
   LayoutGrid,
   Settings,
 } from "lucide-react";
-import { SessionDebugPanel } from "./SessionDebugPanel";
 import { CustomCheckbox } from "../ui/custom-checkbox";
 
 interface AdminSessionsProps {
@@ -879,29 +878,29 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                   <div className="flex items-center justify-between">
                     <span className="text-[12px] text-hh-muted">{session.date}</span>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuTrigger asChild onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); viewTranscript(session); }}>
+                        <DropdownMenuItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); viewTranscript(session); }}>
                           <Eye className="w-4 h-4 mr-2" />
                           Bekijk Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                           <Download className="w-4 h-4 mr-2" />
                           Download
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e: React.MouseEvent) => e.stopPropagation()}
                           className={session.flagged ? "text-hh-success" : "text-red-600"}
                         >
                           <Flag className="w-4 h-4 mr-2" />
                           {session.flagged ? "Unflag" : "Flag for Review"}
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e: React.MouseEvent) => e.stopPropagation()}
                           className="text-hh-error"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
