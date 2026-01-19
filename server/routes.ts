@@ -4304,6 +4304,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/v2/config/conflicts - Add a new config conflict (from transcript corrections, etc.)
+  app.post("/api/v2/config/conflicts", async (req, res) => {
+    try {
+      const { addConflict } = await import('./v2/config-consistency');
+      const { 
+        techniqueNumber, 
+        type, 
+        severity, 
+        description, 
+        source,
+        sessionId,
+        originalValues,
+        correctedValues 
+      } = req.body;
+      
+      if (!techniqueNumber || !description) {
+        return res.status(400).json({ error: 'techniqueNumber and description are required' });
+      }
+
+      const conflict = addConflict({
+        correctionId: `manual-${sessionId || Date.now()}`,
+        severity: (severity?.toLowerCase() || 'medium') as 'high' | 'medium' | 'low',
+        configFile: 'manual_correction',
+        techniqueId: techniqueNumber,
+        conflictType: 'detector_mismatch' as const,
+        description: `${description} | Original: ${JSON.stringify(originalValues || {})} | Corrected: ${JSON.stringify(correctedValues || {})}`,
+        suggestedChange: `Manual correction from ${source || 'unknown'}: Apply the corrected values`
+      });
+
+      console.log(`[config-conflicts] Added manual conflict: ${conflict.id}`);
+      res.json({ success: true, conflict });
+    } catch (error: any) {
+      console.error('[config-conflicts] Error adding conflict:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // POST /api/v2/admin/config-conflicts/:id/resolve - Mark a conflict as resolved
   app.post("/api/v2/admin/config-conflicts/:id/resolve", async (req, res) => {
     try {

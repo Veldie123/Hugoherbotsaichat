@@ -256,9 +256,23 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
       return;
     }
 
-    const isCorrection = editState.detectedTechnique && editState.detectedTechnique !== editState.expectedTechnique;
+    const originalSignal = line.debugInfo?.signal || "neutraal";
+    const originalExpected = line.debugInfo?.expectedTechnique || session.techniqueNumber;
+    const originalDetected = line.debugInfo?.detectedTechnique || "";
+    
+    const hasChanges = 
+      editState.signal !== originalSignal ||
+      editState.expectedTechnique !== originalExpected ||
+      editState.detectedTechnique !== originalDetected;
+
+    if (!hasChanges) {
+      toast.info('Geen wijzigingen gedetecteerd');
+      cancelEdit();
+      return;
+    }
 
     try {
+      // Save the reference answer
       const response = await fetch('/api/v2/session/save-reference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -267,16 +281,52 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
           techniqueId: editState.expectedTechnique,
           message: line.text,
           context: line.debugInfo?.context?.gathered || {},
-          matchStatus: isCorrection ? 'mismatch' : 'match',
+          matchStatus: editState.detectedTechnique !== editState.expectedTechnique ? 'mismatch' : 'match',
           signal: editState.signal,
-          detectedTechnique: isCorrection ? editState.detectedTechnique : undefined
+          detectedTechnique: editState.detectedTechnique || undefined
         })
       });
 
       if (!response.ok) throw new Error('Failed to save edit');
+
+      // Also create a config conflict for review
+      const conflictDescription = [];
+      if (editState.signal !== originalSignal) {
+        conflictDescription.push(`Signaal: ${originalSignal} → ${editState.signal}`);
+      }
+      if (editState.expectedTechnique !== originalExpected) {
+        conflictDescription.push(`Verwacht: ${originalExpected} → ${editState.expectedTechnique}`);
+      }
+      if (editState.detectedTechnique !== originalDetected) {
+        conflictDescription.push(`Gedetecteerd: ${originalDetected || "geen"} → ${editState.detectedTechnique || "geen"}`);
+      }
+
+      // Submit to config review
+      await fetch('/api/v2/config/conflicts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          techniqueNumber: editState.expectedTechnique,
+          type: 'Manual Correction',
+          severity: 'MEDIUM',
+          description: `Admin correctie transcript: ${conflictDescription.join(', ')}`,
+          source: 'transcript_dialog',
+          sessionId: session.sessionId,
+          originalValues: {
+            signal: originalSignal,
+            expectedTechnique: originalExpected,
+            detectedTechnique: originalDetected
+          },
+          correctedValues: {
+            signal: editState.signal,
+            expectedTechnique: editState.expectedTechnique,
+            detectedTechnique: editState.detectedTechnique
+          }
+        })
+      });
       
       setValidatedLines(prev => new Set(prev).add(editState.lineId));
-      toast.success('Bewerking opgeslagen');
+      toast.success('Bewerking opgeslagen en naar Config Review gestuurd');
       cancelEdit();
     } catch (error) {
       console.error('[Golden Standard] Edit error:', error);
@@ -557,6 +607,21 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                             {/* Geen debug data */}
                             {!line.debugInfo && (
                               <p className="text-hh-muted italic">Geen debug data beschikbaar</p>
+                            )}
+                            
+                            {/* Bewerken Button - visible in debug panel for admin */}
+                            {isAdmin && editState?.lineId !== lineId && (
+                              <div className="pt-3 mt-3 border-t border-hh-border">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
+                                  onClick={() => startEdit(lineId, index, line)}
+                                >
+                                  <Pencil className="w-3 h-3 mr-2" />
+                                  Bewerken
+                                </Button>
+                              </div>
                             )}
                             
                             {/* Edit Mode */}
