@@ -104,6 +104,15 @@ interface DebugInfo {
     epicFase: string;
     evaluatie: "positief" | "gemist" | "neutraal";
   };
+  promptsUsed?: {
+    systemPrompt?: string;
+    userPrompt?: string;
+  };
+  ragDocuments?: Array<{
+    title?: string;
+    content?: string;
+    score?: number;
+  }>;
   
   // For Hugo (Seller) messages
   sellerSignaal?: "positief" | "neutraal" | "negatief";
@@ -396,7 +405,9 @@ export function AdminChatExpertMode({
       aiDecision: {
         epicFase: ssotResult.aiDecision?.epicFase || `Fase ${phase}`,
         evaluatie: typedEval
-      }
+      },
+      promptsUsed: apiResponse?.debug?.promptsUsed || apiResponse?.promptsUsed,
+      ragDocuments: apiResponse?.ragDocuments || apiResponse?.debug?.ragDocuments
     };
   };
 
@@ -1232,19 +1243,13 @@ export function AdminChatExpertMode({
                                   Persona
                                 </button>
                                 {isDebugSectionExpanded(message.id, "persona") && (
-                                  <div className="mt-2 ml-5 space-y-1 text-[12px]">
-                                    <div className="flex justify-between">
-                                      <span className="text-hh-muted">Gedragsstijl:</span>
-                                      <p className="text-hh-text font-medium">{message.debugInfo.persona.gedragsstijl}</p>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-hh-muted">Koopklok:</span>
-                                      <p className="text-hh-text font-medium">{message.debugInfo.persona.koopklok}</p>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-hh-muted">Moeilijkheid:</span>
-                                      <p className="text-hh-text font-medium">{message.debugInfo.persona.moeilijkheid}</p>
-                                    </div>
+                                  <div className="mt-2 ml-5 grid grid-cols-[120px_1fr] gap-y-1 gap-x-2 text-[12px]">
+                                    <span className="text-hh-muted">Gedragsstijl:</span>
+                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.gedragsstijl}</p>
+                                    <span className="text-hh-muted">Buying Clock:</span>
+                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.koopklok}</p>
+                                    <span className="text-hh-muted">Difficulty:</span>
+                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.moeilijkheid}</p>
                                   </div>
                                 )}
                               </div>
@@ -1483,19 +1488,13 @@ export function AdminChatExpertMode({
                                   Persona
                                 </button>
                                 {isDebugSectionExpanded(message.id, "persona") && (
-                                  <div className="mt-2 ml-5 space-y-1 text-[12px]">
-                                    <div className="flex justify-between">
-                                      <span className="text-hh-muted">Gedragsstijl:</span>
-                                      <p className="text-hh-text font-medium">{message.debugInfo.persona.gedragsstijl}</p>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-hh-muted">Koopklok:</span>
-                                      <p className="text-hh-text font-medium">{message.debugInfo.persona.koopklok}</p>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-hh-muted">Moeilijkheid:</span>
-                                      <p className="text-hh-text font-medium">{message.debugInfo.persona.moeilijkheid}</p>
-                                    </div>
+                                  <div className="mt-2 ml-5 grid grid-cols-[120px_1fr] gap-y-1 gap-x-2 text-[12px]">
+                                    <span className="text-hh-muted">Gedragsstijl:</span>
+                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.gedragsstijl}</p>
+                                    <span className="text-hh-muted">Buying Clock:</span>
+                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.koopklok}</p>
+                                    <span className="text-hh-muted">Difficulty:</span>
+                                    <p className="text-hh-text font-medium">{message.debugInfo.persona.moeilijkheid}</p>
                                   </div>
                                 )}
                               </div>
@@ -1615,6 +1614,59 @@ export function AdminChatExpertMode({
                                     </Badge>
                                   </div>
                                 </div>
+                              </div>
+                              
+                              {/* AI Prompt & Grounding */}
+                              <div>
+                                <button
+                                  onClick={() => toggleDebugSection(message.id, "aiPrompt")}
+                                  className="flex items-center gap-2 text-[12px] font-semibold text-hh-text hover:text-hh-primary w-full"
+                                >
+                                  {isDebugSectionExpanded(message.id, "aiPrompt") ? (
+                                    <ChevronDown className="w-3 h-3" />
+                                  ) : (
+                                    <ChevronRight className="w-3 h-3" />
+                                  )}
+                                  AI Prompt & Grounding
+                                </button>
+                                {isDebugSectionExpanded(message.id, "aiPrompt") && (
+                                  <div className="mt-2 ml-5 space-y-3 text-[11px]">
+                                    {message.debugInfo.promptsUsed?.systemPrompt ? (
+                                      <>
+                                        <div>
+                                          <p className="text-hh-muted font-semibold mb-1">System Prompt:</p>
+                                          <pre className="bg-slate-100 p-2 rounded text-[10px] max-h-[200px] overflow-auto whitespace-pre-wrap break-words text-slate-700">
+                                            {message.debugInfo.promptsUsed.systemPrompt.slice(0, 2000)}
+                                            {message.debugInfo.promptsUsed.systemPrompt.length > 2000 && "... [truncated]"}
+                                          </pre>
+                                        </div>
+                                        {message.debugInfo.promptsUsed.userPrompt && (
+                                          <div>
+                                            <p className="text-hh-muted font-semibold mb-1">User Prompt:</p>
+                                            <pre className="bg-slate-100 p-2 rounded text-[10px] max-h-[100px] overflow-auto whitespace-pre-wrap break-words text-slate-700">
+                                              {message.debugInfo.promptsUsed.userPrompt}
+                                            </pre>
+                                          </div>
+                                        )}
+                                        {message.debugInfo.ragDocuments && message.debugInfo.ragDocuments.length > 0 && (
+                                          <div>
+                                            <p className="text-hh-muted font-semibold mb-1">RAG Documents ({message.debugInfo.ragDocuments.length}):</p>
+                                            <div className="space-y-1">
+                                              {message.debugInfo.ragDocuments.map((doc, idx) => (
+                                                <div key={idx} className="bg-blue-50 p-2 rounded border border-blue-200">
+                                                  <p className="font-medium text-blue-800">{doc.title || `Document ${idx + 1}`}</p>
+                                                  <p className="text-blue-600 text-[10px]">{doc.content?.slice(0, 200)}...</p>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <p className="text-hh-muted italic">Geen prompt data beschikbaar voor dit bericht</p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
