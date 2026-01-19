@@ -22,17 +22,17 @@
  * TODO: RAG-CORPUS-VULLEN
  * -----------------------
  * Issue: RAG corpus is leeg - geen trainingsmateriaal geïndexeerd
- * Status: Pending
+ * Status: Done (januari 2026)
  * 
- * Bron: NIET IN ZIP - trainingsmateriaal moet door gebruiker aangeleverd worden
+ * Bron: hugo-rag-export.zip → data/documents_for_embedding.jsonl (130 documenten)
  * 
- * Aanpak:
- * 1. Gebruiker levert trainingsmateriaal aan (.md/.txt files)
- * 2. Plaats in rag/corpus/ directory
- * 3. Maak indexeer script: npm run rag:index (NIET IN ZIP - moet geschreven worden)
- * 4. Verifieer: SELECT COUNT(*) FROM rag_documents;
+ * Oplossing:
+ * 1. Trainingsmateriaal geëxtraheerd naar rag/corpus/
+ * 2. Indexeer script gemaakt: npm run rag:index
+ * 3. 130 documenten geïndexeerd met embeddings
+ * 4. Verificatie: SELECT COUNT(*) FROM rag_documents; → 130
  * 
- * Frontend koppeling: N/A - backend-only functionaliteit
+ * Frontend koppeling: N/A - backend-only, RAG grounding gebeurt in coach responses
  */
 
 import OpenAI from "openai";

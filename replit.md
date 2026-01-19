@@ -176,7 +176,7 @@ Alle openstaande taken staan als expliciete TODO stubs direct in de relevante be
 |---------|---------|--------|
 | HEYGEN-VIDEO-FIX | src/components/HH/TalkToHugoAI.tsx | Skipped (user fixing elsewhere) |
 | RAG-DATABASE-FIX | server/v2/rag-service.ts | Done |
-| RAG-CORPUS-VULLEN | server/v2/rag-service.ts | Pending (needs training material) |
+| RAG-CORPUS-VULLEN | server/v2/rag-service.ts | Done (130 documenten) |
 | ROLEPLAY-API-ENDPOINTS | server/api.ts | Done |
 | HISTORICAL-CONTEXT-ACTIVEREN | server/v2/historical-context-service.ts | Pending |
 | DATABASE-SCHEMA-CHECK | server/db.ts | Done |

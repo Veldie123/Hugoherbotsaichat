@@ -87,6 +87,7 @@
             "dev": "vite",
             "dev:api": "tsx server/api.ts",
             "dev:full": "concurrently \"npm run dev\" \"npm run dev:api\"",
-            "build": "vite build"
+            "build": "vite build",
+            "rag:index": "tsx scripts/rag-index.ts"
       }
 }
