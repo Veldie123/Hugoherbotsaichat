@@ -174,7 +174,7 @@ Alle openstaande taken staan als expliciete TODO stubs direct in de relevante be
 **Huidige TODO's (januari 2026):**
 | TODO ID | Bestand | Status |
 |---------|---------|--------|
-| HEYGEN-VIDEO-FIX | src/components/HH/TalkToHugoAI.tsx | Skipped (user fixing elsewhere) |
+| HEYGEN-LIVEAVATAR | src/components/HH/LiveAvatarComponent.tsx | Done (SDK geüpdatet naar v0.0.9 API) |
 | RAG-DATABASE-FIX | server/v2/rag-service.ts | Done |
 | RAG-CORPUS-VULLEN | server/v2/rag-service.ts | Done (130 documenten) |
 | ROLEPLAY-API-ENDPOINTS | server/api.ts | Done |

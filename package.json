@@ -5,6 +5,7 @@
       "dependencies": {
             "@elevenlabs/client": "^0.13.0",
             "@elevenlabs/react": "^0.13.0",
+            "@heygen/liveavatar-web-sdk": "^0.0.10",
             "@heygen/streaming-avatar": "^2.1.0",
             "@jsr/supabase__supabase-js": "^2.49.8",
             "@livekit/agents": "^1.0.36",
