@@ -176,7 +176,23 @@ export default defineAgent({
       }
     }
     
+    // Debug: Log all session events
+    session.on(voice.AgentSessionEventTypes.AgentStartedSpeaking, () => {
+      console.log('[LiveKit Agent] EVENT: Agent started speaking');
+    });
+    session.on(voice.AgentSessionEventTypes.AgentStoppedSpeaking, () => {
+      console.log('[LiveKit Agent] EVENT: Agent stopped speaking');
+    });
+    session.on(voice.AgentSessionEventTypes.UserStartedSpeaking, () => {
+      console.log('[LiveKit Agent] EVENT: User started speaking');
+    });
+    session.on(voice.AgentSessionEventTypes.UserStoppedSpeaking, () => {
+      console.log('[LiveKit Agent] EVENT: User stopped speaking');
+    });
+    
     session.on(voice.AgentSessionEventTypes.UserInputTranscribed, async (ev) => {
+      console.log(`[LiveKit Agent] EVENT: UserInputTranscribed - isFinal: ${ev.isFinal}, text: "${ev.transcript}"`);
+      
       // Only process final transcripts
       if (!ev.isFinal) return;
       
