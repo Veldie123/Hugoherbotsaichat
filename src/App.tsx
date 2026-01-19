@@ -22,14 +22,41 @@ import { auth } from "./utils/supabase/client";
 
 type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "onboarding" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "analysis" | "analysis-results" | "upload-analysis" | "admin-uploads" | "admin-sessions" | "admin-chat-expert" | "admin-config-review" | "admin-notifications";
 
+const DEV_PREVIEW_PAGES: Record<string, Page> = {
+  'admin-chat-expert': 'admin-chat-expert',
+  'admin-sessions': 'admin-sessions',
+  'admin-uploads': 'admin-uploads',
+  'admin-config-review': 'admin-config-review',
+  'admin-notifications': 'admin-notifications',
+  'talk-to-hugo': 'talk-to-hugo',
+  'hugo-overview': 'hugo-overview',
+  'analysis': 'analysis',
+  'upload-analysis': 'upload-analysis',
+};
+
+function getDevPreviewPage(): Page | null {
+  const path = window.location.pathname;
+  if (path.startsWith('/_dev/')) {
+    const devPage = path.replace('/_dev/', '');
+    return DEV_PREVIEW_PAGES[devPage] || null;
+  }
+  return null;
+}
+
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const devPreviewPage = getDevPreviewPage();
+  const [currentPage, setCurrentPage] = useState<Page | null>(devPreviewPage);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(!devPreviewPage);
+  const [isAdmin, setIsAdmin] = useState(!!devPreviewPage);
 
   console.log('📍 App.tsx rendered, currentPage:', currentPage);
 
   useEffect(() => {
+    if (devPreviewPage) {
+      console.log('🔧 Dev preview mode:', devPreviewPage);
+      return;
+    }
+    
     const checkAuthAndRoute = async () => {
       console.log('🔐 Checking initial auth state...');
       
