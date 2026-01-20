@@ -84,6 +84,18 @@ import {
   type ArtifactContent
 } from "./v2/artifact-service";
 import type { ArtifactType } from "./v2/orchestrator";
+import {
+  buildExtendedContext,
+  formatExtendedContextForPrompt,
+  getRequiredLayers,
+  type ContextDepth,
+  type ContextLayer
+} from "./v2/context-layers-service";
+import {
+  generateDiscoveryBrief,
+  generateOfferBrief,
+  generateScenarioSnapshot
+} from "./v2/brief-generator-service";
 
 const app = express();
 
@@ -1800,6 +1812,111 @@ app.get("/api/v2/artifacts/:sessionId/:artifactType", async (req, res) => {
     
   } catch (error: any) {
     console.error("[artifacts] Get specific error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===========================================
+// V3.2-V3.5: BRIEF GENERATION ENDPOINTS
+// ===========================================
+
+// POST /api/v2/briefs/discovery - Generate discovery brief from conversation
+app.post("/api/v2/briefs/discovery", async (req, res) => {
+  try {
+    const { sessionId, userId, techniqueId, conversationHistory } = req.body;
+    
+    if (!sessionId || !userId || !conversationHistory) {
+      return res.status(400).json({ error: "sessionId, userId, and conversationHistory are required" });
+    }
+    
+    console.log(`[briefs] Generating discovery brief for session ${sessionId}`);
+    const brief = await generateDiscoveryBrief(
+      sessionId,
+      userId,
+      techniqueId || "2",
+      conversationHistory
+    );
+    
+    res.json({ success: true, brief });
+    
+  } catch (error: any) {
+    console.error("[briefs] Discovery brief error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/briefs/offer - Generate offer brief from conversation
+app.post("/api/v2/briefs/offer", async (req, res) => {
+  try {
+    const { sessionId, userId, techniqueId, conversationHistory, discoveryBrief } = req.body;
+    
+    if (!sessionId || !userId || !conversationHistory) {
+      return res.status(400).json({ error: "sessionId, userId, and conversationHistory are required" });
+    }
+    
+    console.log(`[briefs] Generating offer brief for session ${sessionId}`);
+    const brief = await generateOfferBrief(
+      sessionId,
+      userId,
+      techniqueId || "3",
+      conversationHistory,
+      discoveryBrief
+    );
+    
+    res.json({ success: true, brief });
+    
+  } catch (error: any) {
+    console.error("[briefs] Offer brief error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/context/build - Build extended context layers
+app.post("/api/v2/context/build", async (req, res) => {
+  try {
+    const { baseContext, contextDepth } = req.body;
+    
+    if (!baseContext) {
+      return res.status(400).json({ error: "baseContext is required" });
+    }
+    
+    const depth = (contextDepth || 'STANDARD') as ContextDepth;
+    const requiredLayers = getRequiredLayers(depth);
+    
+    console.log(`[context] Building extended context with depth ${depth}`);
+    const layers = await buildExtendedContext(baseContext, requiredLayers);
+    const formatted = formatExtendedContextForPrompt(layers);
+    
+    res.json({ 
+      success: true, 
+      layers,
+      formatted,
+      depth,
+      requiredLayers
+    });
+    
+  } catch (error: any) {
+    console.error("[context] Build error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/context/snapshot - Save scenario snapshot as artifact
+app.post("/api/v2/context/snapshot", async (req, res) => {
+  try {
+    const { sessionId, userId, techniqueId, contextLayers } = req.body;
+    
+    if (!sessionId || !userId || !contextLayers) {
+      return res.status(400).json({ error: "sessionId, userId, and contextLayers are required" });
+    }
+    
+    console.log(`[context] Saving scenario snapshot for session ${sessionId}`);
+    await generateScenarioSnapshot(sessionId, userId, techniqueId || "1", contextLayers);
+    
+    res.json({ success: true, message: "Scenario snapshot saved" });
+    
+  } catch (error: any) {
+    console.error("[context] Snapshot error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

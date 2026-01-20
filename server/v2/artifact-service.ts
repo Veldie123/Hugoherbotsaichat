@@ -13,7 +13,9 @@
 import { db } from '../db';
 import { sessionArtifacts, type InsertSessionArtifact, type SessionArtifact } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import type { ArtifactType, EpicPhase } from './orchestrator';
+import type { ArtifactType as OrchestratorArtifactType, EpicPhase } from './orchestrator';
+
+export type ArtifactType = OrchestratorArtifactType;
 
 // ============================================================================
 // TYPES
@@ -58,7 +60,7 @@ export interface OfferBrief {
   generatedAt: string;
 }
 
-export type ArtifactContent = ScenarioSnapshot | DiscoveryBrief | OfferBrief;
+export type ArtifactContent = ScenarioSnapshot | DiscoveryBrief | OfferBrief | Record<string, unknown>;
 
 // ============================================================================
 // CRUD OPERATIONS
