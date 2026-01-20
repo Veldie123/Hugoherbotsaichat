@@ -13,8 +13,15 @@
 import { getOpenAI } from '../openai';
 import type { ContextState } from './context_engine';
 
-export type ContextLayer = 'base' | 'scenario' | 'value_map' | 'objection_bank';
+export type ContextLayer = 'base' | 'scenario' | 'value_map' | 'objection_bank' | 'positioning_map' | 'offer_map';
 export type ContextDepth = 'LIGHT' | 'STANDARD' | 'DEEP';
+export type SlotPriority = 'minimum' | 'nice_to_have';
+
+export interface ContextBudget {
+  maxQuestionsTotal: number;
+  maxQuestionsConsecutive: number;
+  layersCollected: number;
+}
 
 export interface ScenarioLayer {
   klant_naam?: string;
@@ -43,12 +50,66 @@ export interface ObjectionBankLayer {
   risico_percepties?: string[];
 }
 
+export interface PositioningMapLayer {
+  sterktes: string[];
+  zwaktes: string[];
+  afhaakredenen_terecht: string[];
+  afhaakredenen_onterecht: string[];
+  concurrenten: string[];
+  differentiators: string[];
+}
+
+export interface OfferMapLayer {
+  oplossing_kern: string;
+  belangrijkste_voordelen: string[];
+  bewijsvoering: string[];
+  prijsrange?: string;
+  implementatie_aanpak?: string[];
+  next_step_menu?: string[];
+}
+
 export interface ExtendedContextLayers {
   base: Record<string, string>;
   scenario?: ScenarioLayer;
   value_map?: ValueMapLayer;
   objection_bank?: ObjectionBankLayer;
+  positioning_map?: PositioningMapLayer;
+  offer_map?: OfferMapLayer;
 }
+
+export const LAYER_SLOTS: Record<ContextLayer, { minimum: string[]; nice_to_have: string[] }> = {
+  base: {
+    minimum: ['sector', 'product', 'klant_type', 'verkoopkanaal'],
+    nice_to_have: ['ervaring', 'prijsrange', 'regio', 'maturity']
+  },
+  scenario: {
+    minimum: ['afspraak_type', 'rol_gesprekspartner', 'context_afspraak', 'lastige_openingsvraag'],
+    nice_to_have: ['dmu', 'timing_urgentie', 'huidige_oplossing']
+  },
+  value_map: {
+    minimum: ['top_pain', 'gewenste_uitkomst', 'huidige_workaround'],
+    nice_to_have: ['top_3_pains', 'top_3_baten', 'koopredenen_recent', 'besliscriteria']
+  },
+  objection_bank: {
+    minimum: ['typisch_bezwaar', 'typische_twijfel', 'typische_uitstelreden'],
+    nice_to_have: ['top_5_bezwaren', 'top_5_twijfels', 'angst_risico_patroon']
+  },
+  positioning_map: {
+    minimum: ['top_3_sterktes', 'top_2_zwaktes', 'top_3_concurrenten'],
+    nice_to_have: ['afhaakredenen_terecht', 'afhaakredenen_onterecht', 'differentiators']
+  },
+  offer_map: {
+    minimum: ['oplossing_kern', 'belangrijkste_voordelen', 'bewijsvoering', 'prijsrange'],
+    nice_to_have: ['implementatie_aanpak', 'differentiatoren', 'voorwaarden', 'next_step_menu']
+  }
+};
+
+export const FLOW_RULES = {
+  max_consecutive_questions: 2,
+  context_budget_per_session: 5,
+  after_questions_always: 'deliver_value',
+  progressive_disclosure: true
+};
 
 export const CONTEXT_DEPTH_LAYERS: Record<ContextDepth, ContextLayer[]> = {
   LIGHT: ['base'],
@@ -244,9 +305,113 @@ Antwoord in JSON formaat:
   }
 }
 
+export async function generatePositioningMapLayer(
+  baseContext: Record<string, string>
+): Promise<PositioningMapLayer> {
+  const openai = getOpenAI();
+  
+  const prompt = `Je bent een sales positioneringsexpert. Analyseer dit product/dienst en genereer een SWOT-achtige positioneringskaart.
+
+Verkoper context:
+- Sector: ${baseContext.sector || 'onbekend'}
+- Product: ${baseContext.product || 'onbekend'}
+- Klant type: ${baseContext.klant_type || 'onbekend'}
+- Verkoopkanaal: ${baseContext.verkoopkanaal || 'onbekend'}
+
+Genereer een positioneringskaart met sterktes, zwaktes, concurrenten en afhaakredenen.
+
+Antwoord in JSON formaat:
+{
+  "sterktes": ["sterkte 1", "sterkte 2", "sterkte 3"],
+  "zwaktes": ["zwakte/trade-off 1", "zwakte/trade-off 2"],
+  "afhaakredenen_terecht": ["terechte reden 1", "terechte reden 2"],
+  "afhaakredenen_onterecht": ["misperceptie 1", "misperceptie 2", "misperceptie 3"],
+  "concurrenten": ["concurrent/alternatief 1", "concurrent/alternatief 2", "concurrent/alternatief 3"],
+  "differentiators": ["wat ons onderscheidt 1", "wat ons onderscheidt 2"]
+}`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 600,
+      response_format: { type: 'json_object' }
+    });
+
+    const content = response.choices[0]?.message?.content || '{}';
+    return JSON.parse(content) as PositioningMapLayer;
+  } catch (error: any) {
+    console.error('[context-layers] Error generating positioning map:', error.message);
+    return {
+      sterktes: ['Expertise en ervaring', 'Goede service', 'Flexibiliteit'],
+      zwaktes: ['Hogere prijs dan budget-opties', 'Langere implementatietijd'],
+      afhaakredenen_terecht: ['Budget is echt te beperkt', 'Geen fit met werkwijze'],
+      afhaakredenen_onterecht: ['Te complex (terwijl implementatie begeleid wordt)', 'Te duur (zonder ROI te berekenen)'],
+      concurrenten: ['Goedkopere alternatieven', 'Intern doen', 'Niets doen'],
+      differentiators: ['Persoonlijke aanpak', 'Bewezen resultaten']
+    };
+  }
+}
+
+export async function generateOfferMapLayer(
+  baseContext: Record<string, string>,
+  valueMap?: ValueMapLayer
+): Promise<OfferMapLayer> {
+  const openai = getOpenAI();
+  
+  const prompt = `Je bent een sales aanbod-structureerder. Maak een coherent aanbod gebaseerd op de context.
+
+Verkoper context:
+- Sector: ${baseContext.sector || 'onbekend'}
+- Product: ${baseContext.product || 'onbekend'}
+- Klant type: ${baseContext.klant_type || 'onbekend'}
+${valueMap ? `
+Klant behoeften:
+- Behoeften: ${valueMap.belangrijkste_behoeften.join(', ')}
+- Pijnpunten: ${valueMap.pijnpunten.join(', ')}
+- Gewenste resultaten: ${valueMap.gewenste_resultaten.join(', ')}
+` : ''}
+
+Genereer een offer map die het aanbod structureert.
+
+Antwoord in JSON formaat:
+{
+  "oplossing_kern": "De kern van wat we aanbieden in 1 zin",
+  "belangrijkste_voordelen": ["voordeel 1", "voordeel 2", "voordeel 3"],
+  "bewijsvoering": ["case/referentie/metric 1", "bewijs 2"],
+  "prijsrange": "indicatie van prijsrange of contractvorm",
+  "implementatie_aanpak": ["stap 1", "stap 2", "stap 3"],
+  "next_step_menu": ["demo", "workshop", "voorstel", "pilot"]
+}`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 600,
+      response_format: { type: 'json_object' }
+    });
+
+    const content = response.choices[0]?.message?.content || '{}';
+    return JSON.parse(content) as OfferMapLayer;
+  } catch (error: any) {
+    console.error('[context-layers] Error generating offer map:', error.message);
+    return {
+      oplossing_kern: 'Onze oplossing helpt u uw doelen te bereiken',
+      belangrijkste_voordelen: ['Tijdsbesparing', 'Kostenbesparing', 'Betere resultaten'],
+      bewijsvoering: ['Klanten zoals u hebben X% verbetering gezien'],
+      prijsrange: 'Afhankelijk van scope',
+      next_step_menu: ['Demo', 'Voorstel']
+    };
+  }
+}
+
 export async function buildExtendedContext(
   baseContext: Record<string, string>,
-  requiredLayers: ContextLayer[]
+  requiredLayers: ContextLayer[],
+  options?: { thinSlice?: boolean }
 ): Promise<ExtendedContextLayers> {
   const result: ExtendedContextLayers = {
     base: baseContext
@@ -265,6 +430,16 @@ export async function buildExtendedContext(
   if (requiredLayers.includes('objection_bank')) {
     console.log('[context-layers] Generating objection bank layer...');
     result.objection_bank = await generateObjectionBankLayer(baseContext, result.scenario);
+  }
+  
+  if (requiredLayers.includes('positioning_map')) {
+    console.log('[context-layers] Generating positioning map layer...');
+    result.positioning_map = await generatePositioningMapLayer(baseContext);
+  }
+  
+  if (requiredLayers.includes('offer_map')) {
+    console.log('[context-layers] Generating offer map layer...');
+    result.offer_map = await generateOfferMapLayer(baseContext, result.value_map);
   }
   
   console.log('[context-layers] Extended context built with layers:', Object.keys(result));
@@ -317,5 +492,77 @@ export function formatExtendedContextForPrompt(layers: ExtendedContextLayers): s
     }
   }
   
+  if (layers.positioning_map) {
+    sections.push('\n── POSITIONING MAP ──');
+    sections.push(`Sterktes: ${layers.positioning_map.sterktes.join(', ')}`);
+    sections.push(`Zwaktes: ${layers.positioning_map.zwaktes.join(', ')}`);
+    sections.push(`Concurrenten: ${layers.positioning_map.concurrenten.join(', ')}`);
+    sections.push(`Afhaakredenen (terecht): ${layers.positioning_map.afhaakredenen_terecht.join(', ')}`);
+    sections.push(`Afhaakredenen (onterecht/mispercepties): ${layers.positioning_map.afhaakredenen_onterecht.join(', ')}`);
+    sections.push(`Differentiators: ${layers.positioning_map.differentiators.join(', ')}`);
+  }
+  
+  if (layers.offer_map) {
+    sections.push('\n── OFFER MAP ──');
+    sections.push(`Oplossing kern: ${layers.offer_map.oplossing_kern}`);
+    sections.push(`Belangrijkste voordelen: ${layers.offer_map.belangrijkste_voordelen.join(', ')}`);
+    sections.push(`Bewijsvoering: ${layers.offer_map.bewijsvoering.join(', ')}`);
+    if (layers.offer_map.prijsrange) {
+      sections.push(`Prijsrange: ${layers.offer_map.prijsrange}`);
+    }
+    if (layers.offer_map.implementatie_aanpak) {
+      sections.push(`Implementatie aanpak: ${layers.offer_map.implementatie_aanpak.join(' → ')}`);
+    }
+    if (layers.offer_map.next_step_menu) {
+      sections.push(`Next step menu: ${layers.offer_map.next_step_menu.join(', ')}`);
+    }
+  }
+  
   return sections.join('\n');
+}
+
+export function checkRoleplayUnlock(
+  techniqueId: string,
+  userAttempts: Record<string, number>,
+  overlayConfig: any
+): { unlocked: boolean; message?: string; missingPrerequisites?: string[] } {
+  const techniqueConfig = overlayConfig.technieken?.[techniqueId];
+  if (!techniqueConfig?.orchestrator?.roleplay_unlock) {
+    return { unlocked: true };
+  }
+  
+  const unlock = techniqueConfig.orchestrator.roleplay_unlock;
+  if (unlock.type !== 'after_attempts') {
+    return { unlocked: true };
+  }
+  
+  const missingPrerequisites: string[] = [];
+  for (const prereq of unlock.prerequisites || []) {
+    const attempts = userAttempts[prereq] || 0;
+    if (attempts < (unlock.min_attempts || 1)) {
+      missingPrerequisites.push(prereq);
+    }
+  }
+  
+  if (missingPrerequisites.length > 0) {
+    return {
+      unlocked: false,
+      message: unlock.lock_behavior?.locked_message || `Oefen eerst: ${missingPrerequisites.join(', ')}`,
+      missingPrerequisites
+    };
+  }
+  
+  return { unlocked: true };
+}
+
+export function getSequenceRank(techniqueId: string, overlayConfig: any): number {
+  const techniqueConfig = overlayConfig.technieken?.[techniqueId];
+  const learningFunction = techniqueConfig?.orchestrator?.learning_function || 'COACH_TRANSLATE';
+  const rankMap = overlayConfig.flow_rules?.sequence_policy?.rank_by_learning_function || {
+    COACH_TRANSLATE: 10,
+    MICRO_DRILL: 20,
+    ROLEPLAY_DRILL: 80,
+    ROLEPLAY_INTEGRATED: 90
+  };
+  return rankMap[learningFunction] || 50;
 }

@@ -88,6 +88,10 @@ import {
   buildExtendedContext,
   formatExtendedContextForPrompt,
   getRequiredLayers,
+  checkRoleplayUnlock,
+  getSequenceRank,
+  LAYER_SLOTS,
+  FLOW_RULES,
   type ContextDepth,
   type ContextLayer
 } from "./v2/context-layers-service";
@@ -1897,6 +1901,54 @@ app.post("/api/v2/context/build", async (req, res) => {
     
   } catch (error: any) {
     console.error("[context] Build error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/roleplay/unlock-check - Check if roleplay is unlocked for a technique
+app.post("/api/v2/roleplay/unlock-check", async (req, res) => {
+  try {
+    const { techniqueId, userAttempts } = req.body;
+    
+    if (!techniqueId) {
+      return res.status(400).json({ error: "techniqueId is required" });
+    }
+    
+    const overlayPath = path.join(process.cwd(), 'config/ssot/coach_overlay_v3_1.json');
+    let overlayConfig: any = {};
+    try {
+      overlayConfig = JSON.parse(fs.readFileSync(overlayPath, 'utf-8'));
+    } catch (e) {
+      console.warn('[roleplay] Could not load coach_overlay_v3_1.json, falling back to v3');
+      const fallbackPath = path.join(process.cwd(), 'config/ssot/coach_overlay_v3.json');
+      overlayConfig = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
+    }
+    
+    const result = checkRoleplayUnlock(techniqueId, userAttempts || {}, overlayConfig);
+    const sequenceRank = getSequenceRank(techniqueId, overlayConfig);
+    
+    res.json({ 
+      ...result, 
+      sequenceRank,
+      techniqueId 
+    });
+    
+  } catch (error: any) {
+    console.error("[roleplay] Unlock check error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/context/flow-rules - Get context flow rules
+app.get("/api/v2/context/flow-rules", async (req, res) => {
+  try {
+    res.json({ 
+      success: true, 
+      flowRules: FLOW_RULES,
+      layerSlots: LAYER_SLOTS
+    });
+  } catch (error: any) {
+    console.error("[context] Flow rules error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
