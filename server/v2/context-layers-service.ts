@@ -59,13 +59,43 @@ export interface PositioningMapLayer {
   differentiators: string[];
 }
 
+/**
+ * Hiërarchisch Value Model:
+ * Product → Oplossingen (meerdere) → Voordelen per oplossing → Baten per voordeel
+ * 
+ * Voorbeeld totaalrenovatie:
+ * - Oplossing 1: "Gedediceerde projectleider"
+ *   - Voordeel: "U hoeft zelf niets te doen" → Baat: "Gerust gemoed op reis/golfen"
+ *   - Voordeel: "Kwalitatief gedaan" → Baat: "Geen gedoe achteraf"
+ * - Oplossing 2: "24/7 klantendienst"
+ *   - Voordeel: "Altijd bereikbaar" → Baat: "Direct antwoord bij zorgen"
+ * - Oplossing 3: "Aankoopdienst (30% korting)"
+ *   - Voordeel: "Lagere materiaalkosten" → Baat: "Meer budget voor afwerking"
+ */
+export interface BaatItem {
+  baat: string;                    // De emotionele/praktische baat voor de klant
+  persona_fit?: string;            // Welk type klant vindt dit vooral belangrijk?
+}
+
+export interface VoordeelItem {
+  voordeel: string;                // Het functionele voordeel
+  baten: BaatItem[];               // Meerdere baten per voordeel
+}
+
+export interface OplossingsItem {
+  naam: string;                    // Naam van de oplossing (bijv. "Gedediceerde projectleider")
+  korte_omschrijving: string;      // 1-zin uitleg
+  voordelen: VoordeelItem[];       // Meerdere voordelen per oplossing
+  bewijsvoering?: string[];        // Cases, referenties, metrics voor deze oplossing
+}
+
 export interface OfferMapLayer {
-  oplossing_kern: string;
-  belangrijkste_voordelen: string[];
-  bewijsvoering: string[];
-  prijsrange?: string;
-  implementatie_aanpak?: string[];
-  next_step_menu?: string[];
+  product_naam: string;            // Het product/dienst (bijv. "Totaalrenovatie")
+  product_omschrijving: string;    // 1-zin pitch
+  oplossingen: OplossingsItem[];   // Hiërarchische lijst van oplossingen
+  prijsrange?: string;             // Globale indicatie
+  implementatie_aanpak?: string[]; // Hoe wordt het geleverd?
+  next_step_menu?: string[];       // Mogelijke vervolgstappen
 }
 
 export interface ExtendedContextLayers {
@@ -99,8 +129,8 @@ export const LAYER_SLOTS: Record<ContextLayer, { minimum: string[]; nice_to_have
     nice_to_have: ['afhaakredenen_terecht', 'afhaakredenen_onterecht', 'differentiators']
   },
   offer_map: {
-    minimum: ['oplossing_kern', 'belangrijkste_voordelen', 'bewijsvoering', 'prijsrange'],
-    nice_to_have: ['implementatie_aanpak', 'differentiatoren', 'voorwaarden', 'next_step_menu']
+    minimum: ['product_naam', 'product_omschrijving', 'oplossingen'],
+    nice_to_have: ['prijsrange', 'implementatie_aanpak', 'next_step_menu']
   }
 };
 
@@ -111,10 +141,11 @@ export const FLOW_RULES = {
   progressive_disclosure: true
 };
 
-export const CONTEXT_DEPTH_LAYERS: Record<ContextDepth, ContextLayer[]> = {
+export const CONTEXT_DEPTH_LAYERS: Record<ContextDepth | 'FULL', ContextLayer[]> = {
   LIGHT: ['base'],
   STANDARD: ['base', 'scenario'],
-  DEEP: ['base', 'scenario', 'value_map', 'objection_bank']
+  DEEP: ['base', 'scenario', 'value_map', 'objection_bank'],
+  FULL: ['base', 'scenario', 'value_map', 'objection_bank', 'positioning_map', 'offer_map']
 };
 
 export function getRequiredLayers(depth: ContextDepth): ContextLayer[] {
@@ -373,16 +404,36 @@ Klant behoeften:
 - Gewenste resultaten: ${valueMap.gewenste_resultaten.join(', ')}
 ` : ''}
 
-Genereer een offer map die het aanbod structureert.
+Genereer een hiërarchische offer map die het aanbod structureert.
+Let op: een product heeft meerdere OPLOSSINGEN, elke oplossing heeft meerdere VOORDELEN, en elk voordeel heeft meerdere BATEN.
+
+Voorbeeld voor "Totaalrenovatie":
+- Oplossing: "Gedediceerde projectleider" 
+  - Voordeel: "U hoeft zelf niets te doen" → Baat: "Gerust gemoed op reis"
+  - Voordeel: "Controle op onderaannemers" → Baat: "Geen slechte afwerking"
 
 Antwoord in JSON formaat:
 {
-  "oplossing_kern": "De kern van wat we aanbieden in 1 zin",
-  "belangrijkste_voordelen": ["voordeel 1", "voordeel 2", "voordeel 3"],
-  "bewijsvoering": ["case/referentie/metric 1", "bewijs 2"],
-  "prijsrange": "indicatie van prijsrange of contractvorm",
-  "implementatie_aanpak": ["stap 1", "stap 2", "stap 3"],
-  "next_step_menu": ["demo", "workshop", "voorstel", "pilot"]
+  "product_naam": "Naam van het product/dienst",
+  "product_omschrijving": "1-zin pitch van wat het is",
+  "oplossingen": [
+    {
+      "naam": "Naam van oplossing 1",
+      "korte_omschrijving": "Wat deze oplossing inhoudt",
+      "voordelen": [
+        {
+          "voordeel": "Functioneel voordeel",
+          "baten": [
+            { "baat": "Emotionele/praktische baat voor klant", "persona_fit": "Drukke ondernemer" }
+          ]
+        }
+      ],
+      "bewijsvoering": ["Case of referentie"]
+    }
+  ],
+  "prijsrange": "indicatie van prijsrange",
+  "implementatie_aanpak": ["stap 1", "stap 2"],
+  "next_step_menu": ["demo", "workshop", "voorstel"]
 }`;
 
   try {
@@ -390,18 +441,35 @@ Antwoord in JSON formaat:
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: 600,
+      max_tokens: 1500,  // Verhoogd voor hiërarchische structuur
       response_format: { type: 'json_object' }
     });
 
     const content = response.choices[0]?.message?.content || '{}';
+    console.log('[context-layers] AI generated offer_map successfully');
     return JSON.parse(content) as OfferMapLayer;
   } catch (error: any) {
     console.error('[context-layers] Error generating offer map:', error.message);
     return {
-      oplossing_kern: 'Onze oplossing helpt u uw doelen te bereiken',
-      belangrijkste_voordelen: ['Tijdsbesparing', 'Kostenbesparing', 'Betere resultaten'],
-      bewijsvoering: ['Klanten zoals u hebben X% verbetering gezien'],
+      product_naam: baseContext.product || 'Onze oplossing',
+      product_omschrijving: 'Een complete oplossing die u helpt uw doelen te bereiken',
+      oplossingen: [
+        {
+          naam: 'Standaard oplossing',
+          korte_omschrijving: 'De basis van wat wij bieden',
+          voordelen: [
+            {
+              voordeel: 'Tijdsbesparing',
+              baten: [{ baat: 'Meer tijd voor wat echt belangrijk is' }]
+            },
+            {
+              voordeel: 'Kostenbesparing', 
+              baten: [{ baat: 'Meer budget voor andere prioriteiten' }]
+            }
+          ],
+          bewijsvoering: ['Klanten hebben X% verbetering gezien']
+        }
+      ],
       prijsrange: 'Afhankelijk van scope',
       next_step_menu: ['Demo', 'Voorstel']
     };
@@ -504,17 +572,34 @@ export function formatExtendedContextForPrompt(layers: ExtendedContextLayers): s
   
   if (layers.offer_map) {
     sections.push('\n── OFFER MAP ──');
-    sections.push(`Oplossing kern: ${layers.offer_map.oplossing_kern}`);
-    sections.push(`Belangrijkste voordelen: ${layers.offer_map.belangrijkste_voordelen.join(', ')}`);
-    sections.push(`Bewijsvoering: ${layers.offer_map.bewijsvoering.join(', ')}`);
+    sections.push(`Product: ${layers.offer_map.product_naam}`);
+    sections.push(`Omschrijving: ${layers.offer_map.product_omschrijving}`);
+    
+    // Hiërarchische weergave: Product → Oplossingen → Voordelen → Baten
+    if (layers.offer_map.oplossingen && layers.offer_map.oplossingen.length > 0) {
+      sections.push('\nOplossingen:');
+      for (const opl of layers.offer_map.oplossingen) {
+        sections.push(`  ▸ ${opl.naam}: ${opl.korte_omschrijving}`);
+        for (const vd of opl.voordelen || []) {
+          sections.push(`    • Voordeel: ${vd.voordeel}`);
+          for (const bt of vd.baten || []) {
+            sections.push(`      → Baat: ${bt.baat}${bt.persona_fit ? ` (${bt.persona_fit})` : ''}`);
+          }
+        }
+        if (opl.bewijsvoering && opl.bewijsvoering.length > 0) {
+          sections.push(`    📊 Bewijs: ${opl.bewijsvoering.join(', ')}`);
+        }
+      }
+    }
+    
     if (layers.offer_map.prijsrange) {
-      sections.push(`Prijsrange: ${layers.offer_map.prijsrange}`);
+      sections.push(`\nPrijsrange: ${layers.offer_map.prijsrange}`);
     }
     if (layers.offer_map.implementatie_aanpak) {
-      sections.push(`Implementatie aanpak: ${layers.offer_map.implementatie_aanpak.join(' → ')}`);
+      sections.push(`Implementatie: ${layers.offer_map.implementatie_aanpak.join(' → ')}`);
     }
     if (layers.offer_map.next_step_menu) {
-      sections.push(`Next step menu: ${layers.offer_map.next_step_menu.join(', ')}`);
+      sections.push(`Next steps: ${layers.offer_map.next_step_menu.join(', ')}`);
     }
   }
   

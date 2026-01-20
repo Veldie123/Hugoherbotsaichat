@@ -1878,16 +1878,17 @@ app.post("/api/v2/briefs/offer", async (req, res) => {
 // POST /api/v2/context/build - Build extended context layers
 app.post("/api/v2/context/build", async (req, res) => {
   try {
-    const { baseContext, contextDepth } = req.body;
+    const { baseContext, contextDepth, requiredLayers: explicitLayers } = req.body;
     
     if (!baseContext) {
       return res.status(400).json({ error: "baseContext is required" });
     }
     
+    // Allow explicit layers OR depth-based layers
     const depth = (contextDepth || 'STANDARD') as ContextDepth;
-    const requiredLayers = getRequiredLayers(depth);
+    const requiredLayers = explicitLayers || getRequiredLayers(depth);
     
-    console.log(`[context] Building extended context with depth ${depth}`);
+    console.log(`[context] Building extended context with layers:`, requiredLayers);
     const layers = await buildExtendedContext(baseContext, requiredLayers);
     const formatted = formatExtendedContextForPrompt(layers);
     
