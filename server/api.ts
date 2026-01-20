@@ -75,6 +75,15 @@ import {
 } from "./v2/reference-answers";
 
 import { indexCorpus, getDocumentCount } from "./v2/rag-service";
+import { 
+  saveArtifact, 
+  getArtifact, 
+  getSessionArtifacts, 
+  getArtifactsMap,
+  hasRequiredArtifacts,
+  type ArtifactContent
+} from "./v2/artifact-service";
+import type { ArtifactType } from "./v2/orchestrator";
 
 const app = express();
 
@@ -1678,6 +1687,119 @@ app.get("/api/v2/golden-standard/all", (req, res) => {
     });
   } catch (error: any) {
     console.error("[golden-standard/all] Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// V3 ARTIFACT ENDPOINTS
+// ============================================================================
+
+// POST /api/v2/artifacts - Save an artifact
+app.post("/api/v2/artifacts", async (req, res) => {
+  try {
+    const { sessionId, userId, artifactType, techniqueId, content, epicPhase } = req.body;
+    
+    if (!sessionId || !userId || !artifactType || !techniqueId || !content) {
+      return res.status(400).json({ 
+        error: "Missing required fields: sessionId, userId, artifactType, techniqueId, content" 
+      });
+    }
+    
+    const artifact = await saveArtifact(
+      sessionId,
+      userId,
+      artifactType as ArtifactType,
+      techniqueId,
+      content as ArtifactContent,
+      epicPhase
+    );
+    
+    res.json({ success: true, artifact });
+    
+  } catch (error: any) {
+    console.error("[artifacts] Save error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/artifacts/:sessionId/check - Check if required artifacts exist
+// NOTE: Specific routes must come BEFORE generic :artifactType route
+app.get("/api/v2/artifacts/:sessionId/check", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const required = (req.query.required as string)?.split(',') as ArtifactType[] || [];
+    
+    if (required.length === 0) {
+      return res.status(400).json({ error: "required query param is needed (comma-separated artifact types)" });
+    }
+    
+    const result = await hasRequiredArtifacts(sessionId, required);
+    
+    res.json({
+      sessionId,
+      required,
+      ...result
+    });
+    
+  } catch (error: any) {
+    console.error("[artifacts] Check error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/artifacts/:sessionId/map - Get artifacts as a map for gate checking
+app.get("/api/v2/artifacts/:sessionId/map", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const map = await getArtifactsMap(sessionId);
+    
+    res.json({
+      sessionId,
+      artifacts: map
+    });
+    
+  } catch (error: any) {
+    console.error("[artifacts] Map error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/artifacts/:sessionId - Get all artifacts for a session
+app.get("/api/v2/artifacts/:sessionId", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const artifacts = await getSessionArtifacts(sessionId);
+    
+    res.json({ 
+      sessionId, 
+      count: artifacts.length, 
+      artifacts 
+    });
+    
+  } catch (error: any) {
+    console.error("[artifacts] Get error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/artifacts/:sessionId/:artifactType - Get specific artifact
+// NOTE: This generic route must come AFTER specific routes like /check and /map
+app.get("/api/v2/artifacts/:sessionId/:artifactType", async (req, res) => {
+  try {
+    const { sessionId, artifactType } = req.params;
+    const artifact = await getArtifact(sessionId, artifactType as ArtifactType);
+    
+    if (!artifact) {
+      return res.status(404).json({ 
+        error: `Artifact '${artifactType}' not found for session ${sessionId}` 
+      });
+    }
+    
+    res.json(artifact);
+    
+  } catch (error: any) {
+    console.error("[artifacts] Get specific error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

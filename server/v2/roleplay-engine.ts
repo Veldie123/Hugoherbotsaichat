@@ -65,6 +65,7 @@ import { loadMergedTechniques } from '../ssot-loader';
 import { getOpenAI } from '../openai';
 import { formatValidatorContext, buildValidatorContextString } from './historical-context-service';
 import type { ValidatorDebugInfo } from './response-repair';
+import { getArtifactsMap } from './artifact-service';
 import { 
   getOrchestrator, 
   getInitialEpicPhase, 
@@ -1125,11 +1126,14 @@ async function processCoachMessage(
   
   // If user wants roleplay AND technique supports it, check V3 gates first
   if (wantsRoleplay && canRoleplay(state.techniqueId)) {
+    // V3.1: Load session artifacts for gate checking
+    const sessionArtifacts = await getArtifactsMap(state.sessionId);
+    
     // V3: Check orchestrator gates before allowing roleplay
     const gateResult = checkRoleplayGates(
       state.techniqueId,
       state.context.gathered,
-      {} // No session artifacts yet in V3.0
+      sessionArtifacts
     );
     
     if (!gateResult.allowed) {
