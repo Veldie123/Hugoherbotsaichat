@@ -65,6 +65,15 @@ import { loadMergedTechniques } from '../ssot-loader';
 import { getOpenAI } from '../openai';
 import { formatValidatorContext, buildValidatorContextString } from './historical-context-service';
 import type { ValidatorDebugInfo } from './response-repair';
+import { 
+  getOrchestrator, 
+  getInitialEpicPhase, 
+  getDefaultAttitude,
+  checkRoleplayGates,
+  canTechniqueRoleplay,
+  isV3Enabled,
+  type GateCheckResult
+} from './orchestrator';
 
 /**
  * Cache for klant_houdingen.json
@@ -369,6 +378,8 @@ export interface EngineResponse {
     };
     // Validator/Repair debug info (AI Freedom Philosophy v4.0)
     validatorInfo?: ValidatorDebugInfo;
+    // V3 Orchestrator gate check result
+    gateResult?: GateCheckResult;
   };
 }
 
@@ -460,7 +471,7 @@ export function initSession(
     mode,
     currentMode,
     phase,
-    epicPhase: 'explore', // Always start in Explore phase
+    epicPhase: getInitialEpicPhase(techniqueId), // V3: Use orchestrator config, fallback to 'explore'
     epicMilestones: {
       probeUsed: false,
       impactAsked: false,
@@ -1112,9 +1123,40 @@ async function processCoachMessage(
   const userLower = userMessage.toLowerCase();
   const wantsRoleplay = roleplayTriggers.some(t => userLower.includes(t));
   
-  // If user wants roleplay AND technique supports it, transition to ROLEPLAY mode
+  // If user wants roleplay AND technique supports it, check V3 gates first
   if (wantsRoleplay && canRoleplay(state.techniqueId)) {
-    console.log(`[roleplay-engine] User requested roleplay, transitioning from COACH_CHAT to ROLEPLAY`);
+    // V3: Check orchestrator gates before allowing roleplay
+    const gateResult = checkRoleplayGates(
+      state.techniqueId,
+      state.context.gathered,
+      {} // No session artifacts yet in V3.0
+    );
+    
+    if (!gateResult.allowed) {
+      console.log(`[roleplay-engine] Roleplay gate failed: ${gateResult.gate_type} - ${gateResult.message}`);
+      
+      // Return coach response with gate denial message
+      const newHistory = [
+        ...state.conversationHistory,
+        { role: 'seller' as const, content: userMessage },
+        { role: 'customer' as const, content: gateResult.message || 'Roleplay is niet beschikbaar voor deze techniek.' }
+      ];
+      
+      return {
+        message: gateResult.message || 'Roleplay is niet beschikbaar voor deze techniek.',
+        type: 'coach_response',
+        coachMode: true,
+        sessionState: {
+          ...state,
+          conversationHistory: newHistory,
+        },
+        debug: {
+          gateResult
+        }
+      };
+    }
+    
+    console.log(`[roleplay-engine] User requested roleplay, gates passed, transitioning from COACH_CHAT to ROLEPLAY`);
     
     // Mark context as complete (we have enough from the coaching conversation)
     const updatedContext = { ...state.context, isComplete: true };

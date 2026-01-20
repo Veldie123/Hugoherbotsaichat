@@ -1,0 +1,122 @@
+Nu heb ik genoeg context. Hier is de concrete code mapping met acceptance criteria per fase:
+
+🎯 Helder Orchestration Model V3 - Code Mapping
+Fase V3.0: Orchestrator + Basis Gates
+Nieuwe Files
+File	Doel
+server/v2/orchestrator.ts	Laadt coach_overlay_v3.json, bepaalt gates, next mode
+config/ssot/coach_overlay_v3.json	V3 config (al geüpload - copy naar config/ssot)
+Wijzigingen Bestaande Files
+File	Wijziging	Acceptance Criteria
+server/v2/coach-engine.ts	Import orchestrator, call checkRoleplayGates() voor mode switch	✅ Als techniek 2.1.1 → roleplay request wordt geweigerd met melding
+server/v2/roleplay-engine.ts	Respecteer initial_epic_phase uit config	✅ Fase 3 roleplay start bij commit i.p.v. explore
+config/prompts/coach_prompt.json	Voeg gate-copy toe (UX berichten)	✅ Hugo geeft concrete next-step wanneer gate faalt
+Acceptance Test V3.0
+GIVEN: Gebruiker selecteert techniek 2.1.1 (Feitgerichte vragen)
+WHEN: Gebruiker vraagt om roleplay te starten
+THEN: Engine weigert met melding: "Deze techniek is bedoeld als 
+      vertaalslag, niet als rollenspel. Wil je oefenen in de 
+      Explore-bundel (2.1)?"
+Fase V3.1: Session Artifact Storage
+Database Wijziging
+ALTER TABLE v2_sessions ADD COLUMN artifacts jsonb DEFAULT '{}'::jsonb;
+Nieuwe Files
+File	Doel
+server/v2/artifact-manager.ts	CRUD voor session artifacts
+Schema Wijziging
+File	Wijziging
+shared/schema.ts	Add artifacts jsonb field to v2Sessions
+Wijzigingen Bestaande Files
+File	Wijziging	Acceptance Criteria
+server/v2/roleplay-engine.ts	Na roleplay start → save scenario_snapshot	✅ session.artifacts.scenario_snapshot bevat persona_seed, segment, dynamics
+server/storage.ts	CRUD functions voor artifacts	✅ getArtifact(), saveArtifact(), hasArtifact() werken
+Artifact Schema (TypeScript)
+interface ScenarioSnapshot {
+  persona_seed: string;
+  segment: "SME" | "midmarket" | "enterprise";
+  sector: string;
+  role: "decision_maker" | "influencer" | "user";
+  dynamics: { rapport: number; tension: number; commit: number };
+  created_at: string;
+}
+Acceptance Test V3.1
+GIVEN: Gebruiker start fase 2 roleplay
+WHEN: Roleplay begint
+THEN: scenario_snapshot wordt opgeslagen in session.artifacts
+AND: Snapshot bevat persona_seed + dynamics
+Fase V3.2: Discovery Brief Generatie
+Wijzigingen Bestaande Files
+File	Wijziging	Acceptance Criteria
+server/v2/coach-engine.ts	Na fase 2 debrief → generate discovery_brief via structured output	✅ AI genereert JSON met pains, baten, criteria, urgency
+server/v2/orchestrator.ts	Gate check: fase 3 vereist discovery_brief in artifacts_in	✅ Fase 3 roleplay geweigerd zonder discovery_brief
+Discovery Brief Schema
+interface DiscoveryBrief {
+  as_is: string;
+  pains: string[];
+  desired_outcomes: string[];
+  baten: string[];
+  criteria: string[];
+  urgency: "low" | "medium" | "high";
+  proof_points_needed: string[];
+  notes?: string;
+}
+Acceptance Test V3.2
+GIVEN: Gebruiker heeft fase 2 roleplay afgerond met debrief
+WHEN: Debrief eindigt
+THEN: Engine genereert discovery_brief uit gesprekhistorie
+AND: Artifact wordt opgeslagen in session.artifacts.discovery_brief
+GIVEN: Gebruiker wil fase 3 roleplay starten
+WHEN: Geen discovery_brief aanwezig
+THEN: Gate blokkeert met melding: "Ik kan fase 3 pas realistisch 
+      spelen als ik weet wat we in fase 2 ontdekt hebben..."
+Fase V3.3: Extended Context Layers
+Wijzigingen Bestaande Files
+File	Wijziging	Acceptance Criteria
+server/v2/context_engine.ts	Add modes: value_map, objection_bank, offer_map	✅ Progressive gathering vraagt alleen wat nodig is
+config/prompts/context_prompt.json	Voeg vragen toe voor nieuwe layers	✅ Elke layer heeft 3-5 gerichte vragen
+server/v2/orchestrator.ts	Check context_layers_required before roleplay	✅ DEEP technieken vereisen value_map + objection_bank
+Context Layer Keys
+Layer	Keys	When Required
+base	sector, product, klant_type, verkoopkanaal, ervaring	Always
+scenario	afspraak_type, gespreksdoel, beslisser_rol, lastige_openingsvragen	STANDARD+
+value_map	pains, baten, koopredenen_recent, usp_naar_baat_map	DEEP
+objection_bank	bezwaren_typisch, twijfels_typisch, uitstelredenen	DEEP
+offer_map	oplossing_kern, voordelen, bewijsvoering, prijsrange	Phase 3/4
+Acceptance Test V3.3
+GIVEN: Gebruiker selecteert techniek 4.2.4 (Bezwaren)
+AND: context_depth = DEEP, context_layers_required = [base, scenario, value_map, objection_bank]
+WHEN: Alleen base + scenario verzameld
+THEN: Orchestrator vraagt: "Voor realistische bezwaarbehandeling heb ik 
+      nog typische bezwaren en twijfels in jouw sector nodig..."
+Fase V3.4: Cross-Session Persistence
+Database Wijziging
+ALTER TABLE users ADD COLUMN persistent_context jsonb DEFAULT '{}'::jsonb;
+Schema Wijziging
+File	Wijziging
+shared/schema.ts	Add persistentContext jsonb field to users table
+Wijzigingen Bestaande Files
+File	Wijziging	Acceptance Criteria
+server/v2/artifact-manager.ts	Add user-level artifact storage	✅ discovery_brief persistent over sessies
+server/v2/orchestrator.ts	Check user.persistent_context voor artifacts_in	✅ Fase 3 morgen kan discovery_brief van gisteren gebruiken
+Acceptance Test V3.4
+GIVEN: Gebruiker deed gisteren fase 2 roleplay
+AND: discovery_brief opgeslagen in users.persistent_context
+WHEN: Gebruiker start vandaag fase 3 roleplay
+THEN: Gate passed omdat discovery_brief bestaat
+AND: Persona_policy "reuse_scenario_snapshot" haalt oude klant terug
+Fase V3.5: UI Hints
+Wijzigingen Bestaande Files
+File	Wijziging	Acceptance Criteria
+client/src/pages/roleplay-v2.tsx	Toon recommended_bundle banner	✅ Bij 2.1.1 ziet user: "Wil je oefenen in Explore-bundel?"
+API routes	Endpoint voor video deep links	✅ Klik op banner → navigeert naar juiste video
+Implementatie Volgorde (Risico-gebaseerd)
+Prio	Fase	Effort	Risico	Dependencies
+1	V3.0	3-4 uur	Medium	Geen - kan direct
+2	V3.1	2-3 uur	Low	V3.0
+3	V3.3	3-4 uur	Medium	V3.1
+4	V3.2	4-5 uur	High	V3.1, V3.3
+5	V3.4	2-3 uur	Medium	V3.2
+6	V3.5	1-2 uur	Low	V3.0
+Waarom deze volgorde? V3.2 (discovery_brief generatie) is het meest complex en heeft zowel artifact storage (V3.1) als context layers (V3.3) nodig om goed te werken.
+
+Wil je dat ik start met V3.0 (orchestrator + basis gates)? Dat is de foundational layer die de rest mogelijk maakt.
