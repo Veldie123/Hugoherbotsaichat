@@ -841,40 +841,48 @@ app.post("/api/v2/session/message", async (req, res) => {
     // Save updated session
     await saveSessionToDb(session);
     
-    // Build response matching frontend expectations
+    // Build response matching frontend expectations (SendMessageResponse interface)
+    const currentPhase = parseInt(session.techniqueId?.split('.')[0]) || 1;
     const response: any = {
-      message: responseText,
-      type: session.mode === "ROLEPLAY" ? "roleplay" : "coaching",
-      signal: "neutraal",
-      coachMode: session.mode,
-      state: {
-        technique: session.techniqueName,
-        mode: session.mode,
-        phase: parseInt(session.techniqueId?.split('.')[0]) || 1,
-        turns: session.conversationHistory.length,
-        score: 0,
-        contextComplete: session.contextState.isComplete
-      }
-    };
-    
-    // Include debug info if requested
-    if (enableDebug || expertMode || session.isExpert) {
-      response.debug = {
-        promptsUsed: promptsUsed || { systemPrompt: "N/A" },
-        customerDynamics,
+      response: responseText,  // Frontend expects 'response', not 'message'
+      phase: session.mode,
+      contextData: {
+        sector: session.contextState.gathered.sector,
+        product: session.contextState.gathered.product,
+        klant_type: session.contextState.gathered.klant_type,
+        verkoopkanaal: session.contextState.gathered.verkoopkanaal
+      },
+      debug: {
+        phase: session.mode,
+        signal: "neutraal",
+        detectedTechniques: [],
+        evaluation: "neutraal",
+        contextComplete: session.contextState.isComplete,
+        gatheredFields: Object.keys(session.contextState.gathered).filter(k => session.contextState.gathered[k]),
+        persona: {
+          behavior_style: "analyserend",
+          buying_clock_stage: "market_research",
+          difficulty_level: session.isExpert ? "bewuste_kunde" : "onbewuste_onkunde"
+        },
+        context: {
+          fase: currentPhase,
+          gathered: session.contextState.gathered
+        },
+        customerDynamics: customerDynamics,
+        aiDecision: {
+          epicFase: `Fase ${currentPhase}`,
+          evaluatie: "neutraal"
+        },
+        ragDocuments: ragDocuments,
+        promptsUsed: promptsUsed || { systemPrompt: "Geen prompt beschikbaar", userPrompt: "" },
         validatorInfo: validatorInfo ? {
           mode: validatorInfo.mode,
           wasRepaired: validatorInfo.wasRepaired,
           validationLabel: validatorInfo.validationLabel
-        } : null,
-        context: {
-          gathered: session.contextState.gathered,
-          isComplete: session.contextState.isComplete
-        }
-      };
-      response.ragDocuments = ragDocuments;
-      response.customerDynamics = customerDynamics;
-    }
+        } : null
+      },
+      promptsUsed: promptsUsed || { systemPrompt: "Geen prompt beschikbaar", userPrompt: "" }
+    };
     
     res.json(response);
     
