@@ -294,11 +294,25 @@ export function getThemeForSlot(slotId: string): SlotTheme {
     };
   }
   
-  // Fallback for non-base slots
+  // Special handling for lens slots - use human-readable themes
+  if (slotId === 'lens_reverse_engineering') {
+    return {
+      theme: 'strategisch denken over het gespreksdoel',
+      intent: 'Help de verkoper nadenken over wat ze willen bereiken'
+    };
+  }
+  if (slotId === 'lens_situatie_herkenning') {
+    return {
+      theme: 'herkennen wanneer deze techniek nodig is',
+      intent: 'Help de verkoper situaties herkennen waarin deze techniek past'
+    };
+  }
+  
+  // Fallback for other non-base slots
   console.warn(`[context_engine] getThemeForSlot(${slotId}): Not a base slot - using fallback.`);
   return {
-    theme: slotId,
-    intent: `Verzamel informatie over ${slotId}`
+    theme: slotId.replace(/_/g, ' ').replace(/lens /g, ''),
+    intent: `Verzamel informatie over ${slotId.replace(/_/g, ' ')}`
   };
 }
 
@@ -1156,8 +1170,10 @@ ${formatGatheredContext(gatheredContext)}
 Nu wil je meer weten over: ${theme.theme}
 ${theme.examples_of_info_needed ? `Voorbeelden van info die je zoekt: ${theme.examples_of_info_needed.join(', ')}` : ''}`;
 
-  const task = `Stel een natuurlijke vraag om meer te weten te komen over "${slotId}". 
-Bouw voort op wat je al weet. Stel maximaal 1 vraag.`;
+  // Gebruik theme.theme in plaats van slotId om interne IDs te vermijden in de output
+  const task = `Stel een natuurlijke vraag om meer te weten te komen over "${theme.theme}". 
+Bouw voort op wat je al weet. Stel maximaal 1 vraag. 
+BELANGRIJK: Noem NOOIT interne termen zoals "lens_reverse_engineering" of andere technische slot-IDs in je antwoord.`;
 
   return generateHugoResponse(situation, task, { conversationHistory });
 }
