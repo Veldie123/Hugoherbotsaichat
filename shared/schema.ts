@@ -627,3 +627,33 @@ export type Scenario = {
   tries: number;
   beschrijving: string;
 };
+
+// =====================
+// V3 ORCHESTRATION TABLES
+// =====================
+
+// Artifact types for V3 orchestration
+export type ArtifactType = 'scenario_snapshot' | 'discovery_brief' | 'offer_brief';
+
+// Session artifacts - stores briefs and snapshots generated during roleplay
+export const sessionArtifacts = pgTable("session_artifacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  artifactType: text("artifact_type").notNull(), // 'scenario_snapshot' | 'discovery_brief' | 'offer_brief'
+  techniqueId: varchar("technique_id").notNull(), // technique that produced this artifact
+  content: jsonb("content").notNull(), // artifact data (structured JSON)
+  epicPhase: text("epic_phase"), // 'explore' | 'probe' | 'impact' | 'commit'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schema for session artifacts
+export const insertSessionArtifactSchema = createInsertSchema(sessionArtifacts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSessionArtifact = z.infer<typeof insertSessionArtifactSchema>;
+export type SessionArtifact = typeof sessionArtifacts.$inferSelect;
