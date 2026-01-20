@@ -10,6 +10,10 @@ The HugoHerbots.ai Sales Coach App is a React, TypeScript, and Vite-based applic
 - The user wants the agent to ask for confirmation before making significant architectural or feature changes.
 - The user prefers detailed explanations for complex technical decisions.
 
+## Agent Regels (VERPLICHT)
+11. **ALTIJD VISUEEL CHECKEN** - Nooit blind op code werken. Gebruik ALTIJD de screenshot tool of dev toegang om te verifiëren dat UI wijzigingen correct werken VOORDAT je zegt dat iets af is. Code lezen is niet genoeg.
+12. **DEV TOEGANG ALTIJD BESCHIKBAAR** - Er is ALTIJD dev toegang via `/_dev/{pagina-naam}` (bijv. `/_dev/techniques`, `/_dev/live`, `/_dev/dashboard`, `/_dev/admin-chat-expert`). Dit bypass de login. NOOIT zeggen "ik heb geen toegang want er is een login" - gebruik gewoon de dev URL!
+
 ## System Architecture
 The application is built with React 18, TypeScript, and Vite. Styling uses Tailwind CSS v4, and custom UI components are built with Radix UI. Supabase serves as the Backend-as-a-Service (BaaS) for authentication and database operations. The application integrates the Hugo Engine V2 FULL for advanced AI capabilities.
 

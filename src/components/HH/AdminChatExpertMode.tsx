@@ -955,14 +955,11 @@ export function AdminChatExpertMode({
                       <div
                         className={`p-3 rounded-lg relative ${
                           message.sender === "hugo"
-                            ? "bg-[#1E2A3B]"
-                            : "bg-white border border-slate-200"
+                            ? "bg-[#1E2A3B] text-white"
+                            : "bg-white border border-slate-200 text-slate-800"
                         }`}
                       >
-                        <p 
-                          className="text-[13px] leading-[19px]"
-                          style={{ color: message.sender === "hugo" ? '#FFFFFF' : '#1E293B' }}
-                        >{message.text}</p>
+                        <p className="text-[13px] leading-[19px]">{message.text}</p>
                         
                         {/* Tip Button - INSIDE bubble for AI messages */}
                         {message.sender === "ai" && message.debugInfo && (
