@@ -685,6 +685,205 @@ app.post("/api/v2/message", async (req, res) => {
   }
 });
 
+// POST /api/v2/session/message - Frontend-compatible message endpoint
+// Maps frontend field names and includes full debug info with customerDynamics
+app.post("/api/v2/session/message", async (req, res) => {
+  try {
+    const { sessionId, message, debug: enableDebug = false, expertMode = false } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+    if (!message) {
+      return res.status(400).json({ error: "message is required" });
+    }
+    
+    // Try to get session from memory, fallback to database
+    let session = sessions.get(sessionId);
+    if (!session) {
+      session = await loadSessionFromDb(sessionId) ?? undefined;
+      if (session) {
+        sessions.set(session.id, session);
+      }
+    }
+    
+    if (!session) {
+      return res.status(404).json({ error: "Session not found. Please start a new session." });
+    }
+    
+    // Add user message to history
+    session.conversationHistory.push({
+      role: "user",
+      content: message
+    });
+    
+    let responseText: string;
+    let promptsUsed: { systemPrompt: string; userPrompt?: string } | undefined;
+    let ragDocuments: any[] = [];
+    let validatorInfo: any = null;
+    
+    // Calculate dynamic customerDynamics based on conversation
+    const turnCount = session.conversationHistory.filter(m => m.role === 'user').length;
+    const baseRapport = 50;
+    const rapportGrowth = Math.min(turnCount * 5, 30); // Max +30% growth
+    const customerDynamics = {
+      rapport: Math.min(baseRapport + rapportGrowth, 85),
+      valueTension: 50 + Math.floor(Math.random() * 20) - 10, // Slight variation
+      commitReadiness: Math.min(30 + turnCount * 8, 70)
+    };
+    
+    // Route to the correct engine based on mode
+    switch (session.mode) {
+      case "CONTEXT_GATHERING": {
+        const currentSlot = session.contextState.currentQuestionKey;
+        
+        if (currentSlot) {
+          session.contextState = processAnswer(
+            session.contextState,
+            currentSlot,
+            message,
+            session.isExpert ? 2 : undefined
+          );
+        }
+        
+        if (session.contextState.isComplete) {
+          session.mode = "COACH_CHAT";
+          
+          const coachContext: CoachContext = {
+            userId: session.userId,
+            techniqueId: session.techniqueId,
+            techniqueName: session.techniqueName,
+            userName: session.userName,
+            sector: session.contextState.gathered.sector,
+            product: session.contextState.gathered.product,
+            klantType: session.contextState.gathered.klant_type,
+            sessionContext: session.contextState.gathered,
+            contextGatheringHistory: session.conversationHistory.map(m => ({
+              role: m.role === 'user' ? 'seller' as const : 'customer' as const,
+              content: m.content
+            }))
+          };
+          
+          const openingResult = await generateCoachOpening(coachContext);
+          responseText = openingResult.message;
+          validatorInfo = openingResult.validatorInfo;
+          promptsUsed = openingResult.promptsUsed;
+          ragDocuments = openingResult.ragContext || [];
+        } else {
+          const nextSlot = getNextSlotKey(session.contextState);
+          
+          if (nextSlot) {
+            session.contextState.currentQuestionKey = nextSlot;
+            
+            const conversationHistory: ConversationMessage[] = session.conversationHistory.map(m => ({
+              role: m.role as 'user' | 'assistant',
+              content: m.content
+            }));
+            
+            const questionResult = await generateQuestionForSlot(
+              nextSlot,
+              session.contextState.gathered,
+              session.techniqueId,
+              conversationHistory
+            );
+            
+            responseText = questionResult.message;
+            promptsUsed = questionResult.promptsUsed;
+            ragDocuments = [];
+          } else {
+            responseText = "Ik heb alle benodigde context. Laten we beginnen met de coaching.";
+            session.mode = "COACH_CHAT";
+          }
+        }
+        break;
+      }
+      
+      case "COACH_CHAT":
+      case "ROLEPLAY": {
+        const coachContext: CoachContext = {
+          userId: session.userId,
+          techniqueId: session.techniqueId,
+          techniqueName: session.techniqueName,
+          userName: session.userName,
+          sector: session.contextState.gathered.sector,
+          product: session.contextState.gathered.product,
+          klantType: session.contextState.gathered.klant_type,
+          sessionContext: session.contextState.gathered,
+          contextGatheringHistory: session.conversationHistory.map(m => ({
+            role: m.role === 'user' ? 'seller' as const : 'customer' as const,
+            content: m.content
+          }))
+        };
+        
+        const coachHistory: CoachMessage[] = session.conversationHistory.map(m => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content
+        }));
+        
+        const coachResult = await generateCoachResponse(message, coachHistory, coachContext);
+        responseText = coachResult.message;
+        validatorInfo = coachResult.validatorInfo;
+        promptsUsed = coachResult.promptsUsed;
+        ragDocuments = coachResult.ragContext || [];
+        break;
+      }
+      
+      default:
+        responseText = "Onbekende sessiemodus.";
+    }
+    
+    // Add assistant response to history
+    session.conversationHistory.push({
+      role: "assistant",
+      content: responseText
+    });
+    
+    // Save updated session
+    await saveSessionToDb(session);
+    
+    // Build response matching frontend expectations
+    const response: any = {
+      message: responseText,
+      type: session.mode === "ROLEPLAY" ? "roleplay" : "coaching",
+      signal: "neutraal",
+      coachMode: session.mode,
+      state: {
+        technique: session.techniqueName,
+        mode: session.mode,
+        phase: parseInt(session.techniqueId?.split('.')[0]) || 1,
+        turns: session.conversationHistory.length,
+        score: 0,
+        contextComplete: session.contextState.isComplete
+      }
+    };
+    
+    // Include debug info if requested
+    if (enableDebug || expertMode || session.isExpert) {
+      response.debug = {
+        promptsUsed: promptsUsed || { systemPrompt: "N/A" },
+        customerDynamics,
+        validatorInfo: validatorInfo ? {
+          mode: validatorInfo.mode,
+          wasRepaired: validatorInfo.wasRepaired,
+          validationLabel: validatorInfo.validationLabel
+        } : null,
+        context: {
+          gathered: session.contextState.gathered,
+          isComplete: session.contextState.isComplete
+        }
+      };
+      response.ragDocuments = ragDocuments;
+      response.customerDynamics = customerDynamics;
+    }
+    
+    res.json(response);
+    
+  } catch (error: any) {
+    console.error("[API] Error in session/message:", error.message, error.stack);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get session info
 app.get("/api/v2/sessions/:sessionId", async (req, res) => {
   try {
