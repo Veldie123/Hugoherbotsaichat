@@ -68,16 +68,22 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
 - **V3.1 Artifacts Storage**: `session_artifacts` table with 3 types (scenario_snapshot, discovery_brief, offer_brief)
   - CRUD service: `server/v2/artifact-service.ts`
   - API endpoints: POST/GET /api/v2/artifacts/*
+  - Config: `config/ssot/coach_overlay_v3_1.json` (met roleplay_unlock en sequence_policy)
 - **V3.2 Extended Context Layers**: `server/v2/context-layers-service.ts`
-  - base: sector, product, verkoopkanaal, klant_type, ervaring
-  - scenario: klant_naam, klant_functie, klant_bedrijf, klant_situatie, klant_uitdaging
-  - value_map: behoeften, pijnpunten, gewenste_resultaten, prioriteiten
-  - objection_bank: bezwaren, twijfels, concurrentie_argumenten
+  - 6 layer types: base, scenario, value_map, objection_bank, positioning_map, offer_map
+  - Thin-slice approach: elke layer heeft minimum vs nice-to-have slots
+  - positioning_map: sterktes, zwaktes, afhaakredenen (terecht/onterecht), concurrenten, differentiators
+  - offer_map: oplossing_kern, voordelen, bewijsvoering, prijsrange, next_step_menu
 - **V3.3-V3.5 Brief Generation**: `server/v2/brief-generator-service.ts`
   - discovery_brief: Summary after phase 2 (Explore/Probe/Impact)
   - offer_brief: Summary after phase 3 (Recommend)
   - API endpoints: POST /api/v2/briefs/discovery, /api/v2/briefs/offer
   - Context endpoints: POST /api/v2/context/build, /api/v2/context/snapshot
+- **V3.6 Flow Rules & Roleplay Unlock**:
+  - FLOW_RULES: max 2 opeenvolgende vragen, context budget 5 per sessie
+  - roleplay_unlock: capstones pas na prerequisites (bijv. fase 2 pas na 2.1-2.4)
+  - sequence_policy: ranking micro → drill → integrated
+  - API endpoints: POST /api/v2/roleplay/unlock-check, GET /api/v2/context/flow-rules
 
 **Recent Toegevoegd (januari 2026):**
 - **TranscriptDialog Golden Standard Integratie**: Uitgebreid debug paneel met bewerkfunctionaliteit
