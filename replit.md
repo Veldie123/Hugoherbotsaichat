@@ -63,6 +63,22 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
 |---------|---------|--------|
 | (geen actieve TODO's) | - | - |
 
+**V3 Orchestration Model (januari 2026):**
+- **V3.0 Gate System**: 4 gate types control roleplay access (technique, context, artifact, phase)
+- **V3.1 Artifacts Storage**: `session_artifacts` table with 3 types (scenario_snapshot, discovery_brief, offer_brief)
+  - CRUD service: `server/v2/artifact-service.ts`
+  - API endpoints: POST/GET /api/v2/artifacts/*
+- **V3.2 Extended Context Layers**: `server/v2/context-layers-service.ts`
+  - base: sector, product, verkoopkanaal, klant_type, ervaring
+  - scenario: klant_naam, klant_functie, klant_bedrijf, klant_situatie, klant_uitdaging
+  - value_map: behoeften, pijnpunten, gewenste_resultaten, prioriteiten
+  - objection_bank: bezwaren, twijfels, concurrentie_argumenten
+- **V3.3-V3.5 Brief Generation**: `server/v2/brief-generator-service.ts`
+  - discovery_brief: Summary after phase 2 (Explore/Probe/Impact)
+  - offer_brief: Summary after phase 3 (Recommend)
+  - API endpoints: POST /api/v2/briefs/discovery, /api/v2/briefs/offer
+  - Context endpoints: POST /api/v2/context/build, /api/v2/context/snapshot
+
 **Recent Toegevoegd (januari 2026):**
 - **TranscriptDialog Golden Standard Integratie**: Uitgebreid debug paneel met bewerkfunctionaliteit
   - ✓ Validatieknoppen (✓/✗) per transcript bericht voor admin review
