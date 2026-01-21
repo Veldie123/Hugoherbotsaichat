@@ -631,6 +631,29 @@ export function TalkToHugoAI({
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, aiMessage]);
+        
+        // Handle level transition (invisible auto-adaptive system)
+        if (response.levelTransition) {
+          const { previousLevel, newLevel, shouldCongratulate } = response.levelTransition;
+          // Update local level state
+          const levelNames = ["onbewuste_onkunde", "bewuste_onkunde", "bewuste_kunde", "onbewuste_kunde"];
+          setDifficultyLevel(levelNames[newLevel - 1] || "onbewuste_onkunde");
+          // Reload assistance config
+          try {
+            const levelData = await hugoApi.getUserLevel();
+            setAssistanceConfig(levelData.assistance);
+          } catch (e) {
+            console.error("[Performance] Failed to reload assistance config:", e);
+          }
+          // Show transition message
+          if (shouldCongratulate) {
+            setLevelTransitionMessage(`🎉 Geweldig! Je bent nu op niveau ${newLevel}. Je past de technieken steeds beter toe!`);
+          } else {
+            setLevelTransitionMessage(`💪 We hebben het niveau aangepast zodat je beter kunt oefenen. Blijf doorgaan!`);
+          }
+          // Auto-hide after 5 seconds
+          setTimeout(() => setLevelTransitionMessage(null), 5000);
+        }
       } catch (error) {
         console.error("Failed to send message:", error);
         const errorMessage: Message = {
@@ -1195,6 +1218,21 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               )}
             </div>
           </div>
+
+          {/* Level transition notification banner */}
+          {levelTransitionMessage && (
+            <div className="px-6 py-3 bg-gradient-to-r from-[#4F7396]/10 to-[#4F7396]/5 border-b border-[#4F7396]/20">
+              <div className="flex items-center justify-between">
+                <span className="text-[14px] text-hh-ink font-medium">{levelTransitionMessage}</span>
+                <button 
+                  onClick={() => setLevelTransitionMessage(null)}
+                  className="text-hh-muted hover:text-hh-ink transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="flex-1 overflow-hidden">
             {renderMainContent()}

@@ -631,6 +631,25 @@ export function AdminChatExpertMode({
         }
       };
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Handle level transition (invisible auto-adaptive system)
+      if (response.levelTransition) {
+        const { previousLevel, newLevel, shouldCongratulate } = response.levelTransition;
+        const levelNames = ["onbewuste_onkunde", "bewuste_onkunde", "bewuste_kunde", "onbewuste_kunde"];
+        setDifficultyLevel(levelNames[newLevel - 1] || "onbewuste_onkunde");
+        try {
+          const levelData = await hugoApi.getUserLevel();
+          setAssistanceConfig(levelData.assistance);
+        } catch (e) {
+          console.error("[Performance] Failed to reload assistance config:", e);
+        }
+        if (shouldCongratulate) {
+          setLevelTransitionMessage(`🎉 Niveau ${previousLevel} → ${newLevel}. Gefeliciteerd!`);
+        } else {
+          setLevelTransitionMessage(`💪 Niveau ${previousLevel} → ${newLevel}. Aangepast voor betere oefening.`);
+        }
+        setTimeout(() => setLevelTransitionMessage(null), 5000);
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
       const errorMessage: Message = {
@@ -805,6 +824,21 @@ export function AdminChatExpertMode({
               </div>
             </div>
           </div>
+
+          {/* Level transition notification banner */}
+          {levelTransitionMessage && (
+            <div className="px-6 py-3 bg-gradient-to-r from-purple-500/10 to-purple-500/5 border-b border-purple-500/20">
+              <div className="flex items-center justify-between">
+                <span className="text-[14px] text-hh-ink font-medium">{levelTransitionMessage}</span>
+                <button 
+                  onClick={() => setLevelTransitionMessage(null)}
+                  className="text-hh-muted hover:text-hh-ink transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Audio Mode Interface */}
           {chatMode === "audio" && (

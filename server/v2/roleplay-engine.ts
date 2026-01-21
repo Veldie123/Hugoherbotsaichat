@@ -75,6 +75,11 @@ import {
   isV3Enabled,
   type GateCheckResult
 } from './orchestrator';
+import { 
+  performanceTracker, 
+  type PerformanceResult, 
+  type LevelTransition 
+} from './performance-tracker';
 
 /**
  * Cache for klant_houdingen.json
@@ -351,6 +356,7 @@ export interface EngineResponse {
     systemPrompt: string;
     userPrompt: string;
   };
+  levelTransition?: LevelTransition;
   debug?: {
     prompt?: string;
     persona?: Persona;
@@ -1691,6 +1697,40 @@ export async function endRoleplay(state: V2SessionState): Promise<EngineResponse
   // Generate Hugo-style debrief
   const hugoDebrief = await generateHugoDebrief(debriefContext);
   
+  // Record performance for invisible auto-adaptive level system
+  let levelTransition: LevelTransition | null = null;
+  try {
+    // Calculate average score per turn (normalize to 0-100 scale)
+    // totalScore is cumulative, so we divide by turns to get average performance
+    const averageScore = state.turnNumber > 0 
+      ? Math.round((state.totalScore / state.turnNumber) * 10) // Scale: 10 points per turn max = 100
+      : 0;
+    
+    // Get technique name from SSOT
+    const technique = getTechnique(state.techniqueId);
+    const techniqueName = technique?.naam || state.techniqueId;
+    
+    const performanceResult: PerformanceResult = {
+      techniqueId: state.techniqueId,
+      techniqueName,
+      score: Math.min(100, averageScore), // Cap at 100
+      outcome: averageScore >= 70 ? "success" : averageScore >= 50 ? "partial" : "struggle",
+    };
+    
+    // Record performance and get potential level transition
+    levelTransition = await performanceTracker.recordPerformance(
+      state.userId,
+      performanceResult
+    );
+    
+    if (levelTransition) {
+      console.log(`[roleplay-engine] Level transition: ${levelTransition.previousLevel} → ${levelTransition.newLevel} (${levelTransition.reason})`);
+    }
+  } catch (error) {
+    console.error('[roleplay-engine] Failed to record performance:', error);
+    // Continue without blocking - level system is non-critical
+  }
+  
   return {
     message: hugoDebrief.message,
     type: 'debrief',
@@ -1698,6 +1738,7 @@ export async function endRoleplay(state: V2SessionState): Promise<EngineResponse
       ...state,
       currentMode: 'DEBRIEF'
     },
+    levelTransition: levelTransition || undefined,
     // Pass through validatorInfo from debrief for debug panel
     debug: hugoDebrief.validatorInfo ? { validatorInfo: hugoDebrief.validatorInfo } : undefined,
     promptsUsed: hugoDebrief.promptsUsed

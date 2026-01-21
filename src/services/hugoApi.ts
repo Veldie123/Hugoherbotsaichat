@@ -52,6 +52,13 @@ export interface SendMessageRequest {
   isExpert?: boolean;
 }
 
+export interface LevelTransition {
+  previousLevel: number;
+  newLevel: number;
+  reason: string;
+  shouldCongratulate: boolean;
+}
+
 export interface SendMessageResponse {
   response: string;
   phase: string;
@@ -61,6 +68,7 @@ export interface SendMessageResponse {
     klant_type?: string;
     verkoopkanaal?: string;
   };
+  levelTransition?: LevelTransition;
   debug?: {
     phase?: string;
     signal?: string;
