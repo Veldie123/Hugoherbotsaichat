@@ -18,6 +18,7 @@ The HugoHerbots.ai Sales Coach App is a React, TypeScript, and Vite-based applic
 The application is built with React 18, TypeScript, and Vite. Styling uses Tailwind CSS v4, and custom UI components are built with Radix UI. Supabase serves as the Backend-as-a-Service (BaaS) for authentication and database operations. The application integrates the Hugo Engine V2 FULL for advanced AI capabilities.
 
 **UI/UX Decisions:**
+- **Design Charter:** Zie `docs/DESIGN_CHARTER.md` voor complete design richtlijnen, kleurencodes, component styling, en checklist voor nieuwe pagina's.
 - **Color Schemes:** Admin view uses purple (`purple-600`) with green (`hh-success`) accents. User view uses dark navy blue (`hh-ink: #1E2A3B`) with `hh-primary` (`#6B7A92`) accents and phase-specific colors for E.P.I.C content.
 - **Component Design:** Reusable UI components follow a `shadcn`-style approach, ensuring consistency.
 - **Navigation:** Simplified to 'Gespreksanalyse' and 'Hugo a.i.'.
