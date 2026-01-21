@@ -91,6 +91,12 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
   - API endpoints: POST /api/v2/roleplay/unlock-check, GET /api/v2/context/flow-rules
 
 **Recent Toegevoegd (januari 2026):**
+- **RAG Techniek Tagging System**: Two-tier tagging approach
+  - **Video-level tagging**: 290/559 chunks (52%) tagged via `config/video_mapping.json` - matches filename to technique
+  - **Heuristic tagging**: 165 chunks suggested via `config/rag_heuristics.json` - specific keywords per technique
+  - **Admin Review UI**: `AdminRAGReview.tsx` with bulk approve, technique names, purple admin styling
+  - **API endpoints**: `/api/v2/rag/tag-stats`, `/api/v2/technieken/names`, `/api/v2/rag/suggest-bulk`
+  - **Key fix**: Extension-agnostic filename matching (.m4a/.MP4/.mov/.WAV normalized)
 - **TranscriptDialog Golden Standard Integratie**: Uitgebreid debug paneel met bewerkfunctionaliteit
   - ✓ Validatieknoppen (✓/✗) per transcript bericht voor admin review
   - ✓ Bewerkknop opent edit mode met dropdowns voor signaal, verwachte techniek, gedetecteerde techniek
