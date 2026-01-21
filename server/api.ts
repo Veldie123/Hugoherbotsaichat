@@ -2209,6 +2209,66 @@ app.get("/api/v2/rag/status", async (req, res) => {
 });
 
 // =====================
+// RAG TECHNIEK TAGGING ENDPOINTS
+// =====================
+import { 
+  bulkTagFromVideoMapping, 
+  getTaggingStats, 
+  getUntaggedChunks,
+  tagChunksForVideo 
+} from "./v2/rag-techniek-tagger";
+
+// POST /api/v2/rag/tag-bulk - Bulk tag all chunks from video mapping
+app.post("/api/v2/rag/tag-bulk", async (req, res) => {
+  try {
+    console.log("[RAG-TAGGER] Starting bulk tagging from video_mapping.json");
+    const result = await bulkTagFromVideoMapping();
+    res.json(result);
+  } catch (error: any) {
+    console.error("[RAG-TAGGER] Bulk tag error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/rag/tag-stats - Get tagging statistics
+app.get("/api/v2/rag/tag-stats", async (req, res) => {
+  try {
+    const stats = await getTaggingStats();
+    res.json(stats);
+  } catch (error: any) {
+    console.error("[RAG-TAGGER] Stats error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/rag/untagged - Get untagged chunks for review
+app.get("/api/v2/rag/untagged", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const chunks = await getUntaggedChunks(limit);
+    res.json({ chunks, count: chunks.length });
+  } catch (error: any) {
+    console.error("[RAG-TAGGER] Untagged error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/rag/tag-video - Tag all chunks for a specific video
+app.post("/api/v2/rag/tag-video", async (req, res) => {
+  try {
+    const { sourceId, technikId } = req.body;
+    if (!sourceId || !technikId) {
+      return res.status(400).json({ error: "sourceId and technikId required" });
+    }
+    const updated = await tagChunksForVideo(sourceId, technikId);
+    res.json({ success: true, updated });
+  } catch (error: any) {
+    console.error("[RAG-TAGGER] Tag video error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================
 // PERFORMANCE TRACKER ENDPOINTS
 // =====================
 import { performanceTracker } from "./v2/performance-tracker";

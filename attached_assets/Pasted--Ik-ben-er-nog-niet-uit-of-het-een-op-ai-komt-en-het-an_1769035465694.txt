@@ -1,0 +1,58 @@
+ Ik ben er nog niet uit of het een op .ai komt en het ander op .com maar kunnen we alvast dit deel uit de implementatie gids in gang zetten (6. Data, SSOT-config en RAG corpus
+Je noemt expliciet gedeelde assets zoals technieken_index.json en de RAG corpus, die door beide
+platformen aangevuld worden (nieuwe video's/webinars enerzijds, config reviews en golden standard
+chats anderzijds). Dit is precies waar 'split apps' mislukt als er geen single source of truth is.
+6.1 SSOT (technieken, overlays, prompts)
+Doel: 1 canonieke versie van technieken + overlays + prompt-assets, met versioning en audit trail.
+Beide apps consumeren dezelfde gepubliceerde versie.
+• Optie 1 (snel): maak een aparte 'shared-config' repo of git submodule en importeer in beide
+Replits. Publiceer versies (tags).
+• Optie 2 (aanbevolen): bewaar SSOT in Supabase (jsonb) met 'draft' en 'published' status,
+inclusief review workflow.
+• Cache-strategie: apps fetchen SSOT bij start + on demand; gebruik ETag/version om enkel te
+verversen bij wijzigingen.
+• Compatibiliteit: voeg een 'schema_version' toe zodat oudere clients weten of ze de config kunnen
+parsen.
+6.2 RAG corpus (training context)
+Doel: 1 centrale verzameling van documenten met embeddings, metadata en toegangslabels. Beide
+apps kunnen documenten toevoegen, maar alleen via gecontroleerde ingest (niet rechtstreeks vanuit
+client).
+• Tabel rag_documents: (id, doc_type, title, content, language, source_ref, visibility, embedding,
+created_at, updated_at).
+• Ingest pipeline: transcript -> chunking -> embedding job -> index update.
+• Visibility/entitlement: markeer premium-only content; enforce via RLS of via server-side search
+endpoints.
+• Observability: log welke RAG docs gebruikt worden in antwoorden (debug + analytics)?
+
+Dit is een goede strategische stap! Op basis van het integratieplan zou ik Optie 2 (Supabase SSOT) aanbevelen - dat past perfect bij jullie bestaande setup en biedt de meeste flexibiliteit.
+
+Aanpak: SSOT & RAG in Supabase
+Wat we gaan bouwen:
+1. SSOT Configs Tabel
+
+ssot_configs (
+  id, config_type, version, schema_version, 
+  data (jsonb), status (draft/published),
+  created_at, updated_at, published_by
+)
+config_type: 'technieken_index', 'klant_houdingen', 'detectors'
+Beide apps fetchen de published versie
+Config Review workflow publiceert nieuwe versies
+2. RAG Documents Tabel (uitbreiding bestaande)
+
+rag_documents (
+  id, doc_type, title, content, language,
+  source_ref, visibility, embedding,
+  source_app, created_at, updated_at
+)
+source_app: 'ai' of 'com' (wie heeft toegevoegd)
+visibility: 'public', 'premium', 'admin'
+3. API Endpoints
+
+GET /api/ssot/:config_type - Haal published config op (met ETag caching)
+POST /api/ssot/:config_type/publish - Publiceer nieuwe versie (admin)
+Voordelen van deze aanpak:
+✅ Beide apps gebruiken dezelfde bron
+✅ Versioning + audit trail ingebouwd
+✅ Draft/review workflow behoudt kwaliteitscontrole
+✅ Geen git sync of submodule complexiteit
