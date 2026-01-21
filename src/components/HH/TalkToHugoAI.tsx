@@ -50,8 +50,7 @@ import {
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
-import { hugoApi } from "../../services/hugoApi";
-import { difficultyLevels } from "../../utils/displayMappings";
+import { hugoApi, type AssistanceConfig } from "../../services/hugoApi";
 import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from "@heygen/streaming-avatar";
 import { Room, RoomEvent, Track, ConnectionState } from "livekit-client";
 
@@ -89,6 +88,15 @@ export function TalkToHugoAI({
   const [activeHouding, setActiveHouding] = useState<string | null>(null);
   const [recommendedTechnique, setRecommendedTechnique] = useState<string | null>(null);
   const [difficultyLevel, setDifficultyLevel] = useState<string>("onbewuste_onkunde");
+  const [assistanceConfig, setAssistanceConfig] = useState<AssistanceConfig>({
+    showHouding: true,
+    showExpectedTechnique: true,
+    showStepIndicators: true,
+    showTipButton: true,
+    showExamples: true,
+    blindPlay: false,
+  });
+  const [levelTransitionMessage, setLevelTransitionMessage] = useState<string | null>(null);
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>("chat");
   const [sessionTimer, setSessionTimer] = useState(0);
@@ -122,6 +130,22 @@ export function TalkToHugoAI({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingText]);
+
+  // Load user's current competence level on mount (auto-adaptive system)
+  useEffect(() => {
+    const loadUserLevel = async () => {
+      try {
+        const levelData = await hugoApi.getUserLevel();
+        setDifficultyLevel(levelData.levelName);
+        setAssistanceConfig(levelData.assistance);
+        console.log("[Performance] Loaded user level:", levelData.level, levelData.levelName);
+      } catch (error) {
+        console.error("[Performance] Failed to load user level:", error);
+        // Keep defaults on error
+      }
+    };
+    loadUserLevel();
+  }, []);
 
   useEffect(() => {
     if (selectedTechnique) {
@@ -725,10 +749,6 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                 Selecteer een techniek in de sidebar om te beginnen met oefenen
               </p>
               
-              {/* Niveau selector moved to header - show hint only */}
-              <p className="text-[12px] text-hh-muted">
-                Kies je niveau bovenaan en start met oefenen
-              </p>
             </div>
           </div>
         )}
@@ -1134,31 +1154,8 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               )}
             </div>
             
-            {/* Right: Niveau selector + Mode toggle + Stop */}
+            {/* Right: Mode toggle + Stop (Niveau is now auto-adaptive, hidden) */}
             <div className="flex items-center gap-3">
-              {/* Niveau selector - always visible */}
-              <div className="flex items-center gap-2">
-                <span className="text-[12px] text-hh-muted">Niveau:</span>
-                <div className="flex gap-0.5 bg-hh-ui-50 rounded-lg p-0.5">
-                  {difficultyLevels.map((level) => (
-                    <button
-                      key={level.key}
-                      onClick={() => setDifficultyLevel(level.key)}
-                      style={difficultyLevel === level.key ? { backgroundColor: '#4F7396', color: 'white' } : {}}
-                      className={`w-7 h-7 rounded-md text-[12px] font-medium transition-all ${
-                        difficultyLevel === level.key 
-                          ? "shadow-sm" 
-                          : "text-hh-text hover:bg-white"
-                      }`}
-                      title={level.label}
-                    >
-                      {level.short}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="h-5 w-px bg-hh-border" />
 
               {/* Mode toggle - compact icon buttons */}
               <div className="flex items-center bg-hh-ui-50 rounded-lg p-1">

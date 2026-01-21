@@ -64,7 +64,7 @@ import {
   buildDebugInfoFromResponse 
 } from "../../utils/displayMappings";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
-import { hugoApi } from "../../services/hugoApi";
+import { hugoApi, type AssistanceConfig } from "../../services/hugoApi";
 import { Loader2 } from "lucide-react";
 import { LiveAvatarComponent } from "./LiveAvatarComponent";
 
@@ -160,6 +160,15 @@ export function AdminChatExpertMode({
   const [activeHouding, setActiveHouding] = useState<string | null>(null); // NEW: Currently active houding from AI
   const [recommendedTechnique, setRecommendedTechnique] = useState<string | null>(null); // NEW: Recommended technique to highlight
   const [difficultyLevel, setDifficultyLevel] = useState<string>("onbewuste_onkunde"); // Competentie niveau (4 levels)
+  const [assistanceConfig, setAssistanceConfig] = useState<AssistanceConfig>({
+    showHouding: true,
+    showExpectedTechnique: true,
+    showStepIndicators: true,
+    showTipButton: true,
+    showExamples: true,
+    blindPlay: false,
+  });
+  const [levelTransitionMessage, setLevelTransitionMessage] = useState<string | null>(null);
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false); // NEW: Stop roleplay confirmation dialog
   const [chatMode, setChatMode] = useState<"chat" | "audio" | "video">("chat"); // Multi-modal chat mode
   const [isMuted, setIsMuted] = useState(false); // Audio/video mute state
@@ -181,6 +190,22 @@ export function AdminChatExpertMode({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Load user's current competence level on mount (auto-adaptive system)
+  useEffect(() => {
+    const loadUserLevel = async () => {
+      try {
+        const levelData = await hugoApi.getUserLevel();
+        setDifficultyLevel(levelData.levelName);
+        setAssistanceConfig(levelData.assistance);
+        console.log("[Performance] Loaded user level:", levelData.level, levelData.levelName);
+      } catch (error) {
+        console.error("[Performance] Failed to load user level:", error);
+        // Keep defaults on error
+      }
+    };
+    loadUserLevel();
+  }, []);
 
   // Session timer effect
   useEffect(() => {
@@ -737,26 +762,8 @@ export function AdminChatExpertMode({
               </div>
             </div>
 
-            {/* Difficulty Level and Mode Selector */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-[12px] text-hh-muted">Niveau:</span>
-                <div className="flex gap-1">
-                  {difficultyLevels.map((level) => (
-                    <Button
-                      key={level.key}
-                      variant={difficultyLevel === level.key ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setDifficultyLevel(level.key)}
-                      className={`h-7 text-[10px] px-2 ${difficultyLevel === level.key ? "bg-purple-600 hover:bg-purple-700" : ""}`}
-                      title={level.label}
-                    >
-                      {level.short}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              
+            {/* Mode Selector - Niveau is now auto-adaptive (hidden) */}
+            <div className="flex items-center justify-end">
               {/* Mode Toggle - Chat/Bellen/Video (same as User View) */}
               <div className="flex items-center gap-3">
                 {selectedTechnique && (

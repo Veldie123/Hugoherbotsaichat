@@ -318,6 +318,105 @@ class HugoApiService {
   clearSession(): void {
     this.currentSessionId = null;
   }
+
+  // =====================
+  // PERFORMANCE TRACKER API
+  // =====================
+
+  /**
+   * Get current competence level and assistance config
+   */
+  async getUserLevel(userId: string = "demo-user"): Promise<UserLevelResponse> {
+    const response = await fetch(`${API_BASE}/v2/user/level?userId=${encodeURIComponent(userId)}`);
+    if (!response.ok) {
+      throw new Error(`Failed to get user level: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Record performance after a roleplay and check for level transitions
+   */
+  async recordPerformance(data: RecordPerformanceRequest): Promise<RecordPerformanceResponse> {
+    const response = await fetch(`${API_BASE}/v2/user/performance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to record performance: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Get technique mastery summary for user
+   */
+  async getUserMastery(userId: string = "demo-user"): Promise<UserMasteryResponse> {
+    const response = await fetch(`${API_BASE}/v2/user/mastery?userId=${encodeURIComponent(userId)}`);
+    if (!response.ok) {
+      throw new Error(`Failed to get user mastery: ${response.statusText}`);
+    }
+    return response.json();
+  }
+}
+
+// Performance Tracker Types
+export interface AssistanceConfig {
+  showHouding: boolean;
+  showExpectedTechnique: boolean;
+  showStepIndicators: boolean;
+  showTipButton: boolean;
+  showExamples: boolean;
+  blindPlay: boolean;
+}
+
+export interface UserLevelResponse {
+  userId: string;
+  level: number;
+  levelName: string;
+  assistance: AssistanceConfig;
+}
+
+export interface RecordPerformanceRequest {
+  userId?: string;
+  techniqueId: string;
+  techniqueName?: string;
+  score: number;
+  struggleSignals?: string[];
+}
+
+export interface LevelTransition {
+  previousLevel: number;
+  newLevel: number;
+  reason: string;
+  shouldCongratulate: boolean;
+  congratulationMessage?: string | null;
+}
+
+export interface RecordPerformanceResponse {
+  recorded: boolean;
+  currentLevel: number;
+  levelName: string;
+  assistance: AssistanceConfig;
+  transition: LevelTransition | null;
+}
+
+export interface TechniqueMasterySummary {
+  techniqueId: string;
+  techniqueName: string;
+  attemptCount: number;
+  successRate: number;
+  averageScore: number;
+  masteryLevel: "beginner" | "intermediate" | "advanced" | "master";
+  lastPracticed: string | null;
+}
+
+export interface UserMasteryResponse {
+  userId: string;
+  currentLevel: number;
+  levelName: string;
+  techniques: TechniqueMasterySummary[];
 }
 
 export const hugoApi = new HugoApiService();

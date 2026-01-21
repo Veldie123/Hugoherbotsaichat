@@ -2208,6 +2208,91 @@ app.get("/api/v2/rag/status", async (req, res) => {
   }
 });
 
+// =====================
+// PERFORMANCE TRACKER ENDPOINTS
+// =====================
+import { performanceTracker } from "./v2/performance-tracker";
+
+// GET /api/v2/user/level - Get current competence level
+app.get("/api/v2/user/level", async (req, res) => {
+  try {
+    const userId = (req.query.userId as string) || "demo-user";
+    const level = await performanceTracker.getCurrentLevel(userId);
+    const levelName = performanceTracker.getLevelName(level);
+    const assistanceConfig = performanceTracker.getAssistanceConfig(level);
+    
+    res.json({
+      userId,
+      level,
+      levelName,
+      assistance: assistanceConfig
+    });
+  } catch (error: any) {
+    console.error("[Performance] Get level error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/user/performance - Record performance and check for level transition
+app.post("/api/v2/user/performance", async (req, res) => {
+  try {
+    const { userId = "demo-user", techniqueId, techniqueName, score, struggleSignals } = req.body;
+    
+    if (!techniqueId || score === undefined) {
+      return res.status(400).json({ error: "techniqueId and score are required" });
+    }
+    
+    const outcome = score >= 70 ? "success" : score >= 50 ? "partial" : "struggle";
+    
+    const transition = await performanceTracker.recordPerformance(userId, {
+      techniqueId,
+      techniqueName: techniqueName || techniqueId,
+      score,
+      outcome,
+      struggleSignals
+    });
+    
+    // Get updated level info
+    const newLevel = await performanceTracker.getCurrentLevel(userId);
+    const assistanceConfig = performanceTracker.getAssistanceConfig(newLevel);
+    
+    res.json({
+      recorded: true,
+      currentLevel: newLevel,
+      levelName: performanceTracker.getLevelName(newLevel),
+      assistance: assistanceConfig,
+      transition: transition ? {
+        ...transition,
+        congratulationMessage: transition.shouldCongratulate 
+          ? performanceTracker.getCongratulationMessage(transition)
+          : null
+      } : null
+    });
+  } catch (error: any) {
+    console.error("[Performance] Record error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/user/mastery - Get technique mastery summary
+app.get("/api/v2/user/mastery", async (req, res) => {
+  try {
+    const userId = (req.query.userId as string) || "demo-user";
+    const mastery = await performanceTracker.getTechniqueMasterySummary(userId);
+    const level = await performanceTracker.getCurrentLevel(userId);
+    
+    res.json({
+      userId,
+      currentLevel: level,
+      levelName: performanceTracker.getLevelName(level),
+      techniques: mastery
+    });
+  } catch (error: any) {
+    console.error("[Performance] Get mastery error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check - now shows FULL engine
 app.get("/api/health", (req, res) => {
   res.json({ 
