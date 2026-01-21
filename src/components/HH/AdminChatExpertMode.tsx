@@ -729,7 +729,14 @@ export function AdminChatExpertMode({
                 <h2 className="text-[18px] leading-[24px] font-bold text-hh-text">
                   {sessionTitle}
                 </h2>
-                <p className="text-[12px] text-hh-muted">Training AI Model</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[12px] text-hh-muted">Training AI Model</p>
+                  <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-100 text-purple-700 rounded-full">
+                    Lvl {difficultyLevel === "onbewuste_onkunde" ? "1" : 
+                         difficultyLevel === "bewuste_onkunde" ? "2" : 
+                         difficultyLevel === "bewuste_kunde" ? "3" : "4"}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button
