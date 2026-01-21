@@ -1116,7 +1116,8 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
   return (
     <AppLayout currentPage="talk-to-hugo" navigate={navigate} isAdmin={isAdmin}>
       <div className="flex h-[calc(100vh-4rem)]">
-        {difficultyLevel !== "onbewuste_kunde" && (
+        {/* Sidebar hidden in blindPlay mode (Level 4) based on assistanceConfig */}
+        {!assistanceConfig.blindPlay && (
           <div className="w-1/3 flex-shrink-0 overflow-y-auto h-full">
             <EPICSidebar
               fasesAccordionOpen={fasesAccordionOpen}
@@ -1149,7 +1150,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           </div>
         )}
 
-        <div className="w-2/3 flex-1 flex flex-col bg-white overflow-hidden">
+        <div className={`${assistanceConfig.blindPlay ? 'w-full' : 'w-2/3'} flex-1 flex flex-col bg-white overflow-hidden`}>
           {/* Clean header - title left, niveau + mode toggle right */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-hh-border bg-white">
             {/* Left: Title + Technique info (hide clock in audio/video mode) */}
