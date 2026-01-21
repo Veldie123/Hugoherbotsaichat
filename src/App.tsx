@@ -17,10 +17,11 @@ import { AdminChatExpertMode } from "./components/HH/AdminChatExpertMode";
 import { AdminUploadManagement } from "./components/HH/AdminUploadManagement";
 import { AdminConfigReview } from "./components/HH/AdminConfigReview";
 import { AdminNotifications } from "./components/HH/AdminNotifications";
+import { AdminRAGReview } from "./components/HH/AdminRAGReview";
 import { HugoAIOverview } from "./components/HH/HugoAIOverview";
 import { auth } from "./utils/supabase/client";
 
-type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "onboarding" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "analysis" | "analysis-results" | "upload-analysis" | "admin-uploads" | "admin-sessions" | "admin-chat-expert" | "admin-config-review" | "admin-notifications";
+type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "onboarding" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "analysis" | "analysis-results" | "upload-analysis" | "admin-uploads" | "admin-sessions" | "admin-chat-expert" | "admin-config-review" | "admin-notifications" | "admin-rag-review";
 
 const DEV_PREVIEW_PAGES: Record<string, Page> = {
   'admin-chat-expert': 'admin-chat-expert',
@@ -28,6 +29,7 @@ const DEV_PREVIEW_PAGES: Record<string, Page> = {
   'admin-uploads': 'admin-uploads',
   'admin-config-review': 'admin-config-review',
   'admin-notifications': 'admin-notifications',
+  'admin-rag-review': 'admin-rag-review',
   'talk-to-hugo': 'talk-to-hugo',
   'hugo-overview': 'hugo-overview',
   'analysis': 'analysis',
@@ -167,6 +169,9 @@ export default function App() {
 
           {/* Admin View - Notifications */}
           {currentPage === "admin-notifications" && <AdminNotifications navigate={navigate} />}
+
+          {/* Admin View - RAG Review */}
+          {currentPage === "admin-rag-review" && <AdminRAGReview navigate={navigate} currentPage={currentPage} />}
         </>
       )}
       <Toaster position="top-right" richColors />

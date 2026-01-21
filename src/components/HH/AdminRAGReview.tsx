@@ -1,0 +1,334 @@
+import { useState, useEffect } from "react";
+import { AdminLayout } from "./AdminLayout";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {
+  Check,
+  X,
+  RefreshCw,
+  Zap,
+  FileText,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
+import { getCodeBadgeColors } from "../../utils/phaseColors";
+import { toast } from "sonner";
+
+interface AdminRAGReviewProps {
+  navigate?: (page: string) => void;
+  currentPage?: string;
+}
+
+interface ChunkForReview {
+  id: string;
+  source_id: string;
+  title: string;
+  content_preview: string;
+  techniek_id: string | null;
+  suggested_techniek_id: string | null;
+  review_status: string;
+}
+
+interface ReviewStats {
+  needsReview: number;
+  approved: number;
+  rejected: number;
+  corrected: number;
+  byTechnique: { technique: string; count: number }[];
+}
+
+interface TagStats {
+  total: number;
+  tagged: number;
+  untagged: number;
+}
+
+export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: AdminRAGReviewProps) {
+  const [chunks, setChunks] = useState<ChunkForReview[]>([]);
+  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
+  const [tagStats, setTagStats] = useState<TagStats | null>(null);
+  const [selectedTechnique, setSelectedTechnique] = useState<string>("all");
+  const [loading, setLoading] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [chunksRes, reviewStatsRes, tagStatsRes] = await Promise.all([
+        fetch("/api/v2/rag/review?limit=100"),
+        fetch("/api/v2/rag/review-stats"),
+        fetch("/api/v2/rag/tag-stats"),
+      ]);
+
+      const chunksData = await chunksRes.json();
+      const reviewStatsData = await reviewStatsRes.json();
+      const tagStatsData = await tagStatsRes.json();
+
+      setChunks(chunksData.chunks || []);
+      setReviewStats(reviewStatsData);
+      setTagStats(tagStatsData);
+    } catch (error) {
+      console.error("Failed to load data:", error);
+      toast.error("Kon data niet laden");
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const runHeuristics = async () => {
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/v2/rag/suggest-bulk", { method: "POST" });
+      const data = await res.json();
+      toast.success(`${data.suggested} nieuwe suggesties gegenereerd`);
+      loadData();
+    } catch (error) {
+      toast.error("Heuristics gefaald");
+    }
+    setBulkLoading(false);
+  };
+
+  const runVideoTagging = async () => {
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/v2/rag/tag-bulk", { method: "POST" });
+      const data = await res.json();
+      toast.success(`${data.tagged} chunks getagd van video mapping`);
+      loadData();
+    } catch (error) {
+      toast.error("Video tagging gefaald");
+    }
+    setBulkLoading(false);
+  };
+
+  const approveChunk = async (id: string) => {
+    try {
+      await fetch(`/api/v2/rag/approve/${id}`, { method: "POST" });
+      setChunks((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Goedgekeurd");
+    } catch (error) {
+      toast.error("Goedkeuring gefaald");
+    }
+  };
+
+  const rejectChunk = async (id: string) => {
+    try {
+      await fetch(`/api/v2/rag/reject/${id}`, { method: "POST" });
+      setChunks((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Afgekeurd");
+    } catch (error) {
+      toast.error("Afkeuring gefaald");
+    }
+  };
+
+  const bulkApprove = async (techniqueId: string) => {
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/v2/rag/approve-bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ techniqueId }),
+      });
+      const data = await res.json();
+      toast.success(`${data.approved} chunks goedgekeurd voor ${techniqueId}`);
+      loadData();
+    } catch (error) {
+      toast.error("Bulk approve gefaald");
+    }
+    setBulkLoading(false);
+  };
+
+  const filteredChunks =
+    selectedTechnique === "all"
+      ? chunks
+      : chunks.filter((c) => c.suggested_techniek_id === selectedTechnique);
+
+  const uniqueTechniques = [
+    ...new Set(chunks.map((c) => c.suggested_techniek_id).filter(Boolean)),
+  ] as string[];
+
+  return (
+    <AdminLayout navigate={navigate} currentPage={currentPage}>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-800">
+              RAG Techniek Review
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Review en keur gesuggereerde technieken goed
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={runVideoTagging}
+              disabled={bulkLoading}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Video Tagging
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={runHeuristics}
+              disabled={bulkLoading}
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Run Heuristics
+            </Button>
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Ververs
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">Totaal Chunks</span>
+              <FileText className="w-4 h-4 text-slate-400" />
+            </div>
+            <p className="text-2xl font-semibold mt-2">{tagStats?.total || 0}</p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">Getagd</span>
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+            </div>
+            <p className="text-2xl font-semibold mt-2 text-green-600">
+              {tagStats?.tagged || 0}
+              <span className="text-sm font-normal text-slate-400 ml-2">
+                ({tagStats ? Math.round((tagStats.tagged / tagStats.total) * 100) : 0}%)
+              </span>
+            </p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">Te Reviewen</span>
+              <AlertCircle className="w-4 h-4 text-orange-500" />
+            </div>
+            <p className="text-2xl font-semibold mt-2 text-orange-600">
+              {reviewStats?.needsReview || 0}
+            </p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">Goedgekeurd</span>
+              <Check className="w-4 h-4 text-purple-500" />
+            </div>
+            <p className="text-2xl font-semibold mt-2 text-purple-600">
+              {reviewStats?.approved || 0}
+            </p>
+          </Card>
+        </div>
+
+        {reviewStats && reviewStats.byTechnique.length > 0 && (
+          <Card className="p-4">
+            <h3 className="font-medium mb-3">Bulk Approve per Techniek</h3>
+            <div className="flex flex-wrap gap-2">
+              {reviewStats.byTechnique.map((t) => (
+                <Button
+                  key={t.technique}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkApprove(t.technique)}
+                  disabled={bulkLoading}
+                  className="border-purple-200 hover:bg-purple-50"
+                >
+                  <Check className="w-3 h-3 mr-1" />
+                  {t.technique} ({t.count})
+                </Button>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium">Chunks voor Review ({filteredChunks.length})</h3>
+            <Select value={selectedTechnique} onValueChange={setSelectedTechnique}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter op techniek" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle technieken</SelectItem>
+                {uniqueTechniques.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-8 text-slate-400">Laden...</div>
+          ) : filteredChunks.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              Geen chunks te reviewen
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[500px] overflow-y-auto">
+              {filteredChunks.map((chunk) => (
+                <div
+                  key={chunk.id}
+                  className="flex items-start gap-4 p-3 bg-slate-50 rounded-lg border"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs text-slate-400">{chunk.source_id}</span>
+                      {chunk.suggested_techniek_id && (
+                        <Badge
+                          className={`text-xs ${getCodeBadgeColors(
+                            chunk.suggested_techniek_id.split(".")[0]
+                          )}`}
+                        >
+                          {chunk.suggested_techniek_id}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-700 line-clamp-2">
+                      {chunk.content_preview}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
+                      onClick={() => approveChunk(chunk.id)}
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
+                      onClick={() => rejectChunk(chunk.id)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    </AdminLayout>
+  );
+}

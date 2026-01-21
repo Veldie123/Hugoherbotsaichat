@@ -2269,6 +2269,93 @@ app.post("/api/v2/rag/tag-video", async (req, res) => {
 });
 
 // =====================
+// RAG HEURISTIC TAGGING ENDPOINTS (P1)
+// =====================
+import { 
+  bulkSuggestTechniques,
+  getChunksForReview,
+  approveChunk,
+  rejectChunk,
+  bulkApproveByTechnique,
+  getReviewStats
+} from "./v2/rag-heuristic-tagger";
+
+// POST /api/v2/rag/suggest-bulk - Run heuristic tagging on untagged chunks
+app.post("/api/v2/rag/suggest-bulk", async (req, res) => {
+  try {
+    console.log("[HEURISTIC] Starting bulk suggestion");
+    const result = await bulkSuggestTechniques();
+    res.json(result);
+  } catch (error: any) {
+    console.error("[HEURISTIC] Suggest error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/rag/review - Get chunks needing review
+app.get("/api/v2/rag/review", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const chunks = await getChunksForReview(limit);
+    res.json({ chunks, count: chunks.length });
+  } catch (error: any) {
+    console.error("[HEURISTIC] Review list error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/v2/rag/review-stats - Get review statistics
+app.get("/api/v2/rag/review-stats", async (req, res) => {
+  try {
+    const stats = await getReviewStats();
+    res.json(stats);
+  } catch (error: any) {
+    console.error("[HEURISTIC] Stats error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/rag/approve/:id - Approve a chunk's suggested technique
+app.post("/api/v2/rag/approve/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const success = await approveChunk(id);
+    res.json({ success });
+  } catch (error: any) {
+    console.error("[HEURISTIC] Approve error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/rag/reject/:id - Reject a suggestion with optional correction
+app.post("/api/v2/rag/reject/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newTechniqueId } = req.body;
+    const success = await rejectChunk(id, newTechniqueId);
+    res.json({ success });
+  } catch (error: any) {
+    console.error("[HEURISTIC] Reject error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/rag/approve-bulk - Bulk approve all suggestions for a technique
+app.post("/api/v2/rag/approve-bulk", async (req, res) => {
+  try {
+    const { techniqueId } = req.body;
+    if (!techniqueId) {
+      return res.status(400).json({ error: "techniqueId required" });
+    }
+    const count = await bulkApproveByTechnique(techniqueId);
+    res.json({ success: true, approved: count });
+  } catch (error: any) {
+    console.error("[HEURISTIC] Bulk approve error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================
 // PERFORMANCE TRACKER ENDPOINTS
 // =====================
 import { performanceTracker } from "./v2/performance-tracker";
