@@ -121,11 +121,13 @@ export async function bulkTagFromVideoMapping(): Promise<TaggingResult> {
       // Try to find techniek for this source
       let techniek = lookup.get(normalizedSourceId);
       
-      // Fallback: if source_id is like "techniek_X.X.X", extract the technique number directly
+      // Fallback: if source_id is like "techniek_X.X.X" or "techniek_4.INDIEN", extract the technique ID directly
       if (!techniek && sourceId) {
-        const technikMatch = sourceId.match(/^techniek_(\d+\.\d+(?:\.\d+)?)/i);
+        const technikMatch = sourceId.match(/^techniek_(\d+(?:\.\d+)*(?:\.[A-Z]+)?)/i);
         if (technikMatch) {
-          techniek = technikMatch[1];
+          techniek = technikMatch[1].toUpperCase().includes('INDIEN') 
+            ? technikMatch[1].replace(/indien/i, 'INDIEN') 
+            : technikMatch[1];
           console.log(`[RAG-TAGGER] Extracted techniek ${techniek} from source_id ${sourceId}`);
         }
       }
