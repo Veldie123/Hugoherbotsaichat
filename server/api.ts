@@ -2241,6 +2241,40 @@ app.get("/api/v2/rag/tag-stats", async (req, res) => {
   }
 });
 
+// GET /api/v2/technieken/names - Get technique number to name mapping
+app.get("/api/v2/technieken/names", async (req, res) => {
+  try {
+    const indexPath = path.join(process.cwd(), "config", "ssot", "technieken_index.json");
+    const indexData = JSON.parse(fs.readFileSync(indexPath, "utf-8"));
+    
+    const nameMap: Record<string, string> = {};
+    
+    function extractNames(obj: any) {
+      if (obj.nummer && obj.naam) {
+        nameMap[obj.nummer] = obj.naam;
+      }
+      if (obj.technieken) {
+        for (const tech of Object.values(obj.technieken)) {
+          extractNames(tech);
+        }
+      }
+      if (obj.subtechnieken) {
+        for (const subId of obj.subtechnieken) {
+          if (obj[subId]) {
+            extractNames(obj[subId]);
+          }
+        }
+      }
+    }
+    
+    extractNames(indexData);
+    res.json(nameMap);
+  } catch (error: any) {
+    console.error("[TECHNIEKEN] Names error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/v2/rag/untagged - Get untagged chunks for review
 app.get("/api/v2/rag/untagged", async (req, res) => {
   try {

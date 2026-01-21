@@ -55,17 +55,25 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
   const [chunks, setChunks] = useState<ChunkForReview[]>([]);
   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
   const [tagStats, setTagStats] = useState<TagStats | null>(null);
+  const [techniqueNames, setTechniqueNames] = useState<Record<string, string>>({});
   const [selectedTechnique, setSelectedTechnique] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
 
+  const getTechniqueName = (id: string | null) => {
+    if (!id) return "";
+    const name = techniqueNames[id];
+    return name ? `${id} - ${name}` : id;
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [chunksRes, reviewStatsRes, tagStatsRes] = await Promise.all([
+      const [chunksRes, reviewStatsRes, tagStatsRes, namesRes] = await Promise.all([
         fetch("/api/v2/rag/review?limit=100"),
         fetch("/api/v2/rag/review-stats"),
         fetch("/api/v2/rag/tag-stats"),
+        fetch("/api/v2/technieken/names"),
       ]);
 
       if (!chunksRes.ok || !reviewStatsRes.ok || !tagStatsRes.ok) {
@@ -75,9 +83,11 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
       const chunksData = await chunksRes.json();
       const reviewStatsData = await reviewStatsRes.json();
       const tagStatsData = await tagStatsRes.json();
+      const namesData = namesRes.ok ? await namesRes.json() : {};
 
       setChunks(chunksData.chunks || []);
       setReviewStats(reviewStatsData);
+      setTechniqueNames(namesData);
       setTagStats(tagStatsData);
     } catch (error) {
       console.error("Failed to load data:", error);
@@ -273,9 +283,10 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
                   onClick={() => bulkApprove(t.technique)}
                   disabled={bulkLoading}
                   className="border-purple-300 text-purple-700 hover:bg-purple-100 hover:border-purple-400"
+                  title={getTechniqueName(t.technique)}
                 >
                   <Check className="w-3 h-3 mr-1 text-purple-600" />
-                  {t.technique} ({t.count})
+                  {getTechniqueName(t.technique)} ({t.count})
                 </Button>
               ))}
             </div>
@@ -293,7 +304,7 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
                 <SelectItem value="all">Alle technieken</SelectItem>
                 {uniqueTechniques.map((t) => (
                   <SelectItem key={t} value={t}>
-                    {t}
+                    {getTechniqueName(t)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -321,8 +332,9 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
                           className={`text-xs ${getCodeBadgeColors(
                             chunk.suggested_techniek_id.split(".")[0]
                           )}`}
+                          title={getTechniqueName(chunk.suggested_techniek_id)}
                         >
-                          {chunk.suggested_techniek_id}
+                          {getTechniqueName(chunk.suggested_techniek_id)}
                         </Badge>
                       )}
                     </div>
