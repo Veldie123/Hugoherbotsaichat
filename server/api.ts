@@ -2277,7 +2277,8 @@ import {
   approveChunk,
   rejectChunk,
   bulkApproveByTechnique,
-  getReviewStats
+  getReviewStats,
+  resetHeuristicSuggestions
 } from "./v2/rag-heuristic-tagger";
 
 // POST /api/v2/rag/suggest-bulk - Run heuristic tagging on untagged chunks
@@ -2351,6 +2352,17 @@ app.post("/api/v2/rag/approve-bulk", async (req, res) => {
     res.json({ success: true, approved: count });
   } catch (error: any) {
     console.error("[HEURISTIC] Bulk approve error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/v2/rag/reset-suggestions - Reset all heuristic suggestions
+app.post("/api/v2/rag/reset-suggestions", async (req, res) => {
+  try {
+    const result = await resetHeuristicSuggestions();
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("[HEURISTIC] Reset error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

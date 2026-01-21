@@ -54,8 +54,16 @@ function loadVideoMapping(): VideoMapping {
 }
 
 /**
+ * Strip all known extensions from a filename
+ * Handles: .MP4, .mp4, .mov, .MOV, .m4a, .M4A, .wav, .WAV
+ */
+function stripExtension(filename: string): string {
+  return filename.replace(/\.(MP4|mp4|mov|MOV|m4a|M4A|wav|WAV)$/i, "");
+}
+
+/**
  * Build a lookup map: source_id -> techniek_id
- * Handles various source_id formats (MVI_0080, MVI_0080.MP4, etc.)
+ * Handles various source_id formats (MVI_0080, MVI_0080.MP4, MVI_0080.m4a, etc.)
  */
 function buildSourceToTechnikMap(mapping: VideoMapping): Map<string, string> {
   const lookup = new Map<string, string>();
@@ -66,13 +74,12 @@ function buildSourceToTechnikMap(mapping: VideoMapping): Map<string, string> {
     // Add multiple lookup keys for flexibility
     const baseId = video.title; // e.g., "MVI_0080"
     const fullName = fileName; // e.g., "MVI_0080.MP4"
-    const noExt = fileName.replace(/\.(MP4|mov|mp4|MOV)$/i, "");
+    const noExt = stripExtension(fileName);
     
-    lookup.set(baseId, video.techniek);
-    lookup.set(fullName, video.techniek);
-    lookup.set(noExt, video.techniek);
-    lookup.set(baseId.toLowerCase(), video.techniek);
+    // Store with lowercase keys for case-insensitive matching
     lookup.set(noExt.toLowerCase(), video.techniek);
+    lookup.set(baseId.toLowerCase(), video.techniek);
+    lookup.set(fullName.toLowerCase(), video.techniek);
   }
   
   return lookup;
@@ -108,10 +115,11 @@ export async function bulkTagFromVideoMapping(): Promise<TaggingResult> {
       const sourceId = doc.source_id;
       const existingTechnik = doc.techniek_id;
       
+      // Normalize source_id: lowercase and strip extension
+      const normalizedSourceId = stripExtension(sourceId || "").toLowerCase();
+      
       // Try to find techniek for this source
-      const techniek = lookup.get(sourceId) || 
-                       lookup.get(sourceId?.toLowerCase()) ||
-                       lookup.get(sourceId?.replace(/\.(MP4|mov|mp4|MOV)$/i, ""));
+      const techniek = lookup.get(normalizedSourceId);
       
       if (!techniek) {
         result.skipped++;

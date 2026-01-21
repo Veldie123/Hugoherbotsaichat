@@ -284,3 +284,22 @@ export async function getReviewStats(): Promise<{
     }))
   };
 }
+
+/**
+ * Reset all heuristic suggestions (clear suggested_techniek_id and needs_review flags)
+ * Use this to start fresh with only video-level tagging
+ */
+export async function resetHeuristicSuggestions(): Promise<{ reset: number }> {
+  const { rowCount } = await pool.query(`
+    UPDATE rag_documents 
+    SET suggested_techniek_id = NULL,
+        needs_review = FALSE,
+        review_status = NULL
+    WHERE suggested_techniek_id IS NOT NULL
+      AND review_status IN ('suggested', 'pending')
+  `);
+  
+  console.log(`[HEURISTIC] Reset ${rowCount} heuristic suggestions`);
+  
+  return { reset: rowCount || 0 };
+}
