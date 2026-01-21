@@ -119,7 +119,16 @@ export async function bulkTagFromVideoMapping(): Promise<TaggingResult> {
       const normalizedSourceId = stripExtension(sourceId || "").toLowerCase();
       
       // Try to find techniek for this source
-      const techniek = lookup.get(normalizedSourceId);
+      let techniek = lookup.get(normalizedSourceId);
+      
+      // Fallback: if source_id is like "techniek_X.X.X", extract the technique number directly
+      if (!techniek && sourceId) {
+        const technikMatch = sourceId.match(/^techniek_(\d+\.\d+(?:\.\d+)?)/i);
+        if (technikMatch) {
+          techniek = technikMatch[1];
+          console.log(`[RAG-TAGGER] Extracted techniek ${techniek} from source_id ${sourceId}`);
+        }
+      }
       
       if (!techniek) {
         result.skipped++;
