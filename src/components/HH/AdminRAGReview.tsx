@@ -68,6 +68,10 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
         fetch("/api/v2/rag/tag-stats"),
       ]);
 
+      if (!chunksRes.ok || !reviewStatsRes.ok || !tagStatsRes.ok) {
+        throw new Error("API error: een of meer endpoints faalden");
+      }
+
       const chunksData = await chunksRes.json();
       const reviewStatsData = await reviewStatsRes.json();
       const tagStatsData = await tagStatsRes.json();
@@ -90,11 +94,15 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
     setBulkLoading(true);
     try {
       const res = await fetch("/api/v2/rag/suggest-bulk", { method: "POST" });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Server error");
+      }
       const data = await res.json();
       toast.success(`${data.suggested} nieuwe suggesties gegenereerd`);
       loadData();
     } catch (error) {
-      toast.error("Heuristics gefaald");
+      toast.error(`Heuristics gefaald: ${error instanceof Error ? error.message : "Onbekende fout"}`);
     }
     setBulkLoading(false);
   };
@@ -103,32 +111,44 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
     setBulkLoading(true);
     try {
       const res = await fetch("/api/v2/rag/tag-bulk", { method: "POST" });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Server error");
+      }
       const data = await res.json();
       toast.success(`${data.tagged} chunks getagd van video mapping`);
       loadData();
     } catch (error) {
-      toast.error("Video tagging gefaald");
+      toast.error(`Video tagging gefaald: ${error instanceof Error ? error.message : "Onbekende fout"}`);
     }
     setBulkLoading(false);
   };
 
   const approveChunk = async (id: string) => {
     try {
-      await fetch(`/api/v2/rag/approve/${id}`, { method: "POST" });
+      const res = await fetch(`/api/v2/rag/approve/${id}`, { method: "POST" });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Server error");
+      }
       setChunks((prev) => prev.filter((c) => c.id !== id));
       toast.success("Goedgekeurd");
     } catch (error) {
-      toast.error("Goedkeuring gefaald");
+      toast.error(`Goedkeuring gefaald: ${error instanceof Error ? error.message : "Onbekende fout"}`);
     }
   };
 
   const rejectChunk = async (id: string) => {
     try {
-      await fetch(`/api/v2/rag/reject/${id}`, { method: "POST" });
+      const res = await fetch(`/api/v2/rag/reject/${id}`, { method: "POST" });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Server error");
+      }
       setChunks((prev) => prev.filter((c) => c.id !== id));
       toast.success("Afgekeurd");
     } catch (error) {
-      toast.error("Afkeuring gefaald");
+      toast.error(`Afkeuring gefaald: ${error instanceof Error ? error.message : "Onbekende fout"}`);
     }
   };
 
@@ -140,11 +160,15 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ techniqueId }),
       });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Server error");
+      }
       const data = await res.json();
       toast.success(`${data.approved} chunks goedgekeurd voor ${techniqueId}`);
       loadData();
     } catch (error) {
-      toast.error("Bulk approve gefaald");
+      toast.error(`Bulk approve gefaald: ${error instanceof Error ? error.message : "Onbekende fout"}`);
     }
     setBulkLoading(false);
   };
@@ -176,20 +200,21 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
               size="sm"
               onClick={runVideoTagging}
               disabled={bulkLoading}
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
             >
               <FileText className="w-4 h-4 mr-2" />
               Video Tagging
             </Button>
             <Button
-              variant="outline"
               size="sm"
               onClick={runHeuristics}
               disabled={bulkLoading}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               <Zap className="w-4 h-4 mr-2" />
               Run Heuristics
             </Button>
-            <Button variant="outline" size="sm" onClick={loadData}>
+            <Button variant="outline" size="sm" onClick={loadData} className="border-purple-300 text-purple-700 hover:bg-purple-50">
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Ververs
             </Button>
@@ -247,9 +272,9 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
                   size="sm"
                   onClick={() => bulkApprove(t.technique)}
                   disabled={bulkLoading}
-                  className="border-purple-200 hover:bg-purple-50"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-100 hover:border-purple-400"
                 >
-                  <Check className="w-3 h-3 mr-1" />
+                  <Check className="w-3 h-3 mr-1 text-purple-600" />
                   {t.technique} ({t.count})
                 </Button>
               ))}
@@ -309,7 +334,7 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
+                      className="h-8 w-8 p-0 text-purple-600 hover:bg-purple-50"
                       onClick={() => approveChunk(chunk.id)}
                     >
                       <Check className="w-4 h-4" />
