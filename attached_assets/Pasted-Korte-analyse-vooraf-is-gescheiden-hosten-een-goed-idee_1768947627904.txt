@@ -1,0 +1,68 @@
+Korte analyse vooraf: is gescheiden hosten een goed idee?
+Waarom dit in jouw setup juist logisch is
+
+Productdifferentiatie: AI chat “toegankelijk/international” vs. premium “live coaching + video/webinars” (exclusiviteit/prijs) is conceptueel twee producten binnen één ecosysteem.
+
+Onafhankelijke iteratie & risico-isolatie: AI-engine changes (prompts/orchestrator) wil je snel kunnen shippen zonder het contentplatform te destabiliseren.
+
+Schaalprofielen verschillen: AI workloads (latency + token cost) vs video/content/admin (storage, indexing, dashboards).
+
+De belangrijkste moeilijkheid (die Replit wat te rooskleurig maakt)
+
+Cross-domain SSO tussen .com en .ai is niet ‘gratis’. Je kan Supabase door beide apps laten gebruiken, maar browsers delen sessie-opslag (cookies/localStorage) niet zomaar tussen twee verschillende TLD’s. Dat betekent: “naadloos switchen zonder her-inloggen” vraagt een expliciet handoff/SSO-mechanisme of een domeinstrategie (subdomeinen).
+
+Waar je extra op moet letten
+
+Entitlements/abonnementen moeten het centrale contract worden (niet “welke app” maar “welke rechten”).
+
+Premium content leakage voorkomen via RLS/visibility + entitlement checks.
+
+Config & RAG drift vermijden: je werkt al SSOT/config-driven (technieken_index.json, overlays, mappings). Dat vraagt centrale versiebeheer/governance. 
+
+HUGO_V2_ARCHITECTUUR
+
+Wat zit er in het PDF-document?
+
+Het PDF bevat:
+
+Besliskader: merge vs split vs monorepo
+
+Doelarchitectuur: twee frontends, één gedeelde kern (Supabase + SSOT + RAG)
+
+Identity & entitlement model (pakketten/rollen)
+
+UX aanpak om het “bijna onvoelbaar” te maken (deep links + handoff)
+
+Fasering (0–6) met deliverables en risico’s
+
+Teststrategie: unit, integratie, e2e, regressie, security
+
+Appendix met een pragmatische SSO handoff (one-time code) en security checklist
+
+Nogmaals: de opzet is expliciet gemodelleerd naar je eerdere “gefaseerd + tests” aanpak. 
+
+Helder_Orchestration_Model_Impl…
+
+Helder_Orchestration_Model_Impl…
+
+Samengevat advies
+
+Ja, dit kan, en het is meestal een goed idee om ze gescheiden te houden—mits je dit als “1 platform met 2 apps” ontwerpt en niet als “2 losse websites”.
+
+De top-3 succesfactoren:
+
+Entitlements als single source of truth (Stripe → Supabase → beide apps).
+
+SSO handoff of domeinconsolidatie (subdomeinen is structureel het simpelst; handoff is pragmatisch).
+
+SSOT + RAG centraliseren en versioneren (zodat beide apps dezelfde waarheid consumeren). 
+
+HUGO_V2_ARCHITECTUUR
+
+Als je wil, kan ik in een volgende stap (zonder te mergen) een concreet “contract” uitschrijven voor:
+
+de entitlements tabelstructuur + RLS policies,
+
+de SSOT publish workflow,
+
+en de handoff endpoints (create/consume) inclusief failure UX.
