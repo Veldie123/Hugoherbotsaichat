@@ -1,0 +1,94 @@
+{
+  "version": "1.0",
+  "description": "RAG chunk tagging heuristics - specific keywords only, no generic phrases",
+  "_note": "These patterns are MORE SPECIFIC than detector patterns. Only use terms that uniquely identify a technique.",
+  "techniques": {
+    "1.1.1": {
+      "patterns": ["vertrouwen opbouwen", "rapport", "opening gesprek", "eerste indruk"],
+      "min_matches": 1
+    },
+    "2.1.1": {
+      "patterns": ["buying clock", "aankoopcyclus", "besluitvormingsproces", "wanneer beslissing", "tijdlijn aankoop", "deadline besluit"],
+      "min_matches": 1
+    },
+    "2.1.2": {
+      "patterns": ["bant", "budget", "authority", "need", "timeline", "wie beslist", "beslissingsbevoegd", "beslisser", "eindverantwoordelijk"],
+      "min_matches": 2
+    },
+    "2.1.3": {
+      "patterns": ["dmu", "decision making unit", "decision-making unit", "wie nog betrokken", "stakeholder", "wie zit er aan tafel"],
+      "min_matches": 1
+    },
+    "2.2.1": {
+      "patterns": ["pijn", "frustratie", "probleem", "uitdaging", "bottleneck", "waar loop je tegenaan", "wat kost je"],
+      "min_matches": 2
+    },
+    "2.2.2": {
+      "patterns": ["implicatie", "consequentie", "gevolg", "wat betekent dat", "impact", "effect hiervan"],
+      "min_matches": 2
+    },
+    "2.2.3": {
+      "patterns": ["need-payoff", "wat zou het opleveren", "ideale situatie", "gewenste resultaat", "wat wil je bereiken"],
+      "min_matches": 1
+    },
+    "2.3.1": {
+      "patterns": ["samenvatten", "samenvattend", "dus als ik goed begrijp", "check", "bevestiging"],
+      "min_matches": 1
+    },
+    "3.1.1": {
+      "patterns": ["fkm", "feature", "kenmerk", "merkmal", "mogelijkheid", "functionaliteit"],
+      "min_matches": 2
+    },
+    "3.1.2": {
+      "patterns": ["voordeel", "advantage", "wat dit betekent", "hierdoor kun je", "dit zorgt ervoor"],
+      "min_matches": 2
+    },
+    "3.1.3": {
+      "patterns": ["fkm-b", "benefit", "waarde voor jou", "wat levert dit op", "persoonlijk voordeel"],
+      "min_matches": 2
+    },
+    "3.2.1": {
+      "patterns": ["propositie", "value proposition", "unieke waarde", "onderscheidend", "usp"],
+      "min_matches": 1
+    },
+    "4.1.1": {
+      "patterns": ["prijs bezwaar", "te duur", "budget overschrijding", "kosten te hoog", "investering te groot"],
+      "min_matches": 1
+    },
+    "4.1.2": {
+      "patterns": ["timing bezwaar", "nu niet het moment", "later", "andere prioriteiten", "geen tijd"],
+      "min_matches": 1
+    },
+    "4.1.3": {
+      "patterns": ["concurrentie bezwaar", "andere leverancier", "vergelijken met", "concurrent", "alternatief"],
+      "min_matches": 1
+    },
+    "4.2.1": {
+      "patterns": ["erkennen bezwaar", "begrijp dat", "snap dat", "terecht punt", "goede vraag"],
+      "min_matches": 1
+    },
+    "4.2.2": {
+      "patterns": ["herkaderen", "andere perspectief", "als je het zo bekijkt", "aan de andere kant"],
+      "min_matches": 1
+    },
+    "4.3.1": {
+      "patterns": ["trial close", "als we dit oplossen", "stel dat", "indien we"],
+      "min_matches": 1
+    },
+    "4.3.2": {
+      "patterns": ["assumptive close", "dan gaan we", "ik noteer", "volgende stap is"],
+      "min_matches": 1
+    },
+    "4.3.3": {
+      "patterns": ["alternatieve close", "optie a of b", "voorkeur voor", "welke variant"],
+      "min_matches": 1
+    }
+  },
+  "global_excludes": [
+    "wat is",
+    "hoe werkt", 
+    "wie",
+    "waarom",
+    "wanneer"
+  ]
+}

@@ -20,6 +20,19 @@ interface DetectorPattern {
   confidence_threshold?: number;
 }
 
+interface HeuristicPattern {
+  patterns: string[];
+  min_matches?: number;
+}
+
+interface HeuristicsConfig {
+  version: string;
+  techniques: {
+    [techniqueId: string]: HeuristicPattern;
+  };
+  global_excludes?: string[];
+}
+
 interface DetectorsConfig {
   version: string;
   techniques: {
@@ -43,56 +56,73 @@ interface HeuristicResult {
   errors: string[];
 }
 
-let detectorsCache: DetectorsConfig | null = null;
+let heuristicsCache: HeuristicsConfig | null = null;
 
 /**
- * Load detectors configuration
+ * Load heuristics configuration (specific patterns for RAG tagging)
  */
-function loadDetectors(): DetectorsConfig {
-  if (detectorsCache) return detectorsCache;
+function loadHeuristics(): HeuristicsConfig {
+  if (heuristicsCache) return heuristicsCache;
   
-  const detectorsPath = path.join(process.cwd(), "config", "detectors.json");
-  const data = fs.readFileSync(detectorsPath, "utf-8");
-  detectorsCache = JSON.parse(data);
-  return detectorsCache!;
+  const heuristicsPath = path.join(process.cwd(), "config", "rag_heuristics.json");
+  const data = fs.readFileSync(heuristicsPath, "utf-8");
+  heuristicsCache = JSON.parse(data);
+  return heuristicsCache!;
 }
 
 /**
- * Analyze chunk content and suggest a technique based on keyword matching
+ * Clear cache (for reloading after config changes)
+ */
+export function clearHeuristicsCache(): void {
+  heuristicsCache = null;
+}
+
+/**
+ * Analyze chunk content and suggest a technique based on SPECIFIC keyword matching
+ * Uses rag_heuristics.json which has more specific patterns than detectors.json
  */
 export function analyzeChunk(content: string): TechniqueSuggestion | null {
-  const detectors = loadDetectors();
+  const heuristics = loadHeuristics();
   const contentLower = content.toLowerCase();
+  
+  // Check for global excludes - if content is too generic, skip
+  const globalExcludes = heuristics.global_excludes || [];
+  const hasOnlyGenericTerms = globalExcludes.some(term => 
+    contentLower.includes(term) && contentLower.length < 100
+  );
+  if (hasOnlyGenericTerms && contentLower.length < 50) {
+    return null; // Too short and only generic terms
+  }
   
   let bestMatch: TechniqueSuggestion | null = null;
   
-  for (const [techniqueId, detector] of Object.entries(detectors.techniques)) {
-    if (!detector.patterns) continue;
+  for (const [techniqueId, config] of Object.entries(heuristics.techniques)) {
+    if (!config.patterns || config.patterns.length === 0) continue;
     
     const matchedPatterns: string[] = [];
     let matchCount = 0;
     
-    for (const pattern of detector.patterns) {
+    for (const pattern of config.patterns) {
       if (contentLower.includes(pattern.toLowerCase())) {
         matchedPatterns.push(pattern);
         matchCount++;
       }
     }
     
-    if (matchCount === 0) continue;
+    // Check minimum matches requirement
+    const minMatches = config.min_matches || 1;
+    if (matchCount < minMatches) continue;
     
-    // Calculate confidence based on pattern matches
-    const confidence = Math.min(0.95, matchCount * 0.15 + 0.3);
-    const threshold = detector.confidence_threshold || 0.5;
+    // Calculate confidence: higher for more specific matches
+    const confidence = Math.min(0.95, 0.5 + (matchCount * 0.15));
     
-    if (confidence >= threshold) {
-      if (!bestMatch || confidence > bestMatch.confidence) {
-        bestMatch = {
-          techniqueId,
-          confidence,
-          matchedPatterns
-        };
-      }
+    if (!bestMatch || confidence > bestMatch.confidence || 
+        (confidence === bestMatch.confidence && matchCount > bestMatch.matchedPatterns.length)) {
+      bestMatch = {
+        techniqueId,
+        confidence,
+        matchedPatterns
+      };
     }
   }
   
