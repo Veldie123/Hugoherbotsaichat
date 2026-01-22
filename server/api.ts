@@ -2401,6 +2401,62 @@ app.post("/api/v2/rag/reset-suggestions", async (req, res) => {
   }
 });
 
+// GET /api/v2/rag/export - Export all chunks as CSV
+app.get("/api/v2/rag/export", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id,
+        source_id,
+        techniek_id,
+        suggested_techniek_id,
+        CASE 
+          WHEN techniek_id IS NOT NULL THEN 'video_tagged'
+          WHEN suggested_techniek_id IS NOT NULL THEN 'heuristic_suggested'
+          ELSE 'untagged'
+        END as tag_source,
+        COALESCE(techniek_id, suggested_techniek_id) as effective_techniek,
+        LEFT(content, 200) as content_preview,
+        content as full_content
+      FROM rag_documents
+      ORDER BY source_id, id
+    `);
+    
+    const format = req.query.format || 'json';
+    
+    if (format === 'csv') {
+      const csvHeader = 'id,source_id,techniek_id,suggested_techniek_id,tag_source,effective_techniek,content_preview\n';
+      const csvRows = result.rows.map(row => {
+        const escapeCsv = (val: string | null) => {
+          if (val === null) return '';
+          return `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+        };
+        return [
+          row.id,
+          escapeCsv(row.source_id),
+          escapeCsv(row.techniek_id),
+          escapeCsv(row.suggested_techniek_id),
+          row.tag_source,
+          escapeCsv(row.effective_techniek),
+          escapeCsv(row.content_preview)
+        ].join(',');
+      }).join('\n');
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=rag_chunks_export.csv');
+      res.send(csvHeader + csvRows);
+    } else {
+      res.json({
+        total: result.rows.length,
+        chunks: result.rows
+      });
+    }
+  } catch (error: any) {
+    console.error("[RAG] Export error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // =====================
 // PERFORMANCE TRACKER ENDPOINTS
 // =====================

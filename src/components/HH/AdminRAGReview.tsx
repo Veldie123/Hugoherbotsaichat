@@ -20,6 +20,7 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  Download,
 } from "lucide-react";
 import { getCodeBadgeColors } from "../../utils/phaseColors";
 import { toast } from "sonner";
@@ -231,6 +232,15 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
             <Button variant="outline" size="sm" onClick={loadData} className="border-purple-300 text-purple-700 hover:bg-purple-50">
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Ververs
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.open('/api/v2/rag/export?format=csv', '_blank')}
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export CSV
             </Button>
           </div>
         </div>
