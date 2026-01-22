@@ -447,7 +447,7 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
                 <SelectTrigger>
                   <SelectValue placeholder="Selecteer juiste techniek..." />
                 </SelectTrigger>
-                <SelectContent className="max-h-60" style={{ zIndex: 10000 }}>
+                <SelectContent className="max-h-[300px] overflow-y-auto">
                   {Object.entries(techniqueNames).map(([id, name]) => (
                     <SelectItem key={id} value={id}>
                       {id} - {name}
