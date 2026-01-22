@@ -1,0 +1,124 @@
+Prima. Ik heb een SSOT‑conforme rag_heuristics.json v2 opgesteld die:
+
+alleen techniek‑ID’s gebruikt die effectief bestaan in technieken_index.json (dus géén “2.2.2” of “3.2.1” als die niet in SSOT staan),
+
+expliciet onderscheid maakt tussen phase/overview anchors en subtechniek/theme anchors,
+
+bedoeld is om primary vs mentions op een principiële manier te laten vallen (dus niet “één keyword = één deeltechniek”, maar: “als er meerdere siblings genoemd worden → primary = parent/phase, en de rest = mentions”).
+
+Je kan het bestand direct downloaden en in je repo zetten:
+
+Download rag_heuristics_v2.json
+
+Wat zit er nieuw in v2 (conceptueel)
+1) SSOT-lock: geen niet-bestaande IDs meer
+
+In v2 staat exact de set techniek‑IDs die in technieken_index.json voorkomen (in jouw SSOT zijn dat er 55).
+
+Advies: laat de loader hard failen als er een ID in heuristics staat die niet in SSOT bestaat. Dan kan dit nooit meer “stiekem” mislopen.
+
+2) Anchors vs support (geen “los woord = techniek”)
+
+Elke techniek heeft:
+
+anchors: sterke, unieke “Hugo‑terminologie” (bv. gentleman's agreement, pingpongtechniek, proefafsluiting)
+
+support: extra signalen (licht gewogen), maar bewust zo beperkt mogelijk gehouden om “generieke woorden” niet te laten domineren.
+
+3) kind: phase / overview / technique / theme
+
+phase: 0,1,2,3,4 (Pre-contact, Opening, Ontdekking, Aanbeveling, Beslissing)
+
+overview: nodes die kinderen hebben (bv. 2.1, 2.1.1, 4.2, 4.3)
+
+technique: leaf skills (bv. 1.2, 2.1.5, 4.2.4, …)
+
+theme: de 2.1.1.x “topics” (Bron, Budget, Timing, …) die wél SSOT zijn, maar typisch mentions binnen feitgerichte vragen.
+
+4) Primary/mentions policy (dit is het deel dat jouw “fase 1 vs koopklimaat” probleem oplost)
+
+De bedoeling is:
+
+mentions = alle regels die matchen
+
+primary:
+
+als er in één chunk meerdere siblings matchen (bv. 1.1, 1.2, 1.4), dan is dat quasi zeker een fase/overzicht → primary = 1 (Openingsfase)
+
+als één subtechniek duidelijk domineert (veel anchors, weinig siblings), dan primary = die subtechniek (bv. 1.1)
+
+Dit is precies wat jij beschrijft: een videochunk die “koopklimaat, gentleman’s agreement, instapvraag…” opsomt mag niet als “koopklimaat” eindigen.
+
+Voorbeeld van hoe dit “automatisch correct” valt
+
+Chunktekst bevat:
+
+“koopklimaat…”
+
+“gentleman’s agreement…”
+
+“instapvraag…”
+
+Matches:
+
+1.1 (koopklimaat) → mention
+
+1.2 (gentleman’s agreement) → mention
+
+1.4 (instapvraag) → mention
+
+Omdat er ≥ 2 children van fase 1 matchen:
+
+primary = 1 (Openingsfase)
+
+mentions = [1.1,1.2,1.4]
+
+En als de chunk een deep-dive is die enkel “koopklimaat / gun-effect / people buy people” bevat:
+
+primary = 1.1
+
+mentions = [1.1]
+
+Belangrijk: v2 is een config + een selectie-regel (je moet beiden doen)
+
+De JSON is de “kennislaag”, maar je hebt ook een consequente selectie-regel nodig. In woorden:
+
+Normaliseer tekst (lowercase, punctuation eruit, whitespace).
+
+Match anchors/support per techniek en bereken score:
+
+score = anchor_hits * anchor_weight + support_hits * support_weight
+
+mentions = alle technieken met score ≥ min_score_to_consider
+
+primary:
+
+Neem beste “leaf” score (subtechniek/theme)
+
+Check voor elke parent met kind in ["phase","overview"] hoeveel distinct child mentions er zijn (parent-child relaties haal je uit SSOT parent).
+
+Als child_mentions >= 2 → parent wordt primary (tenzij leaf extreem domineert; v2 heeft hiervoor leaf_dominance_margin).
+
+In v2 staat dit policy‑blok expliciet in primary_policy + scoring.
+
+Wat je hiermee ook meteen voorkomt
+
+Dat je UI “technieken toont die niet bestaan” (want IDs zijn SSOT‑gelockt).
+
+Dat één “deelterm” (bv. koopklimaat) een hele fase‑uitleg kaapt.
+
+Dat je opnieuw in “ad hoc fallbacks” belandt.
+
+Snelle sanity check die ik je aanraad (must-have)
+
+Bij het laden van heuristics:
+
+Lees technieken_index.json
+
+Verzamel alle SSOT IDs
+
+Check: Object.keys(rag_heuristics.techniques) ⊆ SSOT_IDs
+
+Anders: throw error en stop de run
+
+Dat is de structurele borging die je nu mist.

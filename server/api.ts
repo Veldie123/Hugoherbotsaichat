@@ -2315,14 +2315,22 @@ import {
   resetHeuristicSuggestions
 } from "./v2/rag-heuristic-tagger";
 
-// POST /api/v2/rag/suggest-bulk - Run heuristic tagging on untagged chunks
+import {
+  analyzeChunkV2,
+  bulkSuggestTechniquesV2,
+  resetHeuristicSuggestionsV2,
+  clearHeuristicsCacheV2
+} from "./v2/rag-heuristic-tagger-v2";
+
+// POST /api/v2/rag/suggest-bulk - Run heuristic tagging on untagged chunks (V2 with primary/mentions)
 app.post("/api/v2/rag/suggest-bulk", async (req, res) => {
   try {
-    console.log("[HEURISTIC] Starting bulk suggestion");
-    const result = await bulkSuggestTechniques();
+    console.log("[HEURISTIC-V2] Starting bulk suggestion with SSOT validation");
+    clearHeuristicsCacheV2();
+    const result = await bulkSuggestTechniquesV2();
     res.json(result);
   } catch (error: any) {
-    console.error("[HEURISTIC] Suggest error:", error.message);
+    console.error("[HEURISTIC-V2] Suggest error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -2390,13 +2398,14 @@ app.post("/api/v2/rag/approve-bulk", async (req, res) => {
   }
 });
 
-// POST /api/v2/rag/reset-suggestions - Reset all heuristic suggestions
+// POST /api/v2/rag/reset-suggestions - Reset all heuristic suggestions (V2)
 app.post("/api/v2/rag/reset-suggestions", async (req, res) => {
   try {
-    const result = await resetHeuristicSuggestions();
+    clearHeuristicsCacheV2();
+    const result = await resetHeuristicSuggestionsV2();
     res.json({ success: true, ...result });
   } catch (error: any) {
-    console.error("[HEURISTIC] Reset error:", error.message);
+    console.error("[HEURISTIC-V2] Reset error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
