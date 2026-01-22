@@ -22,6 +22,7 @@ import {
   Menu,
   UserPlus,
   AlertCircle,
+  Zap,
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { useState, useEffect } from "react";
@@ -120,6 +121,15 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
   };
 
   const notifications = [
+    {
+      id: "rag-review",
+      title: "RAG techniek review vraagt jouw aandacht",
+      message: "Er zijn nieuwe technieksuggesties die je moet reviewen",
+      time: "nu",
+      type: "rag",
+      severity: "medium",
+      read: false,
+    },
     {
       id: "config-1",
       title: "Technique 2.1 has no detector configuration",
@@ -443,6 +453,9 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
                         if (notif.type === "config") {
                           navigate?.("admin-config-review");
                           setNotificationsOpen(false);
+                        } else if (notif.type === "rag") {
+                          navigate?.("admin-rag-review");
+                          setNotificationsOpen(false);
                         }
                       }}
                     >
@@ -483,6 +496,9 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
                         )}
                         {notif.type === "config" && (
                           <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                        )}
+                        {notif.type === "rag" && (
+                          <Zap className="w-4 h-4 text-purple-600 flex-shrink-0" />
                         )}
                       </div>
                     </div>
