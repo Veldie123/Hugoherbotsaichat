@@ -18,6 +18,8 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { getCodeBadgeColors } from "../../utils/phaseColors";
 import { toast } from "sonner";
@@ -32,6 +34,7 @@ interface ChunkForReview {
   source_id: string;
   title: string;
   content_preview: string;
+  content: string;
   techniek_id: string | null;
   suggested_techniek_id: string | null;
   review_status: string;
@@ -59,6 +62,7 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
   const [selectedTechnique, setSelectedTechnique] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null);
 
   const getTechniqueName = (id: string | null) => {
     if (!id) return "";
@@ -318,50 +322,72 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
               Geen chunks te reviewen
             </div>
           ) : (
-            <div className="space-y-2 max-h-[500px] overflow-y-auto">
-              {filteredChunks.map((chunk) => (
-                <div
-                  key={chunk.id}
-                  className="flex items-start gap-4 p-3 bg-slate-50 rounded-lg border"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-slate-400">{chunk.source_id}</span>
-                      {chunk.suggested_techniek_id && (
-                        <Badge
-                          className={`text-xs ${getCodeBadgeColors(
-                            chunk.suggested_techniek_id.split(".")[0]
-                          )}`}
-                          title={getTechniqueName(chunk.suggested_techniek_id)}
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {filteredChunks.map((chunk) => {
+                const isExpanded = expandedChunkId === chunk.id;
+                return (
+                  <div
+                    key={chunk.id}
+                    className="p-3 bg-slate-50 rounded-lg border"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-slate-400">{chunk.source_id}</span>
+                          {chunk.suggested_techniek_id && (
+                            <Badge
+                              className={`text-xs ${getCodeBadgeColors(
+                                chunk.suggested_techniek_id.split(".")[0]
+                              )}`}
+                              title={getTechniqueName(chunk.suggested_techniek_id)}
+                            >
+                              {getTechniqueName(chunk.suggested_techniek_id)}
+                            </Badge>
+                          )}
+                        </div>
+                        <p 
+                          className={`text-sm text-slate-700 ${isExpanded ? '' : 'line-clamp-2'} cursor-pointer`}
+                          onClick={() => setExpandedChunkId(isExpanded ? null : chunk.id)}
                         >
-                          {getTechniqueName(chunk.suggested_techniek_id)}
-                        </Badge>
-                      )}
+                          {isExpanded ? chunk.content : chunk.content_preview}
+                        </p>
+                        {chunk.content && chunk.content.length > 200 && (
+                          <button
+                            className="text-xs text-purple-600 hover:text-purple-800 mt-1 flex items-center gap-1"
+                            onClick={() => setExpandedChunkId(isExpanded ? null : chunk.id)}
+                          >
+                            {isExpanded ? (
+                              <>Inklappen <ChevronUp className="w-3 h-3" /></>
+                            ) : (
+                              <>Meer lezen <ChevronDown className="w-3 h-3" /></>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-purple-600 hover:bg-purple-50"
+                          onClick={() => approveChunk(chunk.id)}
+                          title="Goedkeuren"
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
+                          onClick={() => rejectChunk(chunk.id)}
+                          title="Afwijzen"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-700 line-clamp-2">
-                      {chunk.content_preview}
-                    </p>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 text-purple-600 hover:bg-purple-50"
-                      onClick={() => approveChunk(chunk.id)}
-                    >
-                      <Check className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
-                      onClick={() => rejectChunk(chunk.id)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>

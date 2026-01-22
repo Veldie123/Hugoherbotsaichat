@@ -193,12 +193,15 @@ export async function getChunksForReview(limit: number = 50): Promise<{
   source_id: string;
   title: string;
   content_preview: string;
+  content: string;
   techniek_id: string | null;
   suggested_techniek_id: string | null;
   review_status: string;
 }[]> {
   const { rows } = await pool.query(`
-    SELECT id, source_id, title, LEFT(content, 300) as content_preview,
+    SELECT id, source_id, title, 
+           LEFT(content, 200) as content_preview,
+           content,
            techniek_id, suggested_techniek_id, review_status
     FROM rag_documents 
     WHERE needs_review = TRUE 
