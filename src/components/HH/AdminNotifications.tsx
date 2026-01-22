@@ -14,6 +14,7 @@ import {
   Search,
   Filter,
   MoreVertical,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { AdminLayout } from "./AdminLayout";
@@ -49,6 +50,19 @@ export function AdminNotifications({ navigate }: AdminNotificationsProps) {
   const [selectedNotifications, setSelectedNotifications] = useState<number[]>([]);
 
   const notifications = [
+    {
+      id: 9,
+      type: "warning",
+      category: "content",
+      title: "RAG techniek review vraagt jouw aandacht",
+      message: "Er zijn nieuwe technieksuggesties die je moet reviewen",
+      timestamp: "nu",
+      read: false,
+      icon: Zap,
+      iconColor: "text-purple-500",
+      iconBg: "bg-purple-500/10",
+      action: "admin-rag-review",
+    },
     {
       id: 1,
       type: "success",
@@ -462,6 +476,16 @@ export function AdminNotifications({ navigate }: AdminNotificationsProps) {
                           >
                             Nieuw
                           </Badge>
+                        )}
+                        {"action" in notification && notification.action && navigate && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 text-[11px] px-2 border-purple-300 text-purple-700 hover:bg-purple-50"
+                            onClick={() => navigate(notification.action as string)}
+                          >
+                            Bekijk
+                          </Button>
                         )}
                       </div>
                     </div>
