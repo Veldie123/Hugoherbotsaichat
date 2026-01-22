@@ -1,82 +1,106 @@
 {
-  "version": "1.1",
-  "description": "RAG chunk tagging heuristics - VERY specific keywords only",
-  "_note": "Only patterns that UNIQUELY identify a technique. Avoid terms that appear as general topics.",
+  "version": "2.0",
+  "description": "RAG chunk tagging heuristics - ONLY valid techniques from technieken_index.json",
+  "_note": "All technique IDs must exist in config/ssot/technieken_index.json",
   "techniques": {
-    "1.1.1": {
-      "patterns": ["vertrouwen opbouwen", "rapport building", "opening gesprek techniek"],
+    "1.1": {
+      "patterns": ["koopklimaat creëren", "gun-effect", "eerste indruk maken"],
+      "min_matches": 1
+    },
+    "1.2": {
+      "patterns": ["gentleman's agreement", "gentlemans agreement", "agenda afspreken"],
+      "min_matches": 1
+    },
+    "1.3": {
+      "patterns": ["pop presenteren", "firmavoorstelling", "reference story", "persoon organisatie proces"],
+      "min_matches": 1
+    },
+    "1.4": {
+      "patterns": ["instapvraag", "instap vraag"],
+      "min_matches": 1
+    },
+    "2.1.1": {
+      "patterns": ["feitgerichte vraag", "feitgerichte vragen", "gesloten vraag stellen"],
       "min_matches": 1
     },
     "2.1.2": {
-      "patterns": ["bant methodiek", "bant-model", "budget authority need timeline"],
+      "patterns": ["meningsgerichte vraag", "meningsgerichte vragen", "open vraag stellen"],
       "min_matches": 1
     },
-    "2.1.3": {
-      "patterns": ["dmu in kaart", "decision making unit", "besluitvormingsunit"],
+    "2.1.5": {
+      "patterns": ["pingpong techniek", "ping pong techniek", "pingpongen"],
       "min_matches": 1
     },
-    "2.2.1": {
-      "patterns": ["pijnvraag stellen", "situatievraag", "spin situatie"],
+    "2.1.6": {
+      "patterns": ["actief luisteren", "empathisch luisteren", "luistertechniek"],
       "min_matches": 1
     },
-    "2.2.2": {
-      "patterns": ["implicatievraag", "spin implicatie", "consequentievraag", "wat betekent dat voor"],
+    "2.2": {
+      "patterns": ["probe vraag", "hypothetische vraag", "stel dat vraag", "wat als vraag", "storytelling verkoop"],
       "min_matches": 1
     },
-    "2.2.3": {
-      "patterns": ["need-payoff vraag", "opbrengstvraag", "spin need-payoff"],
+    "2.3": {
+      "patterns": ["impactvraag", "impact vraag", "gevolg vraag", "consequentievraag", "wat betekent dat voor"],
       "min_matches": 1
     },
-    "2.3.1": {
-      "patterns": ["samenvatten in eigen woorden", "samenvattingstechniek", "actief luisteren samenvatting"],
+    "2.4": {
+      "patterns": ["commitment vraag", "bevestiging vragen", "klopt dat vraag"],
       "min_matches": 1
     },
-    "3.1.1": {
-      "patterns": ["fkm model", "feature kenmerk mogelijkheid", "fkm-structuur"],
+    "3.1": {
+      "patterns": ["empathie tonen", "begrip tonen klant"],
       "min_matches": 1
     },
-    "3.1.2": {
-      "patterns": ["voordeel vertalen", "advantage presenteren", "fkm voordeel"],
+    "3.2": {
+      "patterns": ["oplossing presenteren", "oplossing aanbieden"],
       "min_matches": 1
     },
-    "3.1.3": {
-      "patterns": ["fkm-b techniek", "benefit koppelen", "persoonlijk voordeel benoemen"],
+    "3.3": {
+      "patterns": ["voordeel benoemen", "voordeel presenteren"],
       "min_matches": 1
     },
-    "3.2.1": {
-      "patterns": ["value proposition formuleren", "waardepropositie", "usp presenteren"],
+    "3.4": {
+      "patterns": ["baat vertalen", "baat koppelen", "persoonlijke baat"],
       "min_matches": 1
     },
-    "4.1.1": {
-      "patterns": ["prijsbezwaar behandelen", "te duur bezwaar", "kosten bezwaar afhandelen"],
+    "3.7": {
+      "patterns": ["baten samenvatten", "samenvatting baten"],
       "min_matches": 1
     },
-    "4.1.2": {
-      "patterns": ["timing bezwaar behandelen", "uitstel bezwaar", "nu niet bezwaar"],
-      "min_matches": 1
-    },
-    "4.1.3": {
-      "patterns": ["concurrentie bezwaar behandelen", "vergelijking concurrent"],
-      "min_matches": 1
-    },
-    "4.2.1": {
-      "patterns": ["bezwaar erkennen techniek", "empathie tonen bezwaar"],
+    "4.1": {
+      "patterns": ["proefafsluiting", "proef afsluiting", "trial close"],
       "min_matches": 1
     },
     "4.2.2": {
-      "patterns": ["herkaderen techniek", "reframing bezwaar", "perspectief wisselen"],
+      "patterns": ["twijfel behandelen", "twijfels wegnemen"],
+      "min_matches": 1
+    },
+    "4.2.3": {
+      "patterns": ["uitstel behandelen", "uitstel weerleggen"],
+      "min_matches": 1
+    },
+    "4.2.4": {
+      "patterns": ["bezwaar behandelen", "bezwaren weerleggen", "bezwaartechniek"],
       "min_matches": 1
     },
     "4.3.1": {
-      "patterns": ["trial close techniek", "proefafsluiting", "testclose"],
-      "min_matches": 1
-    },
-    "4.3.2": {
-      "patterns": ["assumptive close techniek", "aanname afsluiting"],
+      "patterns": ["samenvatten in klantwoorden", "klantwoorden samenvatten"],
       "min_matches": 1
     },
     "4.3.3": {
-      "patterns": ["alternatieve close techniek", "keuze afsluiting", "a of b vraag"],
+      "patterns": ["cvp bevestigen", "customer value proposition"],
+      "min_matches": 1
+    },
+    "4.3.4": {
+      "patterns": ["alternatieve keuze", "a of b vraag", "keuze afsluiting"],
+      "min_matches": 1
+    },
+    "4.ABC": {
+      "patterns": ["abc techniek", "always be closing"],
+      "min_matches": 1
+    },
+    "4.INDIEN": {
+      "patterns": ["indien techniek", "als-dan techniek"],
       "min_matches": 1
     }
   },
