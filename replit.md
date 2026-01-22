@@ -91,12 +91,16 @@ Gebruik `./scripts/list-todos.sh` om alle TODO's in de codebase te vinden.
   - API endpoints: POST /api/v2/roleplay/unlock-check, GET /api/v2/context/flow-rules
 
 **Recent Toegevoegd (januari 2026):**
-- **RAG Techniek Tagging System**: Two-tier tagging approach
-  - **Video-level tagging**: 290/559 chunks (52%) tagged via `config/video_mapping.json` - matches filename to technique
-  - **Heuristic tagging**: 165 chunks suggested via `config/rag_heuristics.json` - specific keywords per technique
-  - **Admin Review UI**: `AdminRAGReview.tsx` with bulk approve, technique names, purple admin styling
-  - **API endpoints**: `/api/v2/rag/tag-stats`, `/api/v2/technieken/names`, `/api/v2/rag/suggest-bulk`
-  - **Key fix**: Extension-agnostic filename matching (.m4a/.MP4/.mov/.WAV normalized)
+- **RAG Techniek Tagging System V2**: Advanced three-tier tagging approach
+  - **Video-level tagging**: 339/559 chunks (61%) tagged via `config/video_mapping.json` - filename-to-technique mapping
+  - **Heuristic tagging V2**: `server/v2/rag-heuristic-tagger-v2.ts` with SSOT validation, anchor/support scoring
+    - SSOT validation: fails hard if technique IDs don't exist in `technieken_index.json`
+    - Anchor weight: 5, Support weight: 1, min_score: 5
+    - Primary/mentions policy: parent phases get primary when ≥2 child techniques match
+    - Text normalization: lowercase, strip diacritics, collapse whitespace
+    - Database column: `suggested_mentions` (JSONB array)
+  - **Admin Review UI**: `AdminRAGReview.tsx` with bulk approve, technique names, CSV export, purple admin styling
+  - **API endpoints**: `/api/v2/rag/tag-stats`, `/api/v2/rag/suggest-bulk`, `/api/v2/rag/reset-suggestions`, `/api/v2/rag/export`
 - **TranscriptDialog Golden Standard Integratie**: Uitgebreid debug paneel met bewerkfunctionaliteit
   - ✓ Validatieknoppen (✓/✗) per transcript bericht voor admin review
   - ✓ Bewerkknop opent edit mode met dropdowns voor signaal, verwachte techniek, gedetecteerde techniek
