@@ -249,25 +249,37 @@ export function analyzeChunkV2(content: string): TaggingResult {
   
   const policy = config.primary_policy;
   
-  for (const match of matches) {
-    if (match.kind === "phase" || match.kind === "overview") {
-      const parentId = match.techniqueId;
-      
-      const childMentions = mentions.filter(m => isChildOf(m, parentId));
-      const distinctChildCount = childMentions.length;
-      
-      const parentScore = match.score + 
-        (distinctChildCount * policy.parent_child_bonus_per_distinct_child);
-      
-      const shouldPreferParent = 
-        distinctChildCount >= policy.prefer_parent_primary_when.min_distinct_child_mentions ||
-        (policy.prefer_parent_primary_when.or_parent_anchor_hit && match.anchorHits > 0);
-      
-      if (shouldPreferParent) {
-        const leafScore = bestLeaf?.score || 0;
-        if (parentScore > leafScore - config.scoring.leaf_dominance_margin) {
-          primary = parentId;
-        }
+  const potentialParentIds = new Set<string>();
+  for (const m of mentions) {
+    const parentId = getParentId(m);
+    if (parentId) potentialParentIds.add(parentId);
+    const grandParentId = parentId ? getParentId(parentId) : null;
+    if (grandParentId) potentialParentIds.add(grandParentId);
+  }
+  
+  for (const parentId of potentialParentIds) {
+    const childMentions = mentions.filter(m => isChildOf(m, parentId));
+    const distinctChildCount = new Set(childMentions).size;
+    
+    if (distinctChildCount < policy.prefer_parent_primary_when.min_distinct_child_mentions) {
+      continue;
+    }
+    
+    const parentMatch = matches.find(m => m.techniqueId === parentId);
+    const parentAnchorHit = parentMatch ? parentMatch.anchorHits > 0 : false;
+    
+    const parentScoreBase = parentMatch?.score || 0;
+    const parentScore = parentScoreBase + 
+      (distinctChildCount * policy.parent_child_bonus_per_distinct_child);
+    
+    const shouldPreferParent = 
+      distinctChildCount >= policy.prefer_parent_primary_when.min_distinct_child_mentions ||
+      (policy.prefer_parent_primary_when.or_parent_anchor_hit && parentAnchorHit);
+    
+    if (shouldPreferParent) {
+      const leafScore = bestLeaf?.score || 0;
+      if (parentScore > leafScore - config.scoring.leaf_dominance_margin) {
+        primary = parentId;
       }
     }
   }
@@ -311,16 +323,14 @@ export async function bulkSuggestTechniquesV2(): Promise<BulkResult> {
         const tagging = analyzeChunkV2(chunk.content);
         
         if (tagging.primary) {
-          const mentionsJson = JSON.stringify(tagging.mentions);
-          
           await pool.query(
             `UPDATE rag_documents 
              SET suggested_techniek_id = $1, 
-                 suggested_mentions = $2,
+                 suggested_mentions = $2::jsonb,
                  needs_review = TRUE,
                  review_status = 'suggested'
              WHERE id = $3`,
-            [tagging.primary, mentionsJson, chunk.id]
+            [tagging.primary, JSON.stringify(tagging.mentions), chunk.id]
           );
           result.suggested++;
         } else {
