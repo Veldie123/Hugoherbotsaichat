@@ -67,7 +67,18 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
   const getTechniqueName = (id: string | null) => {
     if (!id) return "";
     const name = techniqueNames[id];
-    return name ? `${id} - ${name}` : id;
+    if (name) return `${id} - ${name}`;
+    
+    // Fallback: try parent technique (e.g., 2.2.2 -> 2.2 -> 2)
+    const parts = id.split(".");
+    while (parts.length > 1) {
+      parts.pop();
+      const parentId = parts.join(".");
+      const parentName = techniqueNames[parentId];
+      if (parentName) return `${id} - ${parentName}`;
+    }
+    
+    return id;
   };
 
   const loadData = async () => {
