@@ -2416,8 +2416,7 @@ app.get("/api/v2/rag/export", async (req, res) => {
           ELSE 'untagged'
         END as tag_source,
         COALESCE(techniek_id, suggested_techniek_id) as effective_techniek,
-        LEFT(content, 200) as content_preview,
-        content as full_content
+        content
       FROM rag_documents
       ORDER BY source_id, id
     `);
@@ -2425,11 +2424,11 @@ app.get("/api/v2/rag/export", async (req, res) => {
     const format = req.query.format || 'json';
     
     if (format === 'csv') {
-      const csvHeader = 'id,source_id,techniek_id,suggested_techniek_id,tag_source,effective_techniek,content_preview\n';
+      const csvHeader = 'id,source_id,techniek_id,suggested_techniek_id,tag_source,effective_techniek,content\n';
       const csvRows = result.rows.map(row => {
         const escapeCsv = (val: string | null) => {
           if (val === null) return '';
-          return `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+          return `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ').replace(/\r/g, ' ')}"`;
         };
         return [
           row.id,
@@ -2438,13 +2437,13 @@ app.get("/api/v2/rag/export", async (req, res) => {
           escapeCsv(row.suggested_techniek_id),
           row.tag_source,
           escapeCsv(row.effective_techniek),
-          escapeCsv(row.content_preview)
+          escapeCsv(row.content)
         ].join(',');
       }).join('\n');
       
-      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', 'attachment; filename=rag_chunks_export.csv');
-      res.send(csvHeader + csvRows);
+      res.send('\ufeff' + csvHeader + csvRows);
     } else {
       res.json({
         total: result.rows.length,
