@@ -11,6 +11,14 @@ import {
   SelectValue,
 } from "../ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
   Check,
   X,
   RefreshCw,
@@ -64,6 +72,9 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
   const [loading, setLoading] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectChunkId, setRejectChunkId] = useState<string | null>(null);
+  const [correctTechniqueId, setCorrectTechniqueId] = useState<string>("");
 
   const getTechniqueName = (id: string | null) => {
     if (!id) return "";
@@ -153,15 +164,33 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
     }
   };
 
-  const rejectChunk = async (id: string) => {
+  const openRejectDialog = (id: string) => {
+    setRejectChunkId(id);
+    setCorrectTechniqueId("");
+    setRejectDialogOpen(true);
+  };
+
+  const rejectChunk = async (withCorrection: boolean) => {
+    if (!rejectChunkId) return;
+    
     try {
-      const res = await fetch(`/api/v2/rag/reject/${id}`, { method: "POST" });
+      const body = withCorrection && correctTechniqueId 
+        ? JSON.stringify({ newTechniqueId: correctTechniqueId })
+        : undefined;
+      
+      const res = await fetch(`/api/v2/rag/reject/${rejectChunkId}`, { 
+        method: "POST",
+        headers: body ? { "Content-Type": "application/json" } : undefined,
+        body
+      });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || "Server error");
       }
-      setChunks((prev) => prev.filter((c) => c.id !== id));
-      toast.success("Afgekeurd");
+      setChunks((prev) => prev.filter((c) => c.id !== rejectChunkId));
+      toast.success(withCorrection ? `Gecorrigeerd naar ${correctTechniqueId}` : "Afgekeurd");
+      setRejectDialogOpen(false);
+      setRejectChunkId(null);
     } catch (error) {
       toast.error(`Afkeuring gefaald: ${error instanceof Error ? error.message : "Onbekende fout"}`);
     }
@@ -199,7 +228,7 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
 
   return (
     <AdminLayout navigate={navigate} currentPage={currentPage}>
-      <div className="space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-800">
@@ -388,8 +417,8 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
                           size="sm"
                           variant="ghost"
                           className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
-                          onClick={() => rejectChunk(chunk.id)}
-                          title="Afwijzen"
+                          onClick={() => openRejectDialog(chunk.id)}
+                          title="Afwijzen of corrigeren"
                         >
                           <X className="w-4 h-4" />
                         </Button>
@@ -401,6 +430,50 @@ export function AdminRAGReview({ navigate, currentPage = "admin-rag-review" }: A
             </div>
           )}
         </Card>
+
+        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Suggestie afwijzen</DialogTitle>
+              <DialogDescription>
+                Wil je alleen afwijzen of de juiste techniek aangeven?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <label className="text-sm font-medium text-slate-700 mb-2 block">
+                Juiste techniek (optioneel)
+              </label>
+              <Select value={correctTechniqueId} onValueChange={setCorrectTechniqueId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer juiste techniek..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {Object.entries(techniqueNames).map(([id, name]) => (
+                    <SelectItem key={id} value={id}>
+                      {id} - {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => rejectChunk(false)}
+                className="border-slate-300"
+              >
+                Alleen afwijzen
+              </Button>
+              <Button
+                onClick={() => rejectChunk(true)}
+                disabled={!correctTechniqueId}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                Corrigeren naar {correctTechniqueId || "..."}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
