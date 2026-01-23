@@ -989,72 +989,57 @@ export function AdminChatExpertMode({
 
             {messages.map((message) => (
               <div key={message.id} className="space-y-2">
-                {/* Message Bubble */}
+                {/* Message Bubble - Modern rounded design */}
                 <div className={`flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[70%] ${message.sender === "hugo" ? "" : "flex gap-2"}`}>
-                    {message.sender === "ai" && (
-                      <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarFallback className="bg-purple-600 text-white text-[12px]">
-                          AI
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    <div>
-                      <div
-                        className={`p-3 rounded-lg relative ${
-                          message.sender === "hugo"
-                            ? "bg-[#1E2A3B] text-white"
-                            : "bg-white border border-slate-200 text-slate-800"
-                        }`}
-                      >
-                        <p className="text-[13px] leading-[19px]">{message.text}</p>
-                        
-                        {/* Tip Button - INSIDE bubble for AI messages */}
-                        {message.sender === "ai" && message.debugInfo && (
-                          <button
-                            className="flex items-center gap-1 mt-2 text-[11px] text-hh-muted hover:text-hh-primary transition-colors"
-                            onClick={() => {}}
-                          >
-                            <Lightbulb className="w-3 h-3" />
-                            Tip: Bekijk aanbevolen techniek
-                          </button>
-                        )}
-                        
-                        <div className="flex items-center justify-between gap-2 mt-2 text-[10px]">
-                          <span style={{ color: message.sender === "hugo" ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)' }}>{message.timestamp.toLocaleTimeString()}</span>
-                          
-                          {/* Debug Info Button - RECHTS ONDERAAN */}
-                          {message.debugInfo && (
-                            <button
-                              onClick={() =>
-                                setExpandedDebug(expandedDebug === message.id ? null : message.id)
-                              }
-                              className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
-                                message.sender === "hugo"
-                                  ? "bg-slate-700 hover:bg-slate-600 text-white"
-                                  : "bg-gray-200 hover:bg-gray-300 text-hh-text"
-                              }`}
-                              title="Toggle debug info"
-                            >
-                              <Info className="w-3 h-3" />
-                              <span className="text-[10px]">Debug</span>
-                              {expandedDebug === message.id ? (
-                                <ChevronDown className="w-3 h-3" />
-                              ) : (
-                                <ChevronRight className="w-3 h-3" />
-                              )}
-                            </button>
+                  <div className="flex flex-col gap-1 max-w-[80%]">
+                    {/* Main bubble */}
+                    <div
+                      className={`p-3 rounded-2xl ${
+                        message.sender === "hugo"
+                          ? "bg-purple-700 text-white rounded-br-md"
+                          : "bg-purple-50 text-slate-800 rounded-bl-md border border-purple-100"
+                      }`}
+                    >
+                      <p className="text-[14px] leading-[20px]">{message.text}</p>
+                    </div>
+                    
+                    {/* Action buttons below bubble */}
+                    <div className={`flex items-center gap-2 ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
+                      {/* Timestamp */}
+                      <span className="text-[10px] text-slate-400">
+                        {message.timestamp.toLocaleTimeString()}
+                      </span>
+                      
+                      {/* Debug Info Button */}
+                      {message.debugInfo && (
+                        <button
+                          onClick={() =>
+                            setExpandedDebug(expandedDebug === message.id ? null : message.id)
+                          }
+                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-colors ${
+                            expandedDebug === message.id
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-slate-100 text-slate-500 hover:bg-purple-50 hover:text-purple-600"
+                          }`}
+                          title="Toggle debug info"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                          <span>Debug</span>
+                          {expandedDebug === message.id ? (
+                            <ChevronDown className="w-3 h-3" />
+                          ) : (
+                            <ChevronRight className="w-3 h-3" />
                           )}
-                        </div>
-                      </div>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Debug Info (collapsible) - SMALLER WIDTH */}
+                {/* Debug Info (collapsible) - Purple admin styling */}
                 {message.debugInfo && expandedDebug === message.id && (
-                  <div className={`${message.sender === "hugo" ? "flex justify-end" : "ml-10"}`}>
-                    <Card className="p-4 mt-2 border-2 border-dashed max-w-[280px] border-slate-200 bg-slate-50/50 text-slate-800">
+                  <div className={`${message.sender === "hugo" ? "flex justify-end" : ""}`}>
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 max-w-[300px] text-slate-800">
                         <div className="space-y-3 text-[13px] leading-[18px]">
                           {/* For Hugo/Seller messages */}
                           {message.sender === "hugo" && (
@@ -1688,7 +1673,7 @@ export function AdminChatExpertMode({
                             </div>
                           )}
                         </div>
-                      </Card>
+                      </div>
                     </div>
                   )}
                 </div>
