@@ -28,6 +28,7 @@ import { Input } from "../ui/input";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { StopRoleplayDialog } from "./StopRoleplayDialog";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import {
   Send,
   ChevronDown,
@@ -46,6 +47,7 @@ import {
   Award,
   RotateCcw,
   AlertCircle,
+  Menu,
 } from "lucide-react";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
@@ -98,6 +100,7 @@ export function TalkToHugoAI({
   });
   const [levelTransitionMessage, setLevelTransitionMessage] = useState<string | null>(null);
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>("chat");
   const [sessionTimer, setSessionTimer] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -1116,9 +1119,9 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
   return (
     <AppLayout currentPage="talk-to-hugo" navigate={navigate} isAdmin={isAdmin}>
       <div className="flex h-[calc(100vh-4rem)]">
-        {/* Sidebar hidden in blindPlay mode (Level 4) based on assistanceConfig */}
+        {/* Sidebar hidden on mobile, visible on desktop - also hidden in blindPlay mode */}
         {!assistanceConfig.blindPlay && (
-          <div className="w-1/3 flex-shrink-0 overflow-y-auto h-full">
+          <div className="hidden lg:block w-1/3 flex-shrink-0 overflow-y-auto h-full">
             <EPICSidebar
               fasesAccordionOpen={fasesAccordionOpen}
               setFasesAccordionOpen={setFasesAccordionOpen}
@@ -1150,29 +1153,38 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           </div>
         )}
 
-        <div className={`${assistanceConfig.blindPlay ? 'w-full' : 'w-2/3'} flex-1 flex flex-col bg-white overflow-hidden`}>
-          {/* Clean header - title left, niveau + mode toggle right */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-hh-border bg-white">
-            {/* Left: Title + Technique info (hide clock in audio/video mode) */}
-            <div className="flex items-center gap-3 min-w-0">
-              <h2 className="text-[18px] text-hh-text font-semibold whitespace-nowrap">Hugo AI</h2>
+        <div className={`${assistanceConfig.blindPlay ? 'w-full' : 'w-full lg:w-2/3'} flex-1 flex flex-col bg-white overflow-hidden`}>
+          {/* Clean header - mobile: hamburger + title, desktop: title + controls */}
+          <div className="flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 border-b border-hh-border bg-white">
+            {/* Left: Mobile sidebar toggle + Title */}
+            <div className="flex items-center gap-2 lg:gap-3 min-w-0">
+              {/* Mobile sidebar toggle - only show when sidebar is not in blindPlay mode */}
+              {!assistanceConfig.blindPlay && (
+                <button
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="lg:hidden p-2 -ml-2 text-hh-muted hover:text-hh-text rounded-lg hover:bg-hh-ui-50 transition-colors"
+                  aria-label="Open technieken"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+              )}
+              <h2 className="text-[16px] lg:text-[18px] text-hh-text font-semibold whitespace-nowrap">Hugo AI</h2>
               {selectedTechnique && (
                 <>
                   <div className="flex items-center gap-2 min-w-0">
                     <Badge variant="outline" className="shrink-0 rounded-full bg-hh-ink/10 text-hh-ink border-hh-ink/20 font-mono text-[11px] px-2 py-0.5">
                       {selectedTechnique}
                     </Badge>
-                    <span className="text-[13px] text-hh-text truncate max-w-[150px]">{selectedTechniqueName}</span>
+                    {/* Hide technique name on mobile for cleaner header */}
+                    <span className="hidden sm:inline text-[13px] text-hh-text truncate max-w-[150px]">{selectedTechniqueName}</span>
                   </div>
-                  {/* Only show clock in chat mode - audio/video have their own timer */}
+                  {/* Only show clock in chat mode on desktop - audio/video have their own timer */}
                   {chatMode === "chat" && (
-                    <>
-                      <div className="h-4 w-px bg-hh-border shrink-0" />
-                      <div className="flex items-center gap-1 text-[13px] text-hh-muted shrink-0">
-                        <Clock className="w-3.5 h-3.5 text-[#4F7396]" />
-                        <span className="font-mono">{formatTime(sessionTimer)}</span>
-                      </div>
-                    </>
+                    <div className="hidden sm:flex items-center gap-1 text-[13px] text-hh-muted shrink-0">
+                      <div className="h-4 w-px bg-hh-border shrink-0 mr-2" />
+                      <Clock className="w-3.5 h-3.5 text-[#4F7396]" />
+                      <span className="font-mono">{formatTime(sessionTimer)}</span>
+                    </div>
                   )}
                 </>
               )}
@@ -1255,6 +1267,49 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         isEditable={false}
         isAdmin={false}
       />
+
+      {/* Mobile Sidebar Sheet */}
+      <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+        <SheetContent side="left" className="w-[85%] sm:w-80 p-0 overflow-y-auto">
+          <SheetHeader className="px-4 py-3 border-b border-hh-border">
+            <SheetTitle className="text-left text-[16px]">Epic Sales Flow</SheetTitle>
+          </SheetHeader>
+          <EPICSidebar
+            fasesAccordionOpen={fasesAccordionOpen}
+            setFasesAccordionOpen={setFasesAccordionOpen}
+            houdingenAccordionOpen={houdingenAccordionOpen}
+            setHoudingenAccordionOpen={setHoudingenAccordionOpen}
+            expandedPhases={expandedPhases}
+            togglePhase={togglePhase}
+            setCurrentPhase={setCurrentPhase}
+            expandedParents={expandedParents}
+            toggleParentTechnique={toggleParentTechnique}
+            expandedHoudingen={expandedHoudingen}
+            toggleHouding={toggleHouding}
+            selectedTechnique={selectedTechniqueName}
+            setSelectedTechnique={(tech) => {
+              setSelectedTechniqueName(tech);
+              setMobileSidebarOpen(false);
+            }}
+            activeHouding={activeHouding}
+            recommendedTechnique={recommendedTechnique}
+            openTechniqueDetails={openTechniqueDetails}
+            startTechniqueChat={(id, name) => {
+              startTechniqueChat(id, name);
+              setMobileSidebarOpen(false);
+            }}
+            techniquesByPhase={techniquesByPhase}
+            phaseNames={phaseNames}
+            getFaseBadgeColor={getFaseBadgeColor}
+            getTopLevelTechniques={getTopLevelTechniques}
+            hasChildren={hasChildren}
+            getChildTechniques={getChildTechniques}
+            klantHoudingen={klantHoudingenArray}
+            difficultyLevel={difficultyLevel}
+            isUserView={true}
+          />
+        </SheetContent>
+      </Sheet>
     </AppLayout>
   );
 }
