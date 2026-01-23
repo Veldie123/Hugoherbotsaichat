@@ -53,6 +53,7 @@ import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
 import { hugoApi, type AssistanceConfig } from "../../services/hugoApi";
+import { lastActivityService } from "../../services/lastActivityService";
 import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from "@heygen/streaming-avatar";
 import { Room, RoomEvent, Track, ConnectionState } from "livekit-client";
 
@@ -144,10 +145,24 @@ export function TalkToHugoAI({
         console.log("[Performance] Loaded user level:", levelData.level, levelData.levelName);
       } catch (error) {
         console.error("[Performance] Failed to load user level:", error);
-        // Keep defaults on error
       }
     };
     loadUserLevel();
+  }, []);
+
+  // Hugo starts conversation proactively based on last activity
+  useEffect(() => {
+    const lastActivity = lastActivityService.get();
+    const welcomeMessage = lastActivityService.getWelcomeMessage(lastActivity);
+    
+    setMessages([{
+      id: `welcome-${Date.now()}`,
+      sender: "ai",
+      text: welcomeMessage,
+      timestamp: new Date(),
+    }]);
+    
+    console.log("[Hugo] Started proactive conversation, last activity:", lastActivity);
   }, []);
 
   useEffect(() => {
@@ -492,6 +507,14 @@ export function TalkToHugoAI({
     setSessionTimer(0);
     setIsLoading(true);
     
+    const phase = parseInt(techniqueNumber.split('.')[0]) || 1;
+    lastActivityService.save({
+      type: 'technique',
+      id: techniqueNumber,
+      name: techniqueName,
+      phase,
+    });
+    
     try {
       const session = await hugoApi.startSession({
         techniqueId: techniqueNumber,
@@ -762,23 +785,6 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
   const renderChatInterface = () => (
     <div className="h-full flex flex-col bg-white">
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center max-w-md">
-              <div className="w-16 h-16 rounded-full bg-hh-ink/5 mx-auto mb-4 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-hh-ink" />
-              </div>
-              <h3 className="text-[18px] font-semibold text-hh-text mb-2">
-                Welkom bij Hugo AI Coach
-              </h3>
-              <p className="text-hh-muted text-[14px] mb-6">
-                Selecteer een techniek in de sidebar om te beginnen met oefenen
-              </p>
-              
-            </div>
-          </div>
-        )}
-
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[80%] p-3 rounded-2xl ${
@@ -838,23 +844,23 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <Input
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && selectedTechnique && handleSendMessage()}
-            placeholder={selectedTechnique ? "Type je antwoord als verkoper..." : "Selecteer eerst een techniek..."}
+            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+            placeholder="Type je bericht..."
             className="flex-1"
-            disabled={!selectedTechnique || isStreaming}
+            disabled={isStreaming}
           />
           <Button
             variant="outline"
             size="icon"
             onClick={handleDictation}
-            disabled={!selectedTechnique || isStreaming}
+            disabled={isStreaming}
             className={`flex-shrink-0 ${isRecording ? "bg-red-50 border-red-300 text-red-600" : ""}`}
           >
             <Mic className="w-4 h-4 text-[#4F7396]" />
           </Button>
           <Button
             onClick={handleSendMessage}
-            disabled={!selectedTechnique || !inputText.trim() || isLoading || isStreaming}
+            disabled={!inputText.trim() || isLoading || isStreaming}
             className="bg-[#4F7396] hover:bg-[#4F7396]/90 gap-2"
           >
             {isLoading || isStreaming ? (
@@ -1154,18 +1160,19 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         )}
 
         <div className={`${assistanceConfig.blindPlay ? 'w-full' : 'w-full lg:w-2/3'} flex-1 flex flex-col bg-white overflow-hidden`}>
-          {/* Clean header - mobile: hamburger + title, desktop: title + controls */}
+          {/* Clean header - mobile: help icon + title, desktop: title + controls */}
           <div className="flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 border-b border-hh-border bg-white">
-            {/* Left: Mobile sidebar toggle + Title */}
+            {/* Left: Help sidebar toggle + Title */}
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-              {/* Mobile sidebar toggle - only show when sidebar is not in blindPlay mode */}
+              {/* Help sidebar toggle (lightbulb) - only show when sidebar is not in blindPlay mode */}
               {!assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
-                  className="lg:hidden p-2 -ml-2 text-hh-muted hover:text-hh-text rounded-lg hover:bg-hh-ui-50 transition-colors"
-                  aria-label="Open technieken"
+                  className="lg:hidden p-2 -ml-2 text-amber-500 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
+                  aria-label="Hulp & technieken"
+                  title="Hulp & technieken"
                 >
-                  <Menu className="w-5 h-5" />
+                  <Lightbulb className="w-5 h-5" />
                 </button>
               )}
               <h2 className="text-[16px] lg:text-[18px] text-hh-text font-semibold whitespace-nowrap">Hugo AI</h2>
