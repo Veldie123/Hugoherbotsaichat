@@ -108,6 +108,7 @@ export function TalkToHugoAI({
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [hasActiveSession, setHasActiveSession] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [useStreaming, setUseStreaming] = useState(true);
   const streamingTextRef = useRef("");
@@ -530,6 +531,7 @@ export function TalkToHugoAI({
         timestamp: new Date(),
       };
       setMessages([aiMessage]);
+      setHasActiveSession(true);
     } catch (error) {
       console.error("Failed to start session:", error);
       const fallbackMessage: Message = {
@@ -539,6 +541,7 @@ export function TalkToHugoAI({
         timestamp: new Date(),
       };
       setMessages([fallbackMessage]);
+      setHasActiveSession(true);
     } finally {
       setIsLoading(false);
     }
@@ -592,6 +595,22 @@ export function TalkToHugoAI({
     const messageText = inputText;
     setMessages(prev => [...prev, userMessage]);
     setInputText("");
+
+    // Auto-start a general coach session if no active session exists
+    if (!hasActiveSession) {
+      try {
+        await hugoApi.startSession({
+          techniqueId: selectedTechnique || "general",
+          mode: "COACH_CHAT",
+          isExpert: difficultyLevel === "onbewuste_kunde",
+          modality: chatMode,
+        });
+        setHasActiveSession(true);
+        console.log("[Hugo] Auto-started coach session");
+      } catch (error) {
+        console.error("[Hugo] Failed to start session:", error);
+      }
+    }
 
     if (useStreaming) {
       setIsStreaming(true);
