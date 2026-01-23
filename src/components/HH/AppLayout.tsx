@@ -184,53 +184,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
         )}
       </div>
 
-      {/* Mobile Sidebar - Icon only */}
-      <div className="lg:hidden w-16 bg-white border-r border-hh-border flex flex-col">
-        {/* Logo Icon - Clickable to open menu */}
-        <button 
-          onClick={() => setMobileMenuOpen(true)}
-          className="h-16 flex items-center justify-center border-b border-hh-border hover:bg-hh-ui-50 transition-colors"
-          aria-label="Open menu"
-        >
-          <Logo variant="icon" className="w-8 h-8" />
-        </button>
-
-        {/* Navigation Icons Only */}
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {mainNavItems
-            .map((item) => {
-              const Icon = item.icon;
-              const isActive = isNavItemActive(item.id);
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigate(item.id)}
-                  className={`w-full flex items-center justify-center p-2.5 rounded-lg transition-all ${
-                    isActive
-                      ? "bg-hh-primary text-white"
-                      : "text-hh-text hover:bg-hh-ui-50"
-                  }`}
-                  aria-label={item.label}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                </button>
-              );
-            })}
-        </nav>
-
-        {/* Admin View Toggle - Mobile Collapsed Sidebar */}
-        {isAdmin && (
-          <div className="p-2 border-t border-hh-border">
-            <button
-              onClick={() => navigate?.("admin-uploads")}
-              className="w-full flex items-center justify-center p-2.5 rounded-lg transition-colors border border-hh-border text-hh-text hover:bg-hh-ui-50"
-              aria-label="Admin View"
-            >
-              <Shield className="w-5 h-5 flex-shrink-0" />
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Mobile Sidebar removed - using hamburger menu in topbar instead (like AdminLayout) */}
 
       {/* Mobile Menu Sheet */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -294,16 +248,25 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
-        <div className="h-16 bg-hh-bg border-b border-hh-border flex items-center justify-between px-3 sm:px-6">
-          {/* Left: HH Logo + Hamburger (Mobile only, only on coaching page) */}
+        <div className="h-16 bg-white border-b border-hh-border flex items-center justify-between px-3 sm:px-6">
+          {/* Left: Hamburger menu (Mobile only) + optional Flow drawer for coaching pages */}
           <div className="flex items-center gap-2 lg:hidden">
+            {/* Hamburger menu - always visible on mobile */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="text-hh-text hover:text-hh-ink p-1.5 rounded-lg hover:bg-hh-ui-50 transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            {/* Flow drawer button - only on coaching/live/analysis-results pages */}
             {(currentPage === "coaching" || currentPage === "live" || currentPage === "analysis-results") && onOpenFlowDrawer && (
               <button
                 onClick={onOpenFlowDrawer}
-                className="text-hh-muted hover:text-hh-text p-1.5 rounded-lg hover:bg-hh-ui-50 transition-colors"
+                className="text-hh-muted hover:text-hh-text p-1.5 rounded-lg hover:bg-hh-ui-50 transition-colors border border-hh-border"
                 aria-label="Open Epic Sales Flow"
               >
-                <Menu className="w-5 h-5" />
+                <ChevronLeft className="w-4 h-4" />
               </button>
             )}
           </div>
