@@ -57,12 +57,20 @@ import { lastActivityService } from "../../services/lastActivityService";
 import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from "@heygen/streaming-avatar";
 import { Room, RoomEvent, Track, ConnectionState } from "livekit-client";
 
+interface MessageDebugInfo {
+  houding?: string;
+  expectedTechnique?: string;
+  expectedTechniqueId?: string;
+  detectedSignals?: string[];
+}
+
 interface Message {
   id: string;
   sender: "hugo" | "ai";
   text: string;
   timestamp: Date;
   technique?: string;
+  debugInfo?: MessageDebugInfo;
 }
 
 type ChatMode = "chat" | "audio" | "video";
@@ -102,6 +110,7 @@ export function TalkToHugoAI({
   const [levelTransitionMessage, setLevelTransitionMessage] = useState<string | null>(null);
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [activeHelpMessageId, setActiveHelpMessageId] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<ChatMode>("chat");
   const [sessionTimer, setSessionTimer] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -801,17 +810,107 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
     }
   };
 
+  const handleHelpClick = (message: Message) => {
+    if (activeHelpMessageId === message.id) {
+      setActiveHelpMessageId(null);
+      return;
+    }
+    
+    setActiveHelpMessageId(message.id);
+    
+    // Als er een verwachte techniek is, scroll ernaar in de sidebar
+    if (message.debugInfo?.expectedTechniqueId) {
+      const techniqueId = message.debugInfo.expectedTechniqueId;
+      
+      // Bepaal de fase van de techniek en expand die
+      const technique = Object.values(technieken_index.technieken).find((t: any) => t.id === techniqueId) as any;
+      if (technique) {
+        const fase = technique.fase;
+        if (!expandedPhases.includes(fase)) {
+          setExpandedPhases(prev => [...prev, fase]);
+        }
+        
+        // Als het een sub-techniek is, expand ook de parent
+        if (technique.nummer.includes('.')) {
+          const parentNumber = technique.nummer.split('.').slice(0, -1).join('.');
+          const parent = Object.values(technieken_index.technieken).find((t: any) => t.nummer === parentNumber) as any;
+          if (parent && !expandedParents.includes(parent.id)) {
+            setExpandedParents(prev => [...prev, parent.id]);
+          }
+        }
+        
+        // Open mobile sidebar en scroll naar techniek
+        setMobileSidebarOpen(true);
+        
+        // Scroll naar de techniek na een korte delay (voor sidebar open animatie)
+        setTimeout(() => {
+          const element = document.getElementById(`technique-${techniqueId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.classList.add('ring-2', 'ring-hh-primary', 'ring-offset-2');
+            setTimeout(() => {
+              element.classList.remove('ring-2', 'ring-hh-primary', 'ring-offset-2');
+            }, 2000);
+          }
+        }, 300);
+      }
+    }
+  };
+
   const renderChatInterface = () => (
     <div className="h-full flex flex-col bg-white">
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[80%] p-3 rounded-2xl ${
-              message.sender === "hugo"
-                ? "bg-hh-ink text-white rounded-br-md"
-                : "bg-hh-ui-100 text-hh-text rounded-bl-md"
-            }`}>
-              <p className="text-[14px] leading-[20px]">{message.text}</p>
+            <div className="flex flex-col gap-1">
+              <div className={`max-w-[80%] p-3 rounded-2xl ${
+                message.sender === "hugo"
+                  ? "bg-hh-ink text-white rounded-br-md"
+                  : "bg-hh-ui-100 text-hh-text rounded-bl-md"
+              }`}>
+                <p className="text-[14px] leading-[20px]">{message.text}</p>
+              </div>
+              
+              {/* Lampje voor AI berichten - toont debug/hulp info */}
+              {message.sender === "ai" && (
+                <div className="flex items-start gap-2">
+                  <button
+                    onClick={() => handleHelpClick(message)}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs transition-colors ${
+                      activeHelpMessageId === message.id
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-600"
+                    }`}
+                  >
+                    <Lightbulb className="w-3.5 h-3.5" />
+                    <span>Hulp</span>
+                  </button>
+                  
+                  {/* Debug tooltip wanneer actief */}
+                  {activeHelpMessageId === message.id && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-slate-700 max-w-[250px]">
+                      {message.debugInfo ? (
+                        <div className="space-y-1">
+                          {message.debugInfo.houding && (
+                            <p><span className="font-medium">Houding:</span> {message.debugInfo.houding}</p>
+                          )}
+                          {message.debugInfo.expectedTechnique && (
+                            <p className="text-amber-700 cursor-pointer hover:underline" onClick={() => handleHelpClick(message)}>
+                              <span className="font-medium">Verwachte techniek:</span> {message.debugInfo.expectedTechnique}
+                              <span className="ml-1 text-amber-500">→ Toon in sidebar</span>
+                            </p>
+                          )}
+                          {message.debugInfo.detectedSignals && message.debugInfo.detectedSignals.length > 0 && (
+                            <p><span className="font-medium">Signalen:</span> {message.debugInfo.detectedSignals.join(', ')}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-slate-500">Klik om hulp te krijgen bij dit onderwerp. De sidebar toont relevante technieken.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -1183,15 +1282,15 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <div className="flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 border-b border-hh-border bg-white">
             {/* Left: Help sidebar toggle + Title */}
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-              {/* Help sidebar toggle (lightbulb) - only show when sidebar is not in blindPlay mode */}
+              {/* Sidebar toggle (menu) - only show when sidebar is not in blindPlay mode */}
               {!assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
-                  className="lg:hidden p-2 -ml-2 text-amber-500 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
-                  aria-label="Hulp & technieken"
-                  title="Hulp & technieken"
+                  className="lg:hidden p-2 -ml-2 text-hh-muted hover:text-hh-text rounded-lg hover:bg-hh-ui-100 transition-colors"
+                  aria-label="Technieken & hulp"
+                  title="Technieken & hulp"
                 >
-                  <Lightbulb className="w-5 h-5" />
+                  <Menu className="w-5 h-5" />
                 </button>
               )}
               <h2 className="text-[16px] lg:text-[18px] text-hh-text font-semibold whitespace-nowrap">Hugo AI</h2>

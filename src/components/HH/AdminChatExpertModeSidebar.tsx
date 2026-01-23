@@ -305,7 +305,7 @@ export function EPICSidebar({
                           const isCompleted = isTechniqueCompleted(technique.nummer);
 
                           return (
-                            <div key={technique.nummer}>
+                            <div key={technique.nummer} id={`technique-${technique.id}`}>
                               <div
                                 role="button"
                                 tabIndex={0}
@@ -416,7 +416,7 @@ export function EPICSidebar({
                                     const isChildExpanded = expandedParents.includes(child.nummer);
                                     
                                     return (
-                                      <div key={child.nummer}>
+                                      <div key={child.nummer} id={`technique-${child.id}`}>
                                         <div
                                           role="button"
                                           tabIndex={0}
@@ -527,6 +527,7 @@ export function EPICSidebar({
                                               return (
                                                 <div
                                                   key={grandchild.nummer}
+                                                  id={`technique-${grandchild.id}`}
                                                   role="button"
                                                   tabIndex={0}
                                                   onClick={(e) => {
