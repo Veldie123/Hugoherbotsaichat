@@ -1,0 +1,83 @@
+-- SSO Handoff Tokens Table
+-- Short-lived tokens for seamless authentication between .com and .ai platforms
+
+CREATE TABLE IF NOT EXISTS sso_handoff_tokens (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  token text NOT NULL UNIQUE,
+  source_platform text NOT NULL CHECK (source_platform IN ('com', 'ai')),
+  target_platform text NOT NULL CHECK (target_platform IN ('com', 'ai')),
+  target_path text,
+  expires_at timestamptz NOT NULL,
+  used_at timestamptz,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sso_handoff_token ON sso_handoff_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_sso_handoff_expires ON sso_handoff_tokens(expires_at);
+
+ALTER TABLE sso_handoff_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access on handoff tokens"
+  ON sso_handoff_tokens
+  USING (auth.role() = 'service_role');
+
+CREATE OR REPLACE FUNCTION cleanup_expired_handoff_tokens()
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  DELETE FROM sso_handoff_tokens 
+  WHERE expires_at < now() OR used_at IS NOT NULL;
+$$;
+
+CREATE OR REPLACE FUNCTION generate_sso_handoff_token(
+  p_user_id uuid,
+  p_source_platform text,
+  p_target_platform text,
+  p_target_path text DEFAULT NULL,
+  p_ttl_seconds int DEFAULT 60
+)
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_token text;
+BEGIN
+  v_token := encode(gen_random_bytes(32), 'hex');
+  
+  INSERT INTO sso_handoff_tokens (user_id, token, source_platform, target_platform, target_path, expires_at)
+  VALUES (p_user_id, v_token, p_source_platform, p_target_platform, p_target_path, now() + (p_ttl_seconds || ' seconds')::interval);
+  
+  RETURN v_token;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION validate_sso_handoff_token(p_token text)
+RETURNS TABLE(user_id uuid, target_path text, valid boolean)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_record sso_handoff_tokens%ROWTYPE;
+BEGIN
+  SELECT * INTO v_record
+  FROM sso_handoff_tokens
+  WHERE token = p_token
+    AND expires_at > now()
+    AND used_at IS NULL
+  FOR UPDATE;
+  
+  IF v_record.id IS NULL THEN
+    RETURN QUERY SELECT NULL::uuid, NULL::text, false;
+    RETURN;
+  END IF;
+  
+  UPDATE sso_handoff_tokens
+  SET used_at = now()
+  WHERE id = v_record.id;
+  
+  RETURN QUERY SELECT v_record.user_id, v_record.target_path, true;
+END;
+$$;
