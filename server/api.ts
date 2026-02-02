@@ -2857,6 +2857,164 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 // Start server on port 3001 (backend API)
 const PORT = parseInt(process.env.API_PORT || "3001", 10);
 
+// ===========================================
+// CROSS-PLATFORM API ALIASES (.com → .ai)
+// These endpoints match what the .com Replit expects
+// ===========================================
+
+// Alias: /api/chat/message → uses V2 coach engine
+app.post("/api/chat/message", async (req, res) => {
+  const { message, userId, conversationHistory } = req.body;
+  
+  if (!message) {
+    return res.status(400).json({ error: "message is required" });
+  }
+
+  try {
+    const sessionKey = userId || `anonymous-${Date.now()}`;
+    
+    let session = activeSessions.get(sessionKey);
+    if (!session) {
+      session = {
+        id: sessionKey,
+        userId: userId || null,
+        mode: 'COACH_CHAT',
+        techniqueId: null,
+        conversationHistory: conversationHistory || [],
+        context: {},
+        createdAt: new Date(),
+        lastActiveAt: new Date()
+      };
+      activeSessions.set(sessionKey, session);
+    }
+
+    session.conversationHistory.push({
+      role: 'user',
+      content: message
+    });
+    session.lastActiveAt = new Date();
+
+    const response = await coachEngine.generateResponse(
+      message,
+      session.mode,
+      session.techniqueId,
+      session.conversationHistory.slice(0, -1),
+      session.context,
+      { competenceLevel: 2 }
+    );
+
+    session.conversationHistory.push({
+      role: 'assistant',
+      content: response.text
+    });
+
+    res.json({
+      success: true,
+      message: response.text,
+      sessionId: sessionKey,
+      signals: response.signals || [],
+      suggestions: response.suggestions || []
+    });
+  } catch (error: any) {
+    console.error("[API] /api/chat/message error:", error);
+    res.status(500).json({ 
+      error: "Er ging iets mis. Probeer het opnieuw.",
+      message: "Hmm, ik heb even moeite met antwoorden. Kun je het nogmaals proberen?"
+    });
+  }
+});
+
+// Alias: /api/user/activity-summary → forwards to v2 endpoint
+app.get("/api/user/activity-summary", async (req, res) => {
+  const userId = req.query.userId as string;
+  
+  if (!userId) {
+    return res.status(400).json({ error: "userId required" });
+  }
+  
+  try {
+    let rpcData = null;
+    const rpcResult = await supabase
+      .rpc('get_user_activity_summary', { p_user_id: userId });
+    
+    if (!rpcResult.error && rpcResult.data) {
+      rpcData = rpcResult.data;
+    }
+    
+    if (rpcData) {
+      const summary = rpcData;
+      let welcomeMessage = "Waar kan ik je vandaag mee helpen?";
+      
+      if (summary.last_activity_type) {
+        const lastActivityDate = new Date(summary.last_activity_at);
+        const timeAgo = Date.now() - lastActivityDate.getTime();
+        const hoursAgo = Math.floor(timeAgo / (1000 * 60 * 60));
+        const daysAgo = Math.floor(hoursAgo / 24);
+        
+        let timePhrase = "";
+        if (daysAgo > 0) {
+          timePhrase = daysAgo === 1 ? "Gisteren" : `${daysAgo} dagen geleden`;
+        } else if (hoursAgo > 0) {
+          timePhrase = hoursAgo === 1 ? "Een uur geleden" : `${hoursAgo} uur geleden`;
+        } else {
+          timePhrase = "Net";
+        }
+        
+        switch (summary.last_activity_type) {
+          case "video_view":
+            welcomeMessage = `${timePhrase} keek je een video. Heb je daar nog vragen over, of wil je het in de praktijk oefenen?`;
+            break;
+          case "webinar_attend":
+            welcomeMessage = `${timePhrase} volgde je een webinar. Zullen we de besproken technieken oefenen?`;
+            break;
+          case "chat_session":
+            welcomeMessage = `Welkom terug! ${timePhrase} hadden we een gesprek. Zullen we verdergaan waar we gebleven waren?`;
+            break;
+          default:
+            welcomeMessage = "Waar kan ik je vandaag mee helpen?";
+        }
+      }
+      
+      res.json({
+        success: true,
+        activity: {
+          videos_watched: summary.videos_watched || 0,
+          webinars_attended: summary.webinars_attended || 0,
+          chat_sessions: summary.chat_sessions || 0,
+          last_activity_type: summary.last_activity_type,
+          last_activity_at: summary.last_activity_at
+        },
+        welcomeMessage
+      });
+    } else {
+      res.json({
+        success: true,
+        activity: {
+          videos_watched: 0,
+          webinars_attended: 0,
+          chat_sessions: 0,
+          last_activity_type: null,
+          last_activity_at: null
+        },
+        welcomeMessage: "Waar kan ik je vandaag mee helpen?"
+      });
+    }
+  } catch (error: any) {
+    console.error("[API] /api/user/activity-summary error:", error);
+    res.json({
+      success: true,
+      activity: {
+        videos_watched: 0,
+        webinars_attended: 0,
+        chat_sessions: 0,
+        last_activity_type: null,
+        last_activity_at: null
+      },
+      welcomeMessage: "Waar kan ik je vandaag mee helpen?"
+    });
+  }
+});
+
 const server = createServer(app);
 
 // Setup ElevenLabs Scribe WebSocket for STT

@@ -43,6 +43,14 @@ The application is built with React 18, TypeScript, and Vite. Styling uses Tailw
     - `lastActivityService.ts` now has `getPersonalizedWelcome(userId)` for async API calls
     - Supabase `get_user_activity_summary(p_user_id)` RPC returns videos watched, webinars attended, chat sessions
     - Falls back to localStorage for local-only activity when API unavailable
+  - **Cross-Platform API Endpoints (.com → .ai) (februari 2026):**
+    - `POST /api/chat/message` - Ontvang chat berichten van .com platform, gebruik V2 coach engine
+      - Body: `{ message, userId?, conversationHistory? }`
+      - Response: `{ success, message, sessionId, signals, suggestions }`
+    - `GET /api/user/activity-summary` - Alias voor activity tracking
+      - Query: `?userId=<uuid>`
+      - Response: `{ success, activity: {...}, welcomeMessage }`
+    - .com platform stuurt requests naar: `https://hugoherbots-ai-chat.replit.app`
 - **Progressive Unlocking:** Techniques in the Admin view for Hugo a.i. are progressively unlocked with visual cues.
 - **SSOT (Single Source of Truth) Architecture:** Core data is managed from centralized JSON/TypeScript files and accessed via service wrappers.
 
