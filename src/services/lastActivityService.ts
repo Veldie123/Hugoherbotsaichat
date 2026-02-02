@@ -40,9 +40,9 @@ export const lastActivityService = {
     }
   },
 
-  getWelcomeMessage(activity: LastActivity | null): string {
+  getWelcomeMessage(activity: LastActivity | null): string | null {
     if (!activity) {
-      return "Welkom! Ik ben Hugo, jouw persoonlijke sales coach. Waar wil je vandaag aan werken? Je kunt een techniek kiezen uit de E.P.I.C. Sales Flow, of vraag me gewoon waar je mee zit.";
+      return null;
     }
 
     const timeAgo = Date.now() - activity.timestamp;
@@ -51,31 +51,28 @@ export const lastActivityService = {
 
     let timePhrase = "";
     if (daysAgo > 0) {
-      timePhrase = daysAgo === 1 ? "gisteren" : `${daysAgo} dagen geleden`;
+      timePhrase = daysAgo === 1 ? "Gisteren" : `${daysAgo} dagen geleden`;
     } else if (hoursAgo > 0) {
-      timePhrase = hoursAgo === 1 ? "een uur geleden" : `${hoursAgo} uur geleden`;
+      timePhrase = hoursAgo === 1 ? "Een uur geleden" : `${hoursAgo} uur geleden`;
     } else {
-      timePhrase = "net";
+      timePhrase = "Net";
     }
 
     switch (activity.type) {
       case 'technique':
-        return `Welkom terug! ${timePhrase} werkten we aan "${activity.name}". Wil je daar verder mee, of heb je vragen over wat we besproken hebben? Je kunt ook een nieuwe techniek kiezen als je ergens anders aan wilt werken.`;
+        return `${timePhrase} hadden we het over "${activity.name}". Wil je daar verder mee, of zit je ergens anders mee?`;
       case 'video':
-        return `Welkom terug! ${timePhrase} keek je de video over "${activity.name}". Heb je daar nog vragen over, of wil je oefenen met deze techniek in een roleplay?`;
+        return `${timePhrase} keek je de video over "${activity.name}". Heb je daar nog vragen over?`;
       case 'webinar':
-        return `Welkom terug! ${timePhrase} volgde je het webinar "${activity.name}". Wat vond je ervan? Zullen we de besproken technieken samen oefenen?`;
+        return `${timePhrase} volgde je het webinar "${activity.name}". Zullen we de besproken technieken oefenen?`;
       default:
-        return "Welkom terug! Waar wil je vandaag aan werken?";
+        return null;
     }
   },
 
   getQuickActions(activity: LastActivity | null): Array<{ label: string; action: string; techniqueId?: string }> {
     if (!activity) {
-      return [
-        { label: "Laat me de E.P.I.C. technieken zien", action: "show_sidebar" },
-        { label: "Wat raad je me aan?", action: "recommend" },
-      ];
+      return [];
     }
 
     const actions = [];
@@ -88,8 +85,7 @@ export const lastActivityService = {
       });
     }
     
-    actions.push({ label: "Iets anders oefenen", action: "show_sidebar" });
-    actions.push({ label: "Ik heb een vraag", action: "ask_question" });
+    actions.push({ label: "Iets anders", action: "show_sidebar" });
     
     return actions;
   }

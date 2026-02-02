@@ -110,6 +110,7 @@ export function TalkToHugoAI({
   const [levelTransitionMessage, setLevelTransitionMessage] = useState<string | null>(null);
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
   const [activeHelpMessageId, setActiveHelpMessageId] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<ChatMode>("chat");
   const [sessionTimer, setSessionTimer] = useState(0);
@@ -160,19 +161,23 @@ export function TalkToHugoAI({
     loadUserLevel();
   }, []);
 
-  // Hugo starts conversation proactively based on last activity
+  // Hugo starts conversation proactively based on last activity (ChatGPT-style: blank if no activity)
   useEffect(() => {
     const lastActivity = lastActivityService.get();
     const welcomeMessage = lastActivityService.getWelcomeMessage(lastActivity);
     
-    setMessages([{
-      id: `welcome-${Date.now()}`,
-      sender: "ai",
-      text: welcomeMessage,
-      timestamp: new Date(),
-    }]);
-    
-    console.log("[Hugo] Started proactive conversation, last activity:", lastActivity);
+    if (welcomeMessage) {
+      setMessages([{
+        id: `welcome-${Date.now()}`,
+        sender: "ai",
+        text: welcomeMessage,
+        timestamp: new Date(),
+      }]);
+      console.log("[Hugo] Started proactive conversation, last activity:", lastActivity);
+    } else {
+      setMessages([]);
+      console.log("[Hugo] Blank slate - no previous activity");
+    }
   }, []);
 
   useEffect(() => {
@@ -1243,9 +1248,9 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
   return (
     <AppLayout currentPage="talk-to-hugo" navigate={navigate} isAdmin={isAdmin}>
       <div className="flex h-[calc(100vh-4rem)]">
-        {/* Sidebar hidden on mobile, visible on desktop - also hidden in blindPlay mode */}
-        {!assistanceConfig.blindPlay && (
-          <div className="hidden lg:block w-1/3 flex-shrink-0 overflow-y-auto h-full">
+        {/* Sidebar hidden by default - only shows when user clicks help icon (Piano concept) */}
+        {!assistanceConfig.blindPlay && desktopSidebarOpen && (
+          <div className="hidden lg:block w-1/3 flex-shrink-0 overflow-y-auto h-full border-r border-hh-border">
             <EPICSidebar
               fasesAccordionOpen={fasesAccordionOpen}
               setFasesAccordionOpen={setFasesAccordionOpen}
@@ -1277,12 +1282,12 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           </div>
         )}
 
-        <div className={`${assistanceConfig.blindPlay ? 'w-full' : 'w-full lg:w-2/3'} flex-1 flex flex-col bg-white overflow-hidden`}>
+        <div className={`${assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'w-full lg:w-2/3'} flex-1 flex flex-col bg-white overflow-hidden`}>
           {/* Clean header - mobile: help icon + title, desktop: title + controls */}
           <div className="flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 border-b border-hh-border bg-white">
             {/* Left: Help sidebar toggle + Title */}
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-              {/* Sidebar toggle (menu) - only show when sidebar is not in blindPlay mode */}
+              {/* Mobile: Menu icon for sidebar sheet */}
               {!assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
@@ -1291,6 +1296,21 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                   title="Technieken & hulp"
                 >
                   <Menu className="w-5 h-5" />
+                </button>
+              )}
+              {/* Desktop: Lightbulb help icon - toggles EPIC sidebar (Piano concept) */}
+              {!assistanceConfig.blindPlay && (
+                <button
+                  onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+                  className={`hidden lg:flex p-2 -ml-2 rounded-lg transition-colors ${
+                    desktopSidebarOpen 
+                      ? "bg-amber-100 text-amber-600" 
+                      : "text-hh-muted hover:text-amber-500 hover:bg-amber-50"
+                  }`}
+                  aria-label="Toon E.P.I.C. technieken"
+                  title="Toon E.P.I.C. technieken"
+                >
+                  <Lightbulb className="w-5 h-5" />
                 </button>
               )}
               <h2 className="text-[16px] lg:text-[18px] text-hh-text font-semibold whitespace-nowrap">Hugo AI</h2>
