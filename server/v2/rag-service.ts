@@ -96,6 +96,7 @@ export async function generateEmbedding(text: string): Promise<number[] | null> 
 
 /**
  * Search for relevant documents using semantic similarity
+ * Uses Supabase RPC function match_rag_documents
  */
 export async function searchRag(
   query: string,
@@ -117,20 +118,28 @@ export async function searchRag(
       return { documents: [], query, searchTimeMs: Date.now() - startTime };
     }
     
-    const embeddingStr = `[${queryEmbedding.join(",")}]`;
-    
-    const result = await pool.query(
-      `SELECT * FROM match_rag_documents(
-        $1::vector,
-        $2::float,
-        $3::int,
-        $4::text,
-        $5::text
-      )`,
-      [embeddingStr, threshold, limit, docType || null, technikId || null]
-    );
+    // Use Supabase RPC for similarity search
+    const { data, error } = await supabase.rpc('match_rag_documents', {
+      query_embedding: queryEmbedding,
+      match_threshold: threshold,
+      match_count: limit
+    });
 
-    const documents: RagDocument[] = result.rows.map((row: any) => ({
+    if (error) {
+      console.error("[RAG] Supabase RPC error:", error);
+      return { documents: [], query, searchTimeMs: Date.now() - startTime };
+    }
+
+    // Filter by docType and technikId if provided
+    let filteredData = data || [];
+    if (docType) {
+      filteredData = filteredData.filter((row: any) => row.doc_type === docType);
+    }
+    if (technikId) {
+      filteredData = filteredData.filter((row: any) => row.techniek_id === technikId);
+    }
+
+    const documents: RagDocument[] = filteredData.map((row: any) => ({
       id: row.id,
       docType: row.doc_type,
       title: row.title,
@@ -138,6 +147,8 @@ export async function searchRag(
       technikId: row.techniek_id,
       similarity: row.similarity,
     }));
+
+    console.log(`[RAG] Supabase search returned ${documents.length} docs in ${Date.now() - startTime}ms`);
 
     return {
       documents,
@@ -155,83 +166,28 @@ export async function searchRag(
 }
 
 /**
- * Load and index the RAG corpus into the database
+ * Load and index the RAG corpus into Supabase
+ * NOTE: Indexing should be done via .com Replit (single source of truth)
+ * This function is kept for backwards compatibility
  */
 export async function indexCorpus(): Promise<{ indexed: number; errors: number; needsApiKey?: boolean }> {
-  if (!isRagAvailable()) {
-    console.error("[RAG] OPENAI_API_KEY not set - cannot generate embeddings");
-    return { indexed: 0, errors: 0, needsApiKey: true };
-  }
-  
-  const corpusPath = path.join(process.cwd(), "data/rag/epic_rag_corpus.json");
-  
-  if (!fs.existsSync(corpusPath)) {
-    console.error("[RAG] Corpus not found:", corpusPath);
-    return { indexed: 0, errors: 0 };
-  }
-
-  const corpus = JSON.parse(fs.readFileSync(corpusPath, "utf-8"));
-  let indexed = 0;
-  let errors = 0;
-
-  console.log(`[RAG] Indexing ${corpus.length} documents...`);
-
-  for (const doc of corpus) {
-    try {
-      const existing = await pool.query(
-        "SELECT id FROM rag_documents WHERE source_id = $1",
-        [doc.source || doc.id]
-      );
-
-      if (existing.rows.length > 0) {
-        continue;
-      }
-
-      const embedding = await generateEmbedding(doc.content);
-      if (!embedding) {
-        errors++;
-        continue;
-      }
-      const embeddingStr = `[${embedding.join(",")}]`;
-
-      await pool.query(
-        `INSERT INTO rag_documents 
-         (doc_type, source_id, title, content, techniek_id, embedding, word_count)
-         VALUES ($1, $2, $3, $4, $5, $6::vector, $7)`,
-        [
-          doc.type,
-          doc.source || doc.id,
-          doc.title,
-          doc.content,
-          doc.techniek?.nummer || null,
-          embeddingStr,
-          doc.word_count,
-        ]
-      );
-
-      indexed++;
-      
-      if (indexed % 10 === 0) {
-        console.log(`[RAG] Indexed ${indexed} documents...`);
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    } catch (error) {
-      console.error(`[RAG] Error indexing ${doc.id}:`, error);
-      errors++;
-    }
-  }
-
-  console.log(`[RAG] Indexing complete: ${indexed} indexed, ${errors} errors`);
-  return { indexed, errors };
+  console.log("[RAG] Indexing disabled on .ai Replit - use .com Replit for corpus management");
+  return { indexed: 0, errors: 0 };
 }
 
 /**
- * Get document count in the RAG database
+ * Get document count from Supabase RAG database
  */
 export async function getDocumentCount(): Promise<number> {
-  const result = await pool.query("SELECT COUNT(*) FROM rag_documents");
-  return parseInt(result.rows[0].count, 10);
+  const { count, error } = await supabase
+    .from('rag_documents')
+    .select('*', { count: 'exact', head: true });
+  
+  if (error) {
+    console.error("[RAG] Count error:", error);
+    return 0;
+  }
+  return count || 0;
 }
 
 /**
