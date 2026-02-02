@@ -4,39 +4,20 @@
  * Provides semantic search over Hugo's training materials
  * using OpenAI embeddings and pgvector similarity search.
  * 
- * TODO: RAG-DATABASE-FIX
- * ----------------------
- * Issue: Database error "type vector does not exist"
- * Status: Done (januari 2026)
+ * UPDATE: februari 2026 - Overschakeling naar Supabase
+ * -----------------------------------------------------
+ * RAG corpus leeft nu in Supabase (shared met .com Replit)
+ * ipv Replit PostgreSQL. Dit maakt cross-platform search mogelijk.
  * 
- * Bron: hugo-engine_(4).zip → hugo-engine-export/server/v2/rag-service.ts
- * Service is al geëxtraheerd, database setup was handmatig.
- * 
- * Oplossing:
- * - pgvector extensie geïnstalleerd: CREATE EXTENSION IF NOT EXISTS vector;
- * - rag_documents tabel aangemaakt met vector(1536) kolom
- * - ivfflat index aangemaakt voor snelle similarity search
- * 
- * Frontend koppeling: N/A - backend-only, RAG grounding gebeurt in coach responses
- * 
- * TODO: RAG-CORPUS-VULLEN
- * -----------------------
- * Issue: RAG corpus is leeg - geen trainingsmateriaal geïndexeerd
- * Status: Done (januari 2026)
- * 
- * Bron: hugo-rag-export.zip → data/documents_for_embedding.jsonl (130 documenten)
- * 
- * Oplossing:
- * 1. Trainingsmateriaal geëxtraheerd naar rag/corpus/
- * 2. Indexeer script gemaakt: npm run rag:index
- * 3. 130 documenten geïndexeerd met embeddings
- * 4. Verificatie: SELECT COUNT(*) FROM rag_documents; → 130
+ * Supabase project: pckctmojjrrgzuufsqoo
+ * Corpus: 559 documenten met embeddings
+ * Search: Via match_rag_documents RPC functie
  * 
  * Frontend koppeling: N/A - backend-only, RAG grounding gebeurt in coach responses
  */
 
 import OpenAI from "openai";
-import { pool } from "../db";
+import { supabase } from "../supabase-client";
 import * as fs from "fs";
 import * as path from "path";
 

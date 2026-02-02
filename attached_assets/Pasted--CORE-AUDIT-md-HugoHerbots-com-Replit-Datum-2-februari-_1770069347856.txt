@@ -1,0 +1,191 @@
+# CORE_AUDIT.md - HugoHerbots.com Replit
+
+**Datum:** 2 februari 2026  
+**Doel:** AS-IS analyse + GAPS vs Split Integratieplan v1.2
+
+---
+
+## ANTWOORDEN VOOR .AI REPLIT
+
+### 1. Welk Supabase project wordt hier gebruikt?
+```
+Project ID: pckctmojjrrgzuufsqoo
+URL: https://pckctmojjrrgzuufsqoo.supabase.co
+Anon Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBja2N0bW9qanJyZ3p1dWZzcW9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwOTg1MTUsImV4cCI6MjA4MTY3NDUxNX0.TrPovHz5PgSiwyxVCYplk-SA6cNi0gZkkMVGr3NdIuc
+```
+
+### 2. Kunnen we naar dezelfde Supabase wijzen?
+**JA.** De .ai Replit moet deze credentials gebruiken in hun `info.tsx` of equivalent:
+```typescript
+export const projectId = "pckctmojjrrgzuufsqoo"
+export const publicAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+### 3. Hoe migreren we de RAG data?
+**GEEN MIGRATIE NODIG.** De RAG data bestaat al in deze Supabase:
+- 559 documenten in `rag_documents` tabel
+- Embeddings zijn al gegenereerd (text-embedding-3-small, 1536 dim)
+- `match_rag_documents` RPC function bestaat al
+- .ai Replit kan direct queries doen na configuratie
+
+---
+
+## SUPABASE SCHEMA OVERZICHT
+
+| Tabel | Rows | RLS Status | Beschrijving |
+|-------|------|------------|--------------|
+| `rag_documents` | **559** | ❌ OFF | RAG corpus met embeddings |
+| `video_ingest_jobs` | **153** | ❌ OFF | Video pipeline tracking |
+| `video_ingest_logs` | 0 | ❌ OFF | Processing logs |
+| `live_sessions` | **55** | ❌ OFF | Webinar sessies |
+| `live_chat_messages` | 0 | ✅ ON | Chat tijdens webinars |
+| `live_poll_options` | 0 | ✅ ON | Poll opties |
+| `live_poll_votes` | 0 | ✅ ON | Stemmen |
+| `live_polls` | 0 | ✅ ON | Polls |
+| `live_session_reminders` | 0 | ✅ ON | Reminders |
+
+---
+
+## RAG CORPUS (✅ BESTAAT)
+
+**Schema `rag_documents`:**
+```sql
+id              uuid        NOT NULL (PK)
+doc_type        text        NOT NULL  -- video_transcript, webinar, techniek, etc.
+source_id       text        NULL      -- video_id of webinar_id
+title           text        NOT NULL
+content         text        NOT NULL
+techniek_id     text        NULL      -- bijv. "2.1.3"
+fase            text        NULL      -- bijv. "2"
+categorie       text        NULL
+embedding       vector(1536) NULL     -- OpenAI text-embedding-3-small
+word_count      integer     NULL
+created_at      timestamptz NULL
+updated_at      timestamptz NULL
+```
+
+**Gebruik:**
+```typescript
+// Via RPC function
+const { data } = await supabase.rpc('match_rag_documents', {
+  query_embedding: [...], // 1536-dim vector
+  match_threshold: 0.1,
+  match_count: 10
+});
+
+// Of via REST endpoint op deze Replit
+POST /api/rag/search
+{ "query": "bezwaren afhandelen", "limit": 5 }
+```
+
+---
+
+## SSOT (✅ BESTAAT - JSON FILE)
+
+**Locatie:** `src/data/technieken_index.json`
+- 54 technieken over 5 fases (0-4)
+- Versie: 1.0.2
+- Bevat: nummer, naam, fase, doel, wat, waarom, wanneer, hoe, stappenplan, tags, context_requirements
+
+**Geen Supabase config_versions tabel** - SSOT leeft in codebase.
+
+---
+
+## DATABASE FUNCTIES
+
+| Functie | Status |
+|---------|--------|
+| `match_rag_documents(query_embedding, match_threshold, match_count)` | ✅ Exists |
+| `update_video_ingest_updated_at()` | ✅ Exists - trigger |
+| `has_entitlement(user_id, entitlement)` | ❌ NOT EXISTS |
+| `is_admin(user_id)` | ❌ NOT EXISTS |
+
+---
+
+## ONTBREKENDE TABELLEN (vs PDF Fase 0-4)
+
+| Tabel | Nodig voor | Status |
+|-------|------------|--------|
+| `user_entitlements` | Fase 1 - Entitlements | ❌ NOT EXISTS |
+| `subscriptions` | Fase 1 - Stripe sync | ❌ NOT EXISTS |
+| `profiles` | User management | ❌ NOT EXISTS |
+| `user_activity` | Hugo's geheugen | ❌ NOT EXISTS |
+| `events` | Analytics | ❌ NOT EXISTS |
+| `config_versions` | Fase 3 - SSOT | ❌ NOT EXISTS |
+| `handoff_tokens` | Fase 2 - SSO | ❌ NOT EXISTS |
+
+---
+
+## SECURITY ISSUES (ACTIE NODIG)
+
+### RLS Disabled (ERROR)
+```sql
+-- Run in Supabase SQL Editor:
+ALTER TABLE public.rag_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.video_ingest_jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.video_ingest_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.live_sessions ENABLE ROW LEVEL SECURITY;
+
+-- Policies voor service role access:
+CREATE POLICY "Service role full access" ON public.video_ingest_jobs
+  FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+
+CREATE POLICY "Service role full access" ON public.video_ingest_logs
+  FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+
+-- RAG documents: public read, service role write
+CREATE POLICY "Public read access" ON public.rag_documents
+  FOR SELECT USING (true);
+CREATE POLICY "Service role write access" ON public.rag_documents
+  FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+
+-- Live sessions: public read
+CREATE POLICY "Public read access" ON public.live_sessions
+  FOR SELECT USING (true);
+```
+
+### Function Search Path (WARN)
+```sql
+ALTER FUNCTION public.match_rag_documents(vector, double precision, integer) SET search_path = public;
+ALTER FUNCTION public.update_video_ingest_updated_at() SET search_path = public;
+```
+
+---
+
+## GAPS vs PDF FASES
+
+| Fase | Deliverable | Status |
+|------|-------------|--------|
+| **0** | Entitlement matrix | ❌ Niet geformaliseerd |
+| **0** | Event schema | ❌ Geen events tabel |
+| **0** | Deep link map | ⚠️ Bestaat voor video's, niet cross-app |
+| **0** | RLS policies | ❌ Meeste tabellen onbeschermd |
+| **1** | Stripe → subscriptions | ❌ Geen Stripe integratie |
+| **1** | user_entitlements | ❌ Tabel bestaat niet |
+| **1** | has_entitlement() | ❌ Functie bestaat niet |
+| **2** | handoff_tokens | ❌ Tabel bestaat niet |
+| **2** | SSO endpoints | ❌ Niet geïmplementeerd |
+| **3** | config_versions | ❌ SSOT is JSON file |
+| **4** | RAG visibility labels | ⚠️ Geen visibility kolom |
+| **4** | Controlled ingest | ✅ Via Cloud Run worker |
+| **5** | Central events | ❌ Geen events store |
+
+---
+
+## PRIORITEIT ACTIES (korte termijn)
+
+1. **RLS aanzetten** - Security fix (zie SQL hierboven)
+2. **user_activity tabel** - Voor Hugo's geheugen
+3. **visibility kolom** - Toevoegen aan rag_documents (free/premium)
+4. **.ai Replit configureren** - Zelfde Supabase credentials
+
+---
+
+## VOOR .AI REPLIT: HOE TE CONNECTEN
+
+1. Update je Supabase config met bovenstaande credentials
+2. RAG search kan via:
+   - Direct: `supabase.rpc('match_rag_documents', {...})`
+   - Via .com API: `POST https://[.com-domain]/api/rag/search`
+3. Geen data migratie nodig - alles bestaat al
+4. Entitlements filtering: moet nog gebouwd worden (visibility kolom)
