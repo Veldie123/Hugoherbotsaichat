@@ -1,0 +1,79 @@
+Datum: 2 februari 2026
+Doel: AS-IS analyse + GAPS vs Split Integratieplan v1.2
+
+1. SUPABASE SCHEMA OVERZICHT
+Tabel	Rows	RLS Status	Beschrijving
+rag_documents	559	❌ OFF	RAG corpus met embeddings
+video_ingest_jobs	153	❌ OFF	Video pipeline tracking
+video_ingest_logs	0	❌ OFF	Processing logs
+live_sessions	55	❌ OFF	Webinar sessies
+live_chat_messages	0	✅ ON	Chat tijdens webinars
+live_poll_options	0	✅ ON	Poll opties
+live_poll_votes	0	✅ ON	Stemmen
+live_polls	0	✅ ON	Polls
+live_session_reminders	0	✅ ON	Reminders
+2. RAG CORPUS (✅ BESTAAT)
+Schema rag_documents:
+
+id (uuid), doc_type, source_id, title, content
+techniek_id, fase, categorie
+embedding (pgvector 1536-dim), word_count
+created_at, updated_at
+Status: 559 documenten geïndexeerd met embeddings
+Search: Via match_rag_documents RPC function + /api/rag/search endpoint
+Model: text-embedding-3-small (OpenAI)
+
+3. SSOT (✅ BESTAAT - JSON FILE)
+Locatie: src/data/technieken_index.json
+
+54 technieken over 5 fases (0-4)
+Versie: 1.0.2
+Bevat: nummer, naam, fase, doel, wat, waarom, wanneer, hoe, stappenplan, tags, context_requirements
+Geen Supabase config_versions tabel - SSOT leeft in codebase.
+
+4. DATABASE FUNCTIES
+Functie	Status
+match_rag_documents	✅ Exists - pgvector similarity search
+update_video_ingest_updated_at	✅ Exists - trigger
+has_entitlement()	❌ NOT EXISTS
+is_admin()	❌ NOT EXISTS
+5. ONTBREKENDE TABELLEN (vs PDF Fase 0-4)
+Tabel	Nodig voor	Status
+user_entitlements	Fase 1 - Entitlements	❌ NOT EXISTS
+subscriptions	Fase 1 - Stripe sync	❌ NOT EXISTS
+profiles	User management	❌ NOT EXISTS
+user_activity	Hugo's geheugen	❌ NOT EXISTS
+events	Analytics	❌ NOT EXISTS
+config_versions	Fase 3 - SSOT	❌ NOT EXISTS
+handoff_tokens	Fase 2 - SSO	❌ NOT EXISTS
+6. SECURITY ISSUES
+RLS disabled op kritieke tabellen:
+
+rag_documents - bevat alle content
+video_ingest_jobs - video metadata
+live_sessions - webinar data
+Function search_path mutable - 11 functions need SET search_path = public
+
+Service role key - alleen in backend (correct)
+
+GAPS vs PDF Fases
+Fase	Deliverable	Status
+0	Entitlement matrix	❌ Niet geformaliseerd
+0	Event schema	❌ Geen events tabel
+0	Deep link map	⚠️ Bestaat voor video's, niet voor cross-app
+0	RLS policies	❌ Meeste tabellen onbeschermd
+1	Stripe → subscriptions	❌ Geen Stripe integratie
+1	user_entitlements	❌ Tabel bestaat niet
+1	has_entitlement()	❌ Functie bestaat niet
+2	handoff_tokens	❌ Tabel bestaat niet
+2	SSO endpoints	❌ Niet geïmplementeerd
+3	config_versions	❌ SSOT is JSON file, niet DB
+4	RAG visibility labels	⚠️ Geen visibility kolom
+4	Controlled ingest	✅ Via Cloud Run worker
+5	Central events	❌ Geen events store
+PRIORITEIT ACTIES
+RLS aanzetten op rag_documents, video_ingest_jobs, live_sessions
+user_activity tabel maken voor Hugo's geheugen
+user_entitlements + has_entitlement() function
+Visibility kolom toevoegen aan rag_documents (free/premium)
+Wil je dat ik deze als bestand opsla en de takenlijst bijwerk?

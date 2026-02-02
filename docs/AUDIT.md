@@ -226,19 +226,71 @@ Index type: ivfflat (pgvector)
 
 ---
 
-## 12. SAMENVATTING
+## 12. VERGELIJKING MET .COM REPLIT (CORE_AUDIT)
+
+**Goed nieuws:** Beide Replits gebruiken **hetzelfde Supabase project**!
+
+| Aspect | .ai Replit | .com Replit |
+|--------|-----------|-------------|
+| Supabase project | `pckctmojjrrgzuufsqoo` | `pckctmojjrrgzuufsqoo` |
+| RAG location | Replit PostgreSQL | Supabase |
+| RAG count | 559 docs | 559 docs |
+| SSOT | JSON file | JSON file |
+| Entitlements | ❌ | ❌ |
+| User Activity | ❌ | ❌ |
+| RLS | N/A (lokaal) | ❌ Disabled |
+
+### Belangrijke observaties:
+
+1. **RAG data lijkt gedupliceerd** - Dezelfde 559 docs staan op twee plekken. De .com Supabase versie is waarschijnlijk de bron, .ai heeft een lokale kopie.
+
+2. **Auth is al gedeeld** - Beide apps wijzen naar dezelfde Supabase auth, dus SSO is technisch al mogelijk!
+
+3. **Ontbrekende tabellen zijn identiek** - Beide missen:
+   - `user_entitlements`
+   - `user_activity` 
+   - `profiles`
+   - `events`
+   - `handoff_tokens`
+
+---
+
+## 13. AANBEVOLEN AANPAK
+
+### Optie A: .ai gebruikt Supabase RAG (Aanbevolen)
+- .ai stopt met Replit PostgreSQL voor RAG
+- .ai leest rechtstreeks uit Supabase `rag_documents`
+- Voordeel: Single source of truth, minder onderhoud
+
+### Optie B: Sync tussen databases
+- Periodieke sync van RAG data
+- Nadeel: Complexer, meer kans op inconsistentie
+
+### Eerste stappen (beide Replits):
+1. ✅ Supabase project is al hetzelfde
+2. 🔲 `user_activity` tabel aanmaken in Supabase
+3. 🔲 .ai overschakelen naar Supabase RAG
+4. 🔲 RLS aanzetten op kritieke tabellen
+5. 🔲 Subdomeinen configureren voor SSO
+
+---
+
+## 14. SAMENVATTING
 
 **Sterke punten:**
 - RAG corpus is operationeel (559 docs)
 - Multi-modal (chat/audio/video) werkt
 - Auth via Supabase werkt
+- **Supabase project is al gedeeld!**
 - SSOT config is compleet
 
 **Kritische gaps:**
-- Twee aparte databases (Supabase vs Replit PostgreSQL)
+- RAG data duplicatie (Supabase vs Replit PostgreSQL)
 - Geen entitlements/access control
 - Geen centrale activity tracking voor "omniscient coach"
-- Geen cross-app navigatie/SSO
+- RLS policies ontbreken
 
 **Aanbeveling:**
-Start met het verbinden van beide Replits naar dezelfde Supabase, daarna `user_activity` tabel voor Hugo's geheugen.
+1. Kies Supabase als single RAG bron
+2. Bouw `user_activity` tabel voor Hugo's geheugen
+3. Configureer subdomeinen voor SSO
