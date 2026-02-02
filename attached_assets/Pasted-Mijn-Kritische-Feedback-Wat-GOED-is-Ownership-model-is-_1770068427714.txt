@@ -1,0 +1,40 @@
+Mijn Kritische Feedback
+✅ Wat GOED is:
+Ownership model is helder: .com = commerce/admin owner, .ai = AI runtime, shared core = data
+Gate per fase met tests voorkomt "half-af" integraties
+Single writer principe vermijdt schema drift
+Security checklist is compleet (TTL, one-time-use, no refresh_token logging)
+⚠️ Wat ONDERSCHAT wordt:
+1. SSO Handoff is overkill voor nu
+Het PDF zegt zelf dat subdomeinen (Fase 6) de "cleanste oplossing" is. Waarom eerst complex handoff bouwen als je later toch naar ai.hugoherbots.com + app.hugoherbots.com gaat?
+→ Mijn advies: Begin met Fase 6 (subdomeinen), dan is SSO gratis via cookies.
+
+2. SSOT verhuizen naar Supabase = risico
+technieken_index.json werkt al. 54 technieken, sync scripts, alles draait. Naar config_versions verhuizen kost weken en voegt complexiteit toe.
+→ Alternatief: Laat JSON file als SSOT, maar sync naar Supabase voor beide apps te consumeren. Eenvoudiger.
+
+3. RAG corpus bestaat hier al
+Deze Replit heeft 559 documenten in pgvector. De .ai Replit hoeft niet te "bouwen", alleen te connecten naar dezelfde Supabase.
+→ Realiteit: 80% van RAG is al klaar. Fase 4 is veel kleiner dan gesuggereerd.
+
+4. "Anon key only" is onrealistisch voor .ai
+De .ai Replit moet events schrijven, RAG queries doen met entitlement filters, etc. Je hebt server-side access nodig.
+→ Correctie: .ai krijgt beperkte service role OF edge functions.
+
+5. Geen analyse van huidige staat
+De prompts doen alsof je from scratch bouwt. Maar beide Replits hebben bestaande code.
+→ Eerste stap: Audit wat er IS, niet wat er MOET.
+
+6. Ontbrekend: Timeline
+"Weekblok A/B/C" is vaag. Hoeveel weken is dit écht? Met alleen jou, schat ik 8-12 weken voor Fase 0-4.
+
+🔧 Mijn alternatieve aanpak:
+Stap	Wat	Tijd
+1	.ai Replit → zelfde Supabase URL wijzen	1 dag
+2	Subdomeinen instellen (ai.hugoherbots.com)	1 dag
+3	Cookie-based auth op .hugoherbots.com	2 dagen
+4	Entitlements tabel + RLS	1 week
+5	.ai consumeert bestaande RAG	2 dagen
+Totaal: ~2 weken voor basis-integratie vs. 8+ weken voor volledige PDF-plan.
+
+Wil je de snelle of de complete route?

@@ -1,0 +1,458 @@
+Hier is een stevige, structurele manier om dit te organiseren: per fase beslis je (a) wat in de gedeelde kern hoort, (b) welke app de “owner” is, (c) wat de andere app enkel consumeert. Je laat dus wel beide Replits “aan het werk”, maar niet aan dezelfde laag tegelijk.
+
+1) De basisregel: “shared core” is een derde artefact, geen copy/paste in 2 apps
+
+De kern bevat identity, entitlements, data, configuratie en RAG-documenten; beide apps zijn clients van die kern.
+
+Praktisch gevolg: schema’s, RLS, functies, ingest jobs, handoff_tokens, etc. behandel je als één “shared-core” codepad (migrations/scripts), en niet als losse implementaties per Replit. Anders krijg je precies het drift-risico dat het document benoemt.
+
+2) Wie doet wat? (owner-per-domein, zoals het document het letterlijk opsplitst)
+Replit “.com” (video/webinars/live coaching/admin) — owner van commerce + content catalogus
+
+Checkout/upgrade flows (Stripe), dashboards/admin.
+
+Video/webinar catalogus en live coaching UI.
+
+Logisch: .com is owner van subscription lifecycle (Stripe → Supabase).
+
+Replit “.ai” (AI chat/roleplay/gespreksanalyse) — owner van AI runtime en practice flows
+
+Primair: AI chat, roleplay, analyse.
+
+Upsell/upgrade triggers in-context (locked features).
+
+“Shared core” (Supabase + edge/functions) — owner van security & waarheid
+
+Entitlements + plan mapping + RLS policies.
+
+SSOT/config store met versioning + publish workflow.
+
+RAG corpus (rag_documents + ingest pipeline + visibility labels).
+
+Centrale events tabel (append-only) + views.
+
+3) Concreet per fase: wat laat je welke Replit doen?
+Fase 0 — Alignment & contracten (beide Replits doen “client side”, core doet schema)
+
+Deliverables: entitlement matrix, deep link map, event schema, security baseline.
+
+Wie doet wat:
+
+Shared core: definieert tabellen/enum’s/funcs (entitlements, event schema, RLS helpers).
+
+.ai + .com: implementeren dezelfde types/constants en “deep link router” client-side (zodat links niet breken).
+
+Belangrijk: dit is de fase waar je “dubbel werk” voorkomt door één canonieke contract-definitie.
+
+Fase 1 — Shared identity + entitlements
+
+Deliverables: Stripe webhook → subscriptions, user_entitlements, RLS policies, UI gating.
+
+Owner:
+
+.com: Stripe checkout + webhooks (lifecycle) → schrijft naar Supabase.
+
+Shared core: user_entitlements, has_entitlement() + RLS.
+
+.ai: leest entitlements en toont locked/upgrade flows (upsell triggers).
+
+Fase 2 — Cross-domain handoff (SSO) + navigatie
+
+Deliverables: handoff endpoint + one-time code, deep link router, failure UX, audit logging.
+
+Belangrijk detail uit de appendix: elke app heeft een eigen backend endpoint (create_handoff op bron, consume_handoff op doel) en er is één shared tabel handoff_tokens.
+
+Owner:
+
+Shared core: handoff_tokens tabel + security checklist (TTL/one-time/use fragment).
+
+.com en .ai: elk implementeert z’n eigen backend endpoints + front-end redirect/consume flow.
+
+Fase 3 — SSOT/config centralisatie
+
+Doel: 1 canonieke versie, beide apps consumeren published.
+
+Owner:
+
+Shared core: config_versions/SSOT store + publish workflow + schema_version + caching/ETag.
+
+.com (aanbevolen): admin/editor UI (want “admin.platform” zit typisch daar).
+
+.ai: consumer (laadt SSOT bij start/on demand).
+
+Fase 4 — RAG corpus pipeline centralisatie
+
+Doel: één rag_documents schema + ingest pipeline; beide apps kunnen docs toevoegen maar via gecontroleerde ingest (niet vanuit client).
+
+Owner:
+
+.com: produceert content (webinar/video transcripts) → triggert ingest. (document noemt expliciet webinars/video als bron).
+
+.ai: produceert “golden standard chats”/AI artifacts die ook in corpus kunnen.
+
+Shared core: ingest jobs, visibility/entitlement enforcement (RLS of server-side search endpoints), usage logging.
+
+Fase 5 — Analytics consolidatie
+
+Events store + dashboards/views + cross-product reporting.
+
+Owner:
+
+Shared core: centrale events tabel + views/materialized views.
+
+.com: dashboards/admin.
+
+.ai: sessiestatistieken en emit events.
+
+4) Hoe voorkom je fragiliteit: “single writer” principe per laag
+
+Als je het “structureel stevig” wil:
+
+Één plek waar migrations/RLS/functions leven (shared-core repo/folder).
+
+Per fase één owner die changes aan de kern doorvoert (meestal .com voor commerce/admin; soms .ai voor AI-specifieke tabellen), maar altijd via dezelfde core pipeline.
+
+Contract tests tegen drift (entitlement mapping, handoff replay protection, SSOT publish/cache invalidatie, RAG ingest binnen 5 min).
+
+Dit volgt exact de “gate per fase” discipline: een fase is pas done met functionele acceptatie én security/observability.
+
+5) Mijn aanbeveling voor jou (concreet “wat doe ik nu?”)
+
+Als jij alleen beslist (geen team), kies dan dit werkritme:
+
+Weekblok A (Shared core + .com owner): Fase 0 + Fase 1 (entitlements) opzetten: Supabase schema/RLS + Stripe sync vanuit .com.
+
+Weekblok B (.ai owner): .ai aanpassen om entitlements/SSOT/RAG te consumeren (zonder nog handoff).
+
+Weekblok C (beide): Fase 2 handoff implementeren aan beide kanten + deep links.
+
+Daarna: Fase 3 (SSOT) en Fase 4 (RAG pipeline) afmaken.
+
+Waarom zo: zonder Fase 0–1 bouw je “omniscient coach” op drijfzand (security/rights), en het document benadrukt dat entitlement de centrale schakel is.
+
+Als je me zegt welke Replit vandaag al Stripe en welke al Supabase schema/migrations beheert, kan ik je een super concrete “owner map” maken (per repo: welke folder, welke scripts, welke CI stap) zodat je nooit meer twijfelt “waar hoort dit thuis?”.
+
+Sources
+beide zitten bij de webinar/video replit
+Thought for 7s
+
+Top — dat is eigenlijk gunstig. Als Stripe + Supabase (schema/migrations) nu al volledig in de webinar/video Replit zitten, maak je die Replit meteen de “core owner” (commerce + data-kernel), en maak je de AI/chat Replit een pure consumer.
+
+Dan vermijd je precies de twee grote risico’s: schema drift en dubbele waarheid.
+
+Wat is dan de juiste verdeling?
+Webinar/Video Replit = “Core Owner”
+
+Doet alles wat “waarheid + security + billing” is:
+
+Supabase schema & migrations
+
+user_entitlements
+
+events/user_activity
+
+config_versions (SSOT)
+
+rag_documents (+ ingest status/metadata)
+
+handoff_tokens (SSO handoff)
+
+RLS policies + DB functies
+
+has_entitlement(user, capability)
+
+RLS op rag_documents.visibility, content_access, etc.
+
+Stripe lifecycle
+
+checkout + webhooks → schrijft naar user_entitlements
+
+Admin/editor UI
+
+SSOT editor (draft/publish)
+
+content beheer (video/webinar metadata)
+
+eventueel analytics dashboards
+
+AI/Chat Replit = “Runtime Client”
+
+Doet geen schema/migrations/billing. Alleen:
+
+Gebruikerservaring + agent orchestration
+
+Leest entitlements en past UI/feature gating toe
+
+Schrijft events (events/user_activity) en (optioneel) RAG-items via een ingest endpoint
+
+Gebruikt SSOT en RAG via dezelfde Supabase of via jouw “core API”
+
+Wat doe je nu best eerst? (stevig en geduldig)
+Stap 1 — Maak één harde regel: “AI Replit voert geen migrations uit”
+
+Verwijder/disable alle migration scripts daar.
+
+Geen service-role key in AI Replit (alleen anon key client-side + server-side beperkt).
+
+Waarom: anders krijg je vroeg of laat “twee bronnen van waarheid”.
+
+Stap 2 — Connect AI Replit aan dezelfde Supabase (read/write beperkt)
+
+AI Replit krijgt:
+
+Supabase URL + anon key (client)
+
+eventueel server-side service-role alleen als je echt server endpoints draait (maar liever niet; liever edge/functions of core API).
+
+Stap 3 — Bouw eerst de “shared core tables” in webinar/video Replit
+
+In deze volgorde (minimalistisch, maar correct):
+
+events / user_activity (append-only)
+
+user_entitlements (+ Stripe sync)
+
+config_versions (SSOT published/draft)
+
+rag_documents (met source_app, visibility, content_type)
+
+RLS + has_entitlement() db functie
+
+Daarna kan AI meteen “omniscient” worden, zonder SSO handoff al.
+
+Stap 4 — Pas daarna: cross-domain SSO handoff
+
+Dit is de eerste keer dat beide Replits echt code moeten bouwen aan dezelfde feature.
+
+Maar de kern blijft: token tabel + security in core, beide apps alleen endpoints + redirect.
+
+Hoe laat je “beide aan het werk gaan” zonder dubbel werk?
+
+Denk in één kern-repo + twee clients:
+
+Webinar/Video Replit bevat een map (of package) shared-core/ met:
+
+migrations
+
+SQL policies
+
+entitlement matrix (canoniek JSON/TS)
+
+event schema types
+
+SSOT schema validators
+
+AI Replit importeert enkel:
+
+de types/constants (entitlements, event names)
+
+een kleine client library (coreClient.ts) voor calls
+
+Als je niet meteen een aparte repo wil, is dit nog altijd prima als één map in webinar/video Replit + periodiek copy van alleen de types naar AI (maar liefst via git submodule of npm package zodra je kan).
+
+Concreet advies op jouw situatie (alles zit nu in webinar/video Replit)
+
+Maak webinar/video Replit de “bron” van:
+
+Supabase migrations & RLS
+
+Stripe → entitlements
+
+SSOT publishing
+
+RAG ingest pipeline
+
+Maak AI Replit de “verbruiker” die:
+
+bij elk chatbericht: snapshot + events logt
+
+bij retrieval: RAG query doet (met entitlement filters)
+
+bij features: checkt has_entitlement en toont locked flows
+
+Als je me 2 dingen zegt, kan ik je volgende stap extreem concreet uitschrijven (zonder extra vragen daarna):
+
+Welke Supabase project-id / schema gebruiken jullie effectief (één of twee vandaag)?
+
+Hoe deploy je migrations nu (handmatig SQL editor, drizzle/prisma, supabase CLI)?
+
+Dan maak ik je een “core backlog” met exacte tabellen + RLS policies + welke Replit welke commit doet.
+
+schrijf twee prompts. een voor de chat replit en een voor de video /webinar replit met referentie naar het .pdf document over wat ze moetten doen met takenlijst en checks
+Thought for 1m 23s
+
+According to a document from 20 januari 2026, is de bedoeling: 2 aparte apps/deployments (.ai en .com) die allebei lezen/schrijven naar één gedeelde Supabase-kern (identity, entitlements, data, SSOT, RAG), met expliciete contracten, security-by-default (RLS/least privilege) en “gate per fase” (functioneel + security/observability).
+
+Hier zijn 2 copy/paste prompts: één voor de chat/AI Replit (.ai) en één voor de video/webinar Replit (.com). Ze volgen de fase-deliverables, verantwoordelijkheden, checks en teststrategie uit het PDF.
+
+Prompt voor Chat Replit (hugoherbots.ai)
+Je bent de lead engineer in de hugoherbots.ai (AI chat/roleplay/gespreksanalyse) Replit. Werk strikt volgens “HugoHerbots Platform Architectuur – Split Integratieplan v1.2 (20 jan 2026)”.
+
+DOEL (architectuur):
+- .ai blijft autonoom deployen, maar is client van de gedeelde Supabase-kern (auth/DB/storage/RLS) + gedeelde SSOT + gedeelde RAG.
+- Vermijd “app A roept app B rechtstreeks aan” coupling; gebruik gedeelde kern/services.
+- Werk incrementeel per fase en beschouw een fase pas “DONE” met functionele acceptatie + security + observability.
+
+SCOPE voor .ai (wat jij WEL bouwt):
+A) Consumer van shared core:
+- Lees entitlements en pas UI gating toe (locked states + upgrade CTA).
+- Lees SSOT (published) met caching/ETag en schema_version checks.
+- Doe RAG retrieval met visibility/entitlement filtering (geen premium leakage).
+- Schrijf events naar centrale event store (append-only) voor chats/roleplays/analysis.
+
+B) Cross-app navigatie (bijna onvoelbaar):
+- Voeg app-switcher links toe naar .com (Videos/Webinars/Live coaching) met deep links en context (session_id/technique_id/video_id).
+- Implementeer SSO handoff (one-time code) aan .ai zijde: zowel “create_handoff” (als .ai naar .com linkt) als “consume_handoff” (als .ai een handoff ontvangt).
+
+C) Observability:
+- Log correlation_id per sessie/turn.
+- Log welke RAG docs gebruikt zijn in antwoorden (voor debug + analytics).
+
+NIET DOEN in .ai:
+- Geen Stripe/checkout/webhooks.
+- Geen Supabase schema/migrations als “source of truth”.
+- Geen service-role key in de browser/client; least-privilege.
+
+TAKENLIJST (volg deze volgorde)
+Fase 0 — Contracts consumer-ready maken
+[ ] Neem entitlement matrix + event schema + deep link map over als types/constants in .ai (geen duplicatie in betekenis).
+[ ] Bouw deep link router in .ai: valideer session_id/technique_id/video_id; no open redirects.
+
+Fase 1 — Entitlements consumer + UI gating
+[ ] Voeg entitlement check toe op alle features: ai.chat, ai.roleplay, ai.conversation_analysis + content.* als links.
+[ ] Locked UI states: grijs/locked + upgrade CTA (plan-aware UI).
+
+Fase 2 — Cross-domain SSO handoff + navigatie
+[ ] Bouw /api/handoff/create (target_path) en /api/handoff/consume (code) volgens appendix flow:
+    - code in URL fragment (#code=)
+    - korte TTL, one-time-use, delete-on-consume
+    - target_path strikt whitelisten
+    - tokens encrypted at rest, nooit refresh_token loggen
+[ ] UX failure mode: als handoff faalt → duidelijke “log opnieuw in” + behoud target.
+
+Fase 3 — SSOT consumer
+[ ] Laad SSOT published bij app start; refresh on demand via version/ETag.
+[ ] Respecteer schema_version: compat mode of duidelijke error + fallback.
+
+Fase 4 — RAG retrieval + usage logging
+[ ] Query rag_documents via server-side search endpoint of DB function met entitlement-aware filtering.
+[ ] Log rag_usage events (doc_ids, scores, session_id, techniek_id).
+
+Fase 5 — Analytics emit
+[ ] Emit server-side events naar centrale events tabel voor:
+    - chat_message_created
+    - roleplay_started/completed
+    - analysis_uploaded/transcribed/scored
+    - rag_context_used
+    - navigation_to_com (deep link)
+
+CHECKS / DEFINITION OF DONE (per fase “gate”)
+Security checks
+[ ] Geen premium leakage: AI-only user kan geen content.videos/webinars content uit RAG terugkrijgen.
+[ ] Geen service-role key in client; RLS/DB policies enforced.
+
+Integratietests (minimaal)
+[ ] Login op .com → klik “Talk to Hugo AI” → arriveer op .ai ingelogd + juiste target route.
+[ ] Login op .ai → klik “Webinars” → arriveer op .com ingelogd + juiste webinar detail.
+[ ] Downgrade premium→basic: premium features in .ai correct geblokkeerd.
+[ ] RAG ingest SLA: nieuw webinar transcript is binnen 5 min vindbaar in .ai context (evidence via test doc).
+[ ] SSOT publish: wijziging zichtbaar in .ai na cache invalidatie.
+
+Regression
+[ ] .ai blijft bruikbaar als .com tijdelijk down is (graceful errors, geen data verlies).
+[ ] Backwards compat: .ai kan 1 release achter lopen zonder breaking schema/config parsing.
+
+LEVER OP:
+- PR/commit met bovenstaande features + korte runbook “hoe testen” + lijst endpoints + env vars.
+
+
+Waar dit in het PDF op steunt: verantwoordelijkheden (.ai: AI chat/roleplay/analysis; .com: video/webinars/checkout; core: entitlements/RLS), fase-deliverables, SSO handoff flow + security checklist, gate/teststrategie, RAG/SSOT centralisatie en observability.
+
+Prompt voor Video/Webinar Replit (hugoherbots.com)
+Je bent de lead engineer in de hugoherbots.com (video/webinars/live coaching/admin) Replit. Werk strikt volgens “HugoHerbots Platform Architectuur – Split Integratieplan v1.2 (20 jan 2026)”.
+
+DOEL (architectuur):
+- Behoud 2 codebases en deployments, maar maak de Supabase-kern gedeeld: identity, entitlements, data, SSOT, RAG.
+- .com is owner van commerce/admin content; .ai is owner van AI runtime. De gedeelde kern is de “single source of truth”.
+- Werk per fase; een fase is pas DONE met functionele acceptatie + security + observability.
+
+SCOPE voor .com (wat jij WEL bouwt / OWNT):
+A) Shared core owner (Supabase schema + security)
+- 1 Supabase project voor beide apps.
+- Entitlements als centrale schakel: plan→entitlement mapping, user_entitlements tabel, Postgres functies (has_entitlement), enforce via RLS + server gating (nooit enkel UI).
+- Centrale events tabel (append-only) + views/materialized views voor dashboards.
+- SSOT store met versioning + draft/published + publish workflow + schema_version + cache/ETag.
+- RAG corpus pipeline: rag_documents schema + controlled ingest (transcript→chunking→embedding job→index update) + visibility labels + usage logging.
+
+B) Stripe lifecycle owner
+- Stripe checkout + webhooks: sync subscription state naar Supabase en derive user_entitlements.
+
+C) Cross-app navigatie + SSO handoff
+- App switcher + deep links met context naar .ai (session_id/technique_id).
+- Implementeer SSO handoff endpoints aan .com zijde: create_handoff + consume_handoff volgens appendix.
+- Audit logging voor handoff en entitlement changes.
+
+NIET DOEN in .com:
+- Geen directe runtime dependency op .ai endpoints (vermijd coupling); gebruik shared core/edge functions waar mogelijk.
+- Geen tokens/logging die refresh_token leakt.
+
+TAKENLIJST (volg deze volgorde)
+Fase 0 — Alignment & contracten (canoniek maken)
+[ ] Formaliseer entitlement matrix (core.account, ai.*, content.*, coaching.live, admin.platform).
+[ ] Formaliseer deep link map (session_id, technique_id, video_id).
+[ ] Formaliseer event schema + security baseline (RLS rules + least privilege + service boundaries).
+
+Fase 1 — Shared identity + entitlements (Stripe → Supabase)
+[ ] Bouw subscriptions tabel + webhook verwerking (active/past_due/canceled).
+[ ] Bouw user_entitlements tabel (materialized entitlements per user) + plan mapping.
+[ ] Bouw Postgres functies: has_entitlement(user_id, entitlement), is_admin(user_id).
+[ ] Enforce access via RLS policies per tabel (visibility + entitlement); UI gating is extra, nooit de enige laag.
+
+Fase 2 — Cross-domain SSO handoff + navigatie
+[ ] Maak handoff_tokens tabel (encrypted tokens at rest) + TTL + used_at.
+[ ] Bouw /api/handoff/create (target_path) en /api/handoff/consume (code) conform appendix:
+    - #code fragment, TTL 30–120s, one-time-use, delete-on-consume
+    - bind aan user_id en optioneel user-agent fingerprint
+    - target_path whitelist (geen open redirects)
+    - log nooit refresh_token
+[ ] Bouw deep link router en failure UX (fallback naar login met behoud target).
+
+Fase 3 — SSOT centralisatie (Supabase)
+[ ] Bouw config_versions (jsonb) met draft/published + review/publish workflow + rollback.
+[ ] Voeg schema_version + ETag/version caching toe.
+[ ] Bouw admin UI (admin.platform gated) om SSOT te editen/publishen.
+
+Fase 4 — RAG corpus pipeline centralisatie
+[ ] Bouw rag_documents schema (doc_type, title, content, language, source_ref, visibility, embedding, timestamps).
+[ ] Controlled ingest: transcript upload → chunking → embedding job → index update.
+[ ] Visibility/entitlement: markeer premium-only; enforce via RLS of server-side search endpoint.
+[ ] Observability: log rag_usage (doc_ids, scores, session_id, request_origin).
+
+Fase 5 — Analytics consolidatie
+[ ] Bouw centrale events store (append-only) + views/materialized views + dashboards/admin.
+[ ] Server-side events preferred; voeg correlation_id toe.
+
+CHECKS / DEFINITION OF DONE (per fase “gate”)
+Unit tests (backend)
+[ ] Entitlement mapping: plan_id → entitlements (active/past_due/canceled).
+[ ] RLS helper functions: has_entitlement(), is_admin(), visibility rules.
+[ ] SSO handoff: TTL, one-time, replay protection, target validation.
+[ ] Deep link router: validatie van ids; geen open redirects.
+
+Integratietests (tussen apps en Supabase)
+[ ] Login .com → “Talk to Hugo AI” → .ai ingelogd + juiste target.
+[ ] Login .ai → “Webinars” → .com ingelogd + juiste detail.
+[ ] Downgrade premium→basic: premium features op beide apps geblokkeerd.
+[ ] RAG ingest: nieuw webinar transcript → embedding job → binnen 5 min zoekbaar in .ai context.
+[ ] SSOT publish: wijziging zichtbaar in beide apps na cache invalidatie.
+
+Security / ops
+[ ] Geen service-role key in client.
+[ ] Audit queries / logging voor entitlement en handoff.
+[ ] Structured logging + health checks + synthetic handoff tests.
+
+LEVER OP:
+- PR/commit met migrations + RLS + edge/functions/endpoints + admin UI waar nodig + runbook “testen & rollback”.
+
+
+Waar dit in het PDF op steunt: doelarchitectuur “gedeelde kern” + verantwoordelijkheden, entitlements (lijst + implementatie: Stripe→Supabase, user_entitlements, has_entitlement, enforce UI+RLS), fases/deliverables + gate per fase, SSOT/RAG centralisatie details, SSO appendix + security checklist, teststrategie.

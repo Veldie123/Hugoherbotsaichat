@@ -1,0 +1,146 @@
+wee HERZIENE prompts (met jouw feedback + PDF-checks)
+Prompt 1 — Chat Replit (.ai) — “Chat als Epicentrum / Command Center”
+Context: je werkt aan hugoherbots.ai (AI chat/roleplay/gespreksanalyse). Volg “HugoHerbots Platform Architectuur – Split Integratieplan v1.2 (20 jan 2026)”, maar houd rekening met huidige staat: RAG corpus bestaat al (±559 docs), technieken_index.json bestaat al, Stripe+Supabase lives in .com replit.
+
+PRIORITEIT: “Chat is het epicentrum” (Piano Concept).
+De chat UI moet: uploads (deck/audio), rolspelen, evaluaties, gespreksanalyse, en proactief video/webinar snippets aanbevelen — alles in 1 venster.
+Tegelijk moet de integratie veilig zijn: entitlements + RLS + least privilege.
+
+A. AUDIT EERST (geen from scratch)
+[ ] Maak een inventory van huidige .ai code + DB interacties:
+    - welke Supabase project-id’s worden gebruikt
+    - welke tabellen worden aangesproken
+    - welke RAG search endpoints bestaan al
+    - welke auth flows bestaan al
+    - welke “activity/events” logging bestaat al (zo niet: noteer gap)
+[ ] Output: AUDIT.md met “AS-IS” en “GAPS vs PDF fases 0-4”.
+
+B. CONNECT TO SHARED CORE
+[ ] Configureer .ai om te wijzen naar dezelfde Supabase kern als .com (auth+DB+RLS).
+[ ] Voeg serverlaag toe in .ai (edge functions of eigen backend endpoints) voor:
+    - events writes
+    - entitlement-aware RAG search (server-side search endpoint aanbevolen)
+    - uploads (gespreksanalyse) en ingest triggers
+
+C. ENTITLEMENTS CONSUMER + UI GATING (Fase 1, consumer-side)
+[ ] Lees user_entitlements (via RPC has_entitlement()) en gate features:
+    - ai.chat, ai.roleplay, ai.conversation_analysis
+    - content.videos, content.webinars tonen als locked + upgrade CTA
+[ ] Test: downgrade premium→basic blokkeert premium features in .ai.
+
+D. CHAT ALS COMMAND CENTER (Product-doel)
+[ ] Bouw GET /api/user/activity-summary (server-side):
+    - last 5 chats (session_id, technique_id, date, short summary)
+    - last watched videos (video_id, watched_at)
+    - last attended webinars (webinar_id, attended_at)
+    - progress per EPIC/techniek (basis: laatst geoefend + score)
+[ ] Hugo opening message gebruikt activity-summary:
+    - “Gisteren keek je X en oefenden we Y. Waar wil je op voortbouwen?”
+[ ] In-chat aanbevelingen:
+    - op basis van technique_id + user_question: query RAG voor relevante snippets
+    - render “video snippet card” met deep link naar .com (met starttijd)
+[ ] Upload flows in chat:
+    - accepteer deck/pitch → analyse + suggesties
+    - accepteer audio opname → transcription + gespreksanalyse (als entitlement toelaat)
+
+E. CROSS-APP NAVIGATIE
+[ ] App switcher: “Platform” (content/admin) vs “AI Coach” (chat).
+[ ] Deep links met context: /chat?technique_id=... /analysis?session_id=...
+[ ] SSO:
+    - Als we NU subdomeinen gebruiken (ai.hugoherbots.com onder 1 apex): gebruik cookie-based auth, geen handoff nodig.
+    - Als we op .ai + .com blijven: implementeer handoff volgens appendix (TTL 30–120s, one-time, fragment #code, no refresh_token logs, strict target_path allowlist).
+
+F. OBSERVABILITY / EVENTS
+[ ] Emit server-side events naar centrale events store:
+    - chat_message_created, roleplay_started/completed, analysis_uploaded/scored, rag_context_used, navigation_to_com
+[ ] Log correlation_id per sessie/turn.
+[ ] Log doc_ids gebruikt voor RAG (debug + analytics).
+
+DEFINITION OF DONE (gates)
+[ ] Login → switch tussen apps zonder contextverlies (deep link target behouden).
+[ ] AI-only user: kan chat/roleplay; video/webinar is locked met upgrade CTA.
+[ ] Premium user: krijgt video/webinar snippets aangeraden en kan doorklikken naar juiste timestamp.
+[ ] RAG: evidence dat nieuwe webinar transcript binnen 5 min vindbaar is in coaching context.
+[ ] Security: geen premium leakage; alle toegang enforced via RLS/RPC/server endpoints, niet enkel UI.
+Deliverables: PR + AUDIT.md + runbook tests + lijst env vars/endpoints.
+
+Prompt 2 — Video/Webinar Replit (.com) — “Core Owner (Stripe+Supabase+RLS+RAG)”
+Context: je werkt aan hugoherbots.com (video/webinars/live coaching/admin). Deze replit is owner van Stripe lifecycle + Supabase schema/migrations. Volg “Split Integratieplan v1.2 (20 jan 2026)”, maar vertrek vanuit huidige staat: pgvector corpus bestaat al (~559 docs), technieken_index.json bestaat al.
+
+A. AUDIT EERST (AS-IS)
+[ ] Inventariseer huidige Supabase schema + policies:
+    - subscriptions/stripe tables?
+    - entitlements bestaan al? mapping plan->entitlements?
+    - RAG tabellen: rag_documents? visibility labels?
+    - bestaande ingest jobs?
+[ ] Output: CORE_AUDIT.md met “AS-IS” + “GAPS vs Fase 0-4”.
+
+B. SHARED CORE HARDENING (Fase 0-1)
+[ ] Formaliseer contracten:
+    - entitlement matrix (core.account, ai.*, content.*, coaching.live, admin.platform)
+    - event schema (append-only events tabel) + naming
+    - deep link map + allowlists
+[ ] Stripe webhook → subscriptions tabel → user_entitlements materialiseren.
+[ ] Postgres RPC functies: has_entitlement(), is_admin().
+[ ] Enforce op 2 niveaus: UI gating + DB/RLS of server API gating (nooit alleen UI).
+[ ] Security: RLS policies op content/RAG op basis van visibility + entitlement; audit logging.
+
+C. RAG CORPUS (Fase 4, maar verkleind omdat al bestaat)
+[ ] Behoud bestaande pgvector docs, maar voeg/normalizeer metadata:
+    - doc_type (video/webinar/golden_chat/etc)
+    - source_ref (video_id/webinar_id)
+    - visibility (free/premium)
+[ ] Controlled ingest:
+    - webinar/video transcript → chunking → embedding job → index update
+    - geen directe client writes naar rag_documents
+[ ] Usage logging: log rag_usage events (doc_ids, scores, request_origin app=.ai/.com).
+
+D. SSOT (Fase 3, pragmatisch)
+[ ] Kies SSOT route:
+    - Optie 1 (snel): shared-config repo/submodule met technieken_index.json + overlays, versieer via tags.
+    - Optie 2 (later): Supabase config_versions jsonb met draft/published workflow.
+[ ] Minimaal nu: “published snapshot” endpoint of tabel zodat .ai dezelfde gepubliceerde versie kan consumeren.
+[ ] Voeg schema_version toe voor backwards compat.
+
+E. DOMAIN / SSO STRATEGIE (beslispunt)
+[ ] Als je naar subdomeinen migreert (Fase 6, cleanste UX):
+    - ai.hugoherbots.com + app.hugoherbots.com
+    - cookie strategy op .hugoherbots.com + HSTS
+    - dan kan Fase 2 handoff grotendeels vervallen
+[ ] Als je op .com + .ai blijft:
+    - implementeer SSO handoff volgens appendix:
+      TTL 30–120s, one-time-use, fragment #code, bind user_id, strict target_path allowlist, encrypt at rest, log nooit refresh_token.
+
+F. TEST GATES (exact en meetbaar)
+[ ] Login .com → “Talk to Hugo AI” → .ai ingelogd + juiste target route.
+[ ] Login .ai → “Webinars” → .com ingelogd + juiste webinar detail.
+[ ] Downgrade premium→basic: premium features geblokkeerd in beide apps.
+[ ] RAG ingest: nieuw webinar transcript → embedding job → binnen 5 min zoekbaar in .ai context.
+[ ] SSOT publish: wijziging zichtbaar na cache invalidatie.
+Deliverables: PR + CORE_AUDIT.md + migrations/RLS + runbook + synthetic tests (handoff of subdomain auth).
+
+4) Waarom deze prompts “kloppen” volgens het PDF (en jouw feedback)
+
+Subdomeinen als cleanste oplossing + cookie sharing: 
+
+HugoHerbots_Platform_Split_Inte…
+
+HugoHerbots_Platform_Split_Inte…
+
+SSOT heeft expliciet Optie 1 (shared repo) en Optie 2 (Supabase jsonb): 
+
+HugoHerbots_Platform_Split_Inte…
+
+RAG: controlled ingest, visibility/entitlement enforcement, usage logging: 
+
+HugoHerbots_Platform_Split_Inte…
+
+Entitlements zijn “centrale schakel” + enforce UI én DB/RLS: 
+
+HugoHerbots_Platform_Split_Inte…
+
+Gate per fase + testset (o.a. “binnen 5 minuten zoekbaar”): 
+
+HugoHerbots_Platform_Split_Inte…
+
+HugoHerbots_Platform_Split_Inte…
