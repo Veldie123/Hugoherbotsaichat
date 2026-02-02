@@ -161,23 +161,18 @@ export function TalkToHugoAI({
     loadUserLevel();
   }, []);
 
-  // Hugo starts conversation proactively based on last activity (ChatGPT-style: blank if no activity)
+  // Hugo starts conversation proactively based on last activity
   useEffect(() => {
     const lastActivity = lastActivityService.get();
     const welcomeMessage = lastActivityService.getWelcomeMessage(lastActivity);
     
-    if (welcomeMessage) {
-      setMessages([{
-        id: `welcome-${Date.now()}`,
-        sender: "ai",
-        text: welcomeMessage,
-        timestamp: new Date(),
-      }]);
-      console.log("[Hugo] Started proactive conversation, last activity:", lastActivity);
-    } else {
-      setMessages([]);
-      console.log("[Hugo] Blank slate - no previous activity");
-    }
+    setMessages([{
+      id: `welcome-${Date.now()}`,
+      sender: "ai",
+      text: welcomeMessage,
+      timestamp: new Date(),
+    }]);
+    console.log("[Hugo] Started proactive conversation, last activity:", lastActivity);
   }, []);
 
   useEffect(() => {

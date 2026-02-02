@@ -40,9 +40,9 @@ export const lastActivityService = {
     }
   },
 
-  getWelcomeMessage(activity: LastActivity | null): string | null {
+  getWelcomeMessage(activity: LastActivity | null): string {
     if (!activity) {
-      return null;
+      return "Waar kan ik je vandaag mee helpen?";
     }
 
     const timeAgo = Date.now() - activity.timestamp;
@@ -62,11 +62,11 @@ export const lastActivityService = {
       case 'technique':
         return `${timePhrase} hadden we het over "${activity.name}". Wil je daar verder mee, of zit je ergens anders mee?`;
       case 'video':
-        return `${timePhrase} keek je de video over "${activity.name}". Heb je daar nog vragen over?`;
+        return `${timePhrase} keek je de video over "${activity.name}". Heb je daar nog vragen over, of wil je het in de praktijk oefenen?`;
       case 'webinar':
         return `${timePhrase} volgde je het webinar "${activity.name}". Zullen we de besproken technieken oefenen?`;
       default:
-        return null;
+        return "Waar kan ik je vandaag mee helpen?";
     }
   },
 
