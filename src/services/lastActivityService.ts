@@ -6,6 +6,27 @@ export interface LastActivity {
   timestamp: number;
 }
 
+export interface ActivitySummary {
+  welcomeMessage: string;
+  summary: {
+    videosWatched: number;
+    webinarsAttended: number;
+    techniquesExplored: number;
+    totalChatSessions: number;
+    strugglingWith: string[];
+  };
+  lastActivity: {
+    type?: string;
+    name?: string;
+    at?: string;
+  };
+  recent?: {
+    videos?: Array<{ name: string; at: string }>;
+    webinars?: Array<{ name: string; at: string }>;
+    techniques?: Array<{ name: string; phase: string }>;
+  };
+}
+
 const STORAGE_KEY = 'hugo_last_activity';
 
 export const lastActivityService = {
@@ -88,5 +109,33 @@ export const lastActivityService = {
     actions.push({ label: "Iets anders", action: "show_sidebar" });
     
     return actions;
+  },
+
+  async fetchActivitySummary(userId: string): Promise<ActivitySummary | null> {
+    try {
+      const response = await fetch(`/api/v2/user/activity-summary?userId=${userId}`);
+      if (!response.ok) {
+        console.warn('[LastActivity] Failed to fetch activity summary:', response.status);
+        return null;
+      }
+      return await response.json() as ActivitySummary;
+    } catch (e) {
+      console.warn('[LastActivity] Error fetching activity summary:', e);
+      return null;
+    }
+  },
+
+  async getPersonalizedWelcome(userId: string | null): Promise<{ message: string; summary: ActivitySummary | null }> {
+    const localActivity = this.get();
+    
+    if (userId) {
+      const summary = await this.fetchActivitySummary(userId);
+      if (summary && summary.welcomeMessage !== "Waar kan ik je vandaag mee helpen?") {
+        return { message: summary.welcomeMessage, summary };
+      }
+    }
+    
+    const localMessage = this.getWelcomeMessage(localActivity);
+    return { message: localMessage, summary: null };
   }
 };

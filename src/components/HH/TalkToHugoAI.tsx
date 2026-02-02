@@ -21,6 +21,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useUser } from "../../contexts/UserContext";
 import { AppLayout } from "./AppLayout";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -84,6 +85,7 @@ export function TalkToHugoAI({
   navigate,
   isAdmin,
 }: TalkToHugoAIProps) {
+  const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [selectedTechnique, setSelectedTechnique] = useState<string>("");
@@ -161,19 +163,20 @@ export function TalkToHugoAI({
     loadUserLevel();
   }, []);
 
-  // Hugo starts conversation proactively based on last activity
+  // Hugo starts conversation proactively based on cross-platform activity
   useEffect(() => {
-    const lastActivity = lastActivityService.get();
-    const welcomeMessage = lastActivityService.getWelcomeMessage(lastActivity);
-    
-    setMessages([{
-      id: `welcome-${Date.now()}`,
-      sender: "ai",
-      text: welcomeMessage,
-      timestamp: new Date(),
-    }]);
-    console.log("[Hugo] Started proactive conversation, last activity:", lastActivity);
-  }, []);
+    const loadPersonalizedWelcome = async () => {
+      const { message, summary } = await lastActivityService.getPersonalizedWelcome(user?.id || null);
+      setMessages([{
+        id: `welcome-${Date.now()}`,
+        sender: "ai",
+        text: message,
+        timestamp: new Date(),
+      }]);
+      console.log("[Hugo] Started proactive conversation, personalized:", !!summary, "userId:", user?.id);
+    };
+    loadPersonalizedWelcome();
+  }, [user?.id]);
 
   useEffect(() => {
     if (selectedTechnique) {
