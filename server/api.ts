@@ -2563,22 +2563,88 @@ app.get("/api/v2/user/activity-summary", async (req, res) => {
   }
   
   try {
+    let rpcData = null;
+    const rpcResult = await supabase
+      .rpc('get_user_activity_summary', { p_user_id: userId });
+    
+    if (!rpcResult.error && rpcResult.data) {
+      rpcData = rpcResult.data;
+    }
+    
+    if (rpcData) {
+      const summary = rpcData;
+      let welcomeMessage = "Waar kan ik je vandaag mee helpen?";
+      
+      if (summary.last_activity_type) {
+        const lastActivityDate = new Date(summary.last_activity_at);
+        const timeAgo = Date.now() - lastActivityDate.getTime();
+        const hoursAgo = Math.floor(timeAgo / (1000 * 60 * 60));
+        const daysAgo = Math.floor(hoursAgo / 24);
+        
+        let timePhrase = "";
+        if (daysAgo > 0) {
+          timePhrase = daysAgo === 1 ? "Gisteren" : `${daysAgo} dagen geleden`;
+        } else if (hoursAgo > 0) {
+          timePhrase = hoursAgo === 1 ? "Een uur geleden" : `${hoursAgo} uur geleden`;
+        } else {
+          timePhrase = "Net";
+        }
+        
+        switch (summary.last_activity_type) {
+          case "video_view":
+            welcomeMessage = `${timePhrase} keek je een video. Heb je daar nog vragen over, of wil je het in de praktijk oefenen?`;
+            break;
+          case "webinar_attend":
+            welcomeMessage = `${timePhrase} volgde je een webinar. Zullen we de besproken technieken oefenen?`;
+            break;
+          case "technique_practice":
+            welcomeMessage = `${timePhrase} oefende je een techniek. Wil je daar verder mee, of iets anders proberen?`;
+            break;
+          case "chat_session":
+            welcomeMessage = `${timePhrase} hadden we een gesprek. Waar kan ik je vandaag mee helpen?`;
+            break;
+        }
+      }
+      
+      return res.json({
+        welcomeMessage,
+        summary: {
+          videosWatched: summary.videos_watched || 0,
+          webinarsAttended: summary.webinars_attended || 0,
+          techniquesExplored: summary.techniques_practiced || 0,
+          totalChatSessions: summary.total_chat_sessions || 0,
+          strugglingWith: summary.struggling_with || [],
+        },
+        lastActivity: {
+          type: summary.last_activity_type,
+          at: summary.last_activity_at,
+        }
+      });
+    }
+    
     const { data: activities, error } = await supabase
-      .from("activity_log")
+      .from("user_activity")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(50);
     
     if (error) {
+      if (error.code === 'PGRST205' || error.code === '42P01' || error.code === '22P02') {
+        return res.json({
+          welcomeMessage: "Waar kan ik je vandaag mee helpen?",
+          summary: { videosWatched: 0, webinarsAttended: 0, techniquesExplored: 0 },
+          recent: {},
+          note: "Activity tracking not yet configured in Supabase"
+        });
+      }
       console.error("[Activity] Supabase error:", error);
       return res.status(500).json({ error: error.message });
     }
     
-    const recentVideos = activities?.filter(a => a.entity_type === "video").slice(0, 5) || [];
-    const recentWebinars = activities?.filter(a => a.entity_type === "webinar").slice(0, 5) || [];
-    const recentTechniques = activities?.filter(a => a.entity_type === "technique").slice(0, 5) || [];
-    const recentConversations = activities?.filter(a => a.entity_type === "conversation").slice(0, 5) || [];
+    const recentVideos = activities?.filter(a => a.activity_type === "video_view").slice(0, 5) || [];
+    const recentWebinars = activities?.filter(a => a.activity_type === "webinar_attend").slice(0, 5) || [];
+    const recentTechniques = activities?.filter(a => a.activity_type === "technique_practice").slice(0, 5) || [];
     
     const lastActivity = activities?.[0] || null;
     
@@ -2597,20 +2663,17 @@ app.get("/api/v2/user/activity-summary", async (req, res) => {
         timePhrase = "Net";
       }
       
-      const entityName = lastActivity.metadata?.name || lastActivity.entity_id;
+      const entityName = lastActivity.metadata?.title || lastActivity.entity_id;
       
-      switch (lastActivity.entity_type) {
-        case "technique":
-          welcomeMessage = `${timePhrase} hadden we het over "${entityName}". Wil je daar verder mee, of zit je ergens anders mee?`;
+      switch (lastActivity.activity_type) {
+        case "technique_practice":
+          welcomeMessage = `${timePhrase} oefende je "${entityName}". Wil je daar verder mee, of zit je ergens anders mee?`;
           break;
-        case "video":
-          welcomeMessage = `${timePhrase} keek je de video over "${entityName}". Heb je daar nog vragen over, of wil je het in de praktijk oefenen?`;
+        case "video_view":
+          welcomeMessage = `${timePhrase} keek je de video "${entityName}". Heb je daar nog vragen over?`;
           break;
-        case "webinar":
+        case "webinar_attend":
           welcomeMessage = `${timePhrase} volgde je het webinar "${entityName}". Zullen we de besproken technieken oefenen?`;
-          break;
-        case "conversation":
-          welcomeMessage = `${timePhrase} bespraken we een verkoopgesprek. Wil je verder met de analyse of iets nieuws proberen?`;
           break;
       }
     }
@@ -2622,13 +2685,11 @@ app.get("/api/v2/user/activity-summary", async (req, res) => {
         videosWatched: recentVideos.length,
         webinarsAttended: recentWebinars.length,
         techniquesExplored: recentTechniques.length,
-        conversationsAnalyzed: recentConversations.length,
       },
       recent: {
         videos: recentVideos,
         webinars: recentWebinars,
         techniques: recentTechniques,
-        conversations: recentConversations,
       }
     });
   } catch (err) {
@@ -2638,19 +2699,19 @@ app.get("/api/v2/user/activity-summary", async (req, res) => {
 });
 
 app.post("/api/v2/user/activity", async (req, res) => {
-  const { userId, eventType, entityType, entityId, durationSeconds, score, metadata } = req.body;
+  const { userId, activityType, entityType, entityId, durationSeconds, score, metadata } = req.body;
   
-  if (!userId || !eventType || !entityType || !entityId) {
-    return res.status(400).json({ error: "userId, eventType, entityType, and entityId required" });
+  if (!userId || !activityType || !entityType || !entityId) {
+    return res.status(400).json({ error: "userId, activityType, entityType, and entityId required" });
   }
   
   try {
     const { data, error } = await supabase
-      .from("activity_log")
+      .from("user_activity")
       .insert({
         id: nanoid(),
         user_id: userId,
-        event_type: eventType,
+        activity_type: activityType,
         entity_type: entityType,
         entity_id: entityId,
         duration_seconds: durationSeconds || null,
@@ -2662,11 +2723,17 @@ app.post("/api/v2/user/activity", async (req, res) => {
       .single();
     
     if (error) {
+      if (error.code === 'PGRST205') {
+        return res.json({ 
+          success: false, 
+          note: "Activity tracking table not yet created in Supabase" 
+        });
+      }
       console.error("[Activity] Insert error:", error);
       return res.status(500).json({ error: error.message });
     }
     
-    console.log(`[Activity] Logged: ${eventType} on ${entityType}/${entityId} for user ${userId}`);
+    console.log(`[Activity] Logged: ${activityType} on ${entityType}/${entityId} for user ${userId}`);
     res.json({ success: true, activity: data });
   } catch (err) {
     console.error("[Activity] Error:", err);
@@ -2682,9 +2749,37 @@ app.get("/api/v2/user/hugo-context", async (req, res) => {
   }
   
   try {
+    let rpcData = null;
+    try {
+      const rpcResult = await supabase
+        .rpc('get_user_activity_summary', { p_user_id: userId });
+      if (!rpcResult.error) rpcData = rpcResult.data;
+    } catch (e) {
+      // RPC not available yet, use fallback
+    }
+    
+    if (rpcData) {
+      const contextForHugo = {
+        user: {
+          product: rpcData.product || null,
+          klantType: rpcData.klant_type || null,
+          sector: rpcData.sector || null,
+        },
+        recentActivity: rpcData.recent_activities || [],
+        mastery: (rpcData.technique_progress || []).map((t: any) => ({
+          technique: t.technique_id,
+          attempts: t.practice_count,
+          avgScore: t.average_score,
+        })),
+        strugglingWith: rpcData.struggling_with || [],
+        summary: `${rpcData.videos_watched || 0} videos, ${rpcData.webinars_attended || 0} webinars, ${rpcData.techniques_practiced || 0} techniques`,
+      };
+      return res.json(contextForHugo);
+    }
+    
     const [activityResult, userContextResult, masteryResult] = await Promise.all([
       supabase
-        .from("activity_log")
+        .from("user_activity")
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
@@ -2713,13 +2808,12 @@ app.get("/api/v2/user/hugo-context", async (req, res) => {
         sector: userContext?.sector || null,
         setting: userContext?.setting || null,
       },
-      recentActivity: activities.map(a => ({
-        type: a.entity_type,
-        name: a.metadata?.name || a.entity_id,
+      recentActivity: activities.map((a: any) => ({
+        type: a.activity_type,
+        name: a.metadata?.title || a.entity_id,
         when: a.created_at,
-        event: a.event_type,
       })),
-      mastery: mastery.map(m => ({
+      mastery: mastery.map((m: any) => ({
         technique: m.technique_name,
         level: m.mastery_level,
         attempts: m.attempt_count,

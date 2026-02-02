@@ -1,0 +1,55 @@
+De database is nu volledig geconfigureerd. Laat me de takenlijst bijwerken:
+
+Database is nu klaar voor de integratie!
+
+Wat is voltooid:
+Onderdeel	Status
+RLS op rag_documents, video_ingest_jobs, live_sessions	✅
+Policies voor public read + service role write	✅
+visibility kolom (free/premium/admin)	✅
+user_activity tabel	✅
+get_user_activity_summary() functie	✅
+.ai Replit naar Supabase RAG	✅
+Volgende stappen:
+Activity tracking implementeren - Video views en webinar attendance loggen vanuit .com
+/api/user/activity-summary endpoint - Zodat .ai Replit Hugo's geheugen kan ophalen
+Subdomeinen - ai.hugoherbots.com + app.hugoherbots.com
+Voor de .ai Replit:
+Hugo kan nu get_user_activity_summary(user_id) aanroepen via:
+
+const { data } = await supabase.rpc('get_user_activity_summary', { p_user_id: userId });
+// Returns: videos_watched, webinars_attended, chat_sessions, last_activity, etc.
+Wil je dat ik nu de activity tracking inbouw in de .com frontend (video views loggen wanneer iemand een video kijkt)?
+
+Time worked
+27 seconds
+Work done
+1 action
+Agent Usage
+$0.12
+update andere replit dit is wat ik stuurde ; ""
+
+Update voor de .ai Replit:
+
+Alle SQL is nu uitgevoerd in Supabase! Dit bestaat nu:
+
+Onderdeel	Status
+user_activity tabel	✅ Aangemaakt
+get_user_activity_summary(p_user_id) RPC	✅ Aangemaakt
+RLS policies (public read, service write)	✅ Actief
+visibility kolom op rag_documents	✅ Toegevoegd
+Belangrijk voor de .ai Replit:
+
+De RPC verwacht een echte Supabase auth UUID. Voor testing kun je:
+
+Met echte user: supabase.rpc('get_user_activity_summary', { p_user_id: user.id })
+
+Fallback voor nieuwe users: Als de RPC 0 results teruggeeft, betekent het simpelweg dat de user nog geen activiteit heeft - dat is OK, Hugo kan dan een welkomstboodschap geven.
+
+De tabel is nog leeg - Er moet nog activity tracking worden ingebouwd aan de .com kant (video views, webinar attendance) voordat er data is.
+
+Wat .com Replit nu moet doen:
+
+Activity tracking inbouwen: wanneer iemand een video kijkt → INSERT INTO user_activity
+/api/user/activity-summary endpoint bouwen (optioneel, .ai kan ook direct de RPC aanroepen)
+Wil je dat ik nu de activity tracking inbouw?
