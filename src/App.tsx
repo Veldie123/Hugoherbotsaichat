@@ -19,9 +19,10 @@ import { AdminConfigReview } from "./components/HH/AdminConfigReview";
 import { AdminNotifications } from "./components/HH/AdminNotifications";
 import { AdminRAGReview } from "./components/HH/AdminRAGReview";
 import { HugoAIOverview } from "./components/HH/HugoAIOverview";
+import { SSOValidate } from "./components/HH/SSOValidate";
 import { auth } from "./utils/supabase/client";
 
-type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "onboarding" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "analysis" | "analysis-results" | "upload-analysis" | "admin-uploads" | "admin-sessions" | "admin-chat-expert" | "admin-config-review" | "admin-notifications" | "admin-rag-review";
+type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback" | "sso-validate" | "onboarding" | "talk-to-hugo" | "hugo-overview" | "roleplay" | "roleplays" | "analysis" | "analysis-results" | "upload-analysis" | "admin-uploads" | "admin-sessions" | "admin-chat-expert" | "admin-config-review" | "admin-notifications" | "admin-rag-review";
 
 const DEV_PREVIEW_PAGES: Record<string, Page> = {
   'admin-chat-expert': 'admin-chat-expert',
@@ -41,6 +42,9 @@ function getDevPreviewPage(): Page | null {
   if (path.startsWith('/_dev/')) {
     const devPage = path.replace('/_dev/', '');
     return DEV_PREVIEW_PAGES[devPage] || null;
+  }
+  if (path.startsWith('/sso/validate')) {
+    return 'sso-validate';
   }
   return null;
 }
@@ -133,6 +137,10 @@ export default function App() {
 
           {currentPage === "authcallback" && (
             <AuthCallback navigate={navigate} />
+          )}
+
+          {currentPage === "sso-validate" && (
+            <SSOValidate navigate={navigate} />
           )}
 
           {currentPage === "landing" && <Landing navigate={navigate} />}

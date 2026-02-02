@@ -3181,6 +3181,157 @@ app.get("/api/platform-sync/status", async (req, res) => {
   }
 });
 
+// =============================================================================
+// SSO HANDOFF TOKEN ENDPOINTS - Cross-platform authentication
+// =============================================================================
+
+// POST /api/sso/generate-token - Generate SSO handoff token for cross-platform auth
+app.post("/api/sso/generate-token", async (req, res) => {
+  try {
+    const { userId, sourcePlatform, targetPlatform, targetPath, ttlSeconds = 60 } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    // Validate platforms
+    const validPlatforms = ['com', 'ai'];
+    if (!validPlatforms.includes(sourcePlatform) || !validPlatforms.includes(targetPlatform)) {
+      return res.status(400).json({ error: "Invalid platform. Must be 'com' or 'ai'" });
+    }
+
+    if (sourcePlatform === targetPlatform) {
+      return res.status(400).json({ error: "Source and target platform must be different" });
+    }
+
+    console.log(`[SSO] Generating token for user ${userId}: ${sourcePlatform} → ${targetPlatform}`);
+
+    // Call Supabase RPC to generate token
+    const { data, error } = await supabase.rpc('generate_sso_handoff_token', {
+      p_user_id: userId,
+      p_source_platform: sourcePlatform,
+      p_target_platform: targetPlatform,
+      p_target_path: targetPath || null,
+      p_ttl_seconds: ttlSeconds
+    });
+
+    if (error) {
+      console.error("[SSO] Error generating token:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    const token = data;
+    console.log(`[SSO] Token generated successfully (expires in ${ttlSeconds}s)`);
+
+    // Build the redirect URL
+    const targetBaseUrl = targetPlatform === 'ai' 
+      ? 'https://hugoherbots-ai-chat.replit.app'
+      : 'https://hugoherbots.com';
+    
+    const redirectUrl = `${targetBaseUrl}/sso/validate?token=${token}`;
+
+    res.json({
+      success: true,
+      token,
+      redirectUrl,
+      expiresIn: ttlSeconds
+    });
+  } catch (error: any) {
+    console.error("[SSO] Error generating token:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/sso/validate - Validate SSO token and return session info
+app.get("/api/sso/validate", async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: "Token is required" });
+    }
+
+    console.log(`[SSO] Validating token...`);
+
+    // Call Supabase RPC to validate and consume token
+    const { data, error } = await supabase.rpc('validate_sso_handoff_token', {
+      p_token: token
+    });
+
+    if (error) {
+      console.error("[SSO] Error validating token:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    // RPC returns a table row
+    const result = data?.[0];
+    
+    if (!result || !result.valid) {
+      console.log("[SSO] Token invalid or expired");
+      return res.status(401).json({ 
+        valid: false, 
+        error: "Token invalid, expired, or already used" 
+      });
+    }
+
+    console.log(`[SSO] Token valid for user ${result.user_id}`);
+
+    // Get user info from Supabase
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, email, name, role')
+      .eq('id', result.user_id)
+      .single();
+
+    if (userError) {
+      // Try auth.users if users table doesn't exist
+      const { data: authUser } = await supabase.auth.admin.getUserById(result.user_id);
+      
+      res.json({
+        valid: true,
+        userId: result.user_id,
+        targetPath: result.target_path,
+        user: authUser?.user ? {
+          id: authUser.user.id,
+          email: authUser.user.email,
+          name: authUser.user.user_metadata?.name || authUser.user.email?.split('@')[0]
+        } : null
+      });
+      return;
+    }
+
+    res.json({
+      valid: true,
+      userId: result.user_id,
+      targetPath: result.target_path,
+      user: userData
+    });
+  } catch (error: any) {
+    console.error("[SSO] Error validating token:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/sso/cleanup - Clean up expired tokens (can be called by cron)
+app.post("/api/sso/cleanup", async (req, res) => {
+  try {
+    console.log("[SSO] Running token cleanup...");
+    
+    const { error } = await supabase.rpc('cleanup_expired_handoff_tokens');
+    
+    if (error) {
+      console.error("[SSO] Cleanup error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    console.log("[SSO] Cleanup completed successfully");
+    res.json({ success: true, message: "Expired tokens cleaned up" });
+  } catch (error: any) {
+    console.error("[SSO] Cleanup error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const server = createServer(app);
 
 // Setup ElevenLabs Scribe WebSocket for STT
