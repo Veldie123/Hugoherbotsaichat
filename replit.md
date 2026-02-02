@@ -37,13 +37,24 @@ The application is built with React 18, TypeScript, and Vite. Styling uses Tailw
     - Supabase `get_user_activity_summary(p_user_id)` RPC returns videos watched, webinars attended, chat sessions
     - Falls back to localStorage for local-only activity when API unavailable
   - **Cross-Platform API Endpoints (.com → .ai) (februari 2026):**
-    - `POST /api/chat/message` - Ontvang chat berichten van .com platform, gebruik V2 coach engine
+    - `POST /api/v2/chat` - Primaire endpoint voor .com platform (RAG + AI coach)
+      - Body: `{ message, userId?, conversationHistory?, techniqueContext?, sourceApp: "com" }`
+      - Response: `{ message, technique, sources: [{ title, chunk }] }`
+    - `POST /api/chat` - Alias voor /api/v2/chat
+    - `POST /api/chat/message` - Legacy endpoint
       - Body: `{ message, userId?, conversationHistory? }`
-      - Response: `{ success, message, sessionId, signals, suggestions }`
-    - `GET /api/user/activity-summary` - Alias voor activity tracking
+      - Response: `{ success, message, sessionId }`
+    - `GET /api/v2/user/activity-summary` - Activity tracking
       - Query: `?userId=<uuid>`
-      - Response: `{ success, activity: {...}, welcomeMessage }`
+      - Response: `{ welcomeMessage, summary: {...}, recent: {...} }`
+    - `GET /api/user/activity-summary` - Alias
+    - CORS: Alle origins toegestaan (`*`)
     - .com platform stuurt requests naar: `https://hugoherbots-ai-chat.replit.app`
+  - **HistorySidebar Component (februari 2026):**
+    - Compacte sidebar met techniek nummers (1.2, 1.4, 2.1.1)
+    - Expandeert bij hover met titel, score, datum
+    - "Bekijk volledige historiek" knop opent overview pagina
+    - Geïntegreerd in TalkToHugoAI.tsx en UploadAnalysis.tsx
 - **Progressive Unlocking:** Techniques in the Admin view for Hugo a.i. are progressively unlocked with visual cues.
 - **SSOT (Single Source of Truth) Architecture:** Core data is managed from centralized JSON/TypeScript files and accessed via service wrappers.
 

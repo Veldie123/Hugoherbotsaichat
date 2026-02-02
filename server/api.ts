@@ -2862,6 +2862,82 @@ const PORT = parseInt(process.env.API_PORT || "3001", 10);
 // These endpoints match what the .com Replit expects
 // ===========================================
 
+// Primary endpoint for .com platform: /api/v2/chat
+app.post("/api/v2/chat", async (req, res) => {
+  const { message, userId, conversationHistory, techniqueContext, sourceApp } = req.body;
+  
+  console.log(`[API] /api/v2/chat from ${sourceApp || 'unknown'}, userId: ${userId || 'anonymous'}`);
+  
+  if (!message) {
+    return res.status(400).json({ error: "message is required" });
+  }
+
+  try {
+    const history: CoachMessage[] = (conversationHistory || []).map((m: any) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content
+    }));
+    
+    const coachResult = await generateCoachResponse(message, history, {
+      userId: userId || undefined,
+      techniqueId: techniqueContext || undefined
+    });
+
+    res.json({
+      message: coachResult.message,
+      technique: null,
+      sources: coachResult.ragContext?.map(doc => ({
+        title: doc.title || 'Video fragment',
+        chunk: doc.content?.substring(0, 200)
+      })) || []
+    });
+  } catch (error: any) {
+    console.error("[API] /api/v2/chat error:", error);
+    res.status(500).json({ 
+      error: "Er ging iets mis. Probeer het opnieuw.",
+      message: "Hmm, ik heb even moeite met antwoorden. Kun je het nogmaals proberen?"
+    });
+  }
+});
+
+// Alias: /api/chat → same as /api/v2/chat
+app.post("/api/chat", async (req, res) => {
+  const { message, userId, conversationHistory, techniqueContext, sourceApp } = req.body;
+  
+  console.log(`[API] /api/chat from ${sourceApp || 'unknown'}`);
+  
+  if (!message) {
+    return res.status(400).json({ error: "message is required" });
+  }
+
+  try {
+    const history: CoachMessage[] = (conversationHistory || []).map((m: any) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content
+    }));
+    
+    const coachResult = await generateCoachResponse(message, history, {
+      userId: userId || undefined,
+      techniqueId: techniqueContext || undefined
+    });
+
+    res.json({
+      message: coachResult.message,
+      technique: null,
+      sources: coachResult.ragContext?.map(doc => ({
+        title: doc.title || 'Video fragment',
+        chunk: doc.content?.substring(0, 200)
+      })) || []
+    });
+  } catch (error: any) {
+    console.error("[API] /api/chat error:", error);
+    res.status(500).json({ 
+      error: "Er ging iets mis",
+      message: "Hmm, ik heb even moeite met antwoorden. Kun je het nogmaals proberen?"
+    });
+  }
+});
+
 // Alias: /api/chat/message → uses V2 coach engine
 app.post("/api/chat/message", async (req, res) => {
   const { message, userId, conversationHistory } = req.body;
@@ -2871,49 +2947,19 @@ app.post("/api/chat/message", async (req, res) => {
   }
 
   try {
-    const sessionKey = userId || `anonymous-${Date.now()}`;
+    const history: CoachMessage[] = (conversationHistory || []).map((m: any) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content
+    }));
     
-    let session = activeSessions.get(sessionKey);
-    if (!session) {
-      session = {
-        id: sessionKey,
-        userId: userId || null,
-        mode: 'COACH_CHAT',
-        techniqueId: null,
-        conversationHistory: conversationHistory || [],
-        context: {},
-        createdAt: new Date(),
-        lastActiveAt: new Date()
-      };
-      activeSessions.set(sessionKey, session);
-    }
-
-    session.conversationHistory.push({
-      role: 'user',
-      content: message
-    });
-    session.lastActiveAt = new Date();
-
-    const response = await coachEngine.generateResponse(
-      message,
-      session.mode,
-      session.techniqueId,
-      session.conversationHistory.slice(0, -1),
-      session.context,
-      { competenceLevel: 2 }
-    );
-
-    session.conversationHistory.push({
-      role: 'assistant',
-      content: response.text
+    const coachResult = await generateCoachResponse(message, history, {
+      userId: userId || undefined
     });
 
     res.json({
       success: true,
-      message: response.text,
-      sessionId: sessionKey,
-      signals: response.signals || [],
-      suggestions: response.suggestions || []
+      message: coachResult.message,
+      sessionId: `session-${Date.now()}`
     });
   } catch (error: any) {
     console.error("[API] /api/chat/message error:", error);
