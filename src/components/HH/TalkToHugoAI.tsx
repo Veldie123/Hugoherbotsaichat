@@ -30,7 +30,6 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { StopRoleplayDialog } from "./StopRoleplayDialog";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
-import { SessionSidebar } from "./SessionSidebar";
 import {
   Send,
   ChevronDown,
@@ -114,8 +113,6 @@ export function TalkToHugoAI({
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
-  const [sessionSidebarCollapsed, setSessionSidebarCollapsed] = useState(false);
-  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
   const [activeHelpMessageId, setActiveHelpMessageId] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<ChatMode>("chat");
   const [sessionTimer, setSessionTimer] = useState(0);
@@ -1246,56 +1243,9 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
     }
   };
 
-  const handleNewChat = () => {
-    setMessages([]);
-    setCurrentSessionId(undefined);
-    setSelectedTechnique("");
-    setSelectedTechniqueName("");
-    setSessionTimer(0);
-  };
-
-  const handleSelectSession = async (sessionId: string) => {
-    try {
-      const response = await fetch(`/api/v2/sessions/${sessionId}`);
-      if (response.ok) {
-        const sessionData = await response.json();
-        setCurrentSessionId(sessionId);
-        if (sessionData.conversation_history) {
-          setMessages(sessionData.conversation_history.map((msg: any, idx: number) => ({
-            id: `${sessionId}-${idx}`,
-            sender: msg.role === 'assistant' ? 'ai' : 'hugo',
-            text: msg.content,
-            timestamp: new Date(),
-          })));
-        }
-        if (sessionData.technique_id) {
-          setSelectedTechnique(sessionData.technique_id);
-          const technique = technieken_index.technieken[sessionData.technique_id as keyof typeof technieken_index.technieken];
-          if (technique) {
-            setSelectedTechniqueName(technique.naam);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("[TalkToHugo] Failed to load session:", error);
-    }
-  };
-
   return (
     <AppLayout currentPage="talk-to-hugo" navigate={navigate} isAdmin={isAdmin}>
       <div className="flex h-[calc(100vh-4rem)]">
-        {/* ChatGPT-style session sidebar - always visible on desktop */}
-        <div className="hidden lg:block h-full">
-          <SessionSidebar
-            isCollapsed={sessionSidebarCollapsed}
-            onToggleCollapse={() => setSessionSidebarCollapsed(!sessionSidebarCollapsed)}
-            onNewChat={handleNewChat}
-            onSelectSession={handleSelectSession}
-            currentSessionId={currentSessionId}
-            userId={user?.id}
-          />
-        </div>
-
         {/* EPIC Sidebar hidden by default - only shows when user clicks help icon (Piano concept) */}
         {!assistanceConfig.blindPlay && desktopSidebarOpen && (
           <div className="hidden lg:block w-1/3 flex-shrink-0 overflow-y-auto h-full border-r border-hh-border">

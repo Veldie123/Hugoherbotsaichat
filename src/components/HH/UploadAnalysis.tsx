@@ -33,7 +33,6 @@ import {
 import { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { getAllTechnieken, getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
-import { AnalysisSidebar } from "./AnalysisSidebar";
 
 interface UploadedAnalysis {
   id: string;
@@ -76,23 +75,6 @@ export function UploadAnalysis({
     text: string; 
     timestamp: string;
   }>>([]);
-
-  const [analysisSidebarCollapsed, setAnalysisSidebarCollapsed] = useState(false);
-  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | undefined>(undefined);
-
-  const handleNewAnalysis = () => {
-    setSelectedFile(null);
-    setTitle("");
-    setContext("");
-    setCurrentAnalysisId(undefined);
-    setUploadError(null);
-  };
-
-  const handleSelectAnalysis = (analysisId: string) => {
-    setCurrentAnalysisId(analysisId);
-    // TODO: Load analysis details from backend
-    console.log("[UploadAnalysis] Selected analysis:", analysisId);
-  };
 
   const analyses: UploadedAnalysis[] = [
     {
@@ -334,21 +316,7 @@ export function UploadAnalysis({
 
   return (
     <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>
-      <div className="flex h-[calc(100vh-4rem)]">
-        {/* ChatGPT-style analysis sidebar - always visible on desktop */}
-        <div className="hidden lg:block h-full">
-          <AnalysisSidebar
-            isCollapsed={analysisSidebarCollapsed}
-            onToggleCollapse={() => setAnalysisSidebarCollapsed(!analysisSidebarCollapsed)}
-            onNewAnalysis={handleNewAnalysis}
-            onSelectAnalysis={handleSelectAnalysis}
-            currentAnalysisId={currentAnalysisId}
-            userId={user?.id}
-          />
-        </div>
-
-        {/* Main content area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
         {/* Header */}
         <div>
           <h1 className="mb-2 text-[32px] leading-[40px] sm:text-[40px] sm:leading-[48px] lg:text-[48px] lg:leading-[56px]">
@@ -712,7 +680,6 @@ export function UploadAnalysis({
               </p>
             </div>
           </div>
-        </div>
         </div>
       </div>
     </AppLayout>

@@ -27,15 +27,8 @@ The application is built with React 18, TypeScript, and Vite. Styling uses Tailw
   - Blank slate on first visit - no generic "Welkom! Ik ben Hugo..." greeting
   - EPIC sidebar hidden by default - only shows on lightbulb icon (💡) click
   - Personalized greetings based on last activity ("Gisteren hadden we het over X...")
-  - **ChatGPT-style Session Sidebars (februari 2026):**
-    - `SessionSidebar.tsx`: Collapsible sidebar in Hugo AI chat met sessie geschiedenis
-    - `AnalysisSidebar.tsx`: Collapsible sidebar in Gespreksanalyse met upload geschiedenis
-    - Grouping: Vandaag/Gisteren/Deze Week/Ouder
-    - Features: Zoekfunctie, "Nieuwe chat/analyse" knop, sessie selectie
-    - Desktop: Sidebar altijd zichtbaar, collapsible via chevron
-    - Mobile: Sidebar hidden (responsive design)
   - **Navigation Flow (februari 2026):**
-    - Na login: Direct naar `talk-to-hugo` (niet dashboard)
+    - Na login: Direct naar `talk-to-hugo` (chat interface)
     - Na onboarding: Altijd naar `talk-to-hugo` (chat is epicenter)
     - User goals opgeslagen in onboarding, Hugo helpt proactief
   - **Cross-Platform Activity Tracking:** 
