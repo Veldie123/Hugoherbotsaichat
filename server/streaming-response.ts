@@ -240,7 +240,7 @@ async function handleRoleplayStreaming(
   const llmStartTime = Date.now();
 
   const apiKey = process.env.Elevenlabs_api_key;
-  const voiceId = process.env.Elevenlabs_Hugo_voice_clone || process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+  const voiceId = process.env.Elevenlabs_Hugo_voice_clone || process.env.ELEVENLABS_VOICE_ID || "sOsTzBXVBqNYMd5L4sCU";
   
   if (!apiKey) {
     console.error("[StreamResponse] ELEVENLABS_API_KEY not configured");
@@ -473,7 +473,7 @@ function sendTextToElevenLabs(ws: WS, text: string, flush: boolean) {
 
 async function streamTextToAudio(connection: StreamConnection, text: string) {
   const apiKey = process.env.Elevenlabs_api_key;
-  const voiceId = process.env.Elevenlabs_Hugo_voice_clone || process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+  const voiceId = process.env.Elevenlabs_Hugo_voice_clone || process.env.ELEVENLABS_VOICE_ID || "sOsTzBXVBqNYMd5L4sCU";
   
   if (!apiKey) {
     console.error("[StreamResponse] ELEVENLABS_API_KEY not configured");

@@ -113,15 +113,14 @@ export default defineAgent({
     let transcriptBuffer = '';
     let debounceTimer: NodeJS.Timeout | null = null;
     
-    // Use ElevenLabs plugin directly for custom voice support
-    // Fallback Dutch male voice until Hugo's custom voice (sOsTzBXVBqNYMd5L4sCU) is fine-tuned
+    // Use ElevenLabs plugin with Hugo Herbots' cloned voice
     const hugoTTS = new elevenlabsPlugin.TTS({
-      voiceId: 'wqDY19Brqhu7UCoLadPh',
+      voiceId: 'sOsTzBXVBqNYMd5L4sCU',
       model: 'eleven_turbo_v2_5',
       apiKey: process.env.ELEVENLABS_API_KEY,
       streamingLatency: 3,
     });
-    console.log('[LiveKit Agent] Using Dutch TTS - voiceId: wqDY19Brqhu7UCoLadPh');
+    console.log('[LiveKit Agent] Using Hugo Herbots voice - voiceId: sOsTzBXVBqNYMd5L4sCU');
     
     // Create session WITHOUT LLM - we use V2 engine exclusively
     const session = new voice.AgentSession({
