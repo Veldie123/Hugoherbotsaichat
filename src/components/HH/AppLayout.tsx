@@ -24,9 +24,10 @@ interface AppLayoutProps {
 }
 
 // Primary navigation items (top section) - Simplified to 2 core features
+// Navigate to action pages (not overview pages) - sidebar shows history
 const mainNavItems = [
-  { id: "analysis", label: "Gespreksanalyse", icon: FileSearch },
-  { id: "roleplay", label: "Talk to Hugo AI", icon: MessageSquare },
+  { id: "upload-analysis", label: "Gespreksanalyse", icon: FileSearch },
+  { id: "talk-to-hugo", label: "Talk to Hugo AI", icon: MessageSquare },
 ];
 
 export function AppLayout({ children, currentPage = "home", navigate, onOpenFlowDrawer, isAdmin }: AppLayoutProps) {
@@ -78,20 +79,16 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
 
   const handleNavigate = (pageId: string) => {
     if (navigate) {
-      // Map nav item ids to actual page names
-      const pageMap: Record<string, string> = {
-        analysis: "analysis",
-        roleplay: "hugo-overview",
-      };
-      navigate(pageMap[pageId] || pageId);
+      // Direct navigation - no mapping needed anymore
+      navigate(pageId);
     }
   };
 
   // Helper to check if a nav item is active based on currentPage
   const isNavItemActive = (itemId: string) => {
     const pageMap: Record<string, string[]> = {
-      analysis: ["analysis", "analysis-results", "upload-analysis"],
-      roleplay: ["hugo-overview", "talk-to-hugo", "roleplay", "roleplays"],
+      "upload-analysis": ["analysis", "analysis-results", "upload-analysis"],
+      "talk-to-hugo": ["hugo-overview", "talk-to-hugo", "roleplay", "roleplays"],
     };
     return pageMap[itemId]?.includes(currentPage) || false;
   };

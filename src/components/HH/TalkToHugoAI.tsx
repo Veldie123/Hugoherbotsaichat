@@ -30,6 +30,7 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { StopRoleplayDialog } from "./StopRoleplayDialog";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
+import { HistorySidebar } from "./HistorySidebar";
 import {
   Send,
   ChevronDown,
@@ -1246,6 +1247,18 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
   return (
     <AppLayout currentPage="talk-to-hugo" navigate={navigate} isAdmin={isAdmin}>
       <div className="flex h-[calc(100vh-4rem)]">
+        {/* History Sidebar - compact by default, expands on hover */}
+        <HistorySidebar
+          type="chat"
+          items={[
+            { id: "1", techniqueNumber: "1.2", title: "Gentleman's agreement", score: 55, date: "2026-02-02" },
+            { id: "2", techniqueNumber: "1.4", title: "Instapvraag", score: 72, date: "2026-02-01" },
+            { id: "3", techniqueNumber: "2.1.1", title: "Koopstijl herkennen", score: 88, date: "2026-01-30" },
+          ]}
+          onSelectItem={(id) => console.log("Selected session:", id)}
+          onOpenFullView={() => navigate("/talk-to-hugo-overview")}
+        />
+        
         {/* EPIC Sidebar hidden by default - only shows when user clicks help icon (Piano concept) */}
         {!assistanceConfig.blindPlay && desktopSidebarOpen && (
           <div className="hidden lg:block w-1/3 flex-shrink-0 overflow-y-auto h-full border-r border-hh-border">
