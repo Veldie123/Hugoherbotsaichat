@@ -10,7 +10,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Check } from "lucide-react";
 import { auth } from "../../utils/supabase/client";
 import hugoImage from "figma:asset/a5da4578176f94a983ebfbba539ea83f4e769336.png";
 
-type Page = "landing" | "pricing" | "about" | "login" | "signup" | "onboarding" | "dashboard" | "roleplay" | "library" | "builder" | "sessions" | "analytics" | "settings" | "admin-dashboard";
+type Page = "landing" | "pricing" | "about" | "login" | "signup" | "onboarding" | "talk-to-hugo" | "roleplay" | "library" | "builder" | "sessions" | "analytics" | "settings" | "admin-dashboard";
 
 interface LoginProps {
   onSignupClick?: () => void;
@@ -43,12 +43,12 @@ export function Login({ onSignupClick, onLoginSuccess, navigate }: LoginProps) {
       // Check if email is admin (@hugoherbots.com)
       const isAdmin = email.toLowerCase().endsWith("@hugoherbots.com");
       
-      // Navigate based on user role
+      // Navigate based on user role - direct to chat (Piano concept)
       if (navigate) {
         if (isAdmin) {
           navigate("admin-dashboard" as Page);
         } else {
-          navigate("dashboard");
+          navigate("talk-to-hugo");
         }
       }
       

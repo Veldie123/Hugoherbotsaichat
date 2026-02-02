@@ -105,7 +105,7 @@ export function Onboarding({ navigate }: OnboardingProps) {
         navigate("roleplay");
         break;
       default:
-        navigate("dashboard");
+        navigate("talk-to-hugo"); // Piano concept - chat is the hub
     }
   };
 
@@ -549,8 +549,8 @@ export function Onboarding({ navigate }: OnboardingProps) {
         {/* Skip option */}
         {step < 4 && (
           <div className="text-center mt-6">
-            <Button variant="ghost" size="sm" onClick={() => navigate && navigate("dashboard")}>
-              Overslaan en direct naar dashboard
+            <Button variant="ghost" size="sm" onClick={() => navigate && navigate("talk-to-hugo")}>
+              Overslaan en direct naar Hugo
             </Button>
           </div>
         )}
