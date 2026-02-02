@@ -75,6 +75,7 @@ import {
 } from "./v2/reference-answers";
 
 import { indexCorpus, getDocumentCount } from "./v2/rag-service";
+import { supabase } from "./supabase-client";
 import { 
   saveArtifact, 
   getArtifact, 
@@ -2547,6 +2548,190 @@ app.get("/api/v2/user/mastery", async (req, res) => {
   } catch (error: any) {
     console.error("[Performance] Get mastery error:", error.message);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ===========================================
+// USER ACTIVITY - Cross-platform activity tracking (Supabase)
+// ===========================================
+
+app.get("/api/v2/user/activity-summary", async (req, res) => {
+  const userId = req.query.userId as string;
+  
+  if (!userId) {
+    return res.status(400).json({ error: "userId required" });
+  }
+  
+  try {
+    const { data: activities, error } = await supabase
+      .from("activity_log")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    
+    if (error) {
+      console.error("[Activity] Supabase error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+    
+    const recentVideos = activities?.filter(a => a.entity_type === "video").slice(0, 5) || [];
+    const recentWebinars = activities?.filter(a => a.entity_type === "webinar").slice(0, 5) || [];
+    const recentTechniques = activities?.filter(a => a.entity_type === "technique").slice(0, 5) || [];
+    const recentConversations = activities?.filter(a => a.entity_type === "conversation").slice(0, 5) || [];
+    
+    const lastActivity = activities?.[0] || null;
+    
+    let welcomeMessage = "Waar kan ik je vandaag mee helpen?";
+    if (lastActivity) {
+      const timeAgo = Date.now() - new Date(lastActivity.created_at).getTime();
+      const hoursAgo = Math.floor(timeAgo / (1000 * 60 * 60));
+      const daysAgo = Math.floor(hoursAgo / 24);
+      
+      let timePhrase = "";
+      if (daysAgo > 0) {
+        timePhrase = daysAgo === 1 ? "Gisteren" : `${daysAgo} dagen geleden`;
+      } else if (hoursAgo > 0) {
+        timePhrase = hoursAgo === 1 ? "Een uur geleden" : `${hoursAgo} uur geleden`;
+      } else {
+        timePhrase = "Net";
+      }
+      
+      const entityName = lastActivity.metadata?.name || lastActivity.entity_id;
+      
+      switch (lastActivity.entity_type) {
+        case "technique":
+          welcomeMessage = `${timePhrase} hadden we het over "${entityName}". Wil je daar verder mee, of zit je ergens anders mee?`;
+          break;
+        case "video":
+          welcomeMessage = `${timePhrase} keek je de video over "${entityName}". Heb je daar nog vragen over, of wil je het in de praktijk oefenen?`;
+          break;
+        case "webinar":
+          welcomeMessage = `${timePhrase} volgde je het webinar "${entityName}". Zullen we de besproken technieken oefenen?`;
+          break;
+        case "conversation":
+          welcomeMessage = `${timePhrase} bespraken we een verkoopgesprek. Wil je verder met de analyse of iets nieuws proberen?`;
+          break;
+      }
+    }
+    
+    res.json({
+      lastActivity,
+      welcomeMessage,
+      summary: {
+        videosWatched: recentVideos.length,
+        webinarsAttended: recentWebinars.length,
+        techniquesExplored: recentTechniques.length,
+        conversationsAnalyzed: recentConversations.length,
+      },
+      recent: {
+        videos: recentVideos,
+        webinars: recentWebinars,
+        techniques: recentTechniques,
+        conversations: recentConversations,
+      }
+    });
+  } catch (err) {
+    console.error("[Activity] Error:", err);
+    res.status(500).json({ error: "Failed to fetch activity summary" });
+  }
+});
+
+app.post("/api/v2/user/activity", async (req, res) => {
+  const { userId, eventType, entityType, entityId, durationSeconds, score, metadata } = req.body;
+  
+  if (!userId || !eventType || !entityType || !entityId) {
+    return res.status(400).json({ error: "userId, eventType, entityType, and entityId required" });
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from("activity_log")
+      .insert({
+        id: nanoid(),
+        user_id: userId,
+        event_type: eventType,
+        entity_type: entityType,
+        entity_id: entityId,
+        duration_seconds: durationSeconds || null,
+        score: score || null,
+        metadata: metadata || {},
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("[Activity] Insert error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+    
+    console.log(`[Activity] Logged: ${eventType} on ${entityType}/${entityId} for user ${userId}`);
+    res.json({ success: true, activity: data });
+  } catch (err) {
+    console.error("[Activity] Error:", err);
+    res.status(500).json({ error: "Failed to log activity" });
+  }
+});
+
+app.get("/api/v2/user/hugo-context", async (req, res) => {
+  const userId = req.query.userId as string;
+  
+  if (!userId) {
+    return res.status(400).json({ error: "userId required" });
+  }
+  
+  try {
+    const [activityResult, userContextResult, masteryResult] = await Promise.all([
+      supabase
+        .from("activity_log")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("user_context")
+        .select("*")
+        .eq("user_id", userId)
+        .single(),
+      supabase
+        .from("technique_mastery")
+        .select("*")
+        .eq("user_id", userId)
+        .order("last_practiced", { ascending: false })
+        .limit(10)
+    ]);
+    
+    const activities = activityResult.data || [];
+    const userContext = userContextResult.data;
+    const mastery = masteryResult.data || [];
+    
+    const contextForHugo = {
+      user: {
+        product: userContext?.product || null,
+        klantType: userContext?.klant_type || null,
+        sector: userContext?.sector || null,
+        setting: userContext?.setting || null,
+      },
+      recentActivity: activities.map(a => ({
+        type: a.entity_type,
+        name: a.metadata?.name || a.entity_id,
+        when: a.created_at,
+        event: a.event_type,
+      })),
+      mastery: mastery.map(m => ({
+        technique: m.technique_name,
+        level: m.mastery_level,
+        attempts: m.attempt_count,
+        avgScore: m.average_score,
+      })),
+      summary: `${activities.length} recent activities, ${mastery.length} techniques practiced`,
+    };
+    
+    res.json(contextForHugo);
+  } catch (err) {
+    console.error("[Hugo Context] Error:", err);
+    res.status(500).json({ error: "Failed to build Hugo context" });
   }
 });
 
