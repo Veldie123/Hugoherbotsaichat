@@ -50,6 +50,13 @@ The application is built with React 18, TypeScript, and Vite. Styling uses Tailw
     - `GET /api/user/activity-summary` - Alias
     - CORS: Alle origins toegestaan (`*`)
     - .com platform stuurt requests naar: `https://hugoherbots-ai-chat.replit.app`
+  - **Platform Sync System (februari 2026):**
+    - Supabase tabel: `platform_sync` voor bidirectionele sync tussen .com en .ai
+    - `GET /api/platform-sync/pending` - Haal pending berichten op voor .ai
+    - `POST /api/platform-sync/acknowledge` - Markeer bericht als gelezen
+    - `POST /api/platform-sync/send` - Stuur bericht naar .com platform
+    - `GET /api/platform-sync/status` - Sync overzicht (pending count, recente berichten)
+    - Flow: .com INSERT → Supabase → .ai POLL → acknowledge
   - **HistorySidebar Component (februari 2026):**
     - Compacte sidebar met techniek nummers (1.2, 1.4, 2.1.1)
     - Expandeert bij hover met titel, score, datum

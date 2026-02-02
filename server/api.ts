@@ -3061,6 +3061,126 @@ app.get("/api/user/activity-summary", async (req, res) => {
   }
 });
 
+// ============================================
+// PLATFORM SYNC ENDPOINTS (.com ↔ .ai)
+// ============================================
+
+// GET /api/platform-sync/pending - Get pending sync messages for .ai
+app.get("/api/platform-sync/pending", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('platform_sync')
+      .select('*')
+      .eq('target_platform', 'ai')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      count: data?.length || 0,
+      messages: data || []
+    });
+  } catch (error: any) {
+    console.error("[SYNC] Error fetching pending messages:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/platform-sync/acknowledge - Mark message as read
+app.post("/api/platform-sync/acknowledge", async (req, res) => {
+  const { messageId } = req.body;
+
+  if (!messageId) {
+    return res.status(400).json({ error: "messageId is required" });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('platform_sync')
+      .update({ 
+        status: 'read',
+        read_at: new Date().toISOString()
+      })
+      .eq('id', messageId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: "Message acknowledged",
+      data
+    });
+  } catch (error: any) {
+    console.error("[SYNC] Error acknowledging message:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/platform-sync/send - Send message to .com platform
+app.post("/api/platform-sync/send", async (req, res) => {
+  const { messageType, title, content } = req.body;
+
+  if (!messageType || !content) {
+    return res.status(400).json({ error: "messageType and content are required" });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('platform_sync')
+      .insert({
+        source_platform: 'ai',
+        target_platform: 'com',
+        message_type: messageType,
+        title: title || `Sync from .ai: ${messageType}`,
+        content,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: "Message sent to .com platform",
+      data
+    });
+  } catch (error: any) {
+    console.error("[SYNC] Error sending message:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-sync/status - Get sync status overview
+app.get("/api/platform-sync/status", async (req, res) => {
+  try {
+    const { data: pending } = await supabase
+      .from('platform_sync')
+      .select('id, message_type, created_at')
+      .eq('target_platform', 'ai')
+      .eq('status', 'pending');
+
+    const { data: recent } = await supabase
+      .from('platform_sync')
+      .select('id, message_type, status, created_at, read_at')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    res.json({
+      success: true,
+      pendingForAi: pending?.length || 0,
+      recentMessages: recent || []
+    });
+  } catch (error: any) {
+    console.error("[SYNC] Error fetching status:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const server = createServer(app);
 
 // Setup ElevenLabs Scribe WebSocket for STT
