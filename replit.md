@@ -27,7 +27,11 @@ The application is built with React 18, TypeScript, and Vite. Styling uses Tailw
   - Blank slate on first visit - no generic "Welkom! Ik ben Hugo..." greeting
   - EPIC sidebar hidden by default - only shows on lightbulb icon (💡) click
   - Personalized greetings based on last activity ("Gisteren hadden we het over X...")
-  - Activity tracking via `lastActivityService.ts` (technique, video, webinar)
+  - **Cross-Platform Activity Tracking:** 
+    - API endpoint: `/api/v2/user/activity-summary` fetches from Supabase RPC
+    - `lastActivityService.ts` now has `getPersonalizedWelcome(userId)` for async API calls
+    - Supabase `get_user_activity_summary(p_user_id)` RPC returns videos watched, webinars attended, chat sessions
+    - Falls back to localStorage for local-only activity when API unavailable
 - **Progressive Unlocking:** Techniques in the Admin view for Hugo a.i. are progressively unlocked with visual cues.
 - **SSOT (Single Source of Truth) Architecture:** Core data is managed from centralized JSON/TypeScript files and accessed via service wrappers.
 
