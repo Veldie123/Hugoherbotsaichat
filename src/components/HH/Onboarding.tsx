@@ -90,23 +90,9 @@ export function Onboarding({ navigate }: OnboardingProps) {
   const handleFinish = () => {
     if (!navigate) return;
     
-    // Navigate based on primary goal
-    switch (primaryGoal) {
-      case "live-training":
-        navigate("live");
-        break;
-      case "video-course":
-        navigate("videos");
-        break;
-      case "conversation-analysis":
-        navigate("analytics");
-        break;
-      case "ai-roleplay":
-        navigate("roleplay");
-        break;
-      default:
-        navigate("talk-to-hugo"); // Piano concept - chat is the hub
-    }
+    // Piano concept - chat is always the hub, regardless of goal
+    // User's goal is stored and Hugo will proactively help them with it
+    navigate("talk-to-hugo");
   };
 
   const progress = (step / 4) * 100;
