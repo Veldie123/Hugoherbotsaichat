@@ -19,6 +19,7 @@ import {
 import * as silero from '@livekit/agents-plugin-silero';
 import * as elevenlabsPlugin from '@livekit/agents-plugin-elevenlabs';
 import { fileURLToPath } from 'node:url';
+import { humanizeSpeechPlainText } from './v2/speech-humanizer';
 
 interface HugoSessionState {
   sessionId: string | null;
@@ -169,7 +170,11 @@ export default defineAgent({
         const response = await sendMessageToV2(sessionState.sessionId, transcript);
         console.log('[LiveKit Agent] V2 response:', response.substring(0, 100));
         
-        await session.say(response);
+        // Humanize the response for more natural speech (pauses, hesitations)
+        const humanizedResponse = humanizeSpeechPlainText(response);
+        console.log('[LiveKit Agent] Humanized response:', humanizedResponse.substring(0, 120));
+        
+        await session.say(humanizedResponse);
         console.log('[LiveKit Agent] TTS response sent');
       } catch (error) {
         console.error('[LiveKit Agent] Error processing message:', error);
@@ -257,10 +262,11 @@ export default defineAgent({
       sessionState.sessionId = sessionId;
       console.log(`[LiveKit Agent] V2 Session: ${sessionId}`);
       
-      // Send greeting immediately
+      // Humanize and send greeting immediately
+      const humanizedGreeting = humanizeSpeechPlainText(greeting);
       try {
-        await session.say(greeting);
-        console.log('[LiveKit Agent] Greeting sent');
+        await session.say(humanizedGreeting);
+        console.log('[LiveKit Agent] Greeting sent (humanized)');
       } catch (ttsErr) {
         console.error('[LiveKit Agent] Greeting TTS error:', ttsErr);
       }

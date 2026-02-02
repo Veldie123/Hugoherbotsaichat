@@ -43,6 +43,11 @@ The application is built with React 18, TypeScript, and Vite. Styling uses Tailw
     - **Audio Mode:** Uses LiveKit Cloud for WebRTC, Deepgram Nova 3 for STT (Dutch), and ElevenLabs for TTS. Backend includes `livekit-agent.ts` and `elevenlabs-stt.ts` (WebSocket proxy).
     - **Video Mode:** Uses HeyGen Streaming Avatar SDK for WebRTC video, with custom or fallback avatars.
     - **Chat Mode Switcher:** Allows dynamic switching between chat, audio, and video modes.
+    - **Speech Humanizer:** `server/v2/speech-humanizer.ts` - Post-processor that makes TTS output more natural:
+      - Adds Dutch hesitations ("euh", "hmm", "nou") at strategic points
+      - Inserts breathing pauses in long sentences
+      - Uses ellipsis and em-dash for natural pauses (compatible with ElevenLabs)
+      - Only active in audio/video modes, NOT in chat mode
 
 **Feature Specifications:**
 - **Hugo a.i.:** AI coaching, chat interface, roleplay training, multi-modal interaction, and Epic Sales Flow progress.
