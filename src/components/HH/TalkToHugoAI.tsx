@@ -1256,7 +1256,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             { id: "3", techniqueNumber: "2.1.1", title: "Koopstijl herkennen", score: 88, date: "2026-01-30" },
           ]}
           onSelectItem={(id) => console.log("Selected session:", id)}
-          onOpenFullView={() => navigate("/talk-to-hugo-overview")}
+          onOpenFullView={() => navigate?.("hugo-overview")}
         />
         
         {/* EPIC Sidebar hidden by default - only shows when user clicks help icon (Piano concept) */}

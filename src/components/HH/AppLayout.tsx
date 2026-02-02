@@ -44,6 +44,7 @@ export function AppLayout({ children, currentPage = "home", navigate, onOpenFlow
   useEffect(() => {
     const subPages = [
       "talk-to-hugo",
+      "upload-analysis",
       "coaching",
       "video-detail",
       "live-session",
