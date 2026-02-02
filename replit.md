@@ -23,6 +23,11 @@ The application is built with React 18, TypeScript, and Vite. Styling uses Tailw
 - **Component Design:** Reusable UI components follow a `shadcn`-style approach, ensuring consistency.
 - **Navigation:** Simplified to 'Gespreksanalyse' and 'Hugo a.i.'.
 - **Multi-Modal Chat Interface:** Supports chat, audio, and video interactions with distinct visual feedback.
+- **Piano Concept (ChatGPT-style UX):** 
+  - Blank slate on first visit - no generic "Welkom! Ik ben Hugo..." greeting
+  - EPIC sidebar hidden by default - only shows on lightbulb icon (💡) click
+  - Personalized greetings based on last activity ("Gisteren hadden we het over X...")
+  - Activity tracking via `lastActivityService.ts` (technique, video, webinar)
 - **Progressive Unlocking:** Techniques in the Admin view for Hugo a.i. are progressively unlocked with visual cues.
 - **SSOT (Single Source of Truth) Architecture:** Core data is managed from centralized JSON/TypeScript files and accessed via service wrappers.
 
