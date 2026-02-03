@@ -149,63 +149,57 @@ interface Session {
 
 const sessions = new Map<string, Session>();
 
-// Helper: Save session to database
+// Helper: Save session to database (Supabase)
 async function saveSessionToDb(session: Session): Promise<void> {
   try {
-    await pool.query(
-      `INSERT INTO v2_sessions (
-        id, user_id, technique_id, mode, current_mode, phase, epic_phase, epic_milestones,
-        context, dialogue_state, persona, turn_number, conversation_history, 
-        customer_dynamics, events, total_score, expert_mode, is_active, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW())
-      ON CONFLICT (id) DO UPDATE SET
-        current_mode = $5,
-        phase = $6,
-        context = $9,
-        dialogue_state = $10,
-        turn_number = $12,
-        conversation_history = $13,
-        total_score = $16,
-        is_active = $18,
-        updated_at = NOW()`,
-      [
-        session.id,
-        session.userId || 'anonymous',
-        session.techniqueId,
-        session.mode,
-        session.mode,
-        session.contextState.isComplete ? 2 : 1, // phase: 1=gathering, 2=coaching
-        'OPENING', // epic_phase
-        JSON.stringify({}), // epic_milestones
-        JSON.stringify(session.contextState.gathered), // context
-        JSON.stringify({ questionsAsked: session.contextState.questionsAsked, questionsAnswered: session.contextState.questionsAnswered }), // dialogue_state
-        JSON.stringify({ name: session.userName }), // persona
-        session.conversationHistory.length, // turn_number
-        JSON.stringify(session.conversationHistory), // conversation_history
-        JSON.stringify({}), // customer_dynamics
-        JSON.stringify([]), // events
-        0, // total_score
-        session.isExpert ? 1 : 0, // expert_mode
-        1, // is_active
-        session.createdAt
-      ]
-    );
+    const sessionData = {
+      id: session.id,
+      user_id: session.userId || 'anonymous',
+      technique_id: session.techniqueId,
+      mode: session.mode,
+      current_mode: session.mode,
+      phase: session.contextState.isComplete ? 2 : 1,
+      epic_phase: 'OPENING',
+      epic_milestones: {},
+      context: session.contextState.gathered,
+      dialogue_state: { 
+        questionsAsked: session.contextState.questionsAsked, 
+        questionsAnswered: session.contextState.questionsAnswered 
+      },
+      persona: { name: session.userName },
+      turn_number: session.conversationHistory.length,
+      conversation_history: session.conversationHistory,
+      customer_dynamics: {},
+      events: [],
+      total_score: 0,
+      expert_mode: session.isExpert ? 1 : 0,
+      is_active: 1,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('v2_sessions')
+      .upsert(sessionData, { onConflict: 'id' });
+
+    if (error) {
+      console.error("[API] Supabase error saving session:", error.message);
+    }
   } catch (error: any) {
     console.error("[API] Error saving session to DB:", error.message);
   }
 }
 
-// Helper: Load session from database
+// Helper: Load session from database (Supabase)
 async function loadSessionFromDb(sessionId: string): Promise<Session | null> {
   try {
-    const result = await pool.query(
-      `SELECT * FROM v2_sessions WHERE id = $1`,
-      [sessionId]
-    );
+    const { data: row, error } = await supabase
+      .from('v2_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
     
-    if (result.rows.length === 0) return null;
+    if (error || !row) return null;
     
-    const row = result.rows[0];
     const conversationHistory = row.conversation_history || [];
     const context = row.context || {};
     const dialogueState = row.dialogue_state || {};
