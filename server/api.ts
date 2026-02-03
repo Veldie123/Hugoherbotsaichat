@@ -949,30 +949,31 @@ app.get("/api/sessions/stats", async (req, res) => {
   }
 });
 
-// Get all sessions list (from database)
+// Get all sessions list (from Supabase)
 app.get("/api/sessions", async (req, res) => {
   try {
     const userId = req.query.userId as string;
     
-    // Query database for sessions - include events and customer_dynamics for debug info
-    let query = `
-      SELECT id, user_id, technique_id, current_mode, phase, turn_number, 
-             conversation_history, context, total_score, expert_mode, 
-             events, customer_dynamics, epic_phase,
-             created_at, updated_at, is_active
-      FROM v2_sessions 
-      WHERE is_active = 1
-    `;
-    const params: any[] = [];
+    // Query Supabase for sessions
+    let query = supabase
+      .from('v2_sessions')
+      .select('id, user_id, technique_id, current_mode, phase, turn_number, conversation_history, context, total_score, expert_mode, events, customer_dynamics, epic_phase, created_at, updated_at, is_active')
+      .eq('is_active', 1)
+      .order('created_at', { ascending: false })
+      .limit(100);
     
     if (userId) {
-      query += ` AND user_id = $1`;
-      params.push(userId);
+      query = query.eq('user_id', userId);
     }
     
-    query += ` ORDER BY created_at DESC LIMIT 100`;
+    const { data: rows, error } = await query;
     
-    const result = await pool.query(query, params);
+    if (error) {
+      console.error("[API] Supabase error fetching sessions:", error.message);
+      return res.status(500).json({ error: error.message });
+    }
+    
+    const result = { rows: rows || [] };
     
     const sessionList = result.rows.map(row => {
       const conversationHistory = row.conversation_history || [];
@@ -1075,21 +1076,25 @@ app.get("/api/sessions", async (req, res) => {
   }
 });
 
-// Get sessions for a specific user (user view)
+// Get sessions for a specific user (user view) - Supabase
 app.get("/api/user/sessions", async (req, res) => {
   try {
     const userId = req.query.userId as string || 'anonymous';
     
-    const result = await pool.query(`
-      SELECT id, technique_id, current_mode, phase, turn_number, 
-             conversation_history, context, total_score, created_at, updated_at
-      FROM v2_sessions 
-      WHERE user_id = $1 AND is_active = 1
-      ORDER BY created_at DESC
-      LIMIT 50
-    `, [userId]);
+    const { data: rows, error } = await supabase
+      .from('v2_sessions')
+      .select('id, technique_id, current_mode, phase, turn_number, conversation_history, context, total_score, created_at, updated_at')
+      .eq('user_id', userId)
+      .eq('is_active', 1)
+      .order('created_at', { ascending: false })
+      .limit(50);
     
-    const sessionList = result.rows.map(row => {
+    if (error) {
+      console.error("[API] Supabase error fetching user sessions:", error.message);
+      return res.status(500).json({ error: error.message });
+    }
+    
+    const sessionList = (rows || []).map(row => {
       const conversationHistory = row.conversation_history || [];
       const context = row.context || {};
       const technique = getTechnique(row.technique_id);
