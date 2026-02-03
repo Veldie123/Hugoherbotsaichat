@@ -296,17 +296,16 @@ app.post("/api/v2/sessions", async (req, res) => {
     // Create context state for context gathering
     const contextState = createContextState(userId || 'anonymous', sessionId, techniqueId);
     
-    // Load existing user context from database and pre-fill gathered slots
+    // Load existing user context from Supabase and pre-fill gathered slots
     const userIdForContext = userId || 'anonymous';
     try {
-      const existingContextResult = await pool.query(
-        `SELECT sector, product, klant_type, setting, additional_context 
-         FROM user_context WHERE user_id = $1`,
-        [userIdForContext]
-      );
+      const { data: row } = await supabase
+        .from('user_context')
+        .select('sector, product, klant_type, setting, additional_context')
+        .eq('user_id', userIdForContext)
+        .single();
       
-      if (existingContextResult.rows.length > 0) {
-        const row = existingContextResult.rows[0];
+      if (row) {
         // Pre-fill context state with existing values
         if (row.sector) {
           contextState.gathered.sector = row.sector;
@@ -456,30 +455,23 @@ app.post("/api/v2/message", async (req, res) => {
             session.isExpert ? 2 : undefined // Expert mode: limit to 2 slots
           );
           
-          // Save updated context to database for persistence
+          // Save updated context to Supabase for persistence
           const userIdToSave = session.userId || 'anonymous';
           const gathered = session.contextState.gathered;
           try {
-            await pool.query(
-              `INSERT INTO user_context (id, user_id, sector, product, klant_type, additional_context, updated_at)
-               VALUES ($1, $2, $3, $4, $5, $6, NOW())
-               ON CONFLICT (user_id) DO UPDATE SET
-                 sector = COALESCE($3, user_context.sector),
-                 product = COALESCE($4, user_context.product),
-                 klant_type = COALESCE($5, user_context.klant_type),
-                 additional_context = COALESCE($6, user_context.additional_context),
-                 updated_at = NOW()`,
-              [
-                nanoid(), 
-                userIdToSave, 
-                gathered.sector || null, 
-                gathered.product || null, 
-                gathered.klant_type || null,
-                gathered.verkoopkanaal || gathered.ervaring 
+            await supabase
+              .from('user_context')
+              .upsert({
+                id: nanoid(),
+                user_id: userIdToSave,
+                sector: gathered.sector || null,
+                product: gathered.product || null,
+                klant_type: gathered.klant_type || null,
+                additional_context: gathered.verkoopkanaal || gathered.ervaring 
                   ? { verkoopkanaal: gathered.verkoopkanaal, ervaring: gathered.ervaring }
-                  : null
-              ]
-            );
+                  : {},
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'user_id' });
             console.log(`[API] Saved context for user ${userIdToSave}: ${currentSlot}=${gathered[currentSlot]}`);
           } catch (saveError: any) {
             console.warn("[API] Could not save context:", saveError.message);
@@ -1138,22 +1130,21 @@ app.get("/api/user/sessions", async (req, res) => {
 // USER CONTEXT ENDPOINTS - DATABASE BACKED
 // ===========================================
 
-// Get user context from database
+// Get user context from Supabase
 app.get("/api/user/context", async (req, res) => {
   try {
     const userId = req.query.userId as string || "default";
     
-    const result = await pool.query(
-      `SELECT sector, product, klant_type, setting, additional_context 
-       FROM user_context WHERE user_id = $1`,
-      [userId]
-    );
+    const { data: row, error } = await supabase
+      .from('user_context')
+      .select('sector, product, klant_type, setting, additional_context')
+      .eq('user_id', userId)
+      .single();
     
-    if (result.rows.length === 0) {
+    if (error || !row) {
       return res.json({ success: true, context: {} });
     }
     
-    const row = result.rows[0];
     const context = {
       sector: row.sector,
       product: row.product,
@@ -1170,7 +1161,7 @@ app.get("/api/user/context", async (req, res) => {
   }
 });
 
-// Save user context to database
+// Save user context to Supabase
 app.post("/api/user/context", async (req, res) => {
   try {
     const { userId = "default", context } = req.body;
@@ -1178,34 +1169,38 @@ app.post("/api/user/context", async (req, res) => {
     // Extract known fields and additional context
     const { sector, product, klantType, setting, ...additional } = context;
     
-    // Upsert the context
-    await pool.query(
-      `INSERT INTO user_context (id, user_id, sector, product, klant_type, setting, additional_context, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-       ON CONFLICT (user_id) DO UPDATE SET
-         sector = COALESCE($3, user_context.sector),
-         product = COALESCE($4, user_context.product),
-         klant_type = COALESCE($5, user_context.klant_type),
-         setting = COALESCE($6, user_context.setting),
-         additional_context = COALESCE($7, user_context.additional_context),
-         updated_at = NOW()`,
-      [nanoid(), userId, sector, product, klantType, setting, Object.keys(additional).length > 0 ? additional : null]
-    );
+    // Upsert the context to Supabase
+    const { error: upsertError } = await supabase
+      .from('user_context')
+      .upsert({
+        id: nanoid(),
+        user_id: userId,
+        sector: sector || null,
+        product: product || null,
+        klant_type: klantType || null,
+        setting: setting || null,
+        additional_context: Object.keys(additional).length > 0 ? additional : {},
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+    
+    if (upsertError) {
+      console.error("[API] Supabase error saving user context:", upsertError.message);
+      return res.status(500).json({ error: upsertError.message });
+    }
     
     // Fetch updated context
-    const result = await pool.query(
-      `SELECT sector, product, klant_type, setting, additional_context 
-       FROM user_context WHERE user_id = $1`,
-      [userId]
-    );
+    const { data: row } = await supabase
+      .from('user_context')
+      .select('sector, product, klant_type, setting, additional_context')
+      .eq('user_id', userId)
+      .single();
     
-    const row = result.rows[0] || {};
     const updatedContext = {
-      sector: row.sector,
-      product: row.product,
-      klantType: row.klant_type,
-      setting: row.setting,
-      ...(row.additional_context || {})
+      sector: row?.sector,
+      product: row?.product,
+      klantType: row?.klant_type,
+      setting: row?.setting,
+      ...(row?.additional_context || {})
     };
     
     console.log("[API] Saved user context for", userId);
