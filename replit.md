@@ -35,7 +35,8 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
     - **Architecture:** Frontend (Vite) and Backend API (Express) with Vite proxying.
     - **AI Integration:** OpenAI (gpt-5.1 model) via Replit AI Integrations.
     - **Engine Features:** Nested prompts, RAG grounding, validation loop for response repair, Hugo persona loading, and advanced signal/technique detection.
-    - **Session Persistence:** V2 sessions and user context are saved to PostgreSQL tables (`v2_sessions`, `user_context`).
+    - **Session Persistence:** V2 sessions (`v2_sessions`) and session artifacts (`session_artifacts`) are stored in **Supabase** (shared with .com platform). User context in local PostgreSQL.
+    - **Database Architecture:** Supabase is the primary database for cross-platform data (sessions, RAG, SSO tokens). Local PostgreSQL used for platform-specific data.
     - **Engine Components:** Includes `coach-engine.ts`, `context_engine.ts`, `rag-service.ts`, and `response-repair.ts`.
     - **Session Flow:** Progresses from CONTEXT_GATHERING to COACH_CHAT, with an "Expert mode" option.
 - **4-Level Competence Model:** Integrated for difficulty selection in coaching, mapping to `onbewuste_onkunde`, `bewuste_onkunde`, `bewuste_kunde`, `onbewuste_kunde`.
