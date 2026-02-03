@@ -25,6 +25,7 @@
 
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { createServer as createViteServer, type ViteDevServer } from "vite";
 import path from "path";
 import fs from "fs";
 import { nanoid } from "nanoid";
@@ -3337,9 +3338,34 @@ const server = createServer(app);
 // Setup ElevenLabs Scribe WebSocket for STT
 setupScribeWebSocket(server);
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`[API] Hugo Engine V2 FULL API running on port ${PORT}`);
-  console.log(`[API] Features: nested-prompts, rag-grounding, validation-loop, livekit-audio`);
-});
+// Integrate Vite in development mode for combined API + Frontend on port 5000
+async function startServer() {
+  const isDev = process.env.NODE_ENV !== 'production';
+  
+  if (isDev) {
+    try {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      
+      // Add Vite middleware AFTER API routes
+      app.use(vite.middlewares);
+      console.log(`[API] Vite dev server integrated as middleware`);
+    } catch (err) {
+      console.log(`[API] Running without Vite middleware (standalone API mode)`);
+    }
+  }
+
+  // Always listen on port 5000 for external access
+  const COMBINED_PORT = 5000;
+  server.listen(COMBINED_PORT, "0.0.0.0", () => {
+    console.log(`[API] Hugo Engine V2 FULL API running on port ${COMBINED_PORT}`);
+    console.log(`[API] Features: nested-prompts, rag-grounding, validation-loop, livekit-audio`);
+    console.log(`[API] External access: ENABLED (API + Frontend on same port)`);
+  });
+}
+
+startServer();
 
 export { app, server };
