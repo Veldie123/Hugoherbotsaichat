@@ -30,7 +30,7 @@ import {
   Target,
   Lightbulb,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { useNotifications } from "../../contexts/NotificationContext";
 import { getAllTechnieken, getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
@@ -72,7 +72,39 @@ export function UploadAnalysis({
     conversationId: string;
     status: string;
     step: string;
-  } | null>(null);
+  } | null>(() => {
+    try {
+      const stored = localStorage.getItem('hh_active_analysis');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && !['completed', 'failed'].includes(parsed.status)) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return null;
+  });
+
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (analysisStatus) {
+      localStorage.setItem('hh_active_analysis', JSON.stringify(analysisStatus));
+    }
+    if (analysisStatus?.status === 'completed' || analysisStatus?.status === 'failed') {
+      localStorage.removeItem('hh_active_analysis');
+    }
+  }, [analysisStatus]);
+
+  useEffect(() => {
+    if (analysisStatus && analysisStatus.conversationId && !['completed', 'failed', 'uploading'].includes(analysisStatus.status)) {
+      setIsUploading(true);
+      pollAnalysisStatus(analysisStatus.conversationId);
+    }
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   // Live Copilot state
   const [copilotActive, setCopilotActive] = useState(false);
@@ -393,9 +425,19 @@ export function UploadAnalysis({
       'failed': 'Analyse mislukt',
     };
 
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+
     const interval = setInterval(async () => {
       try {
         const response = await fetch(`/api/v2/analysis/status/${conversationId}`);
+        if (response.status === 404) {
+          clearInterval(interval);
+          pollIntervalRef.current = null;
+          setIsUploading(false);
+          setAnalysisStatus(null);
+          localStorage.removeItem('hh_active_analysis');
+          return;
+        }
         const data = await response.json();
 
         setAnalysisStatus({
@@ -406,6 +448,7 @@ export function UploadAnalysis({
 
         if (data.status === 'completed') {
           clearInterval(interval);
+          pollIntervalRef.current = null;
           setIsUploading(false);
           setSelectedFile(null);
           setTitle("");
@@ -417,16 +460,20 @@ export function UploadAnalysis({
           }
         } else if (data.status === 'failed') {
           clearInterval(interval);
+          pollIntervalRef.current = null;
           setIsUploading(false);
           setUploadError(data.error || 'Analyse mislukt');
           setAnalysisStatus(null);
         }
       } catch (err) {
         clearInterval(interval);
+        pollIntervalRef.current = null;
         setIsUploading(false);
         setUploadError('Kon de status niet ophalen');
       }
     }, 3000);
+
+    pollIntervalRef.current = interval;
   };
 
   const getStatusIcon = (status: string) => {
@@ -543,24 +590,37 @@ export function UploadAnalysis({
             </label>
 
             {analysisStatus && (
-              <div className="mt-6 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
-                <div className="flex items-center gap-3 mb-3">
-                  <Loader2 className="w-5 h-5 text-hh-primary animate-spin" />
-                  <span className="text-[16px] leading-[24px] font-medium text-hh-text">
+              <div className="mt-6 p-5 rounded-xl bg-hh-ui-50 border border-hh-border shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  {analysisStatus.status === 'completed' ? (
+                    <CheckCircle2 className="w-5 h-5 text-hh-success" />
+                  ) : (
+                    <Loader2 className="w-5 h-5 text-hh-primary animate-spin" />
+                  )}
+                  <span className="text-[16px] leading-[24px] font-semibold text-hh-text">
                     {analysisStatus.step}
                   </span>
                 </div>
-                <div className="flex gap-1">
-                  {['transcribing', 'analyzing', 'evaluating', 'generating_report', 'completed'].map((step, i) => (
-                    <div
-                      key={step}
-                      className={`h-1.5 flex-1 rounded-full ${
-                        ['transcribing', 'analyzing', 'evaluating', 'generating_report', 'completed'].indexOf(analysisStatus.status) >= i
-                          ? 'bg-hh-primary'
-                          : 'bg-hh-ui-200'
-                      }`}
-                    />
-                  ))}
+                <div className="flex gap-1.5 mb-3">
+                  {['uploading', 'transcribing', 'analyzing', 'evaluating', 'generating_report', 'completed'].map((step, i) => {
+                    const currentIndex = ['uploading', 'transcribing', 'analyzing', 'evaluating', 'generating_report', 'completed'].indexOf(analysisStatus.status);
+                    return (
+                      <div
+                        key={step}
+                        className={`h-2 flex-1 rounded-full transition-all duration-500 ${
+                          currentIndex >= i ? 'bg-hh-primary' : 'bg-hh-ui-200'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between text-[11px] text-hh-muted">
+                  <span>Upload</span>
+                  <span>Transcriptie</span>
+                  <span>Analyse</span>
+                  <span>Evaluatie</span>
+                  <span>Rapport</span>
+                  <span>Klaar</span>
                 </div>
               </div>
             )}
@@ -603,23 +663,16 @@ export function UploadAnalysis({
                   </span>
                 </label>
 
-                <Button
-                  onClick={handleUpload}
-                  disabled={!title.trim() || isUploading || !consentConfirmed}
-                  className="w-full sm:w-auto gap-2"
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Uploaden & analyseren...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      Start analyse
-                    </>
-                  )}
-                </Button>
+                {!analysisStatus && (
+                  <Button
+                    onClick={handleUpload}
+                    disabled={!title.trim() || isUploading || !consentConfirmed}
+                    className="w-full sm:w-auto gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Start analyse
+                  </Button>
+                )}
                 {uploadError && (
                   <p className="text-[14px] leading-[20px] text-hh-destructive mt-2">
                     {uploadError}
