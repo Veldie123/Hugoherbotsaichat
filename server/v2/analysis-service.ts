@@ -12,7 +12,7 @@ const openai = new OpenAI({
 });
 
 const openaiDirect = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 export interface ConversationAnalysis {
