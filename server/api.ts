@@ -2974,6 +2974,9 @@ app.get("/api/v2/analysis/list", async (req: Request, res: Response) => {
     const { data, error } = await query;
 
     if (error) {
+      if (error.message?.includes('conversation_analyses') && error.message?.includes('schema cache')) {
+        return res.json({ analyses: [] });
+      }
       return res.status(500).json({ error: error.message });
     }
 
