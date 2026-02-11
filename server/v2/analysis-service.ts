@@ -3,6 +3,8 @@ import { supabase } from '../supabase-client';
 import { getTechnique, loadMergedTechniques } from '../ssot-loader';
 import { getExpectedMoves } from './evaluator';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -94,16 +96,11 @@ interface WhisperSegment {
 const analysisJobs = new Map<string, ConversationAnalysis>();
 const analysisResults = new Map<string, FullAnalysisResult>();
 
-const BUCKET_NAME = 'conversation-uploads';
+const UPLOAD_DIR = path.join(process.cwd(), 'tmp', 'uploads');
 
-async function ensureBucket(): Promise<void> {
-  const { data: buckets } = await supabase.storage.listBuckets();
-  const exists = buckets?.some(b => b.name === BUCKET_NAME);
-  if (!exists) {
-    await supabase.storage.createBucket(BUCKET_NAME, {
-      public: false,
-      fileSizeLimit: 100 * 1024 * 1024,
-    });
+function ensureUploadDir(): void {
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
   }
 }
 
@@ -113,35 +110,26 @@ export async function uploadAndStore(
   mimeType: string,
   userId: string
 ): Promise<string> {
-  await ensureBucket();
+  ensureUploadDir();
 
   const ext = filename.split('.').pop() || 'wav';
-  const storageKey = `${userId}/${crypto.randomUUID()}.${ext}`;
+  const storageKey = `${userId}_${crypto.randomUUID()}.${ext}`;
+  const filePath = path.join(UPLOAD_DIR, storageKey);
 
-  const { error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(storageKey, file, {
-      contentType: mimeType,
-      upsert: false,
-    });
-
-  if (error) {
-    throw new Error(`Upload mislukt: ${error.message}`);
-  }
+  fs.writeFileSync(filePath, file);
+  console.log(`[Analysis] File saved: ${filePath} (${(file.length / 1024 / 1024).toFixed(1)} MB)`);
 
   return storageKey;
 }
 
 export async function transcribeAudio(storageKey: string): Promise<WhisperSegment[]> {
-  const { data, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .download(storageKey);
+  const filePath = path.join(UPLOAD_DIR, storageKey);
 
-  if (error || !data) {
-    throw new Error(`Download mislukt: ${error?.message || 'Geen data'}`);
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Bestand niet gevonden: ${storageKey}`);
   }
 
-  const buffer = Buffer.from(await data.arrayBuffer());
+  const buffer = fs.readFileSync(filePath);
   const ext = storageKey.split('.').pop() || 'wav';
   const file = new File([buffer], `audio.${ext}`, { type: `audio/${ext}` });
 
@@ -159,6 +147,11 @@ export async function transcribeAudio(storageKey: string): Promise<WhisperSegmen
     end: seg.end,
     text: (seg.text || '').trim(),
   }));
+
+  try {
+    fs.unlinkSync(filePath);
+    console.log(`[Analysis] Temp file cleaned up: ${storageKey}`);
+  } catch {}
 
   return segments;
 }
