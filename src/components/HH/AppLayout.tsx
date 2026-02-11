@@ -63,12 +63,6 @@ const defaultChatHistory: HistoryItem[] = [
   { id: "3", techniqueNumber: "2.1.1", title: "Koopstijl herkennen", score: 88, date: "2026-01-30" },
 ];
 
-const defaultAnalysisHistory: HistoryItem[] = [
-  { id: "1", techniqueNumber: "1.1", title: "Demo presentatie voor Acme Corp", score: 56, date: "2026-01-27" },
-  { id: "2", techniqueNumber: "2.1.1", title: "Follow-up meeting DataDrive NL", score: 90, date: "2026-01-23" },
-  { id: "3", techniqueNumber: "1.1", title: "Discovery call met Digital Solutions", score: 79, date: "2026-01-19" },
-];
-
 export function AppLayout({
   children,
   currentPage = "home",
@@ -76,14 +70,37 @@ export function AppLayout({
   onOpenFlowDrawer,
   isAdmin,
   chatHistory = defaultChatHistory,
-  analysisHistory = defaultAnalysisHistory,
+  analysisHistory: analysisHistoryProp,
   onSelectHistoryItem,
 }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [fetchedAnalysisHistory, setFetchedAnalysisHistory] = useState<HistoryItem[]>([]);
   const notifRef = useRef<HTMLDivElement>(null);
   const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
+
+  const analysisHistory = analysisHistoryProp || fetchedAnalysisHistory;
+
+  useEffect(() => {
+    if (analysisHistoryProp) return;
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch('/api/v2/analysis/list');
+        if (!res.ok) return;
+        const data = await res.json();
+        const items: HistoryItem[] = (data.analyses || []).slice(0, 5).map((a: any) => ({
+          id: a.id,
+          techniqueNumber: "",
+          title: a.title || 'Untitled',
+          score: a.overallScore ?? undefined,
+          date: a.createdAt ? new Date(a.createdAt).toISOString().split('T')[0] : '',
+        }));
+        setFetchedAnalysisHistory(items);
+      } catch { }
+    };
+    fetchHistory();
+  }, [analysisHistoryProp]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

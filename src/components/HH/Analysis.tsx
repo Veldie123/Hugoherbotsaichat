@@ -80,7 +80,6 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   useEffect(() => {
     const fetchAnalyses = async () => {
       try {
-        setLoading(true);
         const res = await fetch('/api/v2/analysis/list');
         if (!res.ok) throw new Error('Analyses ophalen mislukt');
         const data = await res.json();
@@ -102,9 +101,15 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
         }));
         
         setConversations(mapped);
+        setError(null);
       } catch (err: any) {
         console.error('Failed to fetch analyses:', err);
-        setError(err.message);
+        setConversations(prev => {
+          if (prev.length === 0) {
+            setError(err.message);
+          }
+          return prev;
+        });
       } finally {
         setLoading(false);
       }
