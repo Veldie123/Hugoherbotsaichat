@@ -1,0 +1,437 @@
+Replit Brief — Hugoherbots.ai “Gespreksanalyse” (Upload + Live)
+1) Doel & scope
+
+Bouw een module “Gespreksanalyse” waar een gebruiker:
+
+Een opgenomen rollenspel of opgenomen echt klantgesprek (met toestemming) kan uploaden en laten analyseren.
+
+Een live gesprek (microfoon) kan laten meeluisteren voor real-time coaching (“live tips”).
+
+De analyse moet concreet antwoorden op:
+
+Wat ging goed (met quotes uit transcript)?
+
+Wat ging minder / wat werd gemist?
+
+Waar had de verkoper moeten proben (Probe), impact vragen, commitment vragen?
+
+Waar werd geen baat (Baat) gevonden / niet bevestigd?
+
+Welke twijfel of bezwaar werd niet herkend?
+
+Welke stap in de bezwarenbehandeling werd overgeslagen?
+
+Wat is de volgende beste vraag (Next Best Question) per cruciaal moment?
+
+Output moet bestaan uit:
+
+Timeline met turn-by-turn evaluatie
+
+EPIC-dekking (Explore/Probe/Impact/Commit) + gemiste kansen
+
+Samenvatting + actieplan (micro-experimenten)
+
+Voor live: ultrakorte tips (max ~1 zin) met lage latency
+
+(Assumptie: in Replit bouwen we een werkend prototype; productie-integraties (S3, Redis, WebRTC-ops) kunnen later.)
+
+Belangrijk: Toon altijd een duidelijke privacy/toestemming-melding en forceer een checkbox vóór upload of live start. (UI-idee: zoals “Privacy & toestemming” sectie onderaan.)
+
+2) UX — Pagina’s & flows
+2.1 “Gespreksanalyse” dashboard (zoals screenshot)
+
+Linker sidebar: lijst met recente analyses (titel, datum, “score/percentage”).
+
+Hoofdcontent: 2 kaarten:
+
+Upload opname (audio/video, max 50MB): mp3/wav/m4a/mp4/mov.
+
+Live analyse: status + knop “Start live coaching”.
+
+Flow A — Upload
+
+User kiest bestand + vinkt “Ik heb toestemming van alle betrokkenen”.
+
+Upload start → backend creëert analysis_job.
+
+UI toont status: “Uploading → Transcribing → Segmenting → Evaluating → Ready”.
+
+Resultaatpagina met:
+
+KPI’s (EPIC coverage, techniek-score, gemiste momenten)
+
+Timeline met transcript + labels
+
+“Top 5 gemiste kansen” (met concrete betere vraag)
+
+Export (Markdown/PDF)
+
+Flow B — Live
+
+User vinkt toestemming aan + selecteert microfoon.
+
+Live sessie start → UI toont realtime transcript (rolling) + tips.
+
+Tips verschijnen als “cards/toasts” (max 1-2 regels) met label waarom (bv. “Impact gemist”, “Commitment nodig”, “Twijfel-signaal”).
+
+Einde sessie: “Sla op als analyse” → maakt dezelfde rapportage als upload.
+
+3) Kernfunctionaliteit — Analyse-pipeline
+3.1 Pipeline stappen (Upload én Live)
+
+Transcribe
+
+Upload: volledige transcriptie.
+
+Live: streaming/near-real-time transcriptie in chunks (bv. 3–5s).
+
+Diarization / speaker roles
+
+Minimaal: 2 speakers (SELLER vs CUSTOMER).
+
+MVP: heuristiek + simpele diarization (of user kiest “ik ben verkoper” en rest = klant).
+
+Later: echte diarization.
+
+Turn building
+
+Zet transcript om in turns:
+
+customer_message gevolgd door seller_message
+
+Timestamp ranges per turn
+
+Detectie & evaluatie per seller-turn
+
+Per turn: detecteer maximaal 1–2 technieken.
+
+Score per techniek: perfect | goed | bijna | gemist.
+
+Altijd JSON-output per turn (machine-readable).
+
+Gebruik SSOT-stappenplan/voorbeelden als criteria.
+
+Customer signal / houding classificatie
+
+Per customer-turn: label (vraag/twijfel/bezwaar/uitstel/…).
+
+Koppel “recommended technique ids” voor next-best actions.
+
+EPIC coverage & gemiste kansen
+
+EPIC coverage:
+
+Explore: welke thema’s (Bron/Motivatie/Ervaring/Verwachtingen/Alternatieven/Budget/Timing/Beslissingscriteria) kwamen aan bod?
+
+Probe: hypothetisch / spanning gecreëerd?
+
+Impact: consequenties gekwantificeerd?
+
+Commit: expliciete bevestiging?
+
+Gemiste kansen:
+
+Als customer houding = twijfel/bezwaar en seller reageert zonder juiste aanpak → markeer “gemist moment”.
+
+Als er wel voordeel is genoemd maar geen baat (persoonlijk effect) → markeer.
+
+Report generator
+
+Samenvatting + “wat ging goed / wat niet”.
+
+Citeer letterlijk transcript-fragmenten bij bevindingen.
+
+Geef 1–3 micro-experimenten (“volgende keer zeg exact dit…”).
+
+Voor live tips: korte output (max tokens/len) met directe volgende vraag.
+
+Richtlijn: live tips moeten ultrakort zijn en niet “rapport-achtig”.
+Asynchroon mag uitgebreid.
+
+4) Align met jullie bestaande EPIC/SSOT aanpak (belangrijk)
+
+Implementeer evaluatie strict op SSOT + evaluator overlay:
+
+Technieken-SSOT: techniekbeschrijving + stappenplan + voorbeelden (EPIC structuur Explore/Probe/Impact/Commit; closing; bezwaren). 
+
+technieken_index.v1.0.1
+
+Evaluator overlay: prompt-template + rubric (perfect/goed/bijna/gemist) + JSON schema output; maximaal 2 technieken per turn. 
+
+evaluator_overlay
+
+Detectors overlay: lexicon/patterns voor detectie (optioneel als extra heuristiek vóór LLM-evaluator). 
+
+detectors.v6.2
+
+Customer dynamics: (rapport/valueTension/commitReadiness) kan worden bijgewerkt op basis van evaluatiekwaliteit en EPIC fase—handig voor “live tips” prioritering. 
+
+customer_dynamics
+
+Feedback-stijl (debrief): citeer transcript, stel reflectieve vraag, geef micro-experiment. 
+
+feedback_prompt
+
+AI parameters: hanteer “kort” voor live tips (lage tokenlimiet), ruimer voor rapport. 
+
+global_config
+
+V2 architectuur: hergebruik concepten “rag-service / evaluator / engines” waar mogelijk. 
+
+HUGO_V2_ARCHITECTUUR
+
+5) Datamodel (MVP; SQLite/Postgres)
+
+Maak tabellen (Prisma aanbevolen):
+
+conversations
+
+id (uuid)
+
+user_id
+
+title
+
+type: upload | live
+
+consent_confirmed: boolean
+
+consent_note: text (optioneel)
+
+created_at
+
+recordings
+
+id
+
+conversation_id
+
+file_path / storage_key
+
+mime_type
+
+duration_seconds
+
+size_bytes
+
+transcripts
+
+id
+
+conversation_id
+
+language
+
+raw_text (optioneel)
+
+segments_json (timestamps, speaker labels)
+
+turns
+
+id
+
+conversation_id
+
+idx
+
+start_ms / end_ms
+
+speaker: customer | seller
+
+text
+
+evaluations
+
+id
+
+conversation_id
+
+turn_idx (seller turn)
+
+techniques_json: [{id, naam, quality, stappen_gevolgd[]}]
+
+overall_quality
+
+rationale
+
+created_at
+
+signals
+
+id
+
+conversation_id
+
+turn_idx (customer turn)
+
+houding: vraag | twijfel | bezwaar | uitstel | ...
+
+confidence
+
+recommended_technique_ids[]
+
+insights
+
+id
+
+conversation_id
+
+epic_coverage_json
+
+missed_opportunities_json
+
+summary_markdown
+
+live_sessions (alleen live)
+
+id
+
+conversation_id
+
+status
+
+started_at / ended_at
+
+6) API’s (REST + WebSocket)
+6.1 Upload analyse
+
+POST /api/conversations
+body: { title, type, consent_confirmed } → returns {conversationId}
+
+POST /api/conversations/:id/upload (multipart)
+→ returns {jobId}
+
+GET /api/jobs/:jobId
+→ { status, progress, step }
+
+GET /api/conversations/:id/results
+→ { transcript, timeline, evaluations, insights }
+
+6.2 Live analyse
+
+POST /api/live/start
+body: { title, consent_confirmed } → { liveSessionId, conversationId, wsUrl }
+
+WebSocket events:
+
+client → server: audio_chunk (binary) + metadata
+
+server → client:
+
+partial_transcript
+
+final_transcript_segment
+
+tip { text, reason, technique_hint?, severity }
+
+status
+
+POST /api/live/stop → finaliseer & start “report job”
+
+GET /api/conversations/:id/results (zelfde als upload)
+
+7) LLM prompts (MVP)
+
+A) Turn evaluator prompt
+Gebruik het evaluator overlay format: strikt JSON, max 2 technieken per turn, score rubric. 
+
+evaluator_overlay
+
+B) Coach report prompt
+Input: samengevoegde evaluaties + gemiste kansen + quotes.
+Output: markdown met:
+
+Wat ging goed (3 bullets, met quotes)
+
+Wat ging mis / gemist (3 bullets, met quotes)
+
+EPIC diagnose (kort)
+
+3 micro-experimenten (ultra concreet)
+Stijl: niet schools, wel coachend en concreet. 
+
+feedback_prompt
+
+C) Live tip prompt
+Input: laatste customer+seller uiting + huidige EPIC state (wat al gedaan is).
+Output: 1 tip (max 140 tokens), in NL, vorm:
+
+“Zeg nu: ‘…?’”
+
+“Doel: … (Probe/Impact/Commit)”
+
+Gebruik lage outputlimieten voor live tips. 
+
+global_config
+
+8) Non-functional requirements
+
+Privacy: toon expliciete toestemmingstekst + block zonder consent.
+
+Security: uploads alleen voor ingelogde user; signed URLs of auth middleware.
+
+Data retention: MVP: “Delete conversation” endpoint (verwijdert recording + transcript + analyses).
+
+Latency (live): tips max om de paar seconden (niet elke token).
+
+Observability: job logs + error states per stap.
+
+9) Tech stack (Replit prototype)
+
+Aanbevolen stack in Replit
+
+Frontend: React + Vite + Tailwind
+
+Backend: Node + Express (TypeScript)
+
+WebSocket: ws
+
+DB: SQLite + Prisma
+
+Uploads: lokaal filesystem in /uploads (MVP)
+
+Speech-to-text: OpenAI (Whisper) of equivalent (via env var)
+
+LLM: OpenAI Chat Completions (via env var)
+
+ENV vars
+
+OPENAI_API_KEY=...
+
+DATABASE_URL=file:./dev.db
+
+10) Acceptance criteria (Definition of Done)
+
+Upload:
+
+ User kan audio/video uploaden (≤50MB) na consent.
+
+ Job status zichtbaar (stappen/progress).
+
+ Resultaat toont transcript + timeline + technieken per turn + gemiste EPIC-momenten.
+
+ Export naar Markdown/PDF (minstens Markdown in MVP).
+
+Live:
+
+ User kan live sessie starten na consent.
+
+ Realtime transcript verschijnt.
+
+ Live tips verschijnen minstens elke ~10–20s wanneer relevant (niet spammen).
+
+ Stop → sessie wordt opgeslagen als analyse met rapport.
+
+Extra: hoe je “gemiste kansen” concreet detecteert (MVP heuristiek)
+
+Gebruik customer-signal + seller-evaluatie:
+
+Als klant een twijfel signaleert en seller-turn bevat geen “analyse van twijfel” + geen impact/commit → missed_opportunity: "Twijfel niet uitgepakt".
+
+Als klant een bezwaar geeft en seller-turn gaat meteen in “argumenteren” zonder eerst te analyseren/isoleren → missed_opportunity: "Bezwarenstappen overgeslagen".
+
+Als seller een voordeel noemt maar nergens “wat betekent dat voor u?” of impact/baat bevestigt → missed_opportunity: "Baat niet gemaakt".
+
+Als Explore-thema dekking laag is (bv. geen budget/timing/criteria) en gesprek gaat naar aanbevelen/closing → missed_opportunity: "Te vroeg naar fase 3/4".
+
+Dit hoeft niet perfect te zijn in MVP; het moet bruikbaar zijn en later verfijnd kunnen worden.
