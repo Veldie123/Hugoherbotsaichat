@@ -1,5 +1,4 @@
 import { AppLayout } from "./AppLayout";
-import { HistorySidebar } from "./HistorySidebar";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -318,17 +317,6 @@ export function UploadAnalysis({
   return (
     <AppLayout currentPage="upload-analysis" navigate={navigate} isAdmin={isAdmin}>
       <div className="flex h-[calc(100vh-4rem)]">
-        {/* History Sidebar - compact by default, expands on hover */}
-        <HistorySidebar
-          type="analysis"
-          items={[
-            { id: "1", techniqueNumber: "1.1", title: "Demo presentatie voor Acme Corp", score: 56, date: "2026-01-27" },
-            { id: "2", techniqueNumber: "2.1.1", title: "Follow-up meeting DataDrive NL", score: 90, date: "2026-01-23" },
-            { id: "3", techniqueNumber: "1.1", title: "Discovery call met Digital Solutions", score: 79, date: "2026-01-19" },
-          ]}
-          onSelectItem={(id) => console.log("Selected analysis:", id)}
-          onOpenFullView={() => navigate?.("analysis")}
-        />
         
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
         {/* Header */}
