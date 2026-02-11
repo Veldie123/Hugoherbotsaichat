@@ -17,7 +17,7 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
 - **Design Charter:** Comprehensive design guidelines, color codes, and component styling are documented in `docs/DESIGN_CHARTER.md`.
 - **Color Schemes:** Admin view uses purple with green accents; user view uses dark navy blue with primary accents and phase-specific colors for E.P.I.C content.
 - **Component Design:** Reusable UI components follow a `shadcn`-style approach for consistency.
-- **Navigation:** Simplified to 'Gespreksanalyse' and 'Hugo a.i.'.
+- **Navigation:** Single unified sidebar (Grok/ChatGPT-style) with main nav items (Hugo AI, Gespreksanalyse) and contextual sub-items (recent history) that appear when a section is active. Replaces the old two-sidebar pattern. HistorySidebar component is deprecated; history is now integrated into AppLayout.
 - **Multi-Modal Chat Interface:** Supports chat, audio, and video interactions with distinct visual feedback.
 - **Piano Concept (ChatGPT-style UX):** Features a blank slate on first visit, personalized greetings, and an EPIC sidebar hidden by default. The chat interface (`talk-to-hugo`) is the central hub post-login/onboarding.
 - **Cross-Platform Activity Tracking:** An API endpoint (`/api/v2/user/activity-summary`) fetches user activity from Supabase, with a local storage fallback.
