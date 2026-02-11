@@ -480,7 +480,7 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                       </div>
                     )}
 
-                    {/* Debug toggle */}
+                    {isAdmin && (
                     <div className="ml-11">
                       <button
                         onClick={() => toggleDebug(lineId)}
@@ -711,6 +711,7 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                         </Card>
                       )}
                     </div>
+                    )}
                   </div>
                 );
               })}
