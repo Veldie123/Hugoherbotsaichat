@@ -168,7 +168,7 @@ export function AppLayout({
                   onClick={() => handleNavigate(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                     isActive
-                      ? "bg-[#1B2A4A] text-white font-semibold"
+                      ? "bg-[#4F7396] text-white font-semibold"
                       : "text-hh-text hover:bg-hh-ui-50"
                   }`}
                 >
@@ -270,7 +270,7 @@ export function AppLayout({
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
-                        ? "bg-[#1B2A4A] text-white font-semibold"
+                        ? "bg-[#4F7396] text-white font-semibold"
                         : "text-hh-text hover:bg-hh-ui-50"
                     }`}
                   >

@@ -179,7 +179,7 @@ export async function buildTurns(segments: WhisperSegment[]): Promise<Transcript
 
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-5.1',
         messages: [
           {
             role: 'system',
@@ -311,7 +311,7 @@ export async function evaluateSellerTurns(turns: TranscriptTurn[]): Promise<Turn
 
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-5.1',
         messages: [
           {
             role: 'system',
@@ -423,7 +423,7 @@ export async function detectCustomerSignals(turns: TranscriptTurn[]): Promise<Cu
     if (!matchedByKeyword && turn.text.length > 20) {
       try {
         const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'gpt-5.1',
           messages: [
             {
               role: 'system',
@@ -695,7 +695,7 @@ Klant: "${m.customerSaid.substring(0, 150)}"`).join('\n\n');
     if (batchPrompt.length > 10) {
       try {
         const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'gpt-5.1',
           messages: [
             {
               role: 'system',
