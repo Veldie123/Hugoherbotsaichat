@@ -239,9 +239,9 @@ export function UploadAnalysis({
   };
 
   const isValidFileSize = (file: File) => {
-    const maxSize = 50 * 1024 * 1024; // 50MB limit (Supabase bucket limit)
+    const maxSize = 25 * 1024 * 1024; // 25MB limit (platform proxy limit)
     if (file.size > maxSize) {
-      setUploadError(`Bestand is te groot. Maximum: 50MB (jouw bestand: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+      setUploadError(`Bestand is te groot. Maximum: 25MB (jouw bestand: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
       return false;
     }
     return true;
@@ -450,7 +450,7 @@ export function UploadAnalysis({
                       </span>
                     </p>
                     <p className="text-[14px] leading-[20px] text-hh-muted">
-                      Audio: MP3, WAV, M4A • Video: MP4, MOV • Max 50MB
+                      Audio: MP3, WAV, M4A • Video: MP4, MOV • Max 25MB
                     </p>
                   </div>
                 </div>

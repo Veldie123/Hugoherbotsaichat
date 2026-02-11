@@ -128,7 +128,8 @@ const upload = multer({
 
 const app = express();
 
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 // CORS headers for development
 app.use((req, res, next) => {
