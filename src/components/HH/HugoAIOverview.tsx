@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -128,6 +128,25 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  const demoSessions: Session[] = useMemo(() => {
+    const demoTranscript = [
+      { speaker: "AI Coach", time: "00:00", text: "Goedemiddag! Vandaag gaan we oefenen met verkooptechnieken. Ben je er klaar voor?" },
+      { speaker: "Verkoper", time: "00:05", text: "Ja, ik ben er klaar voor. Ik wil graag beter worden in het stellen van de juiste vragen." },
+      { speaker: "AI Coach", time: "00:12", text: "Perfect! Stel je voor: je belt een prospect die interesse heeft getoond in jullie software. Begin maar met je opening." },
+      { speaker: "Verkoper", time: "00:25", text: "Goedemiddag, u spreekt met Jan. Ik bel naar aanleiding van uw interesse in onze oplossing. Heeft u even tijd?" },
+      { speaker: "AI Coach", time: "00:35", text: "Goede opening! Je hebt direct de reden van je call benoemd. Probeer nu een open vraag te stellen om de situatie te verkennen." },
+    ];
+    const today = new Date();
+    return [
+      { id: "1", nummer: "1.2", naam: "Gentleman's agreement", fase: "1", type: "ai-chat" as SessionType, score: 55, quality: "needs-improvement" as const, duration: "12:30", date: new Date(today.getTime() - 9 * 86400000).toISOString().split('T')[0], time: "14:30", transcript: demoTranscript },
+      { id: "2", nummer: "1.4", naam: "Instapvraag", fase: "1", type: "ai-audio" as SessionType, score: 72, quality: "good" as const, duration: "8:45", date: new Date(today.getTime() - 10 * 86400000).toISOString().split('T')[0], time: "10:15", transcript: demoTranscript },
+      { id: "3", nummer: "2.1.1", naam: "Koopstijl herkennen", fase: "2", type: "ai-chat" as SessionType, score: 88, quality: "excellent" as const, duration: "15:20", date: new Date(today.getTime() - 12 * 86400000).toISOString().split('T')[0], time: "09:00", transcript: demoTranscript },
+      { id: "4", nummer: "2.1.2", naam: "Situatievragen stellen", fase: "2", type: "ai-video" as SessionType, score: 65, quality: "good" as const, duration: "10:10", date: new Date(today.getTime() - 15 * 86400000).toISOString().split('T')[0], time: "16:45", transcript: demoTranscript },
+      { id: "5", nummer: "1.1", naam: "Opening & rapport", fase: "1", type: "ai-chat" as SessionType, score: 91, quality: "excellent" as const, duration: "18:00", date: new Date(today.getTime() - 20 * 86400000).toISOString().split('T')[0], time: "11:30", transcript: demoTranscript },
+      { id: "6", nummer: "3.1", naam: "Oplossing presenteren", fase: "3", type: "upload-audio" as SessionType, score: 47, quality: "needs-improvement" as const, duration: "22:15", date: new Date(today.getTime() - 25 * 86400000).toISOString().split('T')[0], time: "13:00", transcript: demoTranscript },
+    ];
+  }, []);
+
   useEffect(() => {
     async function fetchSessions() {
       try {
@@ -137,31 +156,34 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         if (!response.ok) throw new Error('Failed to fetch sessions');
         const data = await response.json();
         
-        const mappedSessions: Session[] = data.sessions.map((s: any) => ({
-          id: s.id,
-          nummer: s.nummer || s.techniqueId || '1.1',
-          naam: s.naam || s.techniqueName || 'Techniek',
-          fase: String(s.fase || '1'),
-          type: s.type || 'ai-chat' as SessionType,
-          score: s.score || 0,
-          quality: s.quality || 'needs-improvement',
-          duration: s.duration || '0:00',
-          date: s.date || new Date().toISOString().split('T')[0],
-          time: s.time,
-          transcript: s.transcript || []
-        }));
-        
-        setSessions(mappedSessions);
+        if (data.sessions && data.sessions.length > 0) {
+          const mappedSessions: Session[] = data.sessions.map((s: any) => ({
+            id: s.id,
+            nummer: s.nummer || s.techniqueId || '1.1',
+            naam: s.naam || s.techniqueName || 'Techniek',
+            fase: String(s.fase || '1'),
+            type: s.type || 'ai-chat' as SessionType,
+            score: s.score || 0,
+            quality: s.quality || 'needs-improvement',
+            duration: s.duration || '0:00',
+            date: s.date || new Date().toISOString().split('T')[0],
+            time: s.time,
+            transcript: s.transcript || []
+          }));
+          setSessions(mappedSessions);
+        } else {
+          setSessions(demoSessions);
+        }
       } catch (err: any) {
         console.error('Error fetching sessions:', err);
-        setError(err.message);
+        setSessions(demoSessions);
       } finally {
         setLoading(false);
       }
     }
     
     fetchSessions();
-  }, []);
+  }, [demoSessions]);
 
   const openTranscript = (session: Session) => {
     const transcriptData: TranscriptSession = {
