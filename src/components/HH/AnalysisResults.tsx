@@ -20,7 +20,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 interface AnalysisResultsProps {
   navigate?: (page: string, data?: any) => void;
@@ -447,7 +446,42 @@ export function AnalysisResults({
   }
 
   const { conversation, transcript, evaluations, signals, insights } = result;
-  const { phaseCoverage, missedOpportunities, strengths, improvements, microExperiments, overallScore } = insights;
+  const { phaseCoverage, missedOpportunities, strengths: rawStrengths, improvements: rawImprovements, microExperiments, overallScore } = insights;
+
+  const strengths = rawStrengths.length > 0 ? rawStrengths : evaluations
+    .filter(e => e.techniques.some(t => t.quality === 'perfect' || t.quality === 'goed'))
+    .slice(0, 5)
+    .map(e => {
+      const bestTech = e.techniques.find(t => t.quality === 'perfect') || e.techniques.find(t => t.quality === 'goed');
+      const turn = transcript.find(t => t.idx === e.turnIdx);
+      return {
+        text: `${bestTech?.id} ${bestTech?.naam} – ${bestTech?.quality === 'perfect' ? 'perfect' : 'goed'} toegepast`,
+        quote: turn?.text?.substring(0, 120) || '',
+        turnIdx: e.turnIdx,
+      };
+    });
+
+  const improvements = rawImprovements.length > 0 ? rawImprovements : [
+    ...evaluations
+      .filter(e => e.techniques.some(t => t.quality === 'bijna' || t.quality === 'gemist'))
+      .slice(0, 3)
+      .map(e => {
+        const weakTech = e.techniques.find(t => t.quality === 'gemist') || e.techniques.find(t => t.quality === 'bijna');
+        const turn = transcript.find(t => t.idx === e.turnIdx);
+        return {
+          text: `${weakTech?.id} ${weakTech?.naam} – kan beter worden toegepast`,
+          quote: turn?.text?.substring(0, 120) || '',
+          turnIdx: e.turnIdx,
+          betterApproach: '',
+        };
+      }),
+    ...missedOpportunities.slice(0, 2).map(opp => ({
+      text: opp.description,
+      quote: opp.sellerSaid?.substring(0, 120) || '',
+      turnIdx: opp.turnIdx,
+      betterApproach: opp.betterQuestion,
+    })),
+  ].slice(0, 5);
 
   const phaseScores = [
     { phase: 1, label: 'Fase 1', sublabel: 'Opening', score: phaseCoverage?.phase1?.score ?? 0, data: phaseCoverage?.phase1 },
@@ -509,14 +543,6 @@ export function AnalysisResults({
                   {ps.score}%
                 </span>
                 <Progress value={ps.score} className="h-1.5 mt-2" />
-                {ps.phase === 2 && phaseCoverage?.phase2 && (
-                  <div className="mt-2 flex justify-center gap-2 text-[10px] text-hh-muted">
-                    <span>E:{phaseCoverage.phase2.explore?.score ?? 0}%</span>
-                    <span>P:{phaseCoverage.phase2.probe?.score ?? 0}%</span>
-                    <span>I:{phaseCoverage.phase2.impact?.score ?? 0}%</span>
-                    <span>C:{phaseCoverage.phase2.commit?.score ?? 0}%</span>
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -529,14 +555,27 @@ export function AnalysisResults({
           </div>
         </Card>
 
-        <Tabs value={activeTab} onValueChange={(v: string) => setActiveTab(v as "overview" | "timeline" | "transcript")}>
-          <TabsList className="bg-hh-ui-50">
-            <TabsTrigger value="overview">Overzicht</TabsTrigger>
-            <TabsTrigger value="timeline">Transcript + Evaluatie</TabsTrigger>
-            <TabsTrigger value="transcript">Gemiste Kansen</TabsTrigger>
-          </TabsList>
+        <div className="flex gap-2 border-b border-hh-border pb-0">
+          {[
+            { value: 'overview', label: 'Overzicht' },
+            { value: 'timeline', label: 'Transcript + Evaluatie' },
+            { value: 'transcript', label: 'Gemiste Kansen' },
+          ].map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value as any)}
+              className={`px-4 py-2.5 text-[14px] font-medium rounded-t-lg transition-colors ${
+                activeTab === tab.value
+                  ? 'bg-[#1B2B4D] text-white'
+                  : 'text-hh-muted hover:text-hh-text hover:bg-hh-ui-100'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          <TabsContent value="overview" className="mt-6 space-y-6">
+          {activeTab === 'overview' && (<div className="mt-6 space-y-6">
             <div className="grid sm:grid-cols-2 gap-6">
               <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
                 <h4 className="text-hh-text mb-4 flex items-center gap-2">
@@ -639,34 +678,14 @@ export function AnalysisResults({
                           ))}
                         </div>
                       )}
-                      {ps.phase === 2 && phaseCoverage?.phase2 && (
-                        <div className="mt-3 pt-2 border-t border-current/10 grid grid-cols-4 gap-2 text-center">
-                          <div>
-                            <p className="text-[10px] text-hh-muted">Explore</p>
-                            <p className={`text-[14px] font-semibold ${getScoreColor(phaseCoverage.phase2.explore?.score ?? 0)}`}>{phaseCoverage.phase2.explore?.score ?? 0}%</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-hh-muted">Probe</p>
-                            <p className={`text-[14px] font-semibold ${getScoreColor(phaseCoverage.phase2.probe?.score ?? 0)}`}>{phaseCoverage.phase2.probe?.score ?? 0}%</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-hh-muted">Impact</p>
-                            <p className={`text-[14px] font-semibold ${getScoreColor(phaseCoverage.phase2.impact?.score ?? 0)}`}>{phaseCoverage.phase2.impact?.score ?? 0}%</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-hh-muted">Commit</p>
-                            <p className={`text-[14px] font-semibold ${getScoreColor(phaseCoverage.phase2.commit?.score ?? 0)}`}>{phaseCoverage.phase2.commit?.score ?? 0}%</p>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
               </div>
             </Card>
-          </TabsContent>
+          </div>)}
 
-          <TabsContent value="timeline" className="mt-6">
+          {activeTab === 'timeline' && (<div className="mt-6">
             <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
               <h3 className="text-hh-text mb-2">Transcript met EPIC Evaluatie</h3>
               <p className="text-[14px] leading-[20px] text-hh-muted mb-6">
@@ -703,9 +722,9 @@ export function AnalysisResults({
                             <Badge variant="outline" className={turn.speaker === 'seller' ? 'border-hh-primary text-hh-primary' : ''}>
                               {turn.speaker === 'seller' ? 'Verkoper' : 'Klant'}
                             </Badge>
-                            {signal && signal.houding !== 'neutraal' && (
-                              <Badge className={`${getSignalLabel(signal.houding).color} text-[11px]`}>
-                                {getSignalLabel(signal.houding).label}
+                            {turn.speaker === 'customer' && (
+                              <Badge className={`${getSignalLabel(signal?.houding || 'neutraal').color} text-[11px]`}>
+                                {getSignalLabel(signal?.houding || 'neutraal').label}
                               </Badge>
                             )}
                             {currentPhase && (
@@ -723,7 +742,7 @@ export function AnalysisResults({
                                 const badge = getQualityBadge(tech.quality);
                                 return (
                                   <Badge key={i} variant="outline" className={`${badge.color} text-[11px]`}>
-                                    {tech.quality === 'gemist' ? '✗' : '✓'} {tech.id} {tech.naam} ({tech.score}%)
+                                    {tech.quality === 'gemist' ? '✗' : '✓'} {tech.id} {tech.naam}
                                   </Badge>
                                 );
                               })}
@@ -736,9 +755,9 @@ export function AnalysisResults({
                 })()}
               </div>
             </Card>
-          </TabsContent>
+          </div>)}
 
-          <TabsContent value="transcript" className="mt-6 space-y-6">
+          {activeTab === 'transcript' && (<div className="mt-6 space-y-6">
             <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
               <h3 className="text-hh-text mb-2 flex items-center gap-2">
                 <Target className="w-5 h-5 text-hh-destructive" />
@@ -801,8 +820,7 @@ export function AnalysisResults({
                 </div>
               )}
             </Card>
-          </TabsContent>
-        </Tabs>
+          </div>)}
       </div>
     </AppLayout>
   );

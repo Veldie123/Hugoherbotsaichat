@@ -408,7 +408,7 @@ export function AppLayout({
                 className="h-10 w-10 relative"
                 onClick={() => setNotifOpen(!notifOpen)}
               >
-                <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'text-red-500' : 'text-hh-ink'}`} />
+                <Bell className="w-5 h-5 text-hh-ink" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold leading-none shadow-sm">
                     {unreadCount > 9 ? "9+" : unreadCount}

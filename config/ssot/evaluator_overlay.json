@@ -88,7 +88,7 @@
     "1.3": {
       "eval_type": "stappenplan_check",
       "ssot_fields": ["stappenplan", "voorbeeld"],
-      "eval_note": "Check bondigheid firmavoorstelling tegen voorbeeld"
+      "eval_note": "1.3 Firmavoorstelling vereist dat de verkoper DAADWERKELIJK de firma presenteert met concrete feiten: naam bedrijf, wat ze doen, referenties, resultaten. Alleen het AANKONDIGEN dat men de firma zal voorstellen ('ik stel voor dat ik kort mezelf als ook de firma voorstel') is GEEN firmavoorstelling maar hoort bij 1.2 Gentleman's Agreement. Detecteer 1.3 ALLEEN als de verkoper echte bedrijfsinformatie deelt."
     },
     "1.4": {
       "eval_type": "stappenplan_check",
