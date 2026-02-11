@@ -4,21 +4,16 @@ import {
   Flag,
   Clock,
   Calendar,
-  Video,
   FileAudio,
-  MessageSquare,
   Mic,
   CheckCircle2,
   AlertTriangle,
   ThumbsUp,
-  Lightbulb,
   List,
   LayoutGrid,
   MoreVertical,
   Trash2,
-  FileText,
   BarChart3,
-  Sparkles,
   Eye,
   Upload as UploadIcon,
   XCircle,
@@ -27,7 +22,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { CustomCheckbox } from "../ui/custom-checkbox";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -47,53 +42,101 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { TranscriptDialog, TranscriptSession } from "./TranscriptDialog";
 
 interface AdminUploadManagementProps {
   navigate?: (page: string) => void;
 }
 
-interface ConversationMessage {
-  timestamp: string;
-  speaker: "ai" | "user";
-  speakerName: string;
-  message: string;
-}
-
 interface UploadItem {
-  id: number;
+  id: string;
   user: string;
   userEmail: string;
   userInitials: string;
-  workspace: string;
-  techniqueNumber: string;
-  techniqueName: string;
-  fase: string;
-  type: "Audio" | "Video" | "Chat";
+  title: string;
+  type: "Audio";
   duration: string;
-  score: number;
-  quality: "Excellent" | "Good" | "Needs Work";
+  score: number | null;
+  quality: "Excellent" | "Good" | "Needs Work" | "Pending";
+  status: string;
   date: string;
   time: string;
-  flagged: boolean;
-  transcript?: ConversationMessage[];
-  strengths?: string[];
-  improvements?: string[];
+  techniquesFound: string[];
 }
 
 export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterQuality, setFilterQuality] = useState("all");
-  const [filterType, setFilterType] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
-  const [transcriptSession, setTranscriptSession] = useState<TranscriptSession | null>(null);
-  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const selectionMode = selectedIds.length > 0;
+
+  useEffect(() => {
+    const fetchAnalyses = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/v2/analysis/list');
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+
+        const mapped: UploadItem[] = (data.analyses || []).map((a: any) => {
+          const score = a.overallScore ?? null;
+          const quality = score === null ? 'Pending' :
+            score >= 80 ? 'Excellent' :
+            score >= 60 ? 'Good' : 'Needs Work';
+          const createdAt = a.createdAt ? new Date(a.createdAt) : new Date();
+          const initials = (a.userId || 'AN')
+            .split(/[_@.-]/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((s: string) => s[0]?.toUpperCase() || '')
+            .join('');
+
+          return {
+            id: a.id,
+            user: a.userId || 'Anoniem',
+            userEmail: a.userId || '',
+            userInitials: initials || 'AN',
+            title: a.title || 'Untitled',
+            type: 'Audio' as const,
+            duration: a.durationMs
+              ? `${Math.floor(a.durationMs / 60000)}:${String(Math.floor((a.durationMs % 60000) / 1000)).padStart(2, '0')}`
+              : '—',
+            score,
+            quality,
+            status: a.status,
+            date: createdAt.toLocaleDateString('nl-NL'),
+            time: createdAt.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
+            techniquesFound: a.techniquesFound || [],
+          };
+        });
+
+        setUploads(mapped);
+      } catch (err: any) {
+        console.error('Failed to fetch analyses:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalyses();
+    const interval = setInterval(fetchAnalyses, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const stats = {
+    totalAnalyses: uploads.length,
+    excellentQuality: uploads.filter(u => u.quality === 'Excellent').length,
+    avgScore: uploads.filter(u => u.score !== null).length > 0
+      ? Math.round(uploads.filter(u => u.score !== null).reduce((sum, u) => sum + (u.score || 0), 0) / uploads.filter(u => u.score !== null).length)
+      : 0,
+    needsWork: uploads.filter(u => u.quality === 'Needs Work').length,
+  };
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -116,182 +159,30 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
   };
 
   const openTranscript = (upload: UploadItem) => {
-    const transcriptData: TranscriptSession = {
-      id: upload.id,
-      userName: upload.user,
-      userWorkspace: upload.workspace,
-      techniqueNumber: upload.techniqueNumber,
-      techniqueName: upload.techniqueName,
-      type: upload.type,
-      date: upload.date,
-      time: upload.time,
-      duration: upload.duration,
-      score: upload.score,
-      quality: upload.quality,
-      transcript: upload.transcript?.map(msg => ({
-        speaker: msg.speakerName,
-        time: msg.timestamp,
-        text: msg.message,
-      })) || [],
-      strengths: upload.strengths,
-      improvements: upload.improvements,
-    };
-    setTranscriptSession(transcriptData);
-    setTranscriptDialogOpen(true);
+    if (upload.status === 'completed') {
+      sessionStorage.setItem('analysisId', upload.id);
+      navigate?.('analysis-results');
+    }
   };
 
-  const toggleSelectId = (id: number) => {
+  const toggleSelectId = (id: string) => {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
     );
   };
 
-  const uploads: UploadItem[] = [
-    {
-      id: 1,
-      user: "Jan de Vries",
-      userEmail: "jan@techcorp.nl",
-      userInitials: "JdV",
-      workspace: "TechCorp BV",
-      techniqueNumber: "2.1",
-      techniqueName: "SPIN Questioning",
-      fase: "Ontdekkingsfase",
-      type: "Audio",
-      duration: "18:45",
-      score: 88,
-      quality: "Excellent",
-      date: "2025-01-15",
-      time: "14:23",
-      flagged: false,
-      transcript: [
-        { timestamp: "00:00", speaker: "ai", speakerName: "AI Coach", message: "Goedemiddag! Vandaag gaan we oefenen met SPIN vragen. Ben je er klaar voor?" },
-        { timestamp: "00:05", speaker: "user", speakerName: "Jan", message: "Ja, ik ben er klaar voor. Ik wil graag beter worden in het stellen van de juiste vragen." },
-        { timestamp: "00:12", speaker: "ai", speakerName: "AI Coach", message: "Perfect! Stel je voor: je belt een prospect die interesse heeft getoond in jullie software. Begin maar met je opening." },
-        { timestamp: "00:20", speaker: "user", speakerName: "Jan", message: "Goedemiddag, met Jan van TechCorp. Ik bel naar aanleiding van uw interesse in onze CRM oplossing. Klopt het dat jullie momenteel uitdagingen ervaren met het centraliseren van klantinformatie?" },
-        { timestamp: "00:35", speaker: "ai", speakerName: "AI Coach", message: "Goede opening! Je gaat direct in op hun situatie. Ja, dat klopt. We hebben inderdaad moeite met het centraliseren van klantinformatie." },
-        { timestamp: "00:45", speaker: "user", speakerName: "Jan", message: "Wat zijn de gevolgen hiervan voor jullie team? Merken jullie dat bepaalde processen hierdoor trager verlopen?" },
-        { timestamp: "00:55", speaker: "ai", speakerName: "AI Coach", message: "Uitstekende Problem vraag! Ja, onze salesmedewerkers verliezen veel tijd met zoeken naar klantgeschiedenis. Soms bellen we zelfs dezelfde klant twee keer." },
-      ],
-      strengths: ["Goede opening", "Sterke SPIN vragen", "Actief luisteren"],
-      improvements: ["Meer doorvragen na antwoord", "Pauzes inbouwen"],
-    },
-    {
-      id: 2,
-      user: "Sarah van Dijk",
-      userEmail: "sarah@growco.nl",
-      userInitials: "SvD",
-      workspace: "GrowCo",
-      techniqueNumber: "4.1",
-      techniqueName: "Objection Handling",
-      fase: "Beslissingsfase",
-      type: "Video",
-      duration: "24:12",
-      score: 76,
-      quality: "Good",
-      date: "2025-01-15",
-      time: "10:45",
-      flagged: false,
-      transcript: [
-        { timestamp: "00:00", speaker: "ai", speakerName: "AI Coach", message: "Vandaag gaan we bezwaren oefenen. Ik zal een prospect spelen die twijfelt over de prijs." },
-        { timestamp: "00:08", speaker: "user", speakerName: "Sarah", message: "Prima, ik ben benieuwd naar de scenario's." },
-        { timestamp: "00:15", speaker: "ai", speakerName: "AI Coach", message: "Het klinkt goed, maar jullie oplossing is toch wel erg duur vergeleken met de concurrentie..." },
-        { timestamp: "00:25", speaker: "user", speakerName: "Sarah", message: "Ik begrijp dat prijs belangrijk is. Mag ik vragen welke specifieke oplossing u vergelijkt?" },
-      ],
-      strengths: ["Goede vraag bij bezwaar", "Rustige benadering"],
-      improvements: ["Sneller waarde benoemen", "Meer empathie tonen"],
-    },
-    {
-      id: 3,
-      user: "Mark Peters",
-      userEmail: "mark@startup.io",
-      userInitials: "MP",
-      workspace: "ScaleUp BV",
-      techniqueNumber: "1.2",
-      techniqueName: "Gentleman's Agreement",
-      fase: "Openingsfase",
-      type: "Chat",
-      duration: "12:30",
-      score: 68,
-      quality: "Needs Work",
-      date: "2025-01-14",
-      time: "16:20",
-      flagged: true,
-      transcript: [
-        { timestamp: "00:00", speaker: "ai", speakerName: "AI Coach", message: "Laten we de Gentleman's Agreement oefenen voor het begin van een gesprek." },
-        { timestamp: "00:10", speaker: "user", speakerName: "Mark", message: "Oké, waar moet ik op letten?" },
-        { timestamp: "00:18", speaker: "ai", speakerName: "AI Coach", message: "Begin met een duidelijke agenda en vraag commitment van de klant." },
-      ],
-      strengths: ["Bereid om te leren"],
-      improvements: ["Meer structuur in opening", "Agenda duidelijker maken", "Commitment vragen"],
-    },
-    {
-      id: 4,
-      user: "Lisa de Jong",
-      userEmail: "lisa@salesforce.com",
-      userInitials: "LdJ",
-      workspace: "SalesForce NL",
-      techniqueNumber: "2.2",
-      techniqueName: "E.P.I.C Framework",
-      fase: "Ontdekkingsfase",
-      type: "Audio",
-      duration: "21:18",
-      score: 91,
-      quality: "Excellent",
-      date: "2025-01-14",
-      time: "11:30",
-      flagged: false,
-      transcript: [
-        { timestamp: "00:00", speaker: "ai", speakerName: "AI Coach", message: "Vandaag focussen we op het E.P.I.C framework. Klaar om te oefenen?" },
-        { timestamp: "00:05", speaker: "user", speakerName: "Lisa", message: "Absoluut! Ik heb de theorie bestudeerd en wil het nu in praktijk brengen." },
-        { timestamp: "00:12", speaker: "ai", speakerName: "AI Coach", message: "Perfect. Begin maar met de Explore fase." },
-      ],
-      strengths: ["Uitstekende voorbereiding", "Goede structuur", "Duidelijke communicatie"],
-      improvements: ["Iets meer doorvragen"],
-    },
-    {
-      id: 5,
-      user: "Tom Bakker",
-      userEmail: "tom@example.com",
-      userInitials: "TB",
-      workspace: "TechStart",
-      techniqueNumber: "3.1",
-      techniqueName: "Value Proposition",
-      fase: "Aanbevelingsfase",
-      type: "Video",
-      duration: "15:42",
-      score: 72,
-      quality: "Good",
-      date: "2025-01-13",
-      time: "14:10",
-      flagged: true,
-      transcript: [
-        { timestamp: "00:00", speaker: "ai", speakerName: "AI Coach", message: "We gaan werken aan je value proposition. Hoe presenteer je normaal de waarde van je product?" },
-        { timestamp: "00:08", speaker: "user", speakerName: "Tom", message: "Ik begin meestal met de features en dan de voordelen." },
-        { timestamp: "00:15", speaker: "ai", speakerName: "AI Coach", message: "Interessant. Laten we het eens omdraaien: begin met het probleem dat je oplost." },
-      ],
-      strengths: ["Open voor feedback", "Goede basis aanwezig"],
-      improvements: ["Start met probleem, niet features", "Koppel waarde aan klantbehoefte"],
-    },
-  ];
-
-  const stats = {
-    totalAnalyses: 156,
-    excellentQuality: 67,
-    avgScore: 79,
-    needsWork: 23,
-  };
-
   const filteredUploads = uploads.filter((upload) => {
     if (searchQuery && 
         !upload.user.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !upload.techniqueName.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !upload.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !upload.userEmail.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
-    if (filterQuality !== "all" && upload.quality !== filterQuality) {
+    const processingStatuses = ['transcribing', 'analyzing', 'evaluating', 'generating_report'];
+    if (filterStatus === "processing" && !processingStatuses.includes(upload.status)) {
       return false;
     }
-    if (filterType !== "all" && upload.type !== filterType) {
+    if (filterStatus !== "all" && filterStatus !== "processing" && upload.status !== filterStatus) {
       return false;
     }
     return true;
@@ -300,10 +191,12 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
     let comparison = 0;
     switch (sortField) {
       case "techniqueNumber":
-        comparison = a.techniqueNumber.localeCompare(b.techniqueNumber);
+        const aT = a.techniquesFound[0] || '';
+        const bT = b.techniquesFound[0] || '';
+        comparison = aT.localeCompare(bT);
         break;
       case "techniqueName":
-        comparison = a.techniqueName.localeCompare(b.techniqueName);
+        comparison = a.title.localeCompare(b.title);
         break;
       case "user":
         comparison = a.user.localeCompare(b.user);
@@ -312,15 +205,18 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
         comparison = a.type.localeCompare(b.type);
         break;
       case "score":
-        comparison = a.score - b.score;
+        comparison = (a.score || 0) - (b.score || 0);
         break;
       case "duration":
-        const durationA = parseInt(a.duration.split(':')[0]) * 60 + parseInt(a.duration.split(':')[1]);
-        const durationB = parseInt(b.duration.split(':')[0]) * 60 + parseInt(b.duration.split(':')[1]);
-        comparison = durationA - durationB;
+        const parseDur = (d: string) => {
+          const parts = d.split(':');
+          if (parts.length !== 2) return 0;
+          return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        };
+        comparison = parseDur(a.duration) - parseDur(b.duration);
         break;
       case "date":
-        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+        comparison = a.date.localeCompare(b.date);
         break;
     }
     return sortDirection === "asc" ? comparison : -comparison;
@@ -357,6 +253,13 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             Needs Work
           </Badge>
         );
+      case "Pending":
+        return (
+          <Badge className="bg-hh-muted/10 text-hh-muted border-hh-muted/20">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending
+          </Badge>
+        );
       default:
         return null;
     }
@@ -366,10 +269,6 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
     switch (type) {
       case "Audio":
         return <Mic className="w-4 h-4 text-purple-600" />;
-      case "Video":
-        return <Video className="w-4 h-4 text-purple-600" />;
-      case "Chat":
-        return <MessageSquare className="w-4 h-4 text-purple-600" />;
       default:
         return null;
     }
@@ -379,10 +278,6 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
     switch (type) {
       case "Audio":
         return "AI Audio";
-      case "Video":
-        return "AI Video";
-      case "Chat":
-        return "AI Chat";
       default:
         return type;
     }
@@ -490,32 +385,21 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
-                placeholder="Zoek op gebruiker, techniek, email..."
+                placeholder="Zoek op gebruiker, titel, email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Select value={filterType} onValueChange={setFilterType}>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-full lg:w-[180px]">
-                <SelectValue placeholder="Alle Types" />
+                <SelectValue placeholder="Alle Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Types</SelectItem>
-                <SelectItem value="Audio">Audio</SelectItem>
-                <SelectItem value="Video">Video</SelectItem>
-                <SelectItem value="Chat">Chat</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterQuality} onValueChange={setFilterQuality}>
-              <SelectTrigger className="w-full lg:w-[180px]">
-                <SelectValue placeholder="Alle Kwaliteit" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Kwaliteit</SelectItem>
-                <SelectItem value="Excellent">Excellent</SelectItem>
-                <SelectItem value="Good">Good</SelectItem>
-                <SelectItem value="Needs Work">Needs Work</SelectItem>
+                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="completed">Voltooid</SelectItem>
+                <SelectItem value="processing">Verwerken</SelectItem>
+                <SelectItem value="failed">Mislukt</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex gap-2">
@@ -568,7 +452,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                     onClick={() => handleSort("techniqueName")}
                   >
                     <div className="flex items-center gap-2">
-                      Techniek
+                      Titel
                       <SortIcon column="techniqueName" />
                     </div>
                   </th>
@@ -626,7 +510,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                 </tr>
               </thead>
               <tbody>
-                {filteredUploads.map((upload, index) => (
+                {!loading && filteredUploads.map((upload, index) => (
                   <tr
                     key={upload.id}
                     onMouseEnter={() => setHoveredRow(upload.id)}
@@ -646,17 +530,21 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                       ) : <div className="w-4 h-4" />}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge className="bg-purple-600/10 text-purple-600 border-purple-600/20 text-[11px] font-mono">
-                        {upload.techniqueNumber}
-                      </Badge>
+                      {upload.techniquesFound.length > 0 ? (
+                        <Badge className="bg-purple-600/10 text-purple-600 border-purple-600/20 text-[11px] font-mono">
+                          {upload.techniquesFound[0]}
+                        </Badge>
+                      ) : (
+                        <span className="text-[13px] text-hh-muted">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div>
                         <p className="text-[14px] font-medium text-hh-text">
-                          {upload.techniqueName}
+                          {upload.title}
                         </p>
                         <p className="text-[12px] text-hh-muted">
-                          {upload.fase}
+                          {upload.status}
                         </p>
                       </div>
                     </td>
@@ -672,12 +560,9 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                             <p className="text-[14px] font-medium text-hh-text">
                               {upload.user}
                             </p>
-                            {upload.flagged && (
-                              <Flag className="w-3.5 h-3.5 text-red-600" />
-                            )}
                           </div>
                           <p className="text-[12px] text-hh-muted">
-                            {upload.user} • {upload.workspace}
+                            {upload.userEmail}
                           </p>
                         </div>
                       </div>
@@ -692,9 +577,13 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                       <span className="text-[13px] text-hh-text">{upload.duration}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-[14px] font-semibold ${getScoreColor(upload.score)}`}>
-                        {upload.score}%
-                      </span>
+                      {upload.score !== null ? (
+                        <span className={`text-[14px] font-semibold ${getScoreColor(upload.score)}`}>
+                          {upload.score}%
+                        </span>
+                      ) : (
+                        <span className="text-[13px] text-hh-muted">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {getQualityBadge(upload.quality)}
@@ -718,12 +607,6 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                             <Download className="w-4 h-4 mr-2" />
                             Download
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className={upload.flagged ? "text-hh-success" : "text-red-600"}
-                          >
-                            <Flag className="w-4 h-4 mr-2" />
-                            {upload.flagged ? "Unflag" : "Flag for Review"}
-                          </DropdownMenuItem>
                           <DropdownMenuItem className="text-hh-error">
                             <Trash2 className="w-4 h-4 mr-2" />
                             Verwijder
@@ -737,7 +620,14 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             </table>
           </div>
 
-          {filteredUploads.length === 0 && (
+          {loading && (
+            <div className="p-12 text-center">
+              <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-[16px] text-hh-muted">Analyses laden...</p>
+            </div>
+          )}
+
+          {!loading && filteredUploads.length === 0 && (
             <div className="p-12 text-center">
               <UploadIcon className="w-12 h-12 text-hh-muted mx-auto mb-4" />
               <p className="text-[16px] text-hh-muted">
@@ -746,14 +636,6 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             </div>
           )}
         </Card>
-
-        {/* Shared Transcript Dialog */}
-        <TranscriptDialog
-          open={transcriptDialogOpen}
-          onOpenChange={setTranscriptDialogOpen}
-          session={transcriptSession}
-          isAdmin={true}
-        />
       </div>
     </AdminLayout>
   );

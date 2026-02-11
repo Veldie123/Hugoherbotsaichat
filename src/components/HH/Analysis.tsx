@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -31,13 +31,10 @@ import {
   ArrowUp,
   ArrowDown,
   Mic,
-  MessageSquare,
   BarChart2,
-  Video,
 } from "lucide-react";
 
 import { getCodeBadgeColors } from "../../utils/phaseColors";
-import { TranscriptDialog, TranscriptSession } from "./TranscriptDialog";
 
 interface AnalysisProps {
   navigate?: (page: string) => void;
@@ -45,109 +42,78 @@ interface AnalysisProps {
 }
 
 interface ConversationRecord {
-  id: number;
+  id: string;
   title: string;
   date: string;
   duration: string;
-  type: "call" | "meeting" | "demo";
-  prospect: string;
+  type: "audio";
   techniquesUsed: string[];
-  score: number;
-  status: "analyzed" | "pending" | "processing";
+  score: number | null;
+  status: "completed" | "transcribing" | "analyzing" | "evaluating" | "generating_report" | "failed";
+  phaseCoverage: {
+    phase1: number;
+    phase2: number;
+    phase3: number;
+    phase4: number;
+    overall: number;
+  } | null;
 }
 
 export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortField, setSortField] = useState<string | null>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
-  const [selectedSession, setSelectedSession] = useState<TranscriptSession | null>(null);
+
+  const [conversations, setConversations] = useState<ConversationRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const openTranscript = (conv: ConversationRecord) => {
-    const session: TranscriptSession = {
-      id: conv.id,
-      techniqueNumber: conv.techniquesUsed[0] || "1.1",
-      techniqueName: conv.title,
-      type: conv.type === "call" ? "Audio" : conv.type === "meeting" ? "Video" : "Demo",
-      date: conv.date,
-      duration: conv.duration,
-      score: conv.score,
-      quality: conv.score >= 80 ? "excellent" : conv.score >= 60 ? "good" : "needs-improvement",
-      transcript: [
-        { speaker: "AI Coach", time: "00:00", text: "Goedemiddag! Vandaag gaan we oefenen met verkooptechnieken. Ben je er klaar voor?" },
-        { speaker: "Gebruiker", time: "00:05", text: "Ja, ik ben er klaar voor. Ik wil graag beter worden in het stellen van de juiste vragen." },
-        { speaker: "AI Coach", time: "00:12", text: "Perfect! Stel je voor: je belt een prospect die interesse heeft getoond in jullie software. Begin maar met je opening." },
-        { speaker: "Gebruiker", time: "00:25", text: "Goedemiddag, u spreekt met Jan. Ik bel naar aanleiding van uw interesse in onze oplossing. Heeft u even tijd?" },
-        { speaker: "AI Coach", time: "00:35", text: "Goede opening! Je hebt direct de reden van je call benoemd. Probeer nu een open vraag te stellen om de situatie te verkennen." },
-      ],
-      strengths: ["Duidelijke opening", "Goede timing", "Actief luisteren"],
-      improvements: ["Meer doorvragen", "Betere afsluiting"],
-    };
-    setSelectedSession(session);
-    setTranscriptDialogOpen(true);
+    if (conv.status === 'completed') {
+      sessionStorage.setItem('analysisId', conv.id);
+      navigate?.('analysis-results');
+    }
   };
 
-  const conversations: ConversationRecord[] = useMemo(() => {
-    const seedFromString = (str: string): number => {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash = hash & hash;
-      }
-      return Math.abs(hash);
-    };
-
-    const types: ("call" | "meeting" | "demo")[] = ["call", "meeting", "demo"];
-    const prospects = ["Acme Corp", "TechStart BV", "Digital Solutions", "CloudFirst", "DataDrive NL", "InnovateTech"];
-    const techniqueOptions = [
-      ["2.1.1", "2.1.2", "2.1.6"],
-      ["4.2.4", "4.1"],
-      ["1.1", "2.1.1"],
-      ["3.1", "3.2"],
-    ];
-
-    const conversationTemplates = [
-      { title: "Discovery call met", status: "analyzed" },
-      { title: "Demo presentatie voor", status: "analyzed" },
-      { title: "Follow-up meeting", status: "pending" },
-      { title: "Eerste contact met", status: "processing" },
-      { title: "Contract bespreking", status: "analyzed" },
-      { title: "Needs assessment", status: "analyzed" },
-    ];
-
-    return conversationTemplates.map((template, idx) => {
-      const seed = seedFromString(template.title + idx);
-      const prospect = prospects[seed % prospects.length];
-      const baseDate = new Date();
-      baseDate.setDate(baseDate.getDate() - (seed % 30));
-
-      return {
-        id: idx + 1,
-        title: `${template.title} ${prospect}`,
-        date: baseDate.toISOString().split('T')[0],
-        duration: `${15 + (seed % 45)}:${String(seed % 60).padStart(2, '0')}`,
-        type: types[seed % types.length],
-        prospect,
-        techniquesUsed: techniqueOptions[seed % techniqueOptions.length],
-        score: 50 + (seed % 45),
-        status: template.status as "analyzed" | "pending" | "processing",
-      };
-    });
-  }, []);
-
   useEffect(() => {
-    const openId = sessionStorage.getItem("openSessionId");
-    if (openId && conversations.length > 0) {
-      sessionStorage.removeItem("openSessionId");
-      const match = conversations.find(c => String(c.id) === openId);
-      if (match) {
-        openTranscript(match);
+    const fetchAnalyses = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/v2/analysis/list');
+        if (!res.ok) throw new Error('Analyses ophalen mislukt');
+        const data = await res.json();
+        
+        const mapped: ConversationRecord[] = (data.analyses || []).map((a: any) => ({
+          id: a.id,
+          title: a.title || 'Untitled',
+          date: a.createdAt ? new Date(a.createdAt).toLocaleDateString('nl-NL') : '',
+          duration: a.durationMs 
+            ? `${Math.floor(a.durationMs / 60000)}:${String(Math.floor((a.durationMs % 60000) / 1000)).padStart(2, '0')}`
+            : '—',
+          type: 'audio' as const,
+          techniquesUsed: a.techniquesFound || [],
+          score: a.overallScore ?? null,
+          status: a.status === 'completed' ? 'completed' : 
+                 a.status === 'failed' ? 'failed' : 
+                 a.status as any,
+          phaseCoverage: a.phaseCoverage || null,
+        }));
+        
+        setConversations(mapped);
+      } catch (err: any) {
+        console.error('Failed to fetch analyses:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [conversations]);
+    };
+    
+    fetchAnalyses();
+    const interval = setInterval(fetchAnalyses, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -171,62 +137,51 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "analyzed":
+      case "completed":
         return (
           <Badge className="bg-hh-success/10 text-hh-success border-hh-success/20 text-[11px]">
             Geanalyseerd
           </Badge>
         );
-      case "pending":
+      case "failed":
         return (
-          <Badge className="bg-hh-muted/10 text-hh-muted border-hh-muted/20 text-[11px]">
-            Wachtend
+          <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-[11px]">
+            Mislukt
           </Badge>
         );
-      case "processing":
+      case "transcribing":
+      case "analyzing":
+      case "evaluating":
+      case "generating_report":
         return (
           <Badge className="bg-hh-warn/10 text-hh-warn border-hh-warn/20 text-[11px]">
             Verwerken...
           </Badge>
         );
       default:
-        return null;
+        return (
+          <Badge className="bg-hh-muted/10 text-hh-muted border-hh-muted/20 text-[11px]">
+            Wachtend
+          </Badge>
+        );
     }
   };
 
   const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "call":
-        return <Mic className="w-4 h-4 text-[#4F7396]" />;
-      case "meeting":
-        return <Video className="w-4 h-4 text-[#4F7396]" />;
-      case "demo":
-        return <MessageSquare className="w-4 h-4 text-[#4F7396]" />;
-      default:
-        return null;
-    }
+    return <Mic className="w-4 h-4 text-[#4F7396]" />;
   };
 
   const getTypeLabel = (type: string) => {
-    switch (type) {
-      case "call":
-        return "AI Audio";
-      case "meeting":
-        return "AI Video";
-      case "demo":
-        return "AI Chat";
-      default:
-        return type;
-    }
+    return "Audio";
   };
 
   const filteredConversations = conversations.filter((conv) => {
     const matchesSearch = searchQuery === "" ||
-      conv.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.prospect.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === "all" || conv.type === typeFilter;
-    const matchesStatus = statusFilter === "all" || conv.status === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
+      conv.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const processingStatuses = ['transcribing', 'analyzing', 'evaluating', 'generating_report'];
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "processing" ? processingStatuses.includes(conv.status) : conv.status === statusFilter);
+    return matchesSearch && matchesStatus;
   });
 
   const sortedConversations = [...filteredConversations].sort((a, b) => {
@@ -237,18 +192,15 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
         comparison = a.date.localeCompare(b.date);
         break;
       case "score":
-        comparison = a.score - b.score;
+        comparison = (a.score ?? 0) - (b.score ?? 0);
         break;
       case "title":
         comparison = a.title.localeCompare(b.title);
         break;
-      case "type":
-        comparison = a.type.localeCompare(b.type);
-        break;
       case "duration":
         const durationA = parseInt(a.duration.split(':')[0]) * 60 + parseInt(a.duration.split(':')[1]);
         const durationB = parseInt(b.duration.split(':')[0]) * 60 + parseInt(b.duration.split(':')[1]);
-        comparison = durationA - durationB;
+        comparison = (isNaN(durationA) ? 0 : durationA) - (isNaN(durationB) ? 0 : durationB);
         break;
       case "technieken":
         comparison = (a.techniquesUsed[0] || "").localeCompare(b.techniquesUsed[0] || "");
@@ -257,17 +209,17 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
     return sortDirection === "asc" ? comparison : -comparison;
   });
 
-  const analyzedCount = conversations.filter(c => c.status === "analyzed").length;
-  const avgScore = Math.round(
-    conversations.filter(c => c.status === "analyzed").reduce((sum, c) => sum + c.score, 0) / analyzedCount || 0
-  );
+  const analyzedCount = conversations.filter(c => c.status === "completed").length;
+  const scoredConversations = conversations.filter(c => c.score !== null);
+  const avgScore = scoredConversations.length > 0
+    ? Math.round(scoredConversations.reduce((sum, c) => sum + (c.score ?? 0), 0) / scoredConversations.length)
+    : 0;
   const totalDuration = conversations.reduce((sum, c) => {
-    const [mins] = c.duration.split(':').map(Number);
+    const parts = c.duration.split(':').map(Number);
+    const mins = isNaN(parts[0]) ? 0 : parts[0];
     return sum + mins;
   }, 0);
 
-  // Always use AppLayout for user view - this is the USER analysis page
-  // Admin view has its own separate component (AdminUploadManagement)
   const Layout = AppLayout;
   const layoutProps = { currentPage: "analysis", navigate, isAdmin };
 
@@ -300,13 +252,6 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#4F7396]/10 flex items-center justify-center">
                 <FileAudio className="w-4 h-4 sm:w-5 sm:h-5 text-[#4F7396]" />
               </div>
-              <Badge
-                variant="outline"
-                style={{ backgroundColor: 'transparent', color: '#10B981', borderColor: '#10B981' }}
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
-              >
-                +3
-              </Badge>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Totaal Analyses
@@ -321,13 +266,6 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
                 <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
               </div>
-              <Badge
-                variant="outline"
-                style={{ backgroundColor: 'transparent', color: '#10B981', borderColor: '#10B981' }}
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
-              >
-                100%
-              </Badge>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Geanalyseerd
@@ -356,13 +294,6 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-sky-500/10 flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-sky-500" />
               </div>
-              <Badge
-                variant="outline"
-                style={{ backgroundColor: 'transparent', color: '#10B981', borderColor: '#10B981' }}
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 border"
-              >
-                +7%
-              </Badge>
             </div>
             <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
               Gem. Score
@@ -386,27 +317,15 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               />
             </div>
             
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full lg:w-[180px]">
-                <SelectValue placeholder="Alle Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Types</SelectItem>
-                <SelectItem value="call">Telefoongesprek</SelectItem>
-                <SelectItem value="meeting">Meeting</SelectItem>
-                <SelectItem value="demo">Demo</SelectItem>
-              </SelectContent>
-            </Select>
-            
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full lg:w-[180px]">
                 <SelectValue placeholder="Alle Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Status</SelectItem>
-                <SelectItem value="analyzed">Geanalyseerd</SelectItem>
+                <SelectItem value="completed">Geanalyseerd</SelectItem>
                 <SelectItem value="processing">Verwerken</SelectItem>
-                <SelectItem value="pending">Wachtend</SelectItem>
+                <SelectItem value="failed">Mislukt</SelectItem>
               </SelectContent>
             </Select>
             
@@ -433,8 +352,46 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
           </div>
         </Card>
 
-        {/* List View - Copied from Admin, adapted for User */}
-        {viewMode === "list" && (
+        {/* Loading State */}
+        {loading && (
+          <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
+            <div className="p-12 text-center">
+              <div className="w-8 h-8 border-2 border-hh-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-[16px] text-hh-muted">Analyses laden...</p>
+            </div>
+          </Card>
+        )}
+
+        {/* Error State */}
+        {!loading && error && (
+          <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
+            <div className="p-12 text-center">
+              <p className="text-[16px] text-red-500 mb-2">Er is een fout opgetreden</p>
+              <p className="text-[14px] text-hh-muted">{error}</p>
+            </div>
+          </Card>
+        )}
+
+        {/* Empty State */}
+        {!loading && conversations.length === 0 && !error && (
+          <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
+            <div className="p-12 text-center">
+              <FileAudio className="w-12 h-12 text-hh-muted mx-auto mb-4" />
+              <p className="text-[16px] leading-[24px] text-hh-text mb-2">Nog geen analyses</p>
+              <p className="text-[14px] text-hh-muted mb-4">Upload een gesprek om je eerste analyse te starten</p>
+              <Button 
+                className="gap-2 bg-hh-primary hover:bg-hh-primary/90 text-white"
+                onClick={() => navigate?.("upload-analysis")}
+              >
+                <Upload className="w-4 h-4 text-white" />
+                Analyseer gesprek
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {/* List View */}
+        {!loading && !error && conversations.length > 0 && viewMode === "list" && (
           <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -454,21 +411,15 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                       onClick={() => handleSort("title")}
                     >
                       <div className="flex items-center gap-2">
-                        Techniek
+                        Titel
                         <SortIcon column="title" />
                       </div>
                     </th>
                     <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
                       Technieken
                     </th>
-                    <th 
-                      className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
-                      onClick={() => handleSort("type")}
-                    >
-                      <div className="flex items-center gap-2">
-                        Type
-                        <SortIcon column="type" />
-                      </div>
+                    <th className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text">
+                      Status
                     </th>
                     <th
                       className="text-left px-4 py-3 text-[13px] font-semibold text-hh-text cursor-pointer hover:bg-hh-ui-100 transition-colors"
@@ -515,20 +466,17 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                         <span 
                           style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
                           className="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[12px] font-semibold">
-                          {conv.techniquesUsed[0] || "1.1"}
+                          {conv.techniquesUsed[0] || "—"}
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         <p className="text-[14px] leading-[20px] text-hh-text font-medium">
                           {conv.title}
                         </p>
-                        <p className="text-[12px] leading-[16px] text-hh-muted">
-                          {conv.prospect}
-                        </p>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1.5">
-                          {conv.techniquesUsed.map((tech, idx) => (
+                          {conv.techniquesUsed.length > 0 ? conv.techniquesUsed.map((tech, idx) => (
                             <span
                               key={idx}
                               style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
@@ -536,27 +484,24 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                             >
                               {tech}
                             </span>
-                          ))}
+                          )) : (
+                            <span className="text-hh-muted text-[12px]">—</span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-2 text-[14px] leading-[20px] text-hh-text">
-                          {getTypeIcon(conv.type)}
-                          <span className="text-[13px]">{getTypeLabel(conv.type)}</span>
-                        </div>
+                        {getStatusBadge(conv.status)}
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`text-[14px] leading-[20px] font-medium ${
-                            conv.score >= 80
-                              ? "text-hh-success"
-                              : conv.score >= 70
-                              ? "text-blue-600"
-                              : "text-hh-warn"
-                          }`}
-                        >
-                          {conv.score}%
-                        </span>
+                        {conv.score !== null ? (
+                          <span className={`text-[14px] leading-[20px] font-medium ${
+                            conv.score >= 80 ? "text-hh-success" : conv.score >= 70 ? "text-blue-600" : "text-hh-warn"
+                          }`}>
+                            {Math.round(conv.score)}%
+                          </span>
+                        ) : (
+                          <span className="text-hh-muted">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-[14px] leading-[20px] text-hh-text">
                         {conv.duration}
@@ -597,7 +542,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
         )}
 
         {/* Grid View */}
-        {viewMode === "grid" && (
+        {!loading && !error && conversations.length > 0 && viewMode === "grid" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedConversations.map((conv) => (
               <Card
@@ -610,30 +555,30 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     {getTypeIcon(conv.type)}
                     <span className="text-[12px] text-hh-muted">{getTypeLabel(conv.type)}</span>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                        <MoreVertical className="w-4 h-4 text-hh-muted" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openTranscript(conv)}>
-                        <Eye className="w-4 h-4 mr-2" />
-                        Bekijk details
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(conv.status)}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                          <MoreVertical className="w-4 h-4 text-hh-muted" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openTranscript(conv)}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Bekijk details
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
 
                 <h3 className="text-[16px] font-medium text-hh-text mb-1">
                   {conv.title}
                 </h3>
-                <p className="text-[12px] text-hh-muted mb-3">
-                  {conv.prospect}
-                </p>
 
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                  {conv.techniquesUsed.map((tech, idx) => (
+                  {conv.techniquesUsed.length > 0 ? conv.techniquesUsed.map((tech, idx) => (
                     <span
                       key={idx}
                       style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
@@ -641,7 +586,9 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     >
                       {tech}
                     </span>
-                  ))}
+                  )) : (
+                    <span className="text-hh-muted text-[12px]">—</span>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between text-[13px] text-hh-muted pt-3 border-t border-hh-border">
@@ -649,7 +596,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                     <Clock className="w-4 h-4 text-[#4F7396]" />
                     {conv.duration}
                   </div>
-                  {conv.status === "analyzed" ? (
+                  {conv.score !== null ? (
                     <span
                       className={`font-medium ${
                         conv.score >= 80
@@ -659,7 +606,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                           : "text-hh-warn"
                       }`}
                     >
-                      {conv.score}%
+                      {Math.round(conv.score)}%
                     </span>
                   ) : (
                     <span className="text-hh-muted">—</span>
@@ -671,13 +618,6 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
           </div>
         )}
       </div>
-
-      <TranscriptDialog
-        open={transcriptDialogOpen}
-        onOpenChange={setTranscriptDialogOpen}
-        session={selectedSession}
-        isAdmin={false}
-      />
     </Layout>
   );
 }

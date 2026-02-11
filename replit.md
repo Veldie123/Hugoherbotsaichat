@@ -46,6 +46,10 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
     - **Phase-Aware Signals:** Customer signal detection (`twijfel`, `bezwaar`, `uitstel`) is constrained to contextually appropriate phases - filtered out in Phase 1 to prevent false positives.
     - **AI Model:** All analysis uses gpt-5.1 for quality (diarization, evaluation, signal detection, report generation).
     - **Phase Tracking:** `determineCurrentPhase()` helper analyzes detected techniques to determine conversation phase. Phase badges and dividers shown in transcript view.
+    - **Supabase Persistence:** Analysis results persist to `conversation_analyses` table (id, user_id, title, status, error, result JSONB, created_at, completed_at). Status updates at each pipeline stage. In-memory Maps kept as cache, Supabase as persistent store.
+    - **API Endpoints:** `POST /api/v2/analysis/upload` (upload + start), `GET /api/v2/analysis/status/:id`, `GET /api/v2/analysis/results/:id`, `GET /api/v2/analysis/list?userId=` (list all with summary data).
+    - **Frontend:** Analysis.tsx (user) and AdminUploadManagement.tsx (admin) fetch real data from `/api/v2/analysis/list` with 10s polling. Empty state with upload CTA when no analyses exist.
+    - **BLOCKER:** `conversation_analyses` table needs to be created in Supabase dashboard SQL editor. SQL is in `server/migrations/create-supabase-tables.ts`.
 - **Multi-modal Integration (Audio/Video):**
     - **Audio Mode:** Uses LiveKit Cloud for WebRTC, Deepgram Nova 3 for STT (Dutch), and ElevenLabs for TTS. Includes a `speech-humanizer.ts` for natural speech output.
     - **Video Mode:** Uses HeyGen Streaming Avatar SDK for WebRTC video.
