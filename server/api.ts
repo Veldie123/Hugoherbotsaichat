@@ -2922,7 +2922,7 @@ app.post("/api/v2/analysis/upload", upload.single('file'), async (req: Request, 
 app.get("/api/v2/analysis/status/:conversationId", async (req: Request, res: Response) => {
   try {
     const conversationId = req.params.conversationId as string;
-    const status = getAnalysisStatus(conversationId);
+    const status = await getAnalysisStatus(conversationId);
 
     if (!status) {
       return res.status(404).json({ error: 'Analyse niet gevonden' });
@@ -2938,10 +2938,10 @@ app.get("/api/v2/analysis/status/:conversationId", async (req: Request, res: Res
 app.get("/api/v2/analysis/results/:conversationId", async (req: Request, res: Response) => {
   try {
     const conversationId = req.params.conversationId as string;
-    const results = getAnalysisResults(conversationId);
+    const results = await getAnalysisResults(conversationId);
 
     if (!results) {
-      const status = getAnalysisStatus(conversationId as string);
+      const status = await getAnalysisStatus(conversationId as string);
       if (status) {
         return res.status(202).json({ 
           status: status.status, 
@@ -2955,6 +2955,62 @@ app.get("/api/v2/analysis/results/:conversationId", async (req: Request, res: Re
   } catch (err: any) {
     console.error("[Analysis] Results error:", err);
     res.status(500).json({ error: err.message || 'Resultaten ophalen mislukt' });
+  }
+});
+
+app.get("/api/v2/analysis/list", async (req: Request, res: Response) => {
+  try {
+    const userId = req.query.userId as string;
+
+    let query = supabase
+      .from('conversation_analyses')
+      .select('id, user_id, title, status, error, created_at, completed_at, result')
+      .order('created_at', { ascending: false });
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    const analyses = (data || []).map(row => {
+      const result = row.result as any;
+      return {
+        id: row.id,
+        userId: row.user_id,
+        title: row.title,
+        status: row.status,
+        error: row.error,
+        createdAt: row.created_at,
+        completedAt: row.completed_at,
+        overallScore: result?.insights?.overallScore ?? null,
+        turnCount: result?.transcript?.length ?? null,
+        durationMs: result?.transcript?.length > 0
+          ? result.transcript[result.transcript.length - 1].endMs
+          : null,
+        techniquesFound: result?.evaluations
+          ? [...new Set(result.evaluations.flatMap((e: any) => e.techniques.map((t: any) => t.id)))]
+          : [],
+        phaseCoverage: result?.insights?.phaseCoverage
+          ? {
+              phase1: result.insights.phaseCoverage.phase1?.score ?? 0,
+              phase2: result.insights.phaseCoverage.phase2?.overall?.score ?? 0,
+              phase3: result.insights.phaseCoverage.phase3?.score ?? 0,
+              phase4: result.insights.phaseCoverage.phase4?.score ?? 0,
+              overall: result.insights.phaseCoverage.overall ?? 0,
+            }
+          : null,
+      };
+    });
+
+    res.json({ analyses });
+  } catch (err: any) {
+    console.error("[Analysis] List error:", err);
+    res.status(500).json({ error: err.message || 'Analyses ophalen mislukt' });
   }
 });
 

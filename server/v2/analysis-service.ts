@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { getTechnique, loadMergedTechniques } from '../ssot-loader';
 import { getExpectedMoves } from './evaluator';
+import { supabase } from '../supabase-client';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -1015,16 +1016,45 @@ Schrijf het coachrapport.`
   }
 }
 
+async function persistStatusToSupabase(conversationId: string, status: string, extra?: Record<string, any>): Promise<void> {
+  try {
+    await supabase
+      .from('conversation_analyses')
+      .update({ status, ...extra })
+      .eq('id', conversationId);
+  } catch (err: any) {
+    console.warn('[Analysis] Supabase status update failed:', err.message);
+  }
+}
+
+export async function initAnalysisTable(): Promise<void> {
+  try {
+    const { error } = await supabase.from('conversation_analyses').select('id').limit(1);
+    if (error && error.code === '42P01') {
+      console.warn('[Analysis] conversation_analyses table does not exist in Supabase. Please create it via the Supabase dashboard SQL editor.');
+    } else if (error) {
+      console.warn('[Analysis] Supabase table check error:', error.message);
+    } else {
+      console.log('[Analysis] Supabase conversation_analyses table ready');
+    }
+  } catch (err: any) {
+    console.warn('[Analysis] Supabase init check failed:', err.message);
+  }
+}
+
+initAnalysisTable();
+
 export async function runFullAnalysis(
   conversationId: string,
   storageKey: string,
   userId: string,
   title?: string
 ): Promise<void> {
+  const effectiveTitle = title || `Analyse ${new Date().toLocaleDateString('nl-NL')}`;
   const job: ConversationAnalysis = {
     id: conversationId,
     userId,
-    title: title || `Analyse ${new Date().toLocaleDateString('nl-NL')}`,
+    title: effectiveTitle,
     type: 'upload',
     status: 'transcribing',
     consentConfirmed: true,
@@ -1033,12 +1063,25 @@ export async function runFullAnalysis(
   analysisJobs.set(conversationId, job);
 
   try {
+    await supabase.from('conversation_analyses').upsert({
+      id: conversationId,
+      user_id: userId,
+      title: effectiveTitle,
+      status: 'transcribing',
+      created_at: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    console.warn('[Analysis] Supabase initial upsert failed:', err.message);
+  }
+
+  try {
     job.status = 'transcribing';
     analysisJobs.set(conversationId, { ...job });
     const segments = await transcribeAudio(storageKey);
 
     job.status = 'analyzing';
     analysisJobs.set(conversationId, { ...job });
+    await persistStatusToSupabase(conversationId, 'analyzing');
     const turns = await buildTurns(segments);
 
     if (turns.length === 0) {
@@ -1047,6 +1090,7 @@ export async function runFullAnalysis(
 
     job.status = 'evaluating';
     analysisJobs.set(conversationId, { ...job });
+    await persistStatusToSupabase(conversationId, 'evaluating');
 
     const evaluations = await evaluateSellerTurns(turns);
     const signals = await detectCustomerSignals(turns, evaluations);
@@ -1056,30 +1100,101 @@ export async function runFullAnalysis(
 
     job.status = 'generating_report';
     analysisJobs.set(conversationId, { ...job });
+    await persistStatusToSupabase(conversationId, 'generating_report');
     const insights = await generateCoachReport(turns, evaluations, signals, phaseCoverage, missedOpps);
 
     job.status = 'completed';
     job.completedAt = new Date().toISOString();
     analysisJobs.set(conversationId, { ...job });
 
-    analysisResults.set(conversationId, {
+    const fullResult: FullAnalysisResult = {
       conversation: { ...job },
       transcript: turns,
       evaluations,
       signals,
       insights,
-    });
+    };
+
+    analysisResults.set(conversationId, fullResult);
+
+    try {
+      await supabase
+        .from('conversation_analyses')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          result: fullResult,
+        })
+        .eq('id', conversationId);
+    } catch (err: any) {
+      console.warn('[Analysis] Supabase completed update failed:', err.message);
+    }
   } catch (err: any) {
     job.status = 'failed';
     job.error = err.message || 'Onbekende fout';
     analysisJobs.set(conversationId, { ...job });
+
+    try {
+      await supabase
+        .from('conversation_analyses')
+        .update({
+          status: 'failed',
+          error: err.message || 'Onbekende fout',
+        })
+        .eq('id', conversationId);
+    } catch (sbErr: any) {
+      console.warn('[Analysis] Supabase error update failed:', sbErr.message);
+    }
   }
 }
 
-export function getAnalysisStatus(conversationId: string): ConversationAnalysis | undefined {
-  return analysisJobs.get(conversationId);
+export async function getAnalysisStatus(conversationId: string): Promise<ConversationAnalysis | undefined> {
+  const memJob = analysisJobs.get(conversationId);
+  if (memJob) return memJob;
+
+  try {
+    const { data } = await supabase
+      .from('conversation_analyses')
+      .select('id, user_id, title, status, error, created_at, completed_at')
+      .eq('id', conversationId)
+      .single();
+
+    if (data) {
+      return {
+        id: data.id,
+        userId: data.user_id,
+        title: data.title,
+        type: 'upload',
+        status: data.status as any,
+        consentConfirmed: true,
+        createdAt: data.created_at,
+        completedAt: data.completed_at || undefined,
+        error: data.error || undefined,
+      };
+    }
+  } catch (err: any) {
+    console.warn('[Analysis] Supabase status lookup failed:', err.message);
+  }
+  return undefined;
 }
 
-export function getAnalysisResults(conversationId: string): FullAnalysisResult | undefined {
-  return analysisResults.get(conversationId);
+export async function getAnalysisResults(conversationId: string): Promise<FullAnalysisResult | undefined> {
+  const memResult = analysisResults.get(conversationId);
+  if (memResult) return memResult;
+
+  try {
+    const { data } = await supabase
+      .from('conversation_analyses')
+      .select('result')
+      .eq('id', conversationId)
+      .eq('status', 'completed')
+      .single();
+
+    if (data?.result) {
+      return data.result as FullAnalysisResult;
+    }
+  } catch (err: any) {
+    console.warn('[Analysis] Supabase results lookup failed:', err.message);
+  }
+  return undefined;
 }

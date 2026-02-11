@@ -126,6 +126,42 @@ CREATE POLICY "Service role has full access" ON session_artifacts
     console.log('session_artifacts table already exists in Supabase!');
   }
 
+  console.log('\nChecking conversation_analyses table...');
+  
+  const { error: analysesTestError } = await supabase
+    .from('conversation_analyses')
+    .select('id')
+    .limit(1);
+  
+  if (analysesTestError && analysesTestError.code === '42P01') {
+    console.log('\n=== MANUAL SQL FOR conversation_analyses ===\n');
+    console.log(`
+CREATE TABLE IF NOT EXISTS conversation_analyses (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'transcribing',
+  error TEXT,
+  result JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_ca_user_id ON conversation_analyses(user_id);
+CREATE INDEX IF NOT EXISTS idx_ca_status ON conversation_analyses(status);
+CREATE INDEX IF NOT EXISTS idx_ca_created_at ON conversation_analyses(created_at DESC);
+
+-- Enable RLS
+ALTER TABLE conversation_analyses ENABLE ROW LEVEL SECURITY;
+
+-- Policy for service role (full access)
+CREATE POLICY "Service role full access" ON conversation_analyses
+  FOR ALL USING (true) WITH CHECK (true);
+    `);
+  } else if (!analysesTestError) {
+    console.log('conversation_analyses table already exists in Supabase!');
+  }
+
   console.log('\nChecking Supabase tables...');
   
   const { data: sessionsCheck } = await supabase
@@ -139,6 +175,12 @@ CREATE POLICY "Service role has full access" ON session_artifacts
     .select('id')
     .limit(1);
   console.log('session_artifacts accessible:', artifactsCheck !== null);
+
+  const { data: analysesCheck } = await supabase
+    .from('conversation_analyses')
+    .select('id')
+    .limit(1);
+  console.log('conversation_analyses accessible:', analysesCheck !== null);
 }
 
 createSupabaseTables().catch(console.error);

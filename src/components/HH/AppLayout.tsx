@@ -13,6 +13,7 @@ import {
   UserCircle,
   CheckCheck,
   ExternalLink,
+  Eye,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -220,18 +221,18 @@ export function AppLayout({
         </nav>
 
         {isAdmin && (
-          <div className="p-2 flex-shrink-0 border-t border-hh-border">
+          <div className="p-3 border-t border-hh-border flex-shrink-0">
             <button
               onClick={() => navigate?.("admin-uploads")}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-hh-muted hover:bg-hh-ui-50 hover:text-hh-text transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-hh-border text-hh-muted hover:bg-hh-ui-50 hover:text-hh-text transition-colors text-[14px]"
             >
-              <UserCircle className="w-5 h-5 flex-shrink-0" />
-              {!collapsed && <span className="text-[13px]">Admin View</span>}
+              <Eye className="w-4 h-4 flex-shrink-0" />
+              {!collapsed && <span>Admin View</span>}
             </button>
           </div>
         )}
 
-        {collapsed && (
+        {collapsed && !isAdmin && (
           <div className="p-2 flex-shrink-0 border-t border-hh-border">
             <button
               onClick={() => setCollapsed(false)}
@@ -326,10 +327,10 @@ export function AppLayout({
                   navigate?.("admin-uploads");
                   setMobileMenuOpen(false);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-hh-muted hover:bg-hh-ui-50 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-hh-border text-hh-muted hover:bg-hh-ui-50 hover:text-hh-text transition-colors text-[14px]"
               >
-                <UserCircle className="w-5 h-5" />
-                <span className="text-[13px]">Admin View</span>
+                <Eye className="w-4 h-4" />
+                <span>Admin View</span>
               </button>
             </div>
           )}
@@ -389,7 +390,7 @@ export function AppLayout({
                 className="h-10 w-10 relative"
                 onClick={() => setNotifOpen(!notifOpen)}
               >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-5 h-5 text-hh-ink" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold leading-none">
                     {unreadCount > 9 ? "9+" : unreadCount}
