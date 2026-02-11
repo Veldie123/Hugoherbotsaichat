@@ -35,7 +35,14 @@ const DEV_PREVIEW_PAGES: Record<string, Page> = {
   'talk-to-hugo': 'talk-to-hugo',
   'hugo-overview': 'hugo-overview',
   'analysis': 'analysis',
+  'analysis-results': 'analysis-results',
   'upload-analysis': 'upload-analysis',
+  'landing': 'landing',
+  'login': 'login',
+  'signup': 'signup',
+  'pricing': 'pricing',
+  'about': 'about',
+  'onboarding': 'onboarding',
 };
 
 function getDevPreviewPage(): Page | null {

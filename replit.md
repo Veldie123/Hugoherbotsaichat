@@ -10,6 +10,36 @@ The HugoHerbots.ai Sales Coach App is a React, TypeScript, and Vite-based applic
 - The user wants the agent to ask for confirmation before making significant architectural or feature changes.
 - The user prefers detailed explanations for complex technical decisions.
 
+## CRITICAL: Developer Preview Routes for Screenshots
+**NEVER screenshot `/` (root URL) - it shows the landing page which requires no auth and is useless for validation.**
+
+The app has built-in developer preview routes that bypass authentication. Use these ALWAYS when taking screenshots to validate UI changes:
+
+**Route pattern:** `/_dev/<page-name>`
+
+**Available pages:**
+- `/_dev/analysis-results` - Analysis results page (most common for validation)
+- `/_dev/analysis` - Analysis list page
+- `/_dev/upload-analysis` - Upload analysis page
+- `/_dev/talk-to-hugo` - Hugo AI chat interface
+- `/_dev/hugo-overview` - Hugo overview page
+- `/_dev/admin-uploads` - Admin upload management
+- `/_dev/admin-sessions` - Admin sessions view
+- `/_dev/admin-chat-expert` - Admin expert chat mode
+- `/_dev/admin-config-review` - Admin config review
+- `/_dev/admin-notifications` - Admin notifications
+- `/_dev/admin-rag-review` - Admin RAG review
+- `/_dev/landing` - Landing page (only if specifically testing landing)
+- `/_dev/login` - Login page
+- `/_dev/signup` - Signup page
+- `/_dev/pricing` - Pricing page
+- `/_dev/about` - About page
+- `/_dev/onboarding` - Onboarding page
+
+**Implementation:** Defined in `src/App.tsx` in the `DEV_PREVIEW_PAGES` map. The `getDevPreviewPage()` function reads the URL path and bypasses auth when a `/_dev/` prefix is detected.
+
+**Rule:** When validating UI changes, ALWAYS use the appropriate `/_dev/<page>` path. For analysis work, use `/_dev/analysis-results`. For Hugo chat, use `/_dev/talk-to-hugo`. NEVER use `/` unless specifically testing the landing page.
+
 ## System Architecture
 The application is built with React 18, TypeScript, and Vite, utilizing Tailwind CSS v4 and Radix UI for custom components. Supabase serves as the Backend-as-a-Service (BaaS) for authentication and database operations. The application integrates the Hugo Engine V2 FULL for advanced AI capabilities.
 
