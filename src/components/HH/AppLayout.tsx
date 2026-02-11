@@ -175,7 +175,7 @@ export function AppLayout({
             return (
               <div key={item.id} className="mb-1">
                 <button
-                  onClick={() => handleNavigate(item.overviewPage)}
+                  onClick={() => handleNavigate(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                     isActive
                       ? "bg-hh-ink text-white"
@@ -201,6 +201,7 @@ export function AppLayout({
                           if (onSelectHistoryItem) {
                             onSelectHistoryItem(histItem.id, item.historyType);
                           } else {
+                            sessionStorage.setItem("openSessionId", histItem.id);
                             navigate?.(item.overviewPage);
                           }
                         }}
@@ -289,7 +290,7 @@ export function AppLayout({
                 <div key={item.id} className="mb-1">
                   <button
                     onClick={() => {
-                      handleNavigate(item.overviewPage);
+                      handleNavigate(item.id);
                       setMobileMenuOpen(false);
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -313,6 +314,7 @@ export function AppLayout({
                             if (onSelectHistoryItem) {
                               onSelectHistoryItem(histItem.id, item.historyType);
                             } else {
+                              sessionStorage.setItem("openSessionId", histItem.id);
                               navigate?.(item.overviewPage);
                             }
                             setMobileMenuOpen(false);

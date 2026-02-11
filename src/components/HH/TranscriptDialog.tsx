@@ -80,7 +80,7 @@ export interface TranscriptMessage {
 }
 
 export interface TranscriptSession {
-  id: number;
+  id: number | string;
   sessionId?: string;
   userName?: string;
   userWorkspace?: string;

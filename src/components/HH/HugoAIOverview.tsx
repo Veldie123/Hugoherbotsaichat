@@ -163,15 +163,6 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
     fetchSessions();
   }, []);
 
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
   const openTranscript = (session: Session) => {
     const transcriptData: TranscriptSession = {
       id: session.id,
@@ -187,6 +178,28 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
     };
     setTranscriptSession(transcriptData);
     setTranscriptDialogOpen(true);
+  };
+
+  useEffect(() => {
+    if (!loading && sessions.length > 0) {
+      const openId = sessionStorage.getItem("openSessionId");
+      if (openId) {
+        sessionStorage.removeItem("openSessionId");
+        const match = sessions.find(s => s.id === openId);
+        if (match) {
+          openTranscript(match);
+        }
+      }
+    }
+  }, [loading, sessions]);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
   };
 
   const filteredSessions = sessions

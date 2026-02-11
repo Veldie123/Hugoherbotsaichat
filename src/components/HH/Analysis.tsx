@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -137,6 +137,17 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
       };
     });
   }, []);
+
+  useEffect(() => {
+    const openId = sessionStorage.getItem("openSessionId");
+    if (openId && conversations.length > 0) {
+      sessionStorage.removeItem("openSessionId");
+      const match = conversations.find(c => String(c.id) === openId);
+      if (match) {
+        openTranscript(match);
+      }
+    }
+  }, [conversations]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
