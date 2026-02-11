@@ -39,8 +39,8 @@ interface AppLayoutProps {
 }
 
 const mainNavItems = [
-  { id: "talk-to-hugo", label: "Hugo AI", icon: MessageSquare, historyType: "chat" as const },
-  { id: "upload-analysis", label: "Gespreksanalyse", icon: FileSearch, historyType: "analysis" as const },
+  { id: "talk-to-hugo", label: "Hugo AI", icon: MessageSquare, historyType: "chat" as const, overviewPage: "hugo-overview" },
+  { id: "upload-analysis", label: "Gespreksanalyse", icon: FileSearch, historyType: "analysis" as const, overviewPage: "analysis" },
 ];
 
 const defaultChatHistory: HistoryItem[] = [
@@ -175,7 +175,7 @@ export function AppLayout({
             return (
               <div key={item.id} className="mb-1">
                 <button
-                  onClick={() => handleNavigate(item.id)}
+                  onClick={() => handleNavigate(item.overviewPage)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                     isActive
                       ? "bg-hh-ink text-white"
@@ -192,12 +192,18 @@ export function AppLayout({
                   )}
                 </button>
 
-                {!collapsed && isActive && history.length > 0 && (
+                {!collapsed && isActive && (
                   <div className="mt-1 ml-2 pl-4 border-l-2 border-hh-border space-y-0.5">
                     {history.slice(0, 5).map((histItem) => (
                       <button
                         key={histItem.id}
-                        onClick={() => onSelectHistoryItem?.(histItem.id, item.historyType)}
+                        onClick={() => {
+                          if (onSelectHistoryItem) {
+                            onSelectHistoryItem(histItem.id, item.historyType);
+                          } else {
+                            navigate?.(item.overviewPage);
+                          }
+                        }}
                         className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-left hover:bg-hh-ui-50 transition-colors group"
                       >
                         <div className="flex-1 min-w-0">
@@ -213,18 +219,13 @@ export function AppLayout({
                         )}
                       </button>
                     ))}
-                    {history.length > 5 && (
-                      <button
-                        onClick={() => {
-                          if (item.historyType === "chat") navigate?.("hugo-overview");
-                          else navigate?.("analysis");
-                        }}
-                        className="w-full flex items-center gap-1 px-2 py-1.5 text-[12px] text-hh-primary hover:text-hh-primary/80 transition-colors"
-                      >
-                        <span>Bekijk alle ({history.length})</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => navigate?.(item.overviewPage)}
+                      className="w-full flex items-center gap-1 px-2 py-1.5 text-[12px] text-hh-primary hover:text-hh-primary/80 transition-colors"
+                    >
+                      <span>Bekijk alle{history.length > 0 ? ` (${history.length})` : ""}</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -288,7 +289,7 @@ export function AppLayout({
                 <div key={item.id} className="mb-1">
                   <button
                     onClick={() => {
-                      handleNavigate(item.id);
+                      handleNavigate(item.overviewPage);
                       setMobileMenuOpen(false);
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -303,13 +304,17 @@ export function AppLayout({
                     </span>
                   </button>
 
-                  {isActive && history.length > 0 && (
+                  {isActive && (
                     <div className="mt-1 ml-3 pl-4 border-l-2 border-hh-border space-y-0.5">
                       {history.slice(0, 5).map((histItem) => (
                         <button
                           key={histItem.id}
                           onClick={() => {
-                            onSelectHistoryItem?.(histItem.id, item.historyType);
+                            if (onSelectHistoryItem) {
+                              onSelectHistoryItem(histItem.id, item.historyType);
+                            } else {
+                              navigate?.(item.overviewPage);
+                            }
                             setMobileMenuOpen(false);
                           }}
                           className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-left hover:bg-hh-ui-50 transition-colors"
@@ -325,6 +330,16 @@ export function AppLayout({
                           )}
                         </button>
                       ))}
+                      <button
+                        onClick={() => {
+                          navigate?.(item.overviewPage);
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-1 px-3 py-2 text-[13px] text-hh-primary hover:text-hh-primary/80 transition-colors"
+                      >
+                        <span>Bekijk alle{history.length > 0 ? ` (${history.length})` : ""}</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
                     </div>
                   )}
                 </div>
