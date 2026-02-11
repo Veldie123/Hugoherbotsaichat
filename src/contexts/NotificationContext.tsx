@@ -21,6 +21,7 @@ interface NotificationContextType {
   addNotification: (notification: Omit<Notification, "id" | "read" | "createdAt">) => void;
   markAsRead: (id: string) => void;
   markAllRead: () => void;
+  removeNotification: (id: string) => void;
   clearNotifications: () => void;
   addPendingAnalysis: (conversationId: string, title: string) => void;
 }
@@ -74,6 +75,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const markAllRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
+  const removeNotification = useCallback((id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
   const clearNotifications = useCallback(() => {
@@ -171,6 +176,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         addNotification,
         markAsRead,
         markAllRead,
+        removeNotification,
         clearNotifications,
         addPendingAnalysis,
       }}

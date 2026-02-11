@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { getTechnique, loadMergedTechniques } from '../ssot-loader';
-import { getExpectedMoves } from './evaluator';
+import { getExpectedMoves, evaluateConceptually, evaluateFirstTurn } from './evaluator';
+import { CustomerSignal, EpicPhase } from './customer_engine';
 import { supabase } from '../supabase-client';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
@@ -300,143 +301,249 @@ ${chunkLines}`
   return turns;
 }
 
-function buildTechniqueCatalog(): string {
-  const techniques = loadMergedTechniques();
-  const lines: string[] = [];
+function mapHoudingToCustomerSignal(houding: string): CustomerSignal {
+  const mapping: Record<string, CustomerSignal> = {
+    'positief': 'positief',
+    'negatief': 'negatief',
+    'vaag': 'vaag',
+    'ontwijkend': 'ontwijkend',
+    'vraag': 'vraag',
+    'twijfel': 'twijfel',
+    'bezwaar': 'bezwaar',
+    'uitstel': 'uitstel',
+    'angst': 'angst',
+    'interesse': 'positief',
+    'akkoord': 'positief',
+    'neutraal': 'ontwijkend',
+  };
+  return mapping[houding] || 'ontwijkend';
+}
 
-  for (const t of techniques) {
-    if (t.is_fase) continue;
-    const example = t.voorbeeld?.[0] || '';
-    const hoe = t.hoe ? ` HOE: ${t.hoe.substring(0, 120)}` : '';
-    const wanneer = t.wanneer ? ` WANNEER: ${t.wanneer.substring(0, 80)}` : '';
-    lines.push(`- ${t.nummer} ${t.naam} (fase ${t.fase}): ${t.wat || ''}${hoe}${wanneer} Voorbeeld: "${example.substring(0, 80)}"`);
+function phaseToEpicPhase(phase: number): EpicPhase {
+  switch (phase) {
+    case 1: return 'explore';
+    case 2: return 'explore';
+    case 3: return 'impact';
+    case 4: return 'commit';
+    default: return 'explore';
+  }
+}
+
+function phaseToTechniquePrefix(phase: number): string {
+  switch (phase) {
+    case 1: return '1';
+    case 2: return '2';
+    case 3: return '3';
+    case 4: return '4';
+    default: return '1';
+  }
+}
+
+interface TurnPair {
+  customerTurn: TranscriptTurn | null;
+  sellerTurn: TranscriptTurn;
+  phase: number;
+}
+
+function buildTurnPairs(turns: TranscriptTurn[]): TurnPair[] {
+  const pairs: TurnPair[] = [];
+  let currentPhase = 1;
+
+  for (let i = 0; i < turns.length; i++) {
+    const turn = turns[i];
+    if (turn.speaker !== 'seller') continue;
+
+    let customerTurn: TranscriptTurn | null = null;
+    for (let j = i - 1; j >= 0; j--) {
+      if (turns[j].speaker === 'customer') {
+        customerTurn = turns[j];
+        break;
+      }
+    }
+
+    pairs.push({
+      customerTurn,
+      sellerTurn: turn,
+      phase: currentPhase,
+    });
   }
 
-  return lines.join('\n');
+  return pairs;
 }
 
 export async function evaluateSellerTurns(turns: TranscriptTurn[]): Promise<TurnEvaluation[]> {
-  const catalog = buildTechniqueCatalog();
+  const pairs = buildTurnPairs(turns);
   const evaluations: TurnEvaluation[] = [];
-  const BATCH_SIZE = 6;
+  let currentPhase = 1;
 
-  for (let batchStart = 0; batchStart < turns.length; batchStart += BATCH_SIZE) {
-    const batchEnd = Math.min(batchStart + BATCH_SIZE, turns.length);
-    const batchTurns = turns.slice(batchStart, batchEnd);
-    const sellerTurnsInBatch = batchTurns.filter(t => t.speaker === 'seller');
+  console.log(`[Analysis-Unified] Evaluating ${pairs.length} seller turns using coaching engine...`);
 
-    if (sellerTurnsInBatch.length === 0) continue;
+  const PARALLEL_BATCH = 5;
 
-    const batchText = batchTurns.map(t => t.text).join(' ');
-    let ragContext = '';
-    try {
-      const { searchRag } = await import('./rag-service');
-      const ragResults = await searchRag(batchText, { limit: 8, threshold: 0.25 });
-      if (ragResults.documents.length > 0) {
-        ragContext = '\n\nRELEVANTE TECHNIEKEN UIT KENNISBANK:\n' +
-          ragResults.documents.map(d => `--- ${d.title} (${d.technikId || 'algemeen'}) ---\n${d.content}`).join('\n\n');
+  for (let batchStart = 0; batchStart < pairs.length; batchStart += PARALLEL_BATCH) {
+    const batchEnd = Math.min(batchStart + PARALLEL_BATCH, pairs.length);
+    const batchPairs = pairs.slice(batchStart, batchEnd);
+
+    const batchPromises = batchPairs.map(async (pair) => {
+      const customerText = pair.customerTurn?.text || '';
+      const sellerText = pair.sellerTurn.text;
+
+      if (sellerText.trim().length < 5) {
+        return null;
       }
-    } catch (e) {
-      console.log('[Analysis] RAG search failed, using catalog only');
+
+      let houding: CustomerSignal = 'ontwijkend';
+      if (pair.customerTurn && customerText.length > 3) {
+        houding = await classifyCustomerHouding(customerText, currentPhase);
+      }
+
+      const epicPhase = phaseToEpicPhase(currentPhase);
+      const techniquePrefix = phaseToTechniquePrefix(currentPhase);
+
+      try {
+        const result = await evaluateConceptually(
+          sellerText,
+          customerText,
+          houding,
+          techniquePrefix,
+          currentPhase,
+          epicPhase
+        );
+
+        if (result.detected && result.techniques && result.techniques.length > 0) {
+          const detectedPhases = result.techniques.map(t => {
+            const firstNum = parseInt(t.id?.split('.')[0] || '0');
+            return firstNum;
+          }).filter(p => p > 0);
+          const maxPhase = Math.max(...detectedPhases, currentPhase);
+          if (maxPhase > currentPhase) currentPhase = maxPhase;
+        }
+
+        const techniques = (result.techniques || []).map(t => ({
+          id: t.id || '',
+          naam: t.naam || '',
+          quality: (t.quality || result.quality || 'gemist') as string,
+          score: t.score ?? result.score ?? 0,
+          stappen_gevolgd: [] as string[],
+        }));
+
+        if (techniques.length === 0 && result.detected && result.moveId) {
+          techniques.push({
+            id: result.moveId,
+            naam: result.moveLabel || '',
+            quality: result.quality || 'goed',
+            score: result.score ?? 5,
+            stappen_gevolgd: [],
+          });
+        }
+
+        return {
+          turnIdx: pair.sellerTurn.idx,
+          techniques,
+          overallQuality: result.quality || (result.detected ? 'goed' : 'gemist'),
+          rationale: result.rationale || result.feedback || '',
+        } as TurnEvaluation;
+      } catch (err: any) {
+        console.error(`[Analysis-Unified] Eval failed for turn ${pair.sellerTurn.idx}:`, err.message);
+        const fallback = evaluateFirstTurn(sellerText, techniquePrefix, currentPhase, houding);
+        if (!fallback.detected) return null;
+
+        return {
+          turnIdx: pair.sellerTurn.idx,
+          techniques: (fallback.techniques || []).map(t => ({
+            id: t.id || fallback.moveId || '',
+            naam: t.naam || fallback.moveLabel || '',
+            quality: t.quality || 'goed',
+            score: t.score ?? fallback.score ?? 5,
+            stappen_gevolgd: [],
+          })),
+          overallQuality: fallback.quality || 'goed',
+          rationale: fallback.feedback || '',
+        } as TurnEvaluation;
+      }
+    });
+
+    const batchResults = await Promise.all(batchPromises);
+    for (const result of batchResults) {
+      if (result && result.techniques.length > 0) {
+        evaluations.push(result);
+      }
     }
 
-    const previousEvalSummary = evaluations.length > 0
-      ? `\nTOT NU TOE GEDETECTEERDE TECHNIEKEN: ${evaluations.flatMap(e => e.techniques).map(t => `${t.id} ${t.naam}`).join(', ')}`
-      : '';
-
-    const batchConversation = batchTurns.map(t =>
-      `[${t.idx}] ${t.speaker === 'seller' ? 'VERKOPER' : 'KLANT'}: "${t.text}"`
-    ).join('\n');
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-5.1',
-        messages: [
-          {
-            role: 'system',
-            content: `Je bent Hugo Herbots, expert verkoopcoach met 40 jaar ervaring. Je analyseert een verkoopgesprek en detecteert welke EPIC-verkooptechnieken de verkoper toepast.
-
-EPIC FASESTRUCTUUR:
-- Fase 1: Opening (technieken 0, 0.1-0.3, 1, 1.1 Koopklimaat, 1.2 Gentleman's Agreement, 1.3 Instapvraag, 1.4 Agendabepaling)
-- Fase 2: Ontdekking - Explore (2.1.x), Probe (2.2), Impact (2.3), Commitment (2.4)
-- Fase 3: Aanbeveling (3.1-3.7)
-- Fase 4: Beslissing (4.x)
-
-VOLLEDIGE TECHNIEK CATALOGUS:
-${catalog}
-${ragContext}
-${previousEvalSummary}
-
-SCORING PER TECHNIEK:
-- perfect: Techniek volledig en correct toegepast (score 10)
-- goed: Techniek grotendeels correct (score 7)
-- bijna: Goede richting maar onvolledig (score 4)
-- gemist: Locatie waar techniek had moeten worden toegepast maar niet werd (score 0)
-
-INSTRUCTIES:
-1. Analyseer ALLEEN de verkoper-beurten (niet de klant)
-2. Geef per verkoper-beurt de herkende technieken
-3. Wees RUIM in herkenning - als een verkoper iets doet dat lijkt op een techniek, herken het
-4. Voorbeelden: "Mag ik voorstellen dat we het gesprek als volgt doen" = 1.2 Gentleman's Agreement / 1.4 Agendabepaling
-5. "Via wie bent u bij ons terechtgekomen?" = 1.3 Instapvraag
-6. Koopklimaat creëren (1.1) = complimenten, aansluiting zoeken, informele toon
-
-Antwoord als JSON object met een "evaluations" array van objecten, één per verkoper-beurt:
-{"evaluations": [{"turnIdx": 0, "techniques": [{"id": "1.2", "naam": "Gentleman's Agreement", "quality": "goed", "score": 7}], "overallQuality": "goed", "rationale": "Uitleg..."}]}`
-          },
-          {
-            role: 'user',
-            content: `Analyseer de verkoper-beurten in dit fragment:\n\n${batchConversation}`
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.3,
-        response_format: { type: 'json_object' },
-      });
-
-      const content = response.choices[0]?.message?.content?.trim() || '{}';
-      let parsed: any;
-      try {
-        parsed = JSON.parse(content);
-      } catch {
-        continue;
-      }
-
-      const results = Array.isArray(parsed) ? parsed : (parsed.evaluations || parsed.results || parsed.turns || Object.values(parsed).find(Array.isArray) || []);
-
-      for (const result of results) {
-        const turnIdx = result.turnIdx ?? result.turn_idx;
-        if (turnIdx === undefined) continue;
-
-        evaluations.push({
-          turnIdx,
-          techniques: (result.techniques || []).map((t: any) => ({
-            id: t.id || t.nummer || '',
-            naam: t.naam || t.name || '',
-            quality: t.quality || 'gemist',
-            score: t.score ?? 0,
-            stappen_gevolgd: t.stappen_gevolgd || [],
-          })),
-          overallQuality: result.overallQuality || result.overall_quality || 'geen',
-          rationale: result.rationale || '',
-        });
-      }
-    } catch (err) {
-      console.error('[Analysis] Batch evaluation failed:', err);
+    if (batchStart % 20 === 0 && batchStart > 0) {
+      console.log(`[Analysis-Unified] Progress: ${batchStart}/${pairs.length} turns evaluated, ${evaluations.length} techniques found`);
     }
   }
 
+  console.log(`[Analysis-Unified] Complete: ${evaluations.length} evaluations with techniques from ${pairs.length} seller turns`);
   return evaluations;
 }
 
-const signalKeywords: Record<string, string[]> = {
-  vraag: ['hoe werkt', 'wat kost', 'kunt u uitleggen', 'wat houdt in', 'hoe zit het met', 'wat is'],
-  twijfel: ['ik weet niet', 'misschien', 'ik twijfel', 'niet zeker', 'ik moet erover nadenken', 'lastig'],
-  bezwaar: ['te duur', 'te veel', 'dat kan niet', 'niet akkoord', 'dat geloof ik niet', 'nee want'],
-  uitstel: ['later', 'volgende week', 'nog niet', 'even wachten', 'niet nu', 'binnenkort'],
-  interesse: ['interessant', 'klinkt goed', 'dat wil ik', 'vertel meer', 'hoe kan ik', 'graag'],
-  akkoord: ['akkoord', 'deal', 'laten we beginnen', 'ik ga ermee akkoord', 'prima', 'oké laten we'],
-};
+async function classifyCustomerHouding(text: string, phase: number): Promise<CustomerSignal> {
+  const lower = text.toLowerCase();
+
+  const quickPatterns: Array<{ signal: CustomerSignal; patterns: string[] }> = [
+    { signal: 'vraag', patterns: ['hoe werkt', 'wat kost', 'kunt u uitleggen', 'wat houdt in', 'hoe zit het met', 'wat is het', 'waarom is', 'hoeveel'] },
+    { signal: 'positief', patterns: ['dat is exact', 'dat past', 'dat sluit aan', 'dat helpt', 'dat is voldoende', 'interessant', 'klinkt goed', 'dat wil ik', 'graag', 'prima', 'akkoord', 'deal'] },
+    { signal: 'negatief', patterns: ['dat voldoet niet', 'dat past niet', 'te weinig', 'ik zoek iets anders', 'niet interessant'] },
+    { signal: 'vaag', patterns: ['misschien', 'zou kunnen', 'we zullen zien', 'lijkt interessant', 'eventueel', 'hangt ervan af'] },
+    { signal: 'ontwijkend', patterns: ['moeilijk te zeggen', 'dat varieert', 'dat is een goede vraag', 'maakt niet uit'] },
+  ];
+
+  if (phase >= 2) {
+    quickPatterns.push(
+      { signal: 'twijfel', patterns: ['ik weet niet', 'ik twijfel', 'niet zeker', 'ik moet erover nadenken', 'lastig'] },
+      { signal: 'bezwaar', patterns: ['te duur', 'te veel', 'dat kan niet', 'niet akkoord', 'dat geloof ik niet', 'nee want'] },
+      { signal: 'uitstel', patterns: ['later', 'volgende week', 'nog niet', 'even wachten', 'niet nu', 'binnenkort'] }
+    );
+  }
+
+  for (const { signal, patterns } of quickPatterns) {
+    for (const p of patterns) {
+      if (lower.includes(p)) return signal;
+    }
+  }
+
+  if (text.trim().endsWith('?') || lower.startsWith('hoe') || lower.startsWith('wat') || lower.startsWith('waarom') || lower.startsWith('wanneer')) {
+    return 'vraag';
+  }
+
+  if (text.length < 20) return 'ontwijkend';
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5.1',
+      messages: [
+        {
+          role: 'system',
+          content: `Classificeer deze klantuitspraak in een verkoopgesprek (fase ${phase}).
+
+Kies exact één houding:
+- positief: antwoord is in lijn met aanbod/verwachtingen
+- negatief: antwoord is niet in lijn met aanbod
+- vaag: schijninstemming zonder concreet criterium
+- ontwijkend: te algemeen antwoord
+- vraag: klant stelt een vraag
+${phase >= 2 ? '- twijfel: klant is onzeker\n- bezwaar: klant brengt tegenargument\n- uitstel: klant wil beslissing uitstellen' : ''}
+
+Antwoord als JSON: {"houding": "..."}`
+        },
+        { role: 'user', content: `Klant: "${text}"` }
+      ],
+      max_tokens: 50,
+      temperature: 0.1,
+    });
+
+    const content = response.choices[0]?.message?.content?.trim() || '';
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return (parsed.houding || 'ontwijkend') as CustomerSignal;
+    }
+  } catch {}
+
+  return 'ontwijkend';
+}
 
 function determineCurrentPhase(turnIdx: number, evaluations: TurnEvaluation[]): number {
   const techsBefore = evaluations
@@ -457,82 +564,26 @@ export async function detectCustomerSignals(turns: TranscriptTurn[], evaluations
   const customerTurns = turns.filter(t => t.speaker === 'customer');
   const results: CustomerSignalResult[] = [];
 
+  const signalHoudingMap: Record<string, CustomerSignalResult['houding']> = {
+    'positief': 'interesse',
+    'negatief': 'neutraal',
+    'vaag': 'neutraal',
+    'ontwijkend': 'neutraal',
+    'vraag': 'vraag',
+    'twijfel': 'twijfel',
+    'bezwaar': 'bezwaar',
+    'uitstel': 'uitstel',
+    'angst': 'twijfel',
+  };
+
   for (const turn of customerTurns) {
     const currentPhase = determineCurrentPhase(turn.idx, evaluations);
-    const lower = turn.text.toLowerCase();
-    let detectedHouding: CustomerSignalResult['houding'] = 'neutraal';
-    let confidence = 0.5;
-    let matchedByKeyword = false;
-
-    for (const [houding, keywords] of Object.entries(signalKeywords)) {
-      if (currentPhase === 1 && (houding === 'twijfel' || houding === 'bezwaar' || houding === 'uitstel')) {
-        continue;
-      }
-
-      for (const kw of keywords) {
-        if (lower.includes(kw)) {
-          detectedHouding = houding as CustomerSignalResult['houding'];
-          confidence = 0.8;
-          matchedByKeyword = true;
-          break;
-        }
-      }
-      if (matchedByKeyword) break;
-    }
-
-    if (!matchedByKeyword && turn.text.length > 20) {
-      try {
-        const phaseContext = `Het gesprek bevindt zich momenteel in Fase ${currentPhase}.`;
-        const response = await openai.chat.completions.create({
-          model: 'gpt-5.1',
-          messages: [
-            {
-              role: 'system',
-              content: `Je classificeert klantuitspraken in een verkoopgesprek. ${phaseContext}
-
-Kies exact één houding:
-- vraag: klant stelt een informatieve vraag
-- twijfel: klant is onzeker of aarzelt (alleen relevant vanaf fase 2)
-- bezwaar: klant brengt een tegenargument (alleen relevant vanaf fase 2)
-- uitstel: klant wil beslissing uitstellen (alleen relevant vanaf fase 2)
-- interesse: klant toont positieve interesse
-- akkoord: klant gaat akkoord
-- neutraal: geen duidelijk signaal
-
-${currentPhase === 1 ? 'LET OP: In fase 1 (opening) zijn twijfel, bezwaar en uitstel nog niet relevant. Classificeer deze als neutraal.' : ''}
-
-Antwoord als JSON: {"houding": "...", "confidence": 0.0-1.0}`
-            },
-            {
-              role: 'user',
-              content: `Klant zegt: "${turn.text}"`
-            }
-          ],
-          max_tokens: 100,
-          temperature: 0.2,
-        });
-
-        const content = response.choices[0]?.message?.content?.trim() || '';
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          detectedHouding = parsed.houding || 'neutraal';
-          confidence = parsed.confidence ?? 0.6;
-
-          if (currentPhase === 1 && (detectedHouding === 'twijfel' || detectedHouding === 'bezwaar' || detectedHouding === 'uitstel')) {
-            detectedHouding = 'neutraal';
-            confidence = 0.4;
-          }
-        }
-      } catch {
-        detectedHouding = 'neutraal';
-        confidence = 0.3;
-      }
-    }
+    const houding = await classifyCustomerHouding(turn.text, currentPhase);
+    const displayHouding = signalHoudingMap[houding] || 'neutraal';
 
     let recommendedTechniqueIds: string[] = [];
     try {
-      const moves = getExpectedMoves(detectedHouding as any);
+      const moves = getExpectedMoves(houding);
       recommendedTechniqueIds = moves.map(m => m.id);
     } catch {
       recommendedTechniqueIds = [];
@@ -540,8 +591,8 @@ Antwoord als JSON: {"houding": "...", "confidence": 0.0-1.0}`
 
     results.push({
       turnIdx: turn.idx,
-      houding: detectedHouding,
-      confidence,
+      houding: displayHouding,
+      confidence: 0.8,
       recommendedTechniqueIds,
       currentPhase,
     });
@@ -572,6 +623,13 @@ function qualityToScore(quality: string): number {
     default: return 0;
   }
 }
+
+const PHASE_KEY_TECHNIQUES: Record<number, string[]> = {
+  1: ['1.1', '1.2', '1.3', '1.4'],
+  2: ['2.1', '2.2', '2.3', '2.4'],
+  3: ['3.1', '3.2', '3.3', '3.5'],
+  4: ['4.1', '4.2', '4.3'],
+};
 
 function calculatePhaseScore(
   evaluations: TurnEvaluation[],
@@ -609,11 +667,15 @@ function calculatePhaseScore(
     count: v.count,
   }));
 
+  const phaseNum = techMap.size > 0 ? parseInt(Array.from(techMap.keys())[0]?.split('.')[0] || '1') : 1;
+  const keyTechniques = PHASE_KEY_TECHNIQUES[phaseNum] || PHASE_KEY_TECHNIQUES[1];
+  const effectiveDenominator = Math.max(keyTechniques.length, techniquesFound.length);
+
   const sumScores = Array.from(techMap.values()).reduce((sum, v) => sum + qualityToScore(v.quality), 0);
-  const maxScore = totalPossible * 10;
+  const maxScore = effectiveDenominator * 10;
   const score = maxScore > 0 ? Math.round((sumScores / maxScore) * 100) : 0;
 
-  return { score: Math.min(score, 100), techniquesFound, totalPossible };
+  return { score: Math.min(score, 100), techniquesFound, totalPossible: effectiveDenominator };
 }
 
 export function calculatePhaseCoverage(

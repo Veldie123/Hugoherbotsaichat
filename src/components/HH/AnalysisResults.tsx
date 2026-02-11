@@ -710,7 +710,7 @@ export function AnalysisResults({
                             )}
                             {currentPhase && (
                               <Badge variant="outline" className={`text-[10px] ${PHASE_LABELS[currentPhase].color} border-current/30`}>
-                                F{currentPhase}
+                                Fase {currentPhase}
                               </Badge>
                             )}
                           </div>
