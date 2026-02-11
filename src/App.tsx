@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { UserProvider } from "./contexts/UserContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { Toaster } from "./components/ui/sonner";
 import { Landing } from "./components/HH/Landing";
 import { Pricing } from "./components/HH/Pricing";
@@ -113,6 +114,7 @@ export default function App() {
 
   return (
     <UserProvider>
+    <NotificationProvider>
       {isCheckingAuth && (
         <div className="flex items-center justify-center min-h-screen bg-white">
           <div className="text-center">
@@ -187,6 +189,7 @@ export default function App() {
         </>
       )}
       <Toaster position="top-right" richColors />
+    </NotificationProvider>
     </UserProvider>
   );
 }

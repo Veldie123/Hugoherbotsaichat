@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Search,
   Bell,
@@ -8,15 +8,18 @@ import {
   FileSearch,
   Shield,
   MessageSquare,
-  Plus,
   PanelLeftClose,
   PanelLeft,
+  UserCircle,
+  CheckCheck,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
+import { useNotifications } from "../../contexts/NotificationContext";
 
 interface HistoryItem {
   id: string;
@@ -29,13 +32,23 @@ interface HistoryItem {
 interface AppLayoutProps {
   children: React.ReactNode;
   currentPage?: string;
-  navigate?: (page: string) => void;
+  navigate?: (page: string, data?: Record<string, any>) => void;
   onOpenFlowDrawer?: () => void;
   isAdmin?: boolean;
   chatHistory?: HistoryItem[];
   analysisHistory?: HistoryItem[];
   onSelectHistoryItem?: (id: string, type: "chat" | "analysis") => void;
-  onNewChat?: () => void;
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60) return "Zojuist";
+  if (diff < 3600) return `${Math.floor(diff / 60)} min geleden`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} uur geleden`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} dagen geleden`;
+  return new Date(dateStr).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
 }
 
 const mainNavItems = [
@@ -64,10 +77,22 @@ export function AppLayout({
   chatHistory = defaultChatHistory,
   analysisHistory = defaultAnalysisHistory,
   onSelectHistoryItem,
-  onNewChat,
 }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    if (notifOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notifOpen]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -94,35 +119,23 @@ export function AppLayout({
     return pageMap[itemId]?.includes(currentPage) || false;
   };
 
-  const getScoreColor = (score?: number) => {
-    if (!score) return "text-hh-muted";
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-orange-500";
-    return "text-red-500";
-  };
-
   const getHistoryForItem = (historyType: "chat" | "analysis") => {
     return historyType === "chat" ? chatHistory : analysisHistory;
-  };
-
-  const handleNewChat = () => {
-    if (onNewChat) {
-      onNewChat();
-    } else {
-      navigate?.("talk-to-hugo");
-    }
   };
 
   return (
     <div className="flex h-screen bg-hh-bg">
       <div
         className={`hidden lg:flex ${
-          collapsed ? "w-[60px]" : "w-[280px]"
+          collapsed ? "w-[60px]" : "w-[200px]"
         } bg-white border-r border-hh-border flex-col transition-all duration-300 flex-shrink-0`}
       >
         <div className="h-16 flex items-center justify-between px-3 border-b border-hh-border flex-shrink-0">
           {!collapsed ? (
-            <Logo variant="horizontal" className="text-hh-ink text-[14px]" />
+            <div className="flex flex-col items-start gap-0">
+              <span className="text-[18px] leading-[22px] tracking-widest uppercase font-bold text-hh-ink">HUGO</span>
+              <span className="text-[18px] leading-[22px] tracking-widest uppercase font-bold text-hh-ink">HERBOTS</span>
+            </div>
           ) : (
             <button
               onClick={() => setCollapsed(false)}
@@ -143,30 +156,7 @@ export function AppLayout({
           )}
         </div>
 
-        {!collapsed && (
-          <div className="p-3 flex-shrink-0">
-            <button
-              onClick={handleNewChat}
-              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-hh-border text-hh-text hover:bg-hh-ui-50 transition-colors text-[14px]"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Nieuw gesprek</span>
-            </button>
-          </div>
-        )}
-        {collapsed && (
-          <div className="p-2 flex-shrink-0">
-            <button
-              onClick={handleNewChat}
-              className="w-full flex items-center justify-center p-2 rounded-lg border border-hh-border text-hh-text hover:bg-hh-ui-50 transition-colors"
-              title="Nieuw gesprek"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        <nav className="flex-1 overflow-y-auto px-2 pb-2">
+        <nav className="flex-1 overflow-y-auto px-2 pb-2 pt-2">
           {mainNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavItemActive(item.id);
@@ -178,7 +168,7 @@ export function AppLayout({
                   onClick={() => handleNavigate(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                     isActive
-                      ? "bg-hh-ink text-white"
+                      ? "bg-[#3B5998] text-white"
                       : "text-hh-text hover:bg-hh-ui-50"
                   }`}
                 >
@@ -213,11 +203,6 @@ export function AppLayout({
                           </p>
                           <p className="text-[11px] text-hh-muted">{histItem.date}</p>
                         </div>
-                        {histItem.score !== undefined && (
-                          <span className={`text-[12px] font-semibold flex-shrink-0 ${getScoreColor(histItem.score)}`}>
-                            {histItem.score}%
-                          </span>
-                        )}
                       </button>
                     ))}
                     <button
@@ -240,8 +225,8 @@ export function AppLayout({
               onClick={() => navigate?.("admin-uploads")}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-hh-muted hover:bg-hh-ui-50 hover:text-hh-text transition-colors"
             >
-              <Shield className="w-5 h-5 flex-shrink-0" />
-              {!collapsed && <span className="text-[13px]">Admin</span>}
+              <UserCircle className="w-5 h-5 flex-shrink-0" />
+              {!collapsed && <span className="text-[13px]">Admin View</span>}
             </button>
           </div>
         )}
@@ -263,24 +248,14 @@ export function AppLayout({
         <SheetContent side="left" className="w-full sm:w-80 p-0 flex flex-col">
           <SheetHeader className="px-4 py-4 border-b border-hh-border flex-shrink-0">
             <SheetTitle className="flex items-center justify-between">
-              <Logo variant="horizontal" className="text-hh-ink text-[16px]" />
+              <div className="flex flex-col items-start gap-0">
+                <span className="text-[18px] leading-[22px] tracking-widest uppercase font-bold text-hh-ink">HUGO</span>
+                <span className="text-[18px] leading-[22px] tracking-widest uppercase font-bold text-hh-ink">HERBOTS</span>
+              </div>
             </SheetTitle>
           </SheetHeader>
 
-          <div className="p-3 flex-shrink-0">
-            <button
-              onClick={() => {
-                handleNewChat();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center gap-2 px-4 py-3 rounded-lg border border-hh-border text-hh-text hover:bg-hh-ui-50 transition-colors text-[15px]"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Nieuw gesprek</span>
-            </button>
-          </div>
-
-          <nav className="flex-1 px-3 pb-3 overflow-y-auto">
+          <nav className="flex-1 px-3 pb-3 pt-3 overflow-y-auto">
             {mainNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = isNavItemActive(item.id);
@@ -295,7 +270,7 @@ export function AppLayout({
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
-                        ? "bg-hh-ink text-white"
+                        ? "bg-[#3B5998] text-white"
                         : "text-hh-text hover:bg-hh-ui-50"
                     }`}
                   >
@@ -325,11 +300,6 @@ export function AppLayout({
                             <p className="text-[14px] text-hh-text truncate">{histItem.title}</p>
                             <p className="text-[12px] text-hh-muted">{histItem.date}</p>
                           </div>
-                          {histItem.score !== undefined && (
-                            <span className={`text-[13px] font-semibold flex-shrink-0 ${getScoreColor(histItem.score)}`}>
-                              {histItem.score}%
-                            </span>
-                          )}
                         </button>
                       ))}
                       <button
@@ -358,8 +328,8 @@ export function AppLayout({
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-hh-muted hover:bg-hh-ui-50 transition-colors"
               >
-                <Shield className="w-5 h-5" />
-                <span className="text-[15px]">Admin View</span>
+                <UserCircle className="w-5 h-5" />
+                <span className="text-[13px]">Admin View</span>
               </button>
             </div>
           )}
@@ -412,9 +382,86 @@ export function AppLayout({
               </span>
             </Button>
 
-            <Button variant="ghost" size="icon" className="h-10 w-10">
-              <Bell className="w-5 h-5" />
-            </Button>
+            <div className="relative" ref={notifRef}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 relative"
+                onClick={() => setNotifOpen(!notifOpen)}
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-hh-border z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-hh-border">
+                    <span className="text-[15px] font-semibold text-hh-ink">Notificaties</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={() => markAllRead()}
+                        className="flex items-center gap-1 text-[12px] text-hh-primary hover:text-hh-primary/80 transition-colors"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" />
+                        Alles gelezen
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-[14px] text-hh-muted">
+                        Geen notificaties
+                      </div>
+                    ) : (
+                      notifications.slice(0, 20).map((notif) => (
+                        <button
+                          key={notif.id}
+                          onClick={() => {
+                            markAsRead(notif.id);
+                            if (notif.type === "analysis_complete" && notif.conversationId && navigate) {
+                              navigate("analysis-results", { conversationId: notif.conversationId });
+                              setNotifOpen(false);
+                            }
+                          }}
+                          className={`w-full text-left px-4 py-3 border-b border-hh-border/50 hover:bg-hh-ui-50 transition-colors ${
+                            !notif.read ? "bg-blue-50/50" : ""
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            {!notif.read && (
+                              <span className="mt-1.5 w-2 h-2 rounded-full bg-hh-primary flex-shrink-0" />
+                            )}
+                            <div className={`flex-1 min-w-0 ${notif.read ? "ml-5" : ""}`}>
+                              <p className="text-[13px] font-medium text-hh-ink truncate">
+                                {notif.title}
+                              </p>
+                              <p className="text-[12px] text-hh-muted mt-0.5">
+                                {notif.message}
+                              </p>
+                              <div className="flex items-center justify-between mt-1.5">
+                                <span className="text-[11px] text-hh-muted">
+                                  {formatTimeAgo(notif.createdAt)}
+                                </span>
+                                {notif.type === "analysis_complete" && notif.conversationId && (
+                                  <span className="flex items-center gap-1 text-[11px] text-hh-primary font-medium">
+                                    Bekijk resultaten
+                                    <ExternalLink className="w-3 h-3" />
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <UserMenu navigate={navigate} onLogout={() => navigate?.("landing")} />
           </div>
         </div>

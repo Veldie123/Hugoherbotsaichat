@@ -160,91 +160,99 @@ export async function transcribeAudio(storageKey: string): Promise<WhisperSegmen
   return segments;
 }
 
-export function buildTurns(segments: WhisperSegment[]): TranscriptTurn[] {
+export async function buildTurns(segments: WhisperSegment[]): Promise<TranscriptTurn[]> {
   if (segments.length === 0) return [];
 
-  const questionPatterns = [
-    /\?$/,
-    /^(hoe|wat|waarom|wanneer|wie|waar|welk|hoeveel|kun je|kunt u|mag ik|vertelt? u|vertel eens)/i,
-    /begrijp ik goed/i,
-    /klopt dat/i,
-    /is dat zo/i,
-    /dus als ik/i,
-    /stel dat/i,
-    /wat betekent/i,
-    /wat vindt u/i,
-    /wat zijn de gevolgen/i,
-  ];
+  const CHUNK_SIZE = 80;
+  const allLabels: Array<{ idx: number; speaker: 'seller' | 'customer' }> = [];
 
-  const sellerIndicators = [
-    /wij bieden/i,
-    /ons product/i,
-    /onze oplossing/i,
-    /ik wil u/i,
-    /laat me uitleggen/i,
-    /het voordeel/i,
-    /concreet betekent/i,
-    /als ik het goed begrijp/i,
-    /gentleman's agreement/i,
-    /mag ik.*vragen/i,
-  ];
+  for (let chunkStart = 0; chunkStart < segments.length; chunkStart += CHUNK_SIZE) {
+    const chunkEnd = Math.min(chunkStart + CHUNK_SIZE, segments.length);
+    const chunkSegments = segments.slice(chunkStart, chunkEnd);
+    const chunkLines = chunkSegments.map((seg, i) => `[${chunkStart + i}] ${seg.text}`).join('\n');
 
-  const customerIndicators = [
-    /ik zoek/i,
-    /wij hebben/i,
-    /ons probleem/i,
-    /bij ons/i,
-    /ik twijfel/i,
-    /dat is te duur/i,
-    /ik weet niet/i,
-    /we gebruiken momenteel/i,
-    /onze situatie/i,
-  ];
-
-  const labeled: Array<{ segment: WhisperSegment; speaker: 'seller' | 'customer' }> = [];
-
-  for (let i = 0; i < segments.length; i++) {
-    const seg = segments[i];
-    const text = seg.text;
-
-    let sellerScore = 0;
-    let customerScore = 0;
-
-    for (const p of questionPatterns) {
-      if (p.test(text)) sellerScore += 2;
-    }
-    for (const p of sellerIndicators) {
-      if (p.test(text)) sellerScore += 3;
-    }
-    for (const p of customerIndicators) {
-      if (p.test(text)) customerScore += 3;
+    let prevContext = '';
+    if (chunkStart > 0 && allLabels.length > 0) {
+      const lastLabels = allLabels.slice(-3);
+      prevContext = `\nDe laatste sprekers voor dit fragment waren: ${lastLabels.map(l => `[${l.idx}] = ${l.speaker === 'seller' ? 'V' : 'K'}`).join(', ')}. Houd hier rekening mee voor continuïteit.`;
     }
 
-    const prevPause = i > 0 ? seg.start - segments[i - 1].end : 2;
-    const longPause = prevPause > 1.5;
+    try {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Je bent een expert in het analyseren van verkoopgesprekken. Je taak is om per zin te bepalen wie er spreekt: de Verkoper (V) of de Klant (K).
 
-    let speaker: 'seller' | 'customer';
+BELANGRIJK - Analyseer op INHOUD, niet op aannames:
+- De verkoper stelt ontdekkingsvragen, presenteert oplossingen, stuurt het gesprek, probeert te overtuigen
+- De klant beschrijft zijn situatie, beantwoordt vragen, stelt vragen over het aanbod, geeft bezwaren
+- Let op dialoogpatronen: als iemand een vraag stelt en het antwoord volgt, is dat vaak een sprekerwisseling
+- "Ja", "Nee", korte bevestigingen na een vraag = vaak de ANDERE spreker
+- Als iemand zegt "ik heb dat al twee keer meegemaakt" na een vraag "is dat iets dat je al hebt meegemaakt?" = dat is de klant die antwoordt
+- Whisper maakt GEEN onderscheid tussen sprekers. Lange blokken tekst bevatten vaak BEIDE sprekers.
+- Zoek naar natuurlijke dialoogwisselingen: vraag → antwoord, pitch → reactie
+- Let op voornaamwoorden en context: "wij verkopen" vs "ik zoek", "ons aanbod" vs "mijn situatie"
 
-    if (sellerScore > customerScore) {
-      speaker = 'seller';
-    } else if (customerScore > sellerScore) {
-      speaker = 'customer';
-    } else if (i === 0) {
-      speaker = 'seller';
-    } else if (longPause) {
-      speaker = labeled[i - 1].speaker === 'seller' ? 'customer' : 'seller';
-    } else {
-      speaker = labeled[i - 1].speaker;
+Antwoord als JSON object met een "labels" array: {"labels": [{"idx": 0, "s": "V"}, {"idx": 1, "s": "K"}, ...]}
+Gebruik alleen "V" voor Verkoper en "K" voor Klant. Geef ELKE idx terug.`
+          },
+          {
+            role: 'user',
+            content: `Bepaal per zin wie er spreekt (V=Verkoper, K=Klant):${prevContext}
+
+${chunkLines}`
+          }
+        ],
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
+      });
+
+      const content = response.choices[0]?.message?.content || '{}';
+      let parsed: any;
+      try {
+        parsed = JSON.parse(content);
+      } catch {
+        console.error('[Diarization] Failed to parse AI response for chunk', chunkStart);
+        for (let i = chunkStart; i < chunkEnd; i++) {
+          allLabels.push({ idx: i, speaker: i % 2 === 0 ? 'seller' : 'customer' });
+        }
+        continue;
+      }
+
+      const labels = Array.isArray(parsed) ? parsed : (parsed.labels || parsed.result || parsed.segments || Object.values(parsed).find(Array.isArray) || []);
+
+      const labelMap = new Map<number, 'seller' | 'customer'>();
+      for (const item of labels) {
+        const idx = typeof item.idx === 'number' ? item.idx : parseInt(item.idx);
+        const speaker = (item.s === 'V' || item.speaker === 'V' || item.s === 'seller') ? 'seller' : 'customer';
+        labelMap.set(idx, speaker);
+      }
+
+      for (let i = chunkStart; i < chunkEnd; i++) {
+        const speaker = labelMap.get(i) || (i > 0 && allLabels.length > 0 ? allLabels[allLabels.length - 1].speaker : 'seller');
+        allLabels.push({ idx: i, speaker });
+      }
+
+    } catch (err) {
+      console.error('[Diarization] AI call failed for chunk', chunkStart, err);
+      for (let i = chunkStart; i < chunkEnd; i++) {
+        allLabels.push({ idx: i, speaker: i % 2 === 0 ? 'seller' : 'customer' });
+      }
     }
-
-    labeled.push({ segment: seg, speaker });
   }
+
+  console.log(`[Diarization] AI labeled ${allLabels.length} segments. Seller: ${allLabels.filter(l => l.speaker === 'seller').length}, Customer: ${allLabels.filter(l => l.speaker === 'customer').length}`);
 
   const turns: TranscriptTurn[] = [];
   let currentTurn: { speaker: 'seller' | 'customer'; texts: string[]; startMs: number; endMs: number } | null = null;
 
-  for (const item of labeled) {
-    if (!currentTurn || currentTurn.speaker !== item.speaker) {
+  for (let i = 0; i < allLabels.length; i++) {
+    const label = allLabels[i];
+    const segment = segments[label.idx];
+
+    if (!currentTurn || currentTurn.speaker !== label.speaker) {
       if (currentTurn) {
         turns.push({
           idx: turns.length,
@@ -255,14 +263,14 @@ export function buildTurns(segments: WhisperSegment[]): TranscriptTurn[] {
         });
       }
       currentTurn = {
-        speaker: item.speaker,
-        texts: [item.segment.text],
-        startMs: item.segment.start,
-        endMs: item.segment.end,
+        speaker: label.speaker,
+        texts: [segment.text],
+        startMs: segment.start,
+        endMs: segment.end,
       };
     } else {
-      currentTurn.texts.push(item.segment.text);
-      currentTurn.endMs = item.segment.end;
+      currentTurn.texts.push(segment.text);
+      currentTurn.endMs = segment.end;
     }
   }
 
@@ -866,7 +874,7 @@ export async function runFullAnalysis(
 
     job.status = 'analyzing';
     analysisJobs.set(conversationId, { ...job });
-    const turns = buildTurns(segments);
+    const turns = await buildTurns(segments);
 
     if (turns.length === 0) {
       throw new Error('Geen spraak gedetecteerd in het audiobestand.');

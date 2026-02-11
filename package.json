@@ -59,6 +59,7 @@
             "express": "^5.2.1",
             "hono": "*",
             "input-otp": "^1.4.2",
+            "jspdf": "^4.1.0",
             "livekit-client": "^2.17.0",
             "livekit-server-sdk": "^2.15.0",
             "lucide-react": "^0.487.0",

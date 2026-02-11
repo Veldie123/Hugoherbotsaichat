@@ -215,15 +215,134 @@ export function AnalysisResults({
     return labels[houding] || labels['neutraal'];
   };
 
-  const handleExportMarkdown = () => {
+  const handleExportPDF = async () => {
     if (!result) return;
-    const blob = new Blob([result.insights.summaryMarkdown], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${result.conversation.title || 'analyse'}-rapport.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    const maxW = pageW - 2 * margin;
+    let y = 20;
+
+    const checkPage = (needed: number) => {
+      if (y + needed > 275) {
+        doc.addPage();
+        y = 20;
+      }
+    };
+
+    const addWrappedText = (text: string, fontSize: number, isBold = false, color: [number, number, number] = [30, 30, 30]) => {
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+      doc.setTextColor(...color);
+      const lines = doc.splitTextToSize(text, maxW);
+      const lineH = fontSize * 0.5;
+      for (const line of lines) {
+        checkPage(lineH);
+        doc.text(line, margin, y);
+        y += lineH;
+      }
+    };
+
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('HUGO HERBOTS', margin, y);
+    y += 6;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('E.P.I.C. Sales Analyse Rapport', margin, y);
+    y += 12;
+
+    addWrappedText(result.conversation.title || 'Gespreksanalyse', 16, true);
+    y += 2;
+    addWrappedText(`Datum: ${new Date(result.conversation.createdAt).toLocaleDateString('nl-BE')}`, 10, false, [100, 116, 139]);
+    y += 8;
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, y, pageW - margin, y);
+    y += 8;
+
+    addWrappedText('EPIC Coverage Score', 14, true);
+    y += 2;
+    const coverage = result.insights.epicCoverage;
+    const overallScore = coverage.overall;
+    addWrappedText(`Totaalscore: ${overallScore}%`, 12, true, overallScore >= 70 ? [34, 197, 94] : overallScore >= 50 ? [245, 158, 11] : [239, 68, 68]);
+    y += 4;
+    const epicPhases = [
+      { name: 'Explore', data: coverage.explore },
+      { name: 'Probe', data: coverage.probe },
+      { name: 'Impact', data: coverage.impact },
+      { name: 'Commit', data: coverage.commit },
+    ];
+    for (const phase of epicPhases) {
+      addWrappedText(`${phase.name}: ${phase.data.score}%`, 10, false);
+      y += 1;
+    }
+    y += 6;
+
+    addWrappedText('Sterke Punten', 14, true, [34, 197, 94]);
+    y += 2;
+    for (const s of result.insights.strengths) {
+      checkPage(15);
+      addWrappedText(`+ ${s.text}`, 10, false);
+      if (s.quote) {
+        addWrappedText(`  "${s.quote}"`, 9, false, [100, 116, 139]);
+      }
+      y += 2;
+    }
+    y += 4;
+
+    addWrappedText('Verbeterpunten', 14, true, [239, 68, 68]);
+    y += 2;
+    for (const imp of result.insights.improvements) {
+      checkPage(15);
+      addWrappedText(`- ${imp.text}`, 10, false);
+      if (imp.betterApproach) {
+        addWrappedText(`  Tip: ${imp.betterApproach}`, 9, false, [100, 116, 139]);
+      }
+      y += 2;
+    }
+    y += 4;
+
+    if (result.insights.missedOpportunities && result.insights.missedOpportunities.length > 0) {
+      addWrappedText('Gemiste Kansen', 14, true, [245, 158, 11]);
+      y += 2;
+      for (const opp of result.insights.missedOpportunities) {
+        checkPage(20);
+        addWrappedText(`${opp.type} - ${opp.description}`, 10, true);
+        addWrappedText(`Beter alternatief: "${opp.betterQuestion}"`, 9, false, [100, 116, 139]);
+        y += 3;
+      }
+      y += 4;
+    }
+
+    if (result.insights.microExperiments && result.insights.microExperiments.length > 0) {
+      addWrappedText('Micro-experimenten', 14, true, [59, 130, 246]);
+      y += 2;
+      for (const exp of result.insights.microExperiments) {
+        checkPage(15);
+        addWrappedText(`- ${exp}`, 10, false);
+        y += 3;
+      }
+      y += 4;
+    }
+
+    addWrappedText('Transcript Samenvatting', 14, true);
+    y += 2;
+    const sellerTurns = result.transcript.filter(t => t.speaker === 'seller').length;
+    const customerTurns = result.transcript.filter(t => t.speaker === 'customer').length;
+    addWrappedText(`${result.transcript.length} beurten totaal (Verkoper: ${sellerTurns}, Klant: ${customerTurns})`, 10, false, [100, 116, 139]);
+    y += 6;
+
+    checkPage(10);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text('Gegenereerd door Hugo Herbots AI Sales Coach - hugoherbots.ai', margin, 285);
+
+    doc.save(`${result.conversation.title || 'analyse'}-rapport.pdf`);
   };
 
   if (loading || processingStep) {
@@ -342,9 +461,9 @@ export function AnalysisResults({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-6 pt-6 border-t border-hh-border">
-            <Button variant="outline" className="gap-2" onClick={handleExportMarkdown}>
+            <Button variant="outline" className="gap-2" onClick={handleExportPDF}>
               <Download className="w-4 h-4" />
-              Download rapport (MD)
+              Download rapport (PDF)
             </Button>
           </div>
         </Card>

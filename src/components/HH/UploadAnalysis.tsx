@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { getAllTechnieken, getTechniekByNummer, getFaseNaam } from "../../data/technieken-service";
 
 interface UploadedAnalysis {
@@ -59,6 +60,7 @@ export function UploadAnalysis({
   isAdmin = false,
 }: UploadAnalysisProps) {
   const { user } = useUser();
+  const { addPendingAnalysis } = useNotifications();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [title, setTitle] = useState("");
@@ -288,6 +290,7 @@ export function UploadAnalysis({
         step: 'Transcriberen...',
       });
 
+      addPendingAnalysis(result.conversationId, title);
       pollAnalysisStatus(result.conversationId);
     } catch (err) {
       setUploadError('Er ging iets mis bij het uploaden');
