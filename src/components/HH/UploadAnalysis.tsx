@@ -239,12 +239,91 @@ export function UploadAnalysis({
   };
 
   const isValidFileSize = (file: File) => {
-    const maxSize = 25 * 1024 * 1024; // 25MB limit (platform proxy limit)
+    const maxSize = 100 * 1024 * 1024; // 100MB limit
     if (file.size > maxSize) {
-      setUploadError(`Bestand is te groot. Maximum: 25MB (jouw bestand: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+      setUploadError(`Bestand is te groot. Maximum: 100MB (jouw bestand: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
       return false;
     }
     return true;
+  };
+
+  const CHUNK_SIZE = 20 * 1024 * 1024; // 20MB chunks (under proxy limit)
+
+  const uploadChunked = async (file: File, userId: string): Promise<any> => {
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+    setAnalysisStatus({
+      conversationId: '',
+      status: 'uploading',
+      step: 'Uploaden... (0%)',
+    });
+
+    const initRes = await fetch('/api/v2/analysis/upload/init', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileSize: file.size,
+        totalChunks,
+        mimetype: file.type,
+      }),
+    });
+    if (!initRes.ok) {
+      const err = await initRes.json();
+      throw new Error(err.error || 'Upload initialiseren mislukt');
+    }
+    const { uploadId } = await initRes.json();
+
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end);
+
+      const formData = new FormData();
+      formData.append('chunk', chunk, `chunk_${i}`);
+      formData.append('uploadId', uploadId);
+      formData.append('chunkIndex', String(i));
+
+      const chunkRes = await fetch('/api/v2/analysis/upload/chunk', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!chunkRes.ok) {
+        const err = await chunkRes.json();
+        throw new Error(err.error || `Chunk ${i + 1} upload mislukt`);
+      }
+
+      const progress = Math.round(((i + 1) / totalChunks) * 100);
+      setAnalysisStatus({
+        conversationId: '',
+        status: 'uploading',
+        step: `Uploaden... (${progress}%)`,
+      });
+    }
+
+    setAnalysisStatus({
+      conversationId: '',
+      status: 'uploading',
+      step: 'Bestand samenvoegen & comprimeren...',
+    });
+
+    const completeRes = await fetch('/api/v2/analysis/upload/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uploadId,
+        title,
+        context,
+        userId,
+        consentConfirmed: 'true',
+      }),
+    });
+
+    const result = await completeRes.json();
+    if (!completeRes.ok) {
+      throw new Error(result.error || 'Upload afronden mislukt');
+    }
+    return result;
   };
 
   const handleUpload = async () => {
@@ -264,24 +343,30 @@ export function UploadAnalysis({
     setUploadError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('title', title);
-      formData.append('context', context);
-      formData.append('userId', user.id);
-      formData.append('consentConfirmed', 'true');
+      let result: any;
 
-      const response = await fetch('/api/v2/analysis/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      if (selectedFile.size > CHUNK_SIZE) {
+        result = await uploadChunked(selectedFile, user.id);
+      } else {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('title', title);
+        formData.append('context', context);
+        formData.append('userId', user.id);
+        formData.append('consentConfirmed', 'true');
 
-      const result = await response.json();
+        const response = await fetch('/api/v2/analysis/upload', {
+          method: 'POST',
+          body: formData,
+        });
 
-      if (!response.ok) {
-        setUploadError(result.error || 'Upload mislukt');
-        setIsUploading(false);
-        return;
+        result = await response.json();
+
+        if (!response.ok) {
+          setUploadError(result.error || 'Upload mislukt');
+          setIsUploading(false);
+          return;
+        }
       }
 
       setAnalysisStatus({
@@ -292,8 +377,8 @@ export function UploadAnalysis({
 
       addPendingAnalysis(result.conversationId, title);
       pollAnalysisStatus(result.conversationId);
-    } catch (err) {
-      setUploadError('Er ging iets mis bij het uploaden');
+    } catch (err: any) {
+      setUploadError(err.message || 'Er ging iets mis bij het uploaden');
       setIsUploading(false);
     }
   };
@@ -450,7 +535,7 @@ export function UploadAnalysis({
                       </span>
                     </p>
                     <p className="text-[14px] leading-[20px] text-hh-muted">
-                      Audio: MP3, WAV, M4A • Video: MP4, MOV • Max 25MB
+                      Audio: MP3, WAV, M4A • Video: MP4, MOV • Max 100MB
                     </p>
                   </div>
                 </div>

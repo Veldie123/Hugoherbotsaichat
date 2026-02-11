@@ -28,6 +28,7 @@ import { createServer, type Server } from "http";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import { nanoid } from "nanoid";
 
 // FULL ENGINE IMPORTS - Replacing simplified versions
@@ -115,9 +116,9 @@ import multer from "multer";
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 },
+  limits: { fileSize: 24 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/m4a', 'video/mp4', 'video/quicktime'];
+    const allowed = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/m4a', 'video/mp4', 'video/quicktime', 'application/octet-stream'];
     if (allowed.includes(file.mimetype) || file.originalname.match(/\.(mp3|wav|m4a|mp4|mov)$/i)) {
       cb(null, true);
     } else {
@@ -125,6 +126,31 @@ const upload = multer({
     }
   }
 });
+
+const chunkUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 24 * 1024 * 1024 },
+});
+
+
+const activeChunkedUploads = new Map<string, {
+  chunks: Map<number, boolean>;
+  totalChunks: number;
+  fileName: string;
+  mimetype: string;
+  tmpDir: string;
+  createdAt: number;
+}>();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, upload] of activeChunkedUploads) {
+    if (now - upload.createdAt > 30 * 60 * 1000) {
+      try { fs.rmSync(upload.tmpDir, { recursive: true, force: true }); } catch {}
+      activeChunkedUploads.delete(id);
+    }
+  }
+}, 5 * 60 * 1000);
 
 const app = express();
 
@@ -2875,6 +2901,8 @@ app.get("/api/v2/user/hugo-context", async (req, res) => {
 // GESPREKSANALYSE API ENDPOINTS
 // ============================================================================
 
+import { compressAudioIfNeeded, compressAudioFileFromPath } from "./v2/audio-compressor";
+
 app.post("/api/v2/analysis/upload", upload.single('file'), async (req: Request, res: Response) => {
   try {
     const file = req.file;
@@ -2896,10 +2924,12 @@ app.post("/api/v2/analysis/upload", upload.single('file'), async (req: Request, 
 
     console.log(`[Analysis] Upload started: "${title}" by ${effectiveUserId}, file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
 
+    const compressed = await compressAudioIfNeeded(file.buffer, file.originalname, file.mimetype);
+
     const storageKey = await uploadAndStore(
-      file.buffer,
-      file.originalname,
-      file.mimetype,
+      compressed.buffer,
+      compressed.originalName,
+      compressed.mimetype,
       effectiveUserId
     );
 
@@ -2912,11 +2942,162 @@ app.post("/api/v2/analysis/upload", upload.single('file'), async (req: Request, 
       conversationId,
       storageKey,
       status: 'transcribing',
-      message: 'Upload succesvol! Analyse wordt gestart...'
+      message: compressed.compressed 
+        ? 'Upload succesvol! Bestand gecomprimeerd en analyse wordt gestart...'
+        : 'Upload succesvol! Analyse wordt gestart...'
     });
   } catch (err: any) {
     console.error("[Analysis] Upload error:", err);
     res.status(500).json({ error: err.message || 'Upload mislukt' });
+  }
+});
+
+app.post("/api/v2/analysis/upload/init", express.json(), (req: Request, res: Response) => {
+  try {
+    const { fileName, fileSize, totalChunks, mimetype } = req.body;
+
+    if (!fileName || !totalChunks) {
+      return res.status(400).json({ error: 'fileName en totalChunks zijn vereist' });
+    }
+
+    const allowedAudioExts = ['.mp3', '.wav', '.m4a', '.mp4', '.mov', '.ogg', '.webm', '.flac', '.aac'];
+    const fileExt = path.extname(fileName).toLowerCase();
+    if (!allowedAudioExts.includes(fileExt)) {
+      return res.status(400).json({ error: `Ongeldig bestandstype: ${fileExt}. Alleen audio/video bestanden zijn toegestaan.` });
+    }
+
+    const maxSize = 100 * 1024 * 1024;
+    if (fileSize > maxSize) {
+      return res.status(400).json({ error: `Bestand is te groot. Maximum: 100MB` });
+    }
+
+    const uploadId = crypto.randomUUID();
+    const tmpDir = path.join(os.tmpdir(), `chunked_${uploadId}`);
+    fs.mkdirSync(tmpDir, { recursive: true });
+
+    activeChunkedUploads.set(uploadId, {
+      chunks: new Map(),
+      totalChunks,
+      fileName,
+      mimetype: mimetype || 'application/octet-stream',
+      tmpDir,
+      createdAt: Date.now(),
+    });
+
+    console.log(`[ChunkedUpload] Initialized: ${uploadId}, file: ${fileName} (${(fileSize / 1024 / 1024).toFixed(1)}MB, ${totalChunks} chunks)`);
+
+    res.json({ uploadId, totalChunks });
+  } catch (err: any) {
+    console.error("[ChunkedUpload] Init error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/v2/analysis/upload/chunk", chunkUpload.single('chunk'), (req: Request, res: Response) => {
+  try {
+    const { uploadId, chunkIndex } = req.body;
+    const chunkData = req.file;
+
+    if (!uploadId || chunkIndex === undefined || !chunkData) {
+      return res.status(400).json({ error: 'uploadId, chunkIndex en chunk data zijn vereist' });
+    }
+
+    const upload = activeChunkedUploads.get(uploadId);
+    if (!upload) {
+      return res.status(404).json({ error: 'Upload niet gevonden of verlopen' });
+    }
+
+    const idx = parseInt(chunkIndex, 10);
+    const chunkPath = path.join(upload.tmpDir, `chunk_${String(idx).padStart(5, '0')}`);
+    fs.writeFileSync(chunkPath, chunkData.buffer);
+    upload.chunks.set(idx, true);
+
+    const received = upload.chunks.size;
+    console.log(`[ChunkedUpload] ${uploadId}: chunk ${idx + 1}/${upload.totalChunks} received`);
+
+    res.json({ 
+      received, 
+      total: upload.totalChunks, 
+      complete: received === upload.totalChunks 
+    });
+  } catch (err: any) {
+    console.error("[ChunkedUpload] Chunk error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/v2/analysis/upload/complete", express.json(), async (req: Request, res: Response) => {
+  try {
+    const { uploadId, title, context, userId, consentConfirmed } = req.body;
+
+    if (!uploadId) {
+      return res.status(400).json({ error: 'uploadId is vereist' });
+    }
+
+    const uploadInfo = activeChunkedUploads.get(uploadId);
+    if (!uploadInfo) {
+      return res.status(404).json({ error: 'Upload niet gevonden of verlopen' });
+    }
+
+    if (uploadInfo.chunks.size !== uploadInfo.totalChunks) {
+      return res.status(400).json({ 
+        error: `Niet alle chunks ontvangen: ${uploadInfo.chunks.size}/${uploadInfo.totalChunks}` 
+      });
+    }
+
+    if (!consentConfirmed || consentConfirmed === 'false') {
+      return res.status(400).json({ error: 'Toestemming is vereist' });
+    }
+
+    if (!title) {
+      return res.status(400).json({ error: 'Titel is verplicht' });
+    }
+
+    const effectiveUserId = userId || 'anonymous';
+
+    const ext = path.extname(uploadInfo.fileName).toLowerCase() || '.m4a';
+    const assembledPath = path.join(uploadInfo.tmpDir, `assembled${ext}`);
+    const writeStream = fs.createWriteStream(assembledPath);
+    for (let i = 0; i < uploadInfo.totalChunks; i++) {
+      const chunkPath = path.join(uploadInfo.tmpDir, `chunk_${String(i).padStart(5, '0')}`);
+      const chunkData = fs.readFileSync(chunkPath);
+      writeStream.write(chunkData);
+    }
+    await new Promise<void>((resolve, reject) => {
+      writeStream.end(() => resolve());
+      writeStream.on('error', reject);
+    });
+
+    const fileSize = fs.statSync(assembledPath).size;
+    console.log(`[ChunkedUpload] Assembled ${uploadId}: ${(fileSize / 1024 / 1024).toFixed(1)}MB`);
+
+    const compressed = await compressAudioFileFromPath(assembledPath, uploadInfo.fileName, fileSize);
+
+    const storageKey = await uploadAndStore(
+      compressed.buffer,
+      compressed.originalName,
+      compressed.mimetype,
+      effectiveUserId
+    );
+
+    const conversationId = crypto.randomUUID();
+    runFullAnalysis(conversationId, storageKey, effectiveUserId, title);
+
+    try { fs.rmSync(uploadInfo.tmpDir, { recursive: true, force: true }); } catch {}
+    activeChunkedUploads.delete(uploadId);
+
+    res.json({
+      success: true,
+      conversationId,
+      storageKey,
+      status: 'transcribing',
+      message: compressed.compressed
+        ? 'Upload succesvol! Bestand gecomprimeerd en analyse wordt gestart...'
+        : 'Upload succesvol! Analyse wordt gestart...'
+    });
+  } catch (err: any) {
+    console.error("[ChunkedUpload] Complete error:", err);
+    res.status(500).json({ error: err.message || 'Upload afronden mislukt' });
   }
 });
 
