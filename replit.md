@@ -40,6 +40,12 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
     - **Engine Components:** Includes `coach-engine.ts`, `context_engine.ts`, `rag-service.ts`, `response-repair.ts`, `content-assets.ts`, `intent-detector.ts`, and `rich-response-builder.ts`.
     - **Session Flow:** Progresses from CONTEXT_GATHERING to COACH_CHAT, with an "Expert mode" option.
 - **4-Level Competence Model:** Integrated for difficulty selection in coaching, mapping to `onbewuste_onkunde`, `bewuste_onkunde`, `bewuste_kunde`, `onbewuste_kunde`.
+- **Analysis System (Phase 1-4 Scoring):**
+    - **Phase Coverage:** Replaced E/P/I/C-only scoring with comprehensive Phase 1-4 scoring: Phase 1 Opening (15%), Phase 2 EPIC Discovery (40%), Phase 3 Recommendation (25%), Phase 4 Decision (20%).
+    - **RAG-Enhanced Evaluation:** Seller turns are batch-processed (6 turns) with semantic RAG search (8 documents, threshold 0.25) for improved technique recognition.
+    - **Phase-Aware Signals:** Customer signal detection (`twijfel`, `bezwaar`, `uitstel`) is constrained to contextually appropriate phases - filtered out in Phase 1 to prevent false positives.
+    - **AI Model:** All analysis uses gpt-5.1 for quality (diarization, evaluation, signal detection, report generation).
+    - **Phase Tracking:** `determineCurrentPhase()` helper analyzes detected techniques to determine conversation phase. Phase badges and dividers shown in transcript view.
 - **Multi-modal Integration (Audio/Video):**
     - **Audio Mode:** Uses LiveKit Cloud for WebRTC, Deepgram Nova 3 for STT (Dutch), and ElevenLabs for TTS. Includes a `speech-humanizer.ts` for natural speech output.
     - **Video Mode:** Uses HeyGen Streaming Avatar SDK for WebRTC video.

@@ -1,5 +1,4 @@
 import OpenAI from 'openai';
-import { supabase } from '../supabase-client';
 import { getTechnique, loadMergedTechniques } from '../ssot-loader';
 import { getExpectedMoves } from './evaluator';
 import * as crypto from 'crypto';
@@ -53,13 +52,26 @@ export interface CustomerSignalResult {
   houding: 'vraag' | 'twijfel' | 'bezwaar' | 'uitstel' | 'interesse' | 'akkoord' | 'neutraal';
   confidence: number;
   recommendedTechniqueIds: string[];
+  currentPhase: number;
 }
 
-export interface EpicCoverage {
-  explore: { score: number; themes: string[]; missing: string[] };
-  probe: { score: number; found: boolean; examples: string[] };
-  impact: { score: number; found: boolean; examples: string[] };
-  commit: { score: number; found: boolean; examples: string[] };
+export interface PhaseScore {
+  score: number;
+  techniquesFound: Array<{ id: string; naam: string; quality: string; count: number }>;
+  totalPossible: number;
+}
+
+export interface PhaseCoverage {
+  phase1: PhaseScore;
+  phase2: {
+    overall: PhaseScore;
+    explore: { score: number; themes: string[]; missing: string[] };
+    probe: { score: number; found: boolean; examples: string[] };
+    impact: { score: number; found: boolean; examples: string[] };
+    commit: { score: number; found: boolean; examples: string[] };
+  };
+  phase3: PhaseScore;
+  phase4: PhaseScore;
   overall: number;
 }
 
@@ -73,7 +85,7 @@ export interface MissedOpportunity {
 }
 
 export interface AnalysisInsights {
-  epicCoverage: EpicCoverage;
+  phaseCoverage: PhaseCoverage;
   missedOpportunities: MissedOpportunity[];
   summaryMarkdown: string;
   strengths: Array<{ text: string; quote: string; turnIdx: number }>;
@@ -294,20 +306,46 @@ function buildTechniqueCatalog(): string {
   for (const t of techniques) {
     if (t.is_fase) continue;
     const example = t.voorbeeld?.[0] || '';
-    lines.push(`- ${t.nummer} ${t.naam} (fase ${t.fase}): ${t.wat || ''} Voorbeeld: "${example.substring(0, 80)}"`);
+    const hoe = t.hoe ? ` HOE: ${t.hoe.substring(0, 120)}` : '';
+    const wanneer = t.wanneer ? ` WANNEER: ${t.wanneer.substring(0, 80)}` : '';
+    lines.push(`- ${t.nummer} ${t.naam} (fase ${t.fase}): ${t.wat || ''}${hoe}${wanneer} Voorbeeld: "${example.substring(0, 80)}"`);
   }
 
   return lines.join('\n');
 }
 
 export async function evaluateSellerTurns(turns: TranscriptTurn[]): Promise<TurnEvaluation[]> {
-  const sellerTurns = turns.filter(t => t.speaker === 'seller');
   const catalog = buildTechniqueCatalog();
   const evaluations: TurnEvaluation[] = [];
+  const BATCH_SIZE = 6;
 
-  for (const turn of sellerTurns) {
-    const prevCustomerTurn = turns.filter(t => t.idx < turn.idx && t.speaker === 'customer').pop();
-    const customerContext = prevCustomerTurn ? prevCustomerTurn.text : '(begin gesprek)';
+  for (let batchStart = 0; batchStart < turns.length; batchStart += BATCH_SIZE) {
+    const batchEnd = Math.min(batchStart + BATCH_SIZE, turns.length);
+    const batchTurns = turns.slice(batchStart, batchEnd);
+    const sellerTurnsInBatch = batchTurns.filter(t => t.speaker === 'seller');
+
+    if (sellerTurnsInBatch.length === 0) continue;
+
+    const batchText = batchTurns.map(t => t.text).join(' ');
+    let ragContext = '';
+    try {
+      const { searchRag } = await import('./rag-service');
+      const ragResults = await searchRag(batchText, { limit: 8, threshold: 0.25 });
+      if (ragResults.documents.length > 0) {
+        ragContext = '\n\nRELEVANTE TECHNIEKEN UIT KENNISBANK:\n' +
+          ragResults.documents.map(d => `--- ${d.title} (${d.technikId || 'algemeen'}) ---\n${d.content}`).join('\n\n');
+      }
+    } catch (e) {
+      console.log('[Analysis] RAG search failed, using catalog only');
+    }
+
+    const previousEvalSummary = evaluations.length > 0
+      ? `\nTOT NU TOE GEDETECTEERDE TECHNIEKEN: ${evaluations.flatMap(e => e.techniques).map(t => `${t.id} ${t.naam}`).join(', ')}`
+      : '';
+
+    const batchConversation = batchTurns.map(t =>
+      `[${t.idx}] ${t.speaker === 'seller' ? 'VERKOPER' : 'KLANT'}: "${t.text}"`
+    ).join('\n');
 
     try {
       const response = await openai.chat.completions.create({
@@ -315,74 +353,75 @@ export async function evaluateSellerTurns(turns: TranscriptTurn[]): Promise<Turn
         messages: [
           {
             role: 'system',
-            content: `Je bent een expert verkoopcoach die de EPIC-methode evalueert. Je analyseert verkoopgesprekken en detecteert welke verkooptechnieken de verkoper toepast.
+            content: `Je bent Hugo Herbots, expert verkoopcoach met 40 jaar ervaring. Je analyseert een verkoopgesprek en detecteert welke EPIC-verkooptechnieken de verkoper toepast.
 
-EPIC-structuur:
-- Fase 1: Opening (technieken 0, 1, 1.1-1.4)
+EPIC FASESTRUCTUUR:
+- Fase 1: Opening (technieken 0, 0.1-0.3, 1, 1.1 Koopklimaat, 1.2 Gentleman's Agreement, 1.3 Instapvraag, 1.4 Agendabepaling)
 - Fase 2: Ontdekking - Explore (2.1.x), Probe (2.2), Impact (2.3), Commitment (2.4)
-- Fase 3: Aanbeveling (3.1-3.5)
+- Fase 3: Aanbeveling (3.1-3.7)
 - Fase 4: Beslissing (4.x)
 
-TECHNIEK CATALOGUS:
+VOLLEDIGE TECHNIEK CATALOGUS:
 ${catalog}
+${ragContext}
+${previousEvalSummary}
 
-SCORING:
+SCORING PER TECHNIEK:
 - perfect: Techniek volledig en correct toegepast (score 10)
 - goed: Techniek grotendeels correct (score 7)
 - bijna: Goede richting maar onvolledig (score 4)
-- gemist: Geen herkenbare techniek (score 0)
+- gemist: Locatie waar techniek had moeten worden toegepast maar niet werd (score 0)
 
-Geef maximaal 2 technieken per beurt. Antwoord in JSON.`
+INSTRUCTIES:
+1. Analyseer ALLEEN de verkoper-beurten (niet de klant)
+2. Geef per verkoper-beurt de herkende technieken
+3. Wees RUIM in herkenning - als een verkoper iets doet dat lijkt op een techniek, herken het
+4. Voorbeelden: "Mag ik voorstellen dat we het gesprek als volgt doen" = 1.2 Gentleman's Agreement / 1.4 Agendabepaling
+5. "Via wie bent u bij ons terechtgekomen?" = 1.3 Instapvraag
+6. Koopklimaat creëren (1.1) = complimenten, aansluiting zoeken, informele toon
+
+Antwoord als JSON object met een "evaluations" array van objecten, één per verkoper-beurt:
+{"evaluations": [{"turnIdx": 0, "techniques": [{"id": "1.2", "naam": "Gentleman's Agreement", "quality": "goed", "score": 7}], "overallQuality": "goed", "rationale": "Uitleg..."}]}`
           },
           {
             role: 'user',
-            content: `Klant zei: "${customerContext}"
-Verkoper zei: "${turn.text}"
-
-Welke EPIC-technieken past de verkoper toe? Antwoord als JSON:
-{
-  "techniques": [{"id": "2.1.1", "naam": "...", "quality": "goed", "score": 7, "stappen_gevolgd": ["stap 1"]}],
-  "overallQuality": "goed",
-  "rationale": "Uitleg waarom..."
-}`
+            content: `Analyseer de verkoper-beurten in dit fragment:\n\n${batchConversation}`
           }
         ],
-        max_tokens: 500,
+        max_tokens: 2000,
         temperature: 0.3,
+        response_format: { type: 'json_object' },
       });
 
-      const content = response.choices[0]?.message?.content?.trim() || '';
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const content = response.choices[0]?.message?.content?.trim() || '{}';
+      let parsed: any;
+      try {
+        parsed = JSON.parse(content);
+      } catch {
+        continue;
+      }
 
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+      const results = Array.isArray(parsed) ? parsed : (parsed.evaluations || parsed.results || parsed.turns || Object.values(parsed).find(Array.isArray) || []);
+
+      for (const result of results) {
+        const turnIdx = result.turnIdx ?? result.turn_idx;
+        if (turnIdx === undefined) continue;
+
         evaluations.push({
-          turnIdx: turn.idx,
-          techniques: (parsed.techniques || []).slice(0, 2).map((t: any) => ({
-            id: t.id || '0',
-            naam: t.naam || 'Onbekend',
+          turnIdx,
+          techniques: (result.techniques || []).map((t: any) => ({
+            id: t.id || t.nummer || '',
+            naam: t.naam || t.name || '',
             quality: t.quality || 'gemist',
             score: t.score ?? 0,
-            stappen_gevolgd: t.stappen_gevolgd,
+            stappen_gevolgd: t.stappen_gevolgd || [],
           })),
-          overallQuality: parsed.overallQuality || 'gemist',
-          rationale: parsed.rationale || '',
-        });
-      } else {
-        evaluations.push({
-          turnIdx: turn.idx,
-          techniques: [],
-          overallQuality: 'gemist',
-          rationale: 'Kon geen technieken detecteren.',
+          overallQuality: result.overallQuality || result.overall_quality || 'geen',
+          rationale: result.rationale || '',
         });
       }
-    } catch (err: any) {
-      evaluations.push({
-        turnIdx: turn.idx,
-        techniques: [],
-        overallQuality: 'gemist',
-        rationale: `Evaluatie mislukt: ${err.message}`,
-      });
+    } catch (err) {
+      console.error('[Analysis] Batch evaluation failed:', err);
     }
   }
 
@@ -398,17 +437,37 @@ const signalKeywords: Record<string, string[]> = {
   akkoord: ['akkoord', 'deal', 'laten we beginnen', 'ik ga ermee akkoord', 'prima', 'oké laten we'],
 };
 
-export async function detectCustomerSignals(turns: TranscriptTurn[]): Promise<CustomerSignalResult[]> {
+function determineCurrentPhase(turnIdx: number, evaluations: TurnEvaluation[]): number {
+  const techsBefore = evaluations
+    .filter(e => e.turnIdx <= turnIdx)
+    .flatMap(e => e.techniques.map(t => t.id));
+
+  const hasPhase4 = techsBefore.some(id => id.startsWith('4'));
+  const hasPhase3 = techsBefore.some(id => id.startsWith('3'));
+  const hasPhase2 = techsBefore.some(id => id.startsWith('2'));
+
+  if (hasPhase4) return 4;
+  if (hasPhase3) return 3;
+  if (hasPhase2) return 2;
+  return 1;
+}
+
+export async function detectCustomerSignals(turns: TranscriptTurn[], evaluations: TurnEvaluation[]): Promise<CustomerSignalResult[]> {
   const customerTurns = turns.filter(t => t.speaker === 'customer');
   const results: CustomerSignalResult[] = [];
 
   for (const turn of customerTurns) {
+    const currentPhase = determineCurrentPhase(turn.idx, evaluations);
     const lower = turn.text.toLowerCase();
     let detectedHouding: CustomerSignalResult['houding'] = 'neutraal';
     let confidence = 0.5;
     let matchedByKeyword = false;
 
     for (const [houding, keywords] of Object.entries(signalKeywords)) {
+      if (currentPhase === 1 && (houding === 'twijfel' || houding === 'bezwaar' || houding === 'uitstel')) {
+        continue;
+      }
+
       for (const kw of keywords) {
         if (lower.includes(kw)) {
           detectedHouding = houding as CustomerSignalResult['houding'];
@@ -422,19 +481,24 @@ export async function detectCustomerSignals(turns: TranscriptTurn[]): Promise<Cu
 
     if (!matchedByKeyword && turn.text.length > 20) {
       try {
+        const phaseContext = `Het gesprek bevindt zich momenteel in Fase ${currentPhase}.`;
         const response = await openai.chat.completions.create({
           model: 'gpt-5.1',
           messages: [
             {
               role: 'system',
-              content: `Je classificeert klantuitspraken in een verkoopgesprek. Kies exact één houding:
+              content: `Je classificeert klantuitspraken in een verkoopgesprek. ${phaseContext}
+
+Kies exact één houding:
 - vraag: klant stelt een informatieve vraag
-- twijfel: klant is onzeker of aarzelt
-- bezwaar: klant brengt een tegenargument
-- uitstel: klant wil beslissing uitstellen
+- twijfel: klant is onzeker of aarzelt (alleen relevant vanaf fase 2)
+- bezwaar: klant brengt een tegenargument (alleen relevant vanaf fase 2)
+- uitstel: klant wil beslissing uitstellen (alleen relevant vanaf fase 2)
 - interesse: klant toont positieve interesse
 - akkoord: klant gaat akkoord
 - neutraal: geen duidelijk signaal
+
+${currentPhase === 1 ? 'LET OP: In fase 1 (opening) zijn twijfel, bezwaar en uitstel nog niet relevant. Classificeer deze als neutraal.' : ''}
 
 Antwoord als JSON: {"houding": "...", "confidence": 0.0-1.0}`
             },
@@ -453,6 +517,11 @@ Antwoord als JSON: {"houding": "...", "confidence": 0.0-1.0}`
           const parsed = JSON.parse(jsonMatch[0]);
           detectedHouding = parsed.houding || 'neutraal';
           confidence = parsed.confidence ?? 0.6;
+
+          if (currentPhase === 1 && (detectedHouding === 'twijfel' || detectedHouding === 'bezwaar' || detectedHouding === 'uitstel')) {
+            detectedHouding = 'neutraal';
+            confidence = 0.4;
+          }
         }
       } catch {
         detectedHouding = 'neutraal';
@@ -473,6 +542,7 @@ Antwoord als JSON: {"houding": "...", "confidence": 0.0-1.0}`
       houding: detectedHouding,
       confidence,
       recommendedTechniqueIds,
+      currentPhase,
     });
   }
 
@@ -492,17 +562,88 @@ const themeKeywords: Record<string, string[]> = {
   Beslissingscriteria: ['wie beslist', 'beslissing', 'criteria', 'belangrijk voor de keuze'],
 };
 
-export function calculateEpicCoverage(
+function qualityToScore(quality: string): number {
+  switch (quality) {
+    case 'perfect': return 10;
+    case 'goed': return 7;
+    case 'bijna': return 4;
+    case 'gemist': return 0;
+    default: return 0;
+  }
+}
+
+function calculatePhaseScore(
+  evaluations: TurnEvaluation[],
+  phaseFilter: (id: string) => boolean,
+  totalPossible: number
+): PhaseScore {
+  const techMap = new Map<string, { id: string; naam: string; quality: string; count: number; totalScore: number }>();
+
+  for (const ev of evaluations) {
+    for (const t of ev.techniques) {
+      if (!phaseFilter(t.id)) continue;
+      const existing = techMap.get(t.id);
+      if (existing) {
+        existing.count++;
+        existing.totalScore += qualityToScore(t.quality);
+        if (qualityToScore(t.quality) > qualityToScore(existing.quality)) {
+          existing.quality = t.quality;
+        }
+      } else {
+        techMap.set(t.id, {
+          id: t.id,
+          naam: t.naam,
+          quality: t.quality,
+          count: 1,
+          totalScore: qualityToScore(t.quality),
+        });
+      }
+    }
+  }
+
+  const techniquesFound = Array.from(techMap.values()).map(v => ({
+    id: v.id,
+    naam: v.naam,
+    quality: v.quality,
+    count: v.count,
+  }));
+
+  const sumScores = Array.from(techMap.values()).reduce((sum, v) => sum + qualityToScore(v.quality), 0);
+  const maxScore = totalPossible * 10;
+  const score = maxScore > 0 ? Math.round((sumScores / maxScore) * 100) : 0;
+
+  return { score: Math.min(score, 100), techniquesFound, totalPossible };
+}
+
+export function calculatePhaseCoverage(
   evaluations: TurnEvaluation[],
   turns: TranscriptTurn[]
-): EpicCoverage {
+): PhaseCoverage {
+  const allTechniques = loadMergedTechniques();
+  const nonFaseTechniques = allTechniques.filter(t => !t.is_fase);
+
+  const phase1Count = nonFaseTechniques.filter(t => t.fase === '0' || t.fase === '1').length;
+  const phase2Count = nonFaseTechniques.filter(t => t.fase === '2').length;
+  const phase3Count = nonFaseTechniques.filter(t => t.fase === '3').length;
+  const phase4Count = nonFaseTechniques.filter(t => t.fase === '4').length;
+
+  const phase1 = calculatePhaseScore(
+    evaluations,
+    (id) => id.startsWith('0') || id.startsWith('1'),
+    phase1Count
+  );
+
+  const phase2Overall = calculatePhaseScore(
+    evaluations,
+    (id) => id.startsWith('2'),
+    phase2Count
+  );
+
   const allTechIds = evaluations.flatMap(e => e.techniques.map(t => t.id));
+  const sellerTexts = turns.filter(t => t.speaker === 'seller').map(t => t.text.toLowerCase()).join(' ');
 
   const coveredThemes: string[] = [];
   const missingThemes: string[] = [];
-
-  const sellerTexts = turns.filter(t => t.speaker === 'seller').map(t => t.text.toLowerCase()).join(' ');
-
   for (const theme of EXPLORE_THEMES) {
     const keywords = themeKeywords[theme] || [];
     const found = keywords.some(kw => sellerTexts.includes(kw));
@@ -512,11 +653,10 @@ export function calculateEpicCoverage(
       missingThemes.push(theme);
     }
   }
-
   const exploreScore = EXPLORE_THEMES.length > 0 ? Math.round((coveredThemes.length / EXPLORE_THEMES.length) * 100) : 0;
 
-  const probeExamples: string[] = [];
   const probeFound = allTechIds.some(id => id.startsWith('2.2'));
+  const probeExamples: string[] = [];
   if (probeFound) {
     const probeEvals = evaluations.filter(e => e.techniques.some(t => t.id.startsWith('2.2')));
     for (const ev of probeEvals) {
@@ -524,10 +664,9 @@ export function calculateEpicCoverage(
       if (turn) probeExamples.push(turn.text.substring(0, 100));
     }
   }
-  const probeScore = probeFound ? 100 : 0;
 
-  const impactExamples: string[] = [];
   const impactFound = allTechIds.some(id => id.startsWith('2.3'));
+  const impactExamples: string[] = [];
   if (impactFound) {
     const impactEvals = evaluations.filter(e => e.techniques.some(t => t.id.startsWith('2.3')));
     for (const ev of impactEvals) {
@@ -535,10 +674,9 @@ export function calculateEpicCoverage(
       if (turn) impactExamples.push(turn.text.substring(0, 100));
     }
   }
-  const impactScore = impactFound ? 100 : 0;
 
-  const commitExamples: string[] = [];
   const commitFound = allTechIds.some(id => id.startsWith('2.4'));
+  const commitExamples: string[] = [];
   if (commitFound) {
     const commitEvals = evaluations.filter(e => e.techniques.some(t => t.id.startsWith('2.4')));
     for (const ev of commitEvals) {
@@ -546,15 +684,37 @@ export function calculateEpicCoverage(
       if (turn) commitExamples.push(turn.text.substring(0, 100));
     }
   }
-  const commitScore = commitFound ? 100 : 0;
 
-  const overall = Math.round((exploreScore + probeScore + impactScore + commitScore) / 4);
+  const phase3 = calculatePhaseScore(
+    evaluations,
+    (id) => id.startsWith('3'),
+    phase3Count
+  );
+
+  const phase4 = calculatePhaseScore(
+    evaluations,
+    (id) => id.startsWith('4'),
+    phase4Count
+  );
+
+  const overall = Math.round(
+    phase1.score * 0.15 +
+    phase2Overall.score * 0.40 +
+    phase3.score * 0.25 +
+    phase4.score * 0.20
+  );
 
   return {
-    explore: { score: exploreScore, themes: coveredThemes, missing: missingThemes },
-    probe: { score: probeScore, found: probeFound, examples: probeExamples },
-    impact: { score: impactScore, found: impactFound, examples: impactExamples },
-    commit: { score: commitScore, found: commitFound, examples: commitExamples },
+    phase1,
+    phase2: {
+      overall: phase2Overall,
+      explore: { score: exploreScore, themes: coveredThemes, missing: missingThemes },
+      probe: { score: probeFound ? 100 : 0, found: probeFound, examples: probeExamples },
+      impact: { score: impactFound ? 100 : 0, found: impactFound, examples: impactExamples },
+      commit: { score: commitFound ? 100 : 0, found: commitFound, examples: commitExamples },
+    },
+    phase3,
+    phase4,
     overall,
   };
 }
@@ -699,7 +859,7 @@ Klant: "${m.customerSaid.substring(0, 150)}"`).join('\n\n');
           messages: [
             {
               role: 'system',
-              content: `Je bent een verkoopcoach die de EPIC-methode gebruikt. Genereer voor elk gemist moment een betere vraag die de verkoper had kunnen stellen. Antwoord als JSON array: [{"idx": 1, "betterQuestion": "..."}]`
+              content: `Je bent een verkoopcoach die de EPIC-methode gebruikt. Genereer voor elk gemist moment een betere vraag die de verkoper had kunnen stellen. Antwoord als JSON object: {"suggestions": [{"idx": 1, "betterQuestion": "..."}]}`
             },
             {
               role: 'user',
@@ -708,19 +868,20 @@ Klant: "${m.customerSaid.substring(0, 150)}"`).join('\n\n');
           ],
           max_tokens: 600,
           temperature: 0.5,
+          response_format: { type: 'json_object' },
         });
 
-        const content = response.choices[0]?.message?.content?.trim() || '';
-        const jsonMatch = content.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          const suggestions = JSON.parse(jsonMatch[0]);
+        const content = response.choices[0]?.message?.content?.trim() || '{}';
+        try {
+          const parsed = JSON.parse(content);
+          const suggestions = parsed.suggestions || parsed.results || [];
           for (const s of suggestions) {
             const idx = (s.idx || s.index || 1) - 1;
             if (toEnrich[idx]) {
               toEnrich[idx].betterQuestion = s.betterQuestion || '';
             }
           }
-        }
+        } catch {}
       } catch {
         for (const m of toEnrich) {
           if (!m.betterQuestion) {
@@ -744,7 +905,7 @@ export async function generateCoachReport(
   turns: TranscriptTurn[],
   evaluations: TurnEvaluation[],
   signals: CustomerSignalResult[],
-  epicCoverage: EpicCoverage,
+  phaseCoverage: PhaseCoverage,
   missedOpps: MissedOpportunity[]
 ): Promise<AnalysisInsights> {
   const turnSummaries = turns.map(t => `[${t.speaker}] "${t.text.substring(0, 120)}"`).join('\n');
@@ -752,12 +913,12 @@ export async function generateCoachReport(
     const techs = e.techniques.map(t => `${t.id} ${t.naam} (${t.quality})`).join(', ');
     return `Beurt ${e.turnIdx}: ${techs || 'geen techniek'} - ${e.rationale.substring(0, 80)}`;
   }).join('\n');
-  const signalSummaries = signals.map(s => `Beurt ${s.turnIdx}: ${s.houding} (${Math.round(s.confidence * 100)}%)`).join('\n');
+  const signalSummaries = signals.map(s => `Beurt ${s.turnIdx}: ${s.houding} (${Math.round(s.confidence * 100)}%) [fase ${s.currentPhase}]`).join('\n');
   const missedSummaries = missedOpps.map(m => `${m.type}: ${m.description.substring(0, 100)}`).join('\n');
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.1',
       messages: [
         {
           role: 'system',
@@ -789,12 +950,16 @@ ${evalSummaries}
 KLANTSIGNALEN:
 ${signalSummaries}
 
-EPIC COVERAGE:
-- Explore: ${epicCoverage.explore.score}% (thema's: ${epicCoverage.explore.themes.join(', ')} | missend: ${epicCoverage.explore.missing.join(', ')})
-- Probe: ${epicCoverage.probe.score}%
-- Impact: ${epicCoverage.impact.score}%
-- Commit: ${epicCoverage.commit.score}%
-- Overall: ${epicCoverage.overall}%
+FASE COVERAGE:
+- Fase 1 (Opening): ${phaseCoverage.phase1.score}% (${phaseCoverage.phase1.techniquesFound.length} technieken gevonden van ${phaseCoverage.phase1.totalPossible})
+- Fase 2 (EPIC Ontdekking): ${phaseCoverage.phase2.overall.score}%
+  - Explore: ${phaseCoverage.phase2.explore.score}% (thema's: ${phaseCoverage.phase2.explore.themes.join(', ')} | missend: ${phaseCoverage.phase2.explore.missing.join(', ')})
+  - Probe: ${phaseCoverage.phase2.probe.score}%
+  - Impact: ${phaseCoverage.phase2.impact.score}%
+  - Commit: ${phaseCoverage.phase2.commit.score}%
+- Fase 3 (Aanbeveling): ${phaseCoverage.phase3.score}% (${phaseCoverage.phase3.techniquesFound.length} technieken gevonden van ${phaseCoverage.phase3.totalPossible})
+- Fase 4 (Beslissing): ${phaseCoverage.phase4.score}% (${phaseCoverage.phase4.techniquesFound.length} technieken gevonden van ${phaseCoverage.phase4.totalPossible})
+- Overall: ${phaseCoverage.overall}%
 
 GEMISTE KANSEN:
 ${missedSummaries || 'Geen'}
@@ -813,7 +978,7 @@ Schrijf het coachrapport.`
       const parsed = JSON.parse(jsonMatch[0]);
 
       return {
-        epicCoverage,
+        phaseCoverage,
         missedOpportunities: missedOpps,
         summaryMarkdown: parsed.summaryMarkdown || '',
         strengths: (parsed.strengths || []).slice(0, 3).map((s: any) => ({
@@ -828,14 +993,14 @@ Schrijf het coachrapport.`
           betterApproach: s.betterApproach || '',
         })),
         microExperiments: (parsed.microExperiments || []).slice(0, 3),
-        overallScore: parsed.overallScore ?? epicCoverage.overall,
+        overallScore: parsed.overallScore ?? phaseCoverage.overall,
       };
     }
 
     throw new Error('Geen geldig JSON in coachrapport');
   } catch (err: any) {
     return {
-      epicCoverage,
+      phaseCoverage,
       missedOpportunities: missedOpps,
       summaryMarkdown: 'Het coachrapport kon niet volledig worden gegenereerd.',
       strengths: [],
@@ -845,7 +1010,7 @@ Schrijf het coachrapport.`
         'Gebruik de Probe-techniek: vertel een kort verhaal voordat je een meningsvraag stelt.',
         'Vraag altijd commitment voordat je naar fase 3 gaat.',
       ],
-      overallScore: epicCoverage.overall,
+      overallScore: phaseCoverage.overall,
     };
   }
 }
@@ -882,17 +1047,16 @@ export async function runFullAnalysis(
 
     job.status = 'evaluating';
     analysisJobs.set(conversationId, { ...job });
-    const [evaluations, signals] = await Promise.all([
-      evaluateSellerTurns(turns),
-      detectCustomerSignals(turns),
-    ]);
 
-    const epicCoverage = calculateEpicCoverage(evaluations, turns);
+    const evaluations = await evaluateSellerTurns(turns);
+    const signals = await detectCustomerSignals(turns, evaluations);
+
+    const phaseCoverage = calculatePhaseCoverage(evaluations, turns);
     const missedOpps = await detectMissedOpportunities(evaluations, signals, turns);
 
     job.status = 'generating_report';
     analysisJobs.set(conversationId, { ...job });
-    const insights = await generateCoachReport(turns, evaluations, signals, epicCoverage, missedOpps);
+    const insights = await generateCoachReport(turns, evaluations, signals, phaseCoverage, missedOpps);
 
     job.status = 'completed';
     job.completedAt = new Date().toISOString();

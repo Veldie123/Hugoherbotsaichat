@@ -56,13 +56,26 @@ interface CustomerSignalResult {
   houding: string;
   confidence: number;
   recommendedTechniqueIds: string[];
+  currentPhase?: number;
 }
 
-interface EpicCoverage {
-  explore: { score: number; themes: string[]; missing: string[] };
-  probe: { score: number; found: boolean; examples: string[] };
-  impact: { score: number; found: boolean; examples: string[] };
-  commit: { score: number; found: boolean; examples: string[] };
+interface PhaseScore {
+  score: number;
+  techniquesFound: Array<{ id: string; naam: string; quality: string; count: number }>;
+  totalPossible: number;
+}
+
+interface PhaseCoverage {
+  phase1: PhaseScore;
+  phase2: {
+    overall: PhaseScore;
+    explore: { score: number; themes: string[]; missing: string[] };
+    probe: { score: number; found: boolean; examples: string[] };
+    impact: { score: number; found: boolean; examples: string[] };
+    commit: { score: number; found: boolean; examples: string[] };
+  };
+  phase3: PhaseScore;
+  phase4: PhaseScore;
   overall: number;
 }
 
@@ -76,7 +89,7 @@ interface MissedOpportunity {
 }
 
 interface AnalysisInsights {
-  epicCoverage: EpicCoverage;
+  phaseCoverage: PhaseCoverage;
   missedOpportunities: MissedOpportunity[];
   summaryMarkdown: string;
   strengths: Array<{ text: string; quote: string; turnIdx: number }>;
@@ -100,6 +113,13 @@ interface FullAnalysisResult {
   signals: CustomerSignalResult[];
   insights: AnalysisInsights;
 }
+
+const PHASE_LABELS: Record<number, { name: string; description: string; color: string; bgColor: string }> = {
+  1: { name: 'Fase 1: Opening', description: 'Koopklimaat, Gentleman\'s Agreement, Instapvraag', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200' },
+  2: { name: 'Fase 2: EPIC', description: 'Explore, Probe, Impact, Commitment', color: 'text-emerald-700', bgColor: 'bg-emerald-50 border-emerald-200' },
+  3: { name: 'Fase 3: Aanbeveling', description: 'O.V.B., USP\'s, Mening vragen', color: 'text-purple-700', bgColor: 'bg-purple-50 border-purple-200' },
+  4: { name: 'Fase 4: Beslissing', description: 'Bezwaarbehandeling, Closing', color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200' },
+};
 
 export function AnalysisResults({
   navigate,
@@ -215,6 +235,46 @@ export function AnalysisResults({
     return labels[houding] || labels['neutraal'];
   };
 
+  const getPhaseBadge = (turnIdx: number) => {
+    const signal = result?.signals.find(s => s.turnIdx === turnIdx);
+    const phase = signal?.currentPhase;
+    if (!phase) {
+      const eval_ = result?.evaluations.find(e => e.turnIdx === turnIdx);
+      if (eval_ && eval_.techniques.length > 0) {
+        const firstTech = eval_.techniques[0].id;
+        if (firstTech.startsWith('0') || firstTech.startsWith('1')) return 1;
+        if (firstTech.startsWith('2')) return 2;
+        if (firstTech.startsWith('3')) return 3;
+        if (firstTech.startsWith('4')) return 4;
+      }
+      return null;
+    }
+    return phase;
+  };
+
+  const determinePhaseForTurn = (turnIdx: number): number | null => {
+    if (!result) return null;
+
+    const signal = result.signals.find(s => s.turnIdx === turnIdx);
+    if (signal?.currentPhase) return signal.currentPhase;
+
+    const eval_ = result.evaluations.find(e => e.turnIdx === turnIdx);
+    if (eval_ && eval_.techniques.length > 0) {
+      const firstTech = eval_.techniques[0].id;
+      if (firstTech.startsWith('0') || firstTech.startsWith('1')) return 1;
+      if (firstTech.startsWith('2')) return 2;
+      if (firstTech.startsWith('3')) return 3;
+      if (firstTech.startsWith('4')) return 4;
+    }
+
+    const prevSignals = result.signals.filter(s => s.turnIdx < turnIdx && s.currentPhase);
+    if (prevSignals.length > 0) {
+      return prevSignals[prevSignals.length - 1].currentPhase!;
+    }
+
+    return 1;
+  };
+
   const handleExportPDF = async () => {
     if (!result) return;
     const { jsPDF } = await import('jspdf');
@@ -264,21 +324,28 @@ export function AnalysisResults({
     doc.line(margin, y, pageW - margin, y);
     y += 8;
 
-    addWrappedText('EPIC Coverage Score', 14, true);
+    const coverage = result.insights.phaseCoverage;
+    const overallScore = result.insights.overallScore;
+
+    addWrappedText('Fase Scores', 14, true);
     y += 2;
-    const coverage = result.insights.epicCoverage;
-    const overallScore = coverage.overall;
-    addWrappedText(`Totaalscore: ${overallScore}%`, 12, true, overallScore >= 70 ? [34, 197, 94] : overallScore >= 50 ? [245, 158, 11] : [239, 68, 68]);
+    addWrappedText(`Totaalscore: ${overallScore}/100`, 12, true, overallScore >= 70 ? [34, 197, 94] : overallScore >= 50 ? [245, 158, 11] : [239, 68, 68]);
     y += 4;
-    const epicPhases = [
-      { name: 'Explore', data: coverage.explore },
-      { name: 'Probe', data: coverage.probe },
-      { name: 'Impact', data: coverage.impact },
-      { name: 'Commit', data: coverage.commit },
+
+    const phases = [
+      { name: 'Fase 1: Opening', score: coverage?.phase1?.score ?? 0 },
+      { name: 'Fase 2: EPIC (Ontdekking)', score: coverage?.phase2?.overall?.score ?? 0 },
+      { name: 'Fase 3: Aanbeveling', score: coverage?.phase3?.score ?? 0 },
+      { name: 'Fase 4: Beslissing', score: coverage?.phase4?.score ?? 0 },
     ];
-    for (const phase of epicPhases) {
-      addWrappedText(`${phase.name}: ${phase.data.score}%`, 10, false);
+    for (const phase of phases) {
+      addWrappedText(`${phase.name}: ${phase.score}%`, 10, false);
       y += 1;
+    }
+
+    if (coverage?.phase2) {
+      y += 2;
+      addWrappedText(`  E: ${coverage.phase2.explore?.score ?? 0}%  P: ${coverage.phase2.probe?.score ?? 0}%  I: ${coverage.phase2.impact?.score ?? 0}%  C: ${coverage.phase2.commit?.score ?? 0}%`, 9, false, [100, 116, 139]);
     }
     y += 6;
 
@@ -380,7 +447,14 @@ export function AnalysisResults({
   }
 
   const { conversation, transcript, evaluations, signals, insights } = result;
-  const { epicCoverage, missedOpportunities, strengths, improvements, microExperiments, overallScore } = insights;
+  const { phaseCoverage, missedOpportunities, strengths, improvements, microExperiments, overallScore } = insights;
+
+  const phaseScores = [
+    { phase: 1, label: 'Fase 1', sublabel: 'Opening', score: phaseCoverage?.phase1?.score ?? 0, data: phaseCoverage?.phase1 },
+    { phase: 2, label: 'Fase 2', sublabel: 'EPIC', score: phaseCoverage?.phase2?.overall?.score ?? 0, data: phaseCoverage?.phase2?.overall },
+    { phase: 3, label: 'Fase 3', sublabel: 'Aanbeveling', score: phaseCoverage?.phase3?.score ?? 0, data: phaseCoverage?.phase3 },
+    { phase: 4, label: 'Fase 4', sublabel: 'Beslissing', score: phaseCoverage?.phase4?.score ?? 0, data: phaseCoverage?.phase4 },
+  ];
 
   return (
     <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>
@@ -413,8 +487,8 @@ export function AnalysisResults({
         </div>
 
         <Card className="p-6 rounded-[16px] shadow-hh-md border-hh-border">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            <div className="text-center">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
+            <div className="text-center col-span-2 lg:col-span-1">
               <p className="text-[14px] leading-[20px] text-hh-muted mb-2">Overall Score</p>
               <div className="flex items-center justify-center gap-1 mb-1">
                 <span className={`text-[40px] leading-[48px] ${getScoreColor(overallScore)}`}>
@@ -427,37 +501,24 @@ export function AnalysisResults({
               </Badge>
             </div>
 
-            <div className="text-center">
-              <p className="text-[14px] leading-[20px] text-hh-muted mb-2">Explore</p>
-              <span className={`text-[28px] leading-[36px] ${getScoreColor(epicCoverage.explore.score)}`}>
-                {epicCoverage.explore.score}%
-              </span>
-              <Progress value={epicCoverage.explore.score} className="h-1.5 mt-2" />
-            </div>
-
-            <div className="text-center">
-              <p className="text-[14px] leading-[20px] text-hh-muted mb-2">Probe</p>
-              <span className={`text-[28px] leading-[36px] ${getScoreColor(epicCoverage.probe.score)}`}>
-                {epicCoverage.probe.score}%
-              </span>
-              <Progress value={epicCoverage.probe.score} className="h-1.5 mt-2" />
-            </div>
-
-            <div className="text-center">
-              <p className="text-[14px] leading-[20px] text-hh-muted mb-2">Impact</p>
-              <span className={`text-[28px] leading-[36px] ${getScoreColor(epicCoverage.impact.score)}`}>
-                {epicCoverage.impact.score}%
-              </span>
-              <Progress value={epicCoverage.impact.score} className="h-1.5 mt-2" />
-            </div>
-
-            <div className="text-center">
-              <p className="text-[14px] leading-[20px] text-hh-muted mb-2">Commit</p>
-              <span className={`text-[28px] leading-[36px] ${getScoreColor(epicCoverage.commit.score)}`}>
-                {epicCoverage.commit.score}%
-              </span>
-              <Progress value={epicCoverage.commit.score} className="h-1.5 mt-2" />
-            </div>
+            {phaseScores.map((ps) => (
+              <div key={ps.phase} className="text-center">
+                <p className="text-[12px] leading-[16px] text-hh-muted mb-1">{ps.label}</p>
+                <p className="text-[11px] leading-[14px] text-hh-muted/70 mb-2">{ps.sublabel}</p>
+                <span className={`text-[28px] leading-[36px] ${getScoreColor(ps.score)}`}>
+                  {ps.score}%
+                </span>
+                <Progress value={ps.score} className="h-1.5 mt-2" />
+                {ps.phase === 2 && phaseCoverage?.phase2 && (
+                  <div className="mt-2 flex justify-center gap-2 text-[10px] text-hh-muted">
+                    <span>E:{phaseCoverage.phase2.explore?.score ?? 0}%</span>
+                    <span>P:{phaseCoverage.phase2.probe?.score ?? 0}%</span>
+                    <span>I:{phaseCoverage.phase2.impact?.score ?? 0}%</span>
+                    <span>C:{phaseCoverage.phase2.commit?.score ?? 0}%</span>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-6 pt-6 border-t border-hh-border">
@@ -554,101 +615,125 @@ export function AnalysisResults({
               </Card>
             )}
 
-            {epicCoverage.explore.themes.length > 0 && (
-              <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-                <h4 className="text-hh-text mb-3 flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-hh-primary" />
-                  EPIC Coverage Details
-                </h4>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[13px] leading-[18px] text-hh-muted mb-2">Explore - Thema's besproken:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {epicCoverage.explore.themes.map((t, i) => (
-                        <Badge key={i} variant="outline" className="text-[12px]">{t}</Badge>
-                      ))}
-                    </div>
-                    {epicCoverage.explore.missing.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-[13px] leading-[18px] text-hh-destructive mb-1">Gemist:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {epicCoverage.explore.missing.map((m, i) => (
-                            <Badge key={i} variant="outline" className="text-[12px] border-hh-destructive/30 text-hh-destructive">{m}</Badge>
+            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
+              <h4 className="text-hh-text mb-3 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-hh-primary" />
+                Fase Details
+              </h4>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {phaseScores.map((ps) => {
+                  const phaseInfo = PHASE_LABELS[ps.phase];
+                  return (
+                    <div key={ps.phase} className={`p-4 rounded-lg border ${phaseInfo.bgColor}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-[14px] font-semibold ${phaseInfo.color}`}>{phaseInfo.name}</span>
+                        <span className={`text-[18px] font-bold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
+                      </div>
+                      <p className="text-[12px] text-hh-muted mb-2">{phaseInfo.description}</p>
+                      {ps.data && ps.data.techniquesFound && ps.data.techniquesFound.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {ps.data.techniquesFound.map((t, i) => (
+                            <Badge key={i} variant="outline" className={`text-[11px] ${getQualityBadge(t.quality).color}`}>
+                              {t.id} {t.naam}
+                            </Badge>
                           ))}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {epicCoverage.probe.examples.length > 0 && (
-                      <div>
-                        <p className="text-[13px] leading-[18px] text-hh-muted mb-1">Probe voorbeelden:</p>
-                        {epicCoverage.probe.examples.map((ex, i) => (
-                          <p key={i} className="text-[12px] leading-[17px] text-hh-text italic">"{ex}"</p>
-                        ))}
-                      </div>
-                    )}
-                    {epicCoverage.impact.examples.length > 0 && (
-                      <div>
-                        <p className="text-[13px] leading-[18px] text-hh-muted mb-1">Impact voorbeelden:</p>
-                        {epicCoverage.impact.examples.map((ex, i) => (
-                          <p key={i} className="text-[12px] leading-[17px] text-hh-text italic">"{ex}"</p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            )}
+                      )}
+                      {ps.phase === 2 && phaseCoverage?.phase2 && (
+                        <div className="mt-3 pt-2 border-t border-current/10 grid grid-cols-4 gap-2 text-center">
+                          <div>
+                            <p className="text-[10px] text-hh-muted">Explore</p>
+                            <p className={`text-[14px] font-semibold ${getScoreColor(phaseCoverage.phase2.explore?.score ?? 0)}`}>{phaseCoverage.phase2.explore?.score ?? 0}%</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-hh-muted">Probe</p>
+                            <p className={`text-[14px] font-semibold ${getScoreColor(phaseCoverage.phase2.probe?.score ?? 0)}`}>{phaseCoverage.phase2.probe?.score ?? 0}%</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-hh-muted">Impact</p>
+                            <p className={`text-[14px] font-semibold ${getScoreColor(phaseCoverage.phase2.impact?.score ?? 0)}`}>{phaseCoverage.phase2.impact?.score ?? 0}%</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-hh-muted">Commit</p>
+                            <p className={`text-[14px] font-semibold ${getScoreColor(phaseCoverage.phase2.commit?.score ?? 0)}`}>{phaseCoverage.phase2.commit?.score ?? 0}%</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
           </TabsContent>
 
           <TabsContent value="timeline" className="mt-6">
             <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
               <h3 className="text-hh-text mb-2">Transcript met EPIC Evaluatie</h3>
               <p className="text-[14px] leading-[20px] text-hh-muted mb-6">
-                Turn-by-turn transcript met gedetecteerde technieken en klantsignalen
+                Turn-by-turn transcript met gedetecteerde technieken, klantsignalen en fase-indicatie
               </p>
 
               <div className="space-y-4">
-                {transcript.map((turn) => {
-                  const evaluation = evaluations.find(e => e.turnIdx === turn.idx);
-                  const signal = signals.find(s => s.turnIdx === turn.idx);
+                {(() => {
+                  let lastPhase: number | null = null;
+                  return transcript.map((turn) => {
+                    const evaluation = evaluations.find(e => e.turnIdx === turn.idx);
+                    const signal = signals.find(s => s.turnIdx === turn.idx);
+                    const currentPhase = determinePhaseForTurn(turn.idx);
+                    const showPhaseDivider = currentPhase !== null && currentPhase !== lastPhase;
+                    if (currentPhase !== null) lastPhase = currentPhase;
 
-                  return (
-                    <div key={turn.idx} className={`p-4 rounded-lg border ${
-                      turn.speaker === 'seller' ? 'bg-hh-ui-50 border-hh-border' : 'bg-white border-hh-ui-200'
-                    }`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[13px] leading-[18px] text-hh-muted">
-                          {formatTime(turn.startMs)}
-                        </span>
-                        <Badge variant="outline" className={turn.speaker === 'seller' ? 'border-hh-primary text-hh-primary' : ''}>
-                          {turn.speaker === 'seller' ? 'Verkoper' : 'Klant'}
-                        </Badge>
-                        {signal && (
-                          <Badge className={`${getSignalLabel(signal.houding).color} text-[11px]`}>
-                            {getSignalLabel(signal.houding).label}
-                          </Badge>
+                    return (
+                      <div key={turn.idx}>
+                        {showPhaseDivider && currentPhase && (
+                          <div className={`flex items-center gap-3 my-4 py-2 px-4 rounded-lg border ${PHASE_LABELS[currentPhase].bgColor}`}>
+                            <span className={`text-[13px] font-semibold ${PHASE_LABELS[currentPhase].color}`}>
+                              {PHASE_LABELS[currentPhase].name}
+                            </span>
+                            <span className="text-[11px] text-hh-muted">{PHASE_LABELS[currentPhase].description}</span>
+                          </div>
                         )}
-                      </div>
-
-                      <p className="text-[14px] leading-[22px] text-hh-text mb-2">{turn.text}</p>
-
-                      {evaluation && evaluation.techniques.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {evaluation.techniques.map((tech, i) => {
-                            const badge = getQualityBadge(tech.quality);
-                            return (
-                              <Badge key={i} variant="outline" className={`${badge.color} text-[11px]`}>
-                                {tech.quality === 'gemist' ? '✗' : '✓'} {tech.naam} ({tech.score}%)
+                        <div className={`p-4 rounded-lg border ${
+                          turn.speaker === 'seller' ? 'bg-hh-ui-50 border-hh-border' : 'bg-white border-hh-ui-200'
+                        }`}>
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <span className="text-[13px] leading-[18px] text-hh-muted">
+                              {formatTime(turn.startMs)}
+                            </span>
+                            <Badge variant="outline" className={turn.speaker === 'seller' ? 'border-hh-primary text-hh-primary' : ''}>
+                              {turn.speaker === 'seller' ? 'Verkoper' : 'Klant'}
+                            </Badge>
+                            {signal && signal.houding !== 'neutraal' && (
+                              <Badge className={`${getSignalLabel(signal.houding).color} text-[11px]`}>
+                                {getSignalLabel(signal.houding).label}
                               </Badge>
-                            );
-                          })}
+                            )}
+                            {currentPhase && (
+                              <Badge variant="outline" className={`text-[10px] ${PHASE_LABELS[currentPhase].color} border-current/30`}>
+                                F{currentPhase}
+                              </Badge>
+                            )}
+                          </div>
+
+                          <p className="text-[14px] leading-[22px] text-hh-text mb-2">{turn.text}</p>
+
+                          {evaluation && evaluation.techniques.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {evaluation.techniques.map((tech, i) => {
+                                const badge = getQualityBadge(tech.quality);
+                                return (
+                                  <Badge key={i} variant="outline" className={`${badge.color} text-[11px]`}>
+                                    {tech.quality === 'gemist' ? '✗' : '✓'} {tech.id} {tech.naam} ({tech.score}%)
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </Card>
           </TabsContent>
