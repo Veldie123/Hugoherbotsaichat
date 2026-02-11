@@ -104,6 +104,27 @@ import {
 } from "./v2/brief-generator-service";
 import { detectIntent } from "./v2/intent-detector";
 import { buildRichResponse } from "./v2/rich-response-builder";
+import {
+  uploadAndStore,
+  runFullAnalysis,
+  getAnalysisStatus,
+  getAnalysisResults,
+  type ConversationAnalysis,
+} from "./v2/analysis-service";
+import multer from "multer";
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/m4a', 'video/mp4', 'video/quicktime'];
+    if (allowed.includes(file.mimetype) || file.originalname.match(/\.(mp3|wav|m4a|mp4|mov)$/i)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Ongeldig bestandstype. Toegestaan: MP3, WAV, M4A, MP4, MOV'));
+    }
+  }
+});
 
 const app = express();
 
@@ -2846,6 +2867,94 @@ app.get("/api/v2/user/hugo-context", async (req, res) => {
   } catch (err) {
     console.error("[Hugo Context] Error:", err);
     res.status(500).json({ error: "Failed to build Hugo context" });
+  }
+});
+
+// ============================================================================
+// GESPREKSANALYSE API ENDPOINTS
+// ============================================================================
+
+app.post("/api/v2/analysis/upload", upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'Geen bestand ontvangen' });
+    }
+
+    const { title, context, userId, consentConfirmed } = req.body;
+
+    if (!consentConfirmed || consentConfirmed === 'false') {
+      return res.status(400).json({ error: 'Toestemming is vereist voor het uploaden van gesprekken' });
+    }
+
+    if (!title) {
+      return res.status(400).json({ error: 'Titel is verplicht' });
+    }
+
+    const effectiveUserId = userId || 'anonymous';
+
+    console.log(`[Analysis] Upload started: "${title}" by ${effectiveUserId}, file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+
+    const storageKey = await uploadAndStore(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      effectiveUserId
+    );
+
+    const conversationId = crypto.randomUUID();
+
+    runFullAnalysis(conversationId, storageKey, effectiveUserId, title);
+
+    res.json({
+      success: true,
+      conversationId,
+      storageKey,
+      status: 'transcribing',
+      message: 'Upload succesvol! Analyse wordt gestart...'
+    });
+  } catch (err: any) {
+    console.error("[Analysis] Upload error:", err);
+    res.status(500).json({ error: err.message || 'Upload mislukt' });
+  }
+});
+
+app.get("/api/v2/analysis/status/:conversationId", async (req: Request, res: Response) => {
+  try {
+    const conversationId = req.params.conversationId as string;
+    const status = getAnalysisStatus(conversationId);
+
+    if (!status) {
+      return res.status(404).json({ error: 'Analyse niet gevonden' });
+    }
+
+    res.json(status);
+  } catch (err: any) {
+    console.error("[Analysis] Status error:", err);
+    res.status(500).json({ error: err.message || 'Status ophalen mislukt' });
+  }
+});
+
+app.get("/api/v2/analysis/results/:conversationId", async (req: Request, res: Response) => {
+  try {
+    const conversationId = req.params.conversationId as string;
+    const results = getAnalysisResults(conversationId);
+
+    if (!results) {
+      const status = getAnalysisStatus(conversationId as string);
+      if (status) {
+        return res.status(202).json({ 
+          status: status.status, 
+          message: 'Analyse is nog bezig...' 
+        });
+      }
+      return res.status(404).json({ error: 'Analyse niet gevonden' });
+    }
+
+    res.json(results);
+  } catch (err: any) {
+    console.error("[Analysis] Results error:", err);
+    res.status(500).json({ error: err.message || 'Resultaten ophalen mislukt' });
   }
 });
 

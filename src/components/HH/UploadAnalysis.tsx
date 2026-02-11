@@ -65,6 +65,12 @@ export function UploadAnalysis({
   const [context, setContext] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [consentConfirmed, setConsentConfirmed] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState<{
+    conversationId: string;
+    status: string;
+    step: string;
+  } | null>(null);
 
   // Live Copilot state
   const [copilotActive, setCopilotActive] = useState(false);
@@ -242,50 +248,97 @@ export function UploadAnalysis({
   const handleUpload = async () => {
     if (!selectedFile || !title.trim()) return;
     
-    // Check if user is logged in (preview mode check)
+    if (!consentConfirmed) {
+      setUploadError('Je moet toestemming bevestigen voordat je kunt uploaden');
+      return;
+    }
+    
     if (isPreview || !user) {
-      console.log('⚠️ Preview mode - upload blocked');
       setUploadError('Log in om bestanden te uploaden');
       return;
     }
 
     setIsUploading(true);
     setUploadError(null);
-    
-    console.log('📤 Starting upload via backend API...', { file: selectedFile.name, user: user.id });
 
     try {
-      // Upload via backend API (bypasses RLS, normalizes MIME types)
-      const { uploadConversationViaAPI } = await import('../../utils/supabase/api');
-      const result = await uploadConversationViaAPI(selectedFile);
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('title', title);
+      formData.append('context', context);
+      formData.append('userId', user.id);
+      formData.append('consentConfirmed', 'true');
 
-      if ('error' in result) {
-        console.error('❌ Upload failed:', result.error);
-        setUploadError('Upload mislukt: ' + result.error);
+      const response = await fetch('/api/v2/analysis/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setUploadError(result.error || 'Upload mislukt');
         setIsUploading(false);
         return;
       }
 
-      console.log('✅ Upload successful:', result.path);
-      
-      // TODO: Save metadata to database (conversation_analyses table)
-      // This would store: user_id, title, context, file_path, signed_url, status, created_at
-      
-      // Reset form
-      setSelectedFile(null);
-      setTitle("");
-      setContext("");
-      setIsUploading(false);
-      
-      // Navigate to results (or show "processing" state)
-      if (navigate) {
-        navigate("analysis-results", { id: "new-analysis", filePath: result.path });
-      }
+      setAnalysisStatus({
+        conversationId: result.conversationId,
+        status: result.status,
+        step: 'Transcriberen...',
+      });
+
+      pollAnalysisStatus(result.conversationId);
     } catch (err) {
-      console.error('❌ Unexpected error during upload:', err);
       setUploadError('Er ging iets mis bij het uploaden');
       setIsUploading(false);
     }
+  };
+
+  const pollAnalysisStatus = (conversationId: string) => {
+    const statusLabels: Record<string, string> = {
+      'transcribing': 'Transcriberen...',
+      'analyzing': 'Turns analyseren...',
+      'evaluating': 'EPIC technieken evalueren...',
+      'generating_report': 'Rapport genereren...',
+      'completed': 'Analyse voltooid!',
+      'failed': 'Analyse mislukt',
+    };
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/v2/analysis/status/${conversationId}`);
+        const data = await response.json();
+
+        setAnalysisStatus({
+          conversationId,
+          status: data.status,
+          step: statusLabels[data.status] || data.status,
+        });
+
+        if (data.status === 'completed') {
+          clearInterval(interval);
+          setIsUploading(false);
+          setSelectedFile(null);
+          setTitle("");
+          setContext("");
+          setConsentConfirmed(false);
+          
+          if (navigate) {
+            navigate("analysis-results", { conversationId });
+          }
+        } else if (data.status === 'failed') {
+          clearInterval(interval);
+          setIsUploading(false);
+          setUploadError(data.error || 'Analyse mislukt');
+          setAnalysisStatus(null);
+        }
+      } catch (err) {
+        clearInterval(interval);
+        setIsUploading(false);
+        setUploadError('Kon de status niet ophalen');
+      }
+    }, 3000);
   };
 
   const getStatusIcon = (status: string) => {
@@ -401,8 +454,30 @@ export function UploadAnalysis({
               )}
             </label>
 
-            {/* Context Form */}
-            {selectedFile && (
+            {analysisStatus && (
+              <div className="mt-6 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
+                <div className="flex items-center gap-3 mb-3">
+                  <Loader2 className="w-5 h-5 text-hh-primary animate-spin" />
+                  <span className="text-[16px] leading-[24px] font-medium text-hh-text">
+                    {analysisStatus.step}
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  {['transcribing', 'analyzing', 'evaluating', 'generating_report', 'completed'].map((step, i) => (
+                    <div
+                      key={step}
+                      className={`h-1.5 flex-1 rounded-full ${
+                        ['transcribing', 'analyzing', 'evaluating', 'generating_report', 'completed'].indexOf(analysisStatus.status) >= i
+                          ? 'bg-hh-primary'
+                          : 'bg-hh-ui-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedFile && !analysisStatus && (
               <div className="mt-6 space-y-4">
                 <div>
                   <Label htmlFor="title">Titel gesprek *</Label>
@@ -428,9 +503,21 @@ export function UploadAnalysis({
                   />
                 </div>
 
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={consentConfirmed}
+                    onChange={(e) => setConsentConfirmed(e.target.checked)}
+                    className="mt-1 w-4 h-4 rounded border-hh-border text-hh-primary focus:ring-hh-primary"
+                  />
+                  <span className="text-[13px] leading-[18px] text-hh-muted">
+                    Ik bevestig dat ik toestemming heb van alle betrokkenen voor het uploaden en verwerken van dit gesprek.
+                  </span>
+                </label>
+
                 <Button
                   onClick={handleUpload}
-                  disabled={!title.trim() || isUploading}
+                  disabled={!title.trim() || isUploading || !consentConfirmed}
                   className="w-full sm:w-auto gap-2"
                 >
                   {isUploading ? (

@@ -95,15 +95,19 @@ export default function App() {
     checkAuthAndRoute();
   }, []);
 
-  const navigate = (page: Page | string) => {
-    console.log('🧭 Navigate called with:', page);
+  const [navigationData, setNavigationData] = useState<Record<string, any> | undefined>();
+
+  const navigate = (page: Page | string, data?: Record<string, any>) => {
+    console.log('🧭 Navigate called with:', page, data);
     
     if (page === "talk-to-hugo" || page.startsWith("talk-to-hugo")) {
       setCurrentPage("talk-to-hugo");
+      setNavigationData(data);
       return;
     }
     
     setCurrentPage(page as Page);
+    setNavigationData(data);
     window.scrollTo(0, 0);
   };
 
@@ -156,7 +160,7 @@ export default function App() {
 
           {/* User View - Gespreksanalyse */}
           {currentPage === "analysis" && <Analysis navigate={navigate} isAdmin={isAdmin} />}
-          {currentPage === "analysis-results" && <AnalysisResults navigate={navigate} isAdmin={isAdmin} />}
+          {currentPage === "analysis-results" && <AnalysisResults navigate={navigate} isAdmin={isAdmin} navigationData={navigationData} />}
           {currentPage === "upload-analysis" && <UploadAnalysis navigate={navigate} isAdmin={isAdmin} />}
 
           {/* Admin View - Gespreksanalyse */}

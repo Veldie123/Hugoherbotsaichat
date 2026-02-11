@@ -699,7 +699,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         open={transcriptDialogOpen}
         onOpenChange={setTranscriptDialogOpen}
         session={transcriptSession}
-        isAdmin={isAdmin}
+        isAdmin={false}
       />
     </Layout>
   );
