@@ -11,6 +11,10 @@ const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
 });
 
+const openaiDirect = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+});
+
 export interface ConversationAnalysis {
   id: string;
   userId: string;
@@ -133,7 +137,7 @@ export async function transcribeAudio(storageKey: string): Promise<WhisperSegmen
   const ext = storageKey.split('.').pop() || 'wav';
   const file = new File([buffer], `audio.${ext}`, { type: `audio/${ext}` });
 
-  const response = await openai.audio.transcriptions.create({
+  const response = await openaiDirect.audio.transcriptions.create({
     model: 'whisper-1',
     file,
     response_format: 'verbose_json',

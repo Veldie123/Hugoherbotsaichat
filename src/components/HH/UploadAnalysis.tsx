@@ -510,7 +510,7 @@ export function UploadAnalysis({
                     onChange={(e) => setConsentConfirmed(e.target.checked)}
                     className="mt-1 w-4 h-4 rounded border-hh-border text-hh-primary focus:ring-hh-primary"
                   />
-                  <span className="text-[13px] leading-[18px] text-hh-muted">
+                  <span className={`text-[13px] leading-[18px] ${consentConfirmed ? 'text-hh-text' : 'text-hh-muted'}`}>
                     Ik bevestig dat ik toestemming heb van alle betrokkenen voor het uploaden en verwerken van dit gesprek.
                   </span>
                 </label>
