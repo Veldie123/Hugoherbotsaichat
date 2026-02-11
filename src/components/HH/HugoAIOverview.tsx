@@ -185,9 +185,14 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
       const openId = sessionStorage.getItem("openSessionId");
       if (openId) {
         sessionStorage.removeItem("openSessionId");
-        const match = sessions.find(s => s.id === openId);
+        const match = sessions.find(s => String(s.id) === openId);
         if (match) {
           openTranscript(match);
+        } else {
+          const idx = parseInt(openId, 10) - 1;
+          if (idx >= 0 && idx < sessions.length) {
+            openTranscript(sessions[idx]);
+          }
         }
       }
     }
