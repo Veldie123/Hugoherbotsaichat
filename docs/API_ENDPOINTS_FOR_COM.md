@@ -22,25 +22,100 @@ All endpoints have CORS enabled for all origins. No special headers needed.
 ## 1. CHAT / COACHING
 
 ### POST /api/v2/chat
-Main chat endpoint for Hugo coaching conversations.
+Main chat endpoint for Hugo coaching conversations with rich content support.
+Supports AI Agent-First responses: Hugo can suggest videos, slides, webinars, and roleplay scenarios.
 
 ```json
 // Request
 {
-  "message": "Hoe gebruik ik de SPIN-methode?",
+  "message": "Hoe gebruik ik de gentleman's agreement?",
   "userId": "b01529ff-0b15-4976-a846-12aa508efdfa",
+  "sourceApp": "com",
   "sessionId": "optional-existing-session-id",
-  "techniqueId": "optional-technique-id"
+  "conversationHistory": [
+    { "role": "user", "content": "Hallo Hugo" },
+    { "role": "assistant", "content": "Welkom! Waarmee kan ik je helpen?" }
+  ],
+  "techniqueContext": {
+    "techniqueId": "1.2",
+    "techniqueName": "Gentleman's Agreement",
+    "phase": "E"
+  }
 }
 
 // Response
 {
-  "response": "Hugo's antwoord...",
+  "response": "Hugo's antwoord als tekst...",
+  "message": "Hugo's antwoord als tekst...",
   "sessionId": "abc123",
-  "mode": "COACH_CHAT",
-  "signals": [...],
-  "suggestions": [...]
+  "mode": "coach",
+  "technique": "1.2",
+  "sources": [
+    {
+      "type": "technique",
+      "title": "Gentleman's Agreement",
+      "snippet": "De gentleman's agreement is een techniek...",
+      "relevance": 0.92
+    }
+  ],
+  "richContent": [
+    {
+      "type": "video",
+      "data": {
+        "title": "Gentleman's Agreement - Demo",
+        "muxPlaybackId": "abc123",
+        "thumbnailUrl": "...",
+        "duration": 180,
+        "techniqueId": "1.2"
+      }
+    },
+    {
+      "type": "action",
+      "data": {
+        "label": "Start rollenspel",
+        "action": "start_roleplay",
+        "payload": { "techniqueId": "1.2", "difficulty": "bewuste_onkunde" }
+      }
+    },
+    {
+      "type": "slide",
+      "data": {
+        "title": "Stappen Gentleman's Agreement",
+        "slideUrl": "...",
+        "techniqueId": "1.2",
+        "slideIndex": 1,
+        "totalSlides": 5
+      }
+    }
+  ],
+  "suggestions": [
+    "Bekijk de video over deze techniek",
+    "Laten we een rollenspel doen",
+    "Vertel me meer over de stappen"
+  ],
+  "intent": {
+    "primary": "learn",
+    "confidence": 0.85
+  }
 }
+```
+
+#### Rich Content Types
+The `richContent` array can contain:
+- `video`: Video reference with Mux playback ID for inline player on .com
+- `slide`: Slide reference with URL for slide viewer on .com
+- `webinar`: Webinar link with date and live status
+- `action`: Interactive button (start_roleplay, watch_video, view_slide, join_webinar, practice_technique)
+- `roleplay`: Roleplay proposal with scenario, difficulty level, and estimated duration
+- `card`: General info card with title, description, and optional link
+
+#### Intent Detection
+The `intent` object tells .com what the user is looking for:
+- `chat`: General conversation
+- `learn`: Wants to learn about a technique
+- `practice`: Wants to practice/roleplay
+- `review`: Reviewing previous performance
+- `explore`: Exploring available techniques/content
 ```
 
 ### POST /api/v2/sessions

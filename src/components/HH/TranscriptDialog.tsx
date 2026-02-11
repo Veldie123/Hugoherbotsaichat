@@ -388,8 +388,10 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                       className={`flex gap-3 p-3 rounded-lg ${
                         isAICoach 
                           ? "bg-cyan-50 border border-cyan-200" 
-                          : "bg-fuchsia-50 border border-fuchsia-200"
-                      } ${validatedLines.has(lineId) ? "ring-2 ring-green-400" : ""} ${flaggedLines.has(lineId) ? "ring-2 ring-red-400" : ""}`}
+                          : isAdmin 
+                            ? "bg-fuchsia-50 border border-fuchsia-200"
+                            : "bg-slate-50 border border-slate-200"
+                      } ${isAdmin && validatedLines.has(lineId) ? "ring-2 ring-green-400" : ""} ${isAdmin && flaggedLines.has(lineId) ? "ring-2 ring-red-400" : ""}`}
                     >
                       <div className="flex-shrink-0">
                         <Badge
@@ -449,8 +451,8 @@ export function TranscriptDialog({ open, onOpenChange, session, isAdmin = false 
                       </div>
                     </div>
                     
-                    {/* Feedback input for flagging */}
-                    {showFeedbackInput === lineId && (
+                    {/* Feedback input for flagging - admin only */}
+                    {isAdmin && showFeedbackInput === lineId && (
                       <div className="ml-11 mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                         <p className="text-[12px] text-red-700 mb-2 font-medium">Wat is er mis met dit antwoord?</p>
                         <Textarea

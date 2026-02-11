@@ -37,7 +37,7 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
     - **Engine Features:** Nested prompts, RAG grounding, validation loop for response repair, Hugo persona loading, and advanced signal/technique detection.
     - **Session Persistence:** V2 sessions (`v2_sessions`), session artifacts (`session_artifacts`), and user context (`user_context`) are stored in **Supabase** (shared with .com platform).
     - **Database Architecture:** Supabase is the **single source of truth** for all cross-platform data: sessions, user context, RAG documents, SSO tokens. Local PostgreSQL only used for legacy/platform-specific data.
-    - **Engine Components:** Includes `coach-engine.ts`, `context_engine.ts`, `rag-service.ts`, and `response-repair.ts`.
+    - **Engine Components:** Includes `coach-engine.ts`, `context_engine.ts`, `rag-service.ts`, `response-repair.ts`, `content-assets.ts`, `intent-detector.ts`, and `rich-response-builder.ts`.
     - **Session Flow:** Progresses from CONTEXT_GATHERING to COACH_CHAT, with an "Expert mode" option.
 - **4-Level Competence Model:** Integrated for difficulty selection in coaching, mapping to `onbewuste_onkunde`, `bewuste_onkunde`, `bewuste_kunde`, `onbewuste_kunde`.
 - **Multi-modal Integration (Audio/Video):**
@@ -45,10 +45,17 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
     - **Video Mode:** Uses HeyGen Streaming Avatar SDK for WebRTC video.
     - **Chat Mode Switcher:** Allows dynamic switching between chat, audio, and video modes.
 
+**AI Agent-First Rich Responses:**
+- **Rich Content Types:** The `/api/v2/chat` endpoint returns rich content alongside text: video embeds (Mux playback IDs), slide references, webinar links, action buttons, and roleplay proposals.
+- **Content Asset Library:** `server/v2/content-assets.ts` maps EPIC techniques to available content assets (videos, slides, webinars). Loads from Supabase `videos` table + static technique mappings.
+- **Intent Detection:** `server/v2/intent-detector.ts` uses keyword/pattern matching (Dutch) to detect user intent: learn, practice, review, explore. Triggers content suggestions based on context.
+- **Rich Response Builder:** `server/v2/rich-response-builder.ts` enriches Hugo's text responses with matched content items, action buttons, and suggestion chips.
+- **Shared Types:** `src/types/crossPlatform.ts` contains all shared TypeScript types for cross-platform communication.
+
 **Cross-Platform API Architecture:**
-- **API Documentation:** Full endpoint reference in `docs/API_ENDPOINTS_FOR_COM.md`.
+- **API Documentation:** Full endpoint reference in `docs/API_ENDPOINTS_FOR_COM.md`. Cross-platform stavaza in `docs/ai-platform-stavaza.md`.
 - **Cross-Platform Activity Tracking:** An API endpoint (`/api/v2/user/activity`) logs user activity from both platforms, and (`/api/v2/user/activity-summary`) fetches user stats for personalized Hugo greetings.
-- **Cross-Platform API Endpoints:** Standardized `POST /api/v2/chat` for RAG and AI coaching, and `GET /api/v2/user/activity-summary` for activity tracking, with CORS enabled for all origins.
+- **Cross-Platform API Endpoints:** Standardized `POST /api/v2/chat` for RAG and AI coaching with rich content, and `GET /api/v2/user/activity-summary` for activity tracking, with CORS enabled for all origins.
 - **Platform Sync System:** Utilizes a `platform_sync` Supabase table for bidirectional synchronization between the `.com` and `.ai` platforms, managed via dedicated API endpoints.
 - **SSO Handoff Tokens:** Implements `sso_handoff_tokens` in Supabase for secure cross-platform authentication, with API endpoints for token generation, validation, and cleanup.
 

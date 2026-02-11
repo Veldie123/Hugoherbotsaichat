@@ -102,6 +102,8 @@ import {
   generateOfferBrief,
   generateScenarioSnapshot
 } from "./v2/brief-generator-service";
+import { detectIntent } from "./v2/intent-detector";
+import { buildRichResponse } from "./v2/rich-response-builder";
 
 const app = express();
 
@@ -2881,8 +2883,9 @@ const PORT = parseInt(process.env.API_PORT || "3001", 10);
 // ===========================================
 
 // Primary endpoint for .com platform: /api/v2/chat
+// Returns rich responses with content suggestions (videos, slides, webinars, roleplay)
 app.post("/api/v2/chat", async (req, res) => {
-  const { message, userId, conversationHistory, techniqueContext, sourceApp } = req.body;
+  const { message, userId, sessionId, conversationHistory, techniqueContext, sourceApp } = req.body;
   
   console.log(`[API] /api/v2/chat from ${sourceApp || 'unknown'}, userId: ${userId || 'anonymous'}`);
   
@@ -2896,18 +2899,51 @@ app.post("/api/v2/chat", async (req, res) => {
       content: m.content
     }));
     
+    const techniqueId = techniqueContext?.techniqueId || techniqueContext || undefined;
+    const techniqueName = techniqueContext?.techniqueName || undefined;
+    const phase = techniqueContext?.phase || undefined;
+    
     const coachResult = await generateCoachResponse(message, history, {
       userId: userId || undefined,
-      techniqueId: techniqueContext || undefined
+      techniqueId
     });
 
+    const intentResult = detectIntent(
+      message,
+      (conversationHistory || []).map((m: any) => ({ role: m.role, content: m.content })),
+      techniqueId,
+      undefined
+    );
+
+    const richResponse = await buildRichResponse(
+      coachResult.message,
+      intentResult,
+      {
+        techniqueId,
+        techniqueName,
+        phase,
+        userId: userId || undefined
+      }
+    );
+
     res.json({
+      response: coachResult.message,
       message: coachResult.message,
-      technique: null,
+      sessionId: sessionId || null,
+      mode: 'coach',
+      technique: techniqueId || null,
       sources: coachResult.ragContext?.map(doc => ({
+        type: doc.docType || 'technique',
         title: doc.title || 'Video fragment',
-        chunk: doc.content?.substring(0, 200)
-      })) || []
+        snippet: doc.content?.substring(0, 200) || '',
+        relevance: doc.similarity || 0
+      })) || [],
+      richContent: richResponse.richContent || [],
+      suggestions: richResponse.suggestions || [],
+      intent: {
+        primary: intentResult.primaryIntent,
+        confidence: intentResult.confidence
+      }
     });
   } catch (error: any) {
     console.error("[API] /api/v2/chat error:", error);

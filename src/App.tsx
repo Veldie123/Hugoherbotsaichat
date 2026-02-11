@@ -53,7 +53,7 @@ export default function App() {
   const devPreviewPage = getDevPreviewPage();
   const [currentPage, setCurrentPage] = useState<Page | null>(devPreviewPage);
   const [isCheckingAuth, setIsCheckingAuth] = useState(!devPreviewPage);
-  const [isAdmin, setIsAdmin] = useState(!!devPreviewPage);
+  const [isAdmin, setIsAdmin] = useState(devPreviewPage?.startsWith('admin-') || false);
 
   console.log('📍 App.tsx rendered, currentPage:', currentPage);
 
