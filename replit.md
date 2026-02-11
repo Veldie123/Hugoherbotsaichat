@@ -45,6 +45,13 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
     - **Video Mode:** Uses HeyGen Streaming Avatar SDK for WebRTC video.
     - **Chat Mode Switcher:** Allows dynamic switching between chat, audio, and video modes.
 
+**Cross-Platform API Architecture:**
+- **API Documentation:** Full endpoint reference in `docs/API_ENDPOINTS_FOR_COM.md`.
+- **Cross-Platform Activity Tracking:** An API endpoint (`/api/v2/user/activity`) logs user activity from both platforms, and (`/api/v2/user/activity-summary`) fetches user stats for personalized Hugo greetings.
+- **Cross-Platform API Endpoints:** Standardized `POST /api/v2/chat` for RAG and AI coaching, and `GET /api/v2/user/activity-summary` for activity tracking, with CORS enabled for all origins.
+- **Platform Sync System:** Utilizes a `platform_sync` Supabase table for bidirectional synchronization between the `.com` and `.ai` platforms, managed via dedicated API endpoints.
+- **SSO Handoff Tokens:** Implements `sso_handoff_tokens` in Supabase for secure cross-platform authentication, with API endpoints for token generation, validation, and cleanup.
+
 **Feature Specifications:**
 - **Hugo a.i.:** AI coaching, chat interface, roleplay training, multi-modal interaction, and Epic Sales Flow progress.
 - **Gespreksanalyse:** Audio upload for conversation analysis with a unified `TranscriptDialog`.

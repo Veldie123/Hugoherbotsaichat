@@ -2640,6 +2640,7 @@ app.get("/api/v2/user/activity-summary", async (req, res) => {
     const recentVideos = activities?.filter(a => a.activity_type === "video_view").slice(0, 5) || [];
     const recentWebinars = activities?.filter(a => a.activity_type === "webinar_attend").slice(0, 5) || [];
     const recentTechniques = activities?.filter(a => a.activity_type === "technique_practice").slice(0, 5) || [];
+    const recentChats = activities?.filter(a => a.activity_type === "chat_session").slice(0, 5) || [];
     
     const lastActivity = activities?.[0] || null;
     
@@ -2658,17 +2659,20 @@ app.get("/api/v2/user/activity-summary", async (req, res) => {
         timePhrase = "Net";
       }
       
-      const entityName = lastActivity.metadata?.title || lastActivity.entity_id;
+      const entityName = lastActivity.metadata?.title || lastActivity.video_id || lastActivity.webinar_id || lastActivity.techniek_id || lastActivity.session_id || '';
       
       switch (lastActivity.activity_type) {
         case "technique_practice":
           welcomeMessage = `${timePhrase} oefende je "${entityName}". Wil je daar verder mee, of zit je ergens anders mee?`;
           break;
         case "video_view":
-          welcomeMessage = `${timePhrase} keek je de video "${entityName}". Heb je daar nog vragen over?`;
+          welcomeMessage = `${timePhrase} keek je een video${entityName ? ` "${entityName}"` : ''}. Heb je daar nog vragen over?`;
           break;
         case "webinar_attend":
-          welcomeMessage = `${timePhrase} volgde je het webinar "${entityName}". Zullen we de besproken technieken oefenen?`;
+          welcomeMessage = `${timePhrase} volgde je een webinar${entityName ? ` "${entityName}"` : ''}. Zullen we de besproken technieken oefenen?`;
+          break;
+        case "chat_session":
+          welcomeMessage = `${timePhrase} hadden we een gesprek. Waar kan ik je vandaag mee helpen?`;
           break;
       }
     }
@@ -2680,12 +2684,15 @@ app.get("/api/v2/user/activity-summary", async (req, res) => {
         videosWatched: recentVideos.length,
         webinarsAttended: recentWebinars.length,
         techniquesExplored: recentTechniques.length,
+        totalChatSessions: recentChats.length,
       },
       recent: {
         videos: recentVideos,
         webinars: recentWebinars,
         techniques: recentTechniques,
-      }
+        chats: recentChats,
+      },
+      source: lastActivity?.source_app || null
     });
   } catch (err) {
     console.error("[Activity] Error:", err);
@@ -2694,41 +2701,57 @@ app.get("/api/v2/user/activity-summary", async (req, res) => {
 });
 
 app.post("/api/v2/user/activity", async (req, res) => {
-  const { userId, activityType, entityType, entityId, durationSeconds, score, metadata } = req.body;
+  const { userId, activityType, entityType, entityId, durationSeconds, score, metadata, sourceApp } = req.body;
   
-  if (!userId || !activityType || !entityType || !entityId) {
-    return res.status(400).json({ error: "userId, activityType, entityType, and entityId required" });
+  if (!userId || !activityType) {
+    return res.status(400).json({ error: "userId and activityType required" });
   }
   
   try {
+    const record: Record<string, any> = {
+      user_id: userId,
+      activity_type: activityType,
+      source_app: sourceApp || 'ai',
+      metadata: metadata || {},
+      created_at: new Date().toISOString()
+    };
+    
+    const isUUID = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    
+    if (entityType === 'video' || activityType === 'video_view') {
+      if (entityId && isUUID(entityId)) record.video_id = entityId;
+      else if (entityId) record.metadata = { ...record.metadata, videoId: entityId };
+    } else if (entityType === 'webinar' || activityType === 'webinar_attend') {
+      if (entityId && isUUID(entityId)) record.webinar_id = entityId;
+      else if (entityId) record.metadata = { ...record.metadata, webinarId: entityId };
+    } else if (entityType === 'session' || activityType === 'chat_session') {
+      if (entityId && isUUID(entityId)) record.session_id = entityId;
+      else if (entityId) record.metadata = { ...record.metadata, sessionId: entityId };
+    } else if (entityType === 'technique' || activityType === 'technique_practice') {
+      if (entityId) record.techniek_id = entityId;
+    }
+    
+    if (durationSeconds) record.metadata = { ...record.metadata, duration_seconds: durationSeconds };
+    if (score) record.metadata = { ...record.metadata, score };
+    
     const { data, error } = await supabase
       .from("user_activity")
-      .insert({
-        id: nanoid(),
-        user_id: userId,
-        activity_type: activityType,
-        entity_type: entityType,
-        entity_id: entityId,
-        duration_seconds: durationSeconds || null,
-        score: score || null,
-        metadata: metadata || {},
-        created_at: new Date().toISOString()
-      })
+      .insert(record)
       .select()
       .single();
     
     if (error) {
-      if (error.code === 'PGRST205') {
+      if (error.code === 'PGRST205' || error.code === '42P01') {
         return res.json({ 
           success: false, 
-          note: "Activity tracking table not yet created in Supabase" 
+          note: "Activity tracking table not yet configured in Supabase" 
         });
       }
       console.error("[Activity] Insert error:", error);
       return res.status(500).json({ error: error.message });
     }
     
-    console.log(`[Activity] Logged: ${activityType} on ${entityType}/${entityId} for user ${userId}`);
+    console.log(`[Activity] Logged: ${activityType} for user ${userId} (source: ai)`);
     res.json({ success: true, activity: data });
   } catch (err) {
     console.error("[Activity] Error:", err);
