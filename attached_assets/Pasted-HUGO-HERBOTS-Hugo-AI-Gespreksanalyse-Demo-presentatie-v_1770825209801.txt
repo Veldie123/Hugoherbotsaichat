@@ -1,0 +1,1452 @@
+HUGO
+HERBOTS
+
+
+Hugo AI
+
+Gespreksanalyse
+
+Demo presentatie voor Acme Corp
+
+2026-01-27
+
+
+Follow-up meeting DataDrive NL
+
+2026-01-23
+
+
+Discovery call met Digital Solutions
+
+2026-01-19
+
+
+Bekijk alle (3)
+
+Admin View
+Zoek sessies, technieken...
+
+Talk to Hugo AI
+2
+
+SV
+← Terug naar analyses
+Robbe-Nicop
+11 feb 2026
+•
+309 turns
+•
+28:55
+Overall Score
+
+65
+/ 100
+Goed
+Explore
+
+100%
+Probe
+
+0%
+Impact
+
+0%
+Commit
+
+0%
+Download rapport (PDF)
+Overzicht
+Transcript + Evaluatie
+Gemiste Kansen
+Transcript met EPIC Evaluatie
+Turn-by-turn transcript met gedetecteerde technieken en klantsignalen
+
+00:00
+Verkoper
+Oké. Ik stel anders voor, meneer Standaard, dat we het gesprek als volgt doen. Dat ik kort mijn eigen voorstel, als ook de firma, dat ik toch wel weet wie er tegenover u zit. Anderzijds is het voornamelijk aan mij om een keer naar u te gaan luisteren wat er nu verwachtingen zijn of eventuele ervaringen om u zo goed mogelijk te kunnen verder helpen. Nu, ik ben er mij ook bewust van meneer Standaard, dat we ook niet iedereen kunnen helpen. Is dat het geval, zeg mij dat. Even goeie vrienden, dat is zeker geen probleem. Nu, anderzijds kan het ook zijn, dat u zegt, ja Robbe, het is in zoiets dat ik mijn eigen zie investeren.
+
+00:33
+Klant
+Neutraal
+Het is daarvoor dat ik u laten komen. Dan hebben we eigenlijk drie mogelijkheden.
+
+00:36
+Verkoper
+Enerzijds, u kan met ons direct gaan aantekenen. Ik zit er wel graag bij dat dat eigenlijk voor bestaande klanten is. Dan kun je eigenlijk al een beetje kennen en naar een tweede, derde of eventueel vierde unit gaan kijken. Anderzijds, wat de meeste nieuwe klanten doen, eigenlijk is via een betaalde optie gaan werken. Hoe werkt dat eigenlijk? Dan wordt er eigenlijk een unit uit de verkoop gehaald. En dat kan u er zo eigenlijk nog een keer over na aantekenen. En anderzijds kan er ook wat gewoon via een tweede afspraak gewerkt worden. Is het goed dat we op die manier het gesprek doen?
+
+01:02
+Klant
+Neutraal
+Ja, dat is goed.
+
+01:03
+Verkoper
+Oké, super. Ik ben Robbe en we zijn allezé. Nu, dat is ons populairste project. Meneer Standaard heeft eigenlijk gezien, we hebben zeer veel verschillende projecten en verschillende mogelijkheden. Dus ook heel veel klanten. Nu, wat ik vooral zie bij onze klanten, is dat we die toch kunnen opdelen in twee grote groepen. Enerzijds zijn dat mensen dat nog met bankaire producten. Tak 21, 23. Maar toch niet meer tevreden zijn van het rendement. Anderzijds zijn dat mensen dat zeggen, ja, wij hebben al wat ervaring in het vastgoed. Wij geloven er nog altijd in, hè. Maar toch al jammer genoeg al een paar problemen hebben gehad of de klassieke verhuurproblemen, dat is nu al meegemaakt. Dan spreek ik over wanbetalers, schadegevallen, renovatiekosten, problemen met de huur, soms tot een tevreden gerecht toe. En daar eigenlijk voor naar ons komen. Mag ik iets vragen? In welke categorie zou ik u mogen vragen?
+
+01:54
+Klant
+Neutraal
+In de tweede groep.
+
+01:57
+Verkoper
+Ervaring noemen?
+
+01:58
+Klant
+Neutraal
+Ja.
+
+01:58
+Verkoper
+Oké, mag ik iets vragen? Waar heeft u dat juist?
+
+02:00
+Klant
+Neutraal
+Ik heb enkele appartementen.
+
+02:01
+Verkoper
+Enkele appartementen. Oké, oké, mooi.
+
+02:03
+Klant
+Neutraal
+Zo nu aan mijn leeftijd al?
+
+02:04
+Verkoper
+Voilà, ja. Ja, ja, ja. Oké. Zou ik u gisteren mogen vragen? Want ik zit hier de laatste tijd zeer veel in de buurt. Meneer Standaard, via wie ben je eigenlijk bij ons terechtgekomen?
+
+02:14
+Klant
+Neutraal
+Dat was eigenlijk online, op de advertentie, op Facebook als ik me niet verkeer.
+
+02:18
+Verkoper
+Ja? Oké.
+
+02:19
+Klant
+Twijfel
+Ja, via Facebook heb ik dat gevonden. Ik heb er dan een keer op geklikt. Ik dacht, dat kan misschien wel interessant zijn.
+
+02:24
+Verkoper
+Ja, ja, ja, ja. En heb jij mij opgebeld?
+
+02:26
+Klant
+Neutraal
+Ja, inderdaad. Ja, dat is raar dan natuurlijk.
+
+02:29
+Verkoper
+Ja, maar ik zal het doorgeven aan onze marketing. Mag ik juist iets vragen? Wat sprak u er dan aan?
+
+02:33
+Klant
+Neutraal
+Goh ja, de regio in Zeebrugge, ik denk dat dat wel goed verhuurt. Want er zijn daar heel veel bedrijven. En het was ook wel een mooi gebouw, dat dak is mooi afgelegd en zo. Dus ja, het gebouw sprak mij ook wel aan.
+
+02:46
+Verkoper
+Ja, ja, ja. En wat was daarvan? Zijn er nog dingen?
+
+02:50
+Klant
+Neutraal
+Wel, dat was het dus een beetje.
+
+02:51
+Verkoper
+Ja, ja, ja. Oké, oké, oké. Mag ik u iets vragen? Want u zegt hiermee, ik heb al enkele appartementen. Waarom moet u dan nu niet eens kijken naar exploitatievastgoed en niet terug naar een klassiek appartement?
+
+03:01
+Klant
+Neutraal
+Ik heb er al twintig jaar in, dus ik ben een keer aan het kijken voor een beetje diversificatie eigenlijk.
+
+03:06
+Verkoper
+Ja, ja, ja, oké, oké. Dat is logisch. Maar als ik het goed begrijp, of dat nu bij ons is of bij iemand anders, uw volgende investering gaat terug in het vastgoed zijn.
+
+03:16
+Klant
+Neutraal
+Ja, zeker. Oké.
+
+03:17
+Verkoper
+Nee, maar ja, met uw invaring zal dat wel logisch zijn. Nu, mag ik iets vragen? U zegt tegen mij, ik heb al enkele appartementen. Ik wil gaan diversificeren. Dat is vrij logisch. Dat zien we bij veel mensen. Nu, de mensen komen eigenlijk bij ons eerder om te zeggen, er zijn toch zaken aan het vastgoed dat we anders willen doen. Of beter willen doen. Of een situatie erbij. Mag ik iets vragen? Wat zijn de zaken die bij u beter zouden kunnen?
+
+03:42
+Klant
+Twijfel
+Oh ja, beter. Daar heb ik nog niet heel veel last van gehad. Maar natuurlijk, ik heb er nu twintig. Er komt er natuurlijk altijd een en ander bij kijken. Je moet er al een keer wat voor doen. Dus het is op die manier dat ik hier aan het kijken ben naar iets waar ik minder zorgen over heb. Ik had ook in de advertentie gelezen, een zorgeloze investering. Dat heb ik ook gelezen. Ja, ja, ja. Dus ik dacht, ik ga er een keer voor kijken. Ik ben natuurlijk nog niet zeker dat dat gaat worden.
+
+04:06
+Verkoper
+Nee, nee, nee, oké. U zegt dingen bij kijken. Waar gaat dat dan juist over?
+
+04:12
+Klant
+Neutraal
+In mijn appartement, bedoel ik.
+
+04:13
+Verkoper
+Ja.
+
+04:14
+Klant
+Neutraal
+Oh ja, ik zei het al, ik heb twintig verschillende huurters. Ik probeer me altijd te targeten op het oudere cliënteel. Omdat ik dan ook wel vaker zeker ben dat dat betaald wordt. Dus ik heb daar wel nog wat kans mee gehad. Allee, buiten één keer. Maar dat kan altijd een keer voorkomen. Maar ik zeg het, het oudere cliënteel. Het scheelt dan een keer iets. De klink loopt wat vast. De lampjes moeten vervangen worden. Ik doe dat ook allemaal zelf. Ze bellen dan een keer voor het een en het ander. Ik zeg het, als je er twintig hebt. Dan gebeurt dat al een keer in de weken, dat er een keer iemand belt.
+
+04:47
+Verkoper
+Oké.
+
+04:48
+Klant
+Neutraal
+En om dan nog één bij te nemen, ja.
+
+04:50
+Verkoper
+Ja, ja, ja.
+
+04:51
+Klant
+Neutraal
+Je kunt niet blijven natuurlijk.
+
+04:53
+Verkoper
+U zegt net, ze betalen bijna allemaal goed. Eén keer niet. Mag ik eens vragen, wat is er dan juist gebeurd?
+
+04:58
+Klant
+Neutraal
+Ja, ja. Wel, dat was één keer. Toen ik hier de kans gaf naar de jonger koppel. Die zijn net gestart. Ik wilde wel de kans geven om een appartement van mij te huren. Nu, de eerste vijf, zes maanden ging dat eigenlijk allemaal goed. Altijd op tijd. In het begin van de maand kreeg ik eigenlijk de huur.
+
+05:16
+Verkoper
+Ja, ja.
+
+05:17
+Klant
+Twijfel
+En dan ineens, ja. Niets meer. Ik dacht, misschien over een week of twee zal het betaald zijn. Een keer vergeten. Dat kan altijd.
+
+05:23
+Verkoper
+Dat kan natuurlijk.
+
+05:24
+Klant
+Neutraal
+Maar dan, ja. Week drie, niets. Week vier, niets. Achter week vier dacht ik, ik ga toch een keer bellen. Op het einde van de maandag dacht ik, ik bel. Pakte niet op. Ik dacht, ik kan over weken wachten. Ik ben een keer gebeld. Niets gehoord. Ik dacht, ik kan een keer tot daar gaan. Niets gehoord.
+
+05:41
+Verkoper
+Ja, ja.
+
+05:42
+Klant
+Twijfel
+Ik dacht, dat is misschien iets mis. Ik dacht, ik ga naar de politie. Want ik hoor ze niet. Dat is niet van hun gewenste. Wat blijkt? Ze waren gewoon verdwenen. Gewoon weg. Niets meer gehoord. Alles al onder grief stond er nog. Gewoon vertrokken. En dan was het niet lang, hè. Ik heb nooit meer iets van gehoord. Nooit meer van gehoord. Maar, ja.
+
+05:59
+Verkoper
+Ja, dat kan zomaar. Ja.
+
+06:01
+Klant
+Neutraal
+Ik vroeg mij dat ook af. Kan dat zomaar. Ik zat dan met een uurcontract. Dat eigenlijk een gans jaar duurde. Maar het was dus nog zes maanden dat dat door ging.
+
+06:10
+Verkoper
+Dus, als ik het al goed begrijp. Je hebt al zes maanden geen uur gehad. Of hoe...
+
+06:15
+Klant
+Twijfel
+Ja, de eerste zes maanden heb ik geen problemen gehad. Ja, dat was goed, hoor. Ik dacht, misschien komen die nog terug. Dus ik heb nog even gewacht.
+
+06:22
+Verkoper
+Ah, ja, ja. Ja, weet je. Toch nog het voordeel van het ijvergeven. Als ze misschien op reis waren.
+
+06:26
+Klant
+Uitstel
+Ja, ja. Ik werk met brave mensen. Dus ja, ik wil niet... Dus ja. En dan inderdaad. Achterdat dat contract eigenlijk officieel gepasseerd was. Ik heb gezegd, ja kijk. Ik ga dat al graag buitensmijten. Of later buitensmijten eigenlijk.
+
+06:39
+Verkoper
+Ja, ja, ja.
+
+06:40
+Klant
+Neutraal
+Dan heb ik nu uur dus gezonden. Terug naar het oudere cliënteel gegaan.
+
+06:43
+Verkoper
+Ja, ja, ja. En dan heb je daar weer geen problemen mee gehad.
+
+06:45
+Klant
+Neutraal
+Absoluut, ja.
+
+06:46
+Verkoper
+Maar ik schrijf je. Hoe lang heb je dat dan niet kunnen verhuren? Of heeft u je geld dan niet gehad?
+
+06:49
+Klant
+Neutraal
+Ja, toch zes maanden.
+
+06:50
+Verkoper
+Zes maanden?
+
+06:51
+Klant
+Neutraal
+Ja, ja. Kijk, jong.
+
+06:53
+Verkoper
+En wat vroeg u van die mensen?
+
+06:55
+Klant
+Neutraal
+Ja, dat was eigenlijk een drie slaapkamer appartement. Want ja, er zaten twee kindjes eigenlijk ook nog. Dus ja, dat was al duizend euro in de maand.
+
+07:01
+Verkoper
+Oeh.
+
+07:02
+Klant
+Neutraal
+Ja, ja, ja. Allee dus.
+
+07:05
+Verkoper
+En die mensen hebben het nooit meer gezien?
+
+07:06
+Klant
+Neutraal
+Nooit meer. Gehoord. Niets meer van gezien. Niets meer van gehoord. In de grief stond dat er nog. Allee, stond er nog.
+
+07:12
+Verkoper
+Ja, stond er nog, ja. En wat dat dan zeggen? Dat u zesduizend euro niet gezien heeft, nooit meer gaat zien, geen oplossing meer?
+
+07:16
+Klant
+Neutraal
+Denk ik dat niet. Denk ik dat niet. Nee.
+
+07:19
+Verkoper
+Ja, de vraag is maar natuurlijk. Eerst aan haar te stellen.
+
+07:22
+Klant
+Neutraal
+Ja, dat is inderdaad iets wat ik toch...
+
+07:26
+Verkoper
+Ja, maar u wilt dat niet vermijden natuurlijk.
+
+07:28
+Klant
+Interesse
+Dus dat zou ik wel graag... Allee, ik zou toch graag de volgende keer met zesduizend euro toch wel zien natuurlijk.
+
+07:33
+Verkoper
+Ja, ja, ja. Tuurlijk, tuurlijk. Als ik het goed begrijp, zijn het zoveel dingen dat u zegt. Dat mijn volgende investering wil ik niet meer. Dat wil ik vermijden eigenlijk. Toch? Toch graag?
+
+07:43
+Klant
+Neutraal
+Ja, inderdaad.
+
+07:44
+Verkoper
+Ja, dat is logisch zelfs. Het is daarmee eigenlijk ook dat de mensen bij ons ervoor gaan kiezen om te samenwerken. En ook een project gaan kijken waar er eigenlijk een mogelijkheid is tot vooraf betalen.
+
+07:54
+Klant
+Neutraal
+Ja.
+
+07:55
+Verkoper
+Nu, hoe werkt dat eigenlijk? Het is heel gemakkelijk. De mensen komen hier naartoe en betalen voor de hele verblijfsperiode. Dus in dit geval. Concreet wil ik dat eigenlijk zeggen voor u.
+
+08:03
+Klant
+Neutraal
+Ja.
+
+08:04
+Verkoper
+Dat er onmogelijk een kans is dat u zes maanden uw huur niet zal hebben. Maar dat u dus ook nooit geen zesduizend euro mis zal lopen.
+
+08:11
+Klant
+Neutraal
+Ja, oké. Nu niet, binnen tien jaar niet. Nooit niet. Nee. Ja, dat is wel...
+
+08:16
+Verkoper
+Mag ik eens vragen? Wat vindt u daarvan?
+
+08:18
+Klant
+Neutraal
+Dat is iets. Dat ik mijn geld er niet door misloop.
+
+08:22
+Verkoper
+Dat is natuurlijk een interessante zaak. Ja, want we zitten nu natuurlijk toch samen voor de investering. Voila, voila, voila. Het is geen geld dat je investeert. Dus je moet het opbrengst er ook van krijgen natuurlijk.
+
+08:31
+Klant
+Neutraal
+Ja, ja.
+
+08:32
+Verkoper
+Dus eigenlijk als ik het goed begrijp, voor uw volgende investering kan ik er wel van uitgaan dat dat wel mijn voorafbetalingssysteem zal zijn.
+
+08:40
+Klant
+Interesse
+Graag gedaan. Oké, oké.
+
+08:42
+Verkoper
+Het lijkt mij ook niet meer als logisch natuurlijk. Nu ja, u zei mij zelf ook. Want de verhuur doet u dan allemaal zelf?
+
+08:48
+Klant
+Neutraal
+Ja, ja. Dat is mijn fulltime job eigenlijk.
+
+08:50
+Verkoper
+Ja, ja, wel. Want u zegt ja, ik heb al twintig appartementen. De betalingen zeggen ze volgens u ook. Maar de renovaties doet u ook allemaal zelf?
+
+08:58
+Klant
+Neutraal
+Ja, ja. Maar het is altijd nieuwbouw dat ik koop. Ik heb er nu twintig, maar...
+
+09:02
+Verkoper
+Ja, ja, ja.
+
+09:03
+Klant
+Uitstel
+Heel veel kosten heb ik daar eigenlijk nog niet aan gehad eigenlijk.
+
+09:05
+Verkoper
+Nee, nee, nee. Oké.
+
+09:07
+Klant
+Neutraal
+Allee, qua renovaties.
+
+09:08
+Verkoper
+Ja, oké. Want u was net ook te zeggen ja, ik wil eigenlijk minder zorgen.
+
+09:12
+Klant
+Neutraal
+Ja. Ja, dat klopt.
+
+09:14
+Verkoper
+Ja, dat is ook wel... Over welke zorgen heeft u het dan eigenlijk?
+
+09:16
+Klant
+Neutraal
+Ik zeg het, hè. Ik zeg het, dat is een beetje een ouder cliëntiel. En zeker in de winterperiode merk ik dat wel, dat dat wel wat moeilijker wordt. Dan bellen ze al een keer.
+
+09:24
+Verkoper
+Ja, ja, ja.
+
+09:25
+Klant
+Neutraal
+Ze zijn een beetje moeilijk samen. Het lampje is kapot. De deur sleept een beetje. Het kraantje lekt allemaal weer. Eigenlijk zijn dat allemaal geen grote problemen, hè. Maar ja, ze zien dan al een keer iemand. Hij komt dan een keer binnen. Ik los ik dat op en ben ik hier dan terug weg. Maar natuurlijk, ja, ik zeg het. Twintig appartementen. Ja, dat gebeurt al een keer in de maand, hè. Dat je toch al een paar keer over in het weer moet rijden voor eigenlijk, ja, stomiteit.
+
+09:46
+Verkoper
+Ja, ja, ja.
+
+09:47
+Klant
+Neutraal
+Dat ik er dan nog even bij pak. Het kan nog altijd, maar het wordt al wat duidelijker. Dus ik wil dat toch wel een beetje afbouwen, zie je.
+
+09:54
+Verkoper
+En Max, waarom is dat voor jou zo belangrijk dan?
+
+09:58
+Klant
+Neutraal
+Wel, ik zeg het. Kijk, ik ga nu een korte kleinkind krijgen. Ik wil er ook al wat meer tijd in steken eigenlijk. En dan is dat altijd over in het weer moet rijden. Ik wil een beetje meer op mijn gemak. Een beetje meer genieten van mijn pensioen eigenlijk.
+
+10:10
+Verkoper
+Ja, ja, ja.
+
+10:11
+Klant
+Neutraal
+Dus het is dat dat ik toch wel een beetje wil vermijden. Natuurlijk, dat is ook niet rampzalig dat je dat moet doen. Een beetje tijd verdrijven.
+
+10:17
+Verkoper
+Tuurlijk. Ik heb een keer bij een klant gezeten. Die wou zich eigenlijk hetzelfde vertellen. Die had ook juist twee kleinkinderen. En die had eigenlijk ook een camper waar ze dan veel mee op reis ging. Die had dan eigenlijk ook zo iets geïnvesteerd. Omdat ze ook zeiden, ja, we zijn altijd vast. De baan brengen we toch niet meer op. En ja, wat was daar eigenlijk het probleem? Als ik met mijn kinderen ergens in de camper zit. Of ja, u met uw eerste kleinkind. Stel dat u dat bijvoorbeeld meemaakt. En u wordt gebeld. Ja, het lampje is kapot. Het kraantje lekt. Inderdaad, dat zijn allemaal, voor datzelfde reden. Dat zijn allemaal de grote problemen. Want het is maar die tijd dat het er insteedt. Dat is het. Het zijn zo'n zaken waarvan je zegt. Wow, nu wil ik dat niet meer. Wow, nu ga je nog volgende investeren enzo. Dat misschien wel durven.
+
+10:58
+Klant
+Neutraal
+Nee, nee.
+
+10:59
+Verkoper
+Dat is niet meer als Louis natuurlijk. Bij ons eigenlijk. Mensen kiezen dan altijd om te gaan samenwerken met een professioneel verhuurpartner. Wat doet hij eigenlijk? Heel de verhuur van A tot Z. De mensen zoeken. Ze ontvangen. Ze binnenlaten. Buitenlaten. Opkussen. En weer terug. Concreet wil dat ook voor u zeggen. Is er een lamp kapot? Die gaan naar u niet bellen. Lekt het kraantje. Die gaan naar u niet bellen. U verdient volledige anonimiteit. U kan altijd met uw kleinkind gaan spelen. Gaan doen. Lijkt wat u wilt.
+
+11:31
+Klant
+Neutraal
+En u doet het allemaal voor mij?
+
+11:33
+Verkoper
+Wij doen het allemaal voor u. Is het zoiets dat u, in die richting dat u kijkt?
+
+11:38
+Klant
+Neutraal
+Ja. Eigenlijk wel. Dat dat kan. Ja.
+
+11:42
+Verkoper
+Ja, tuurlijk.
+
+11:43
+Klant
+Neutraal
+Is dat dankelijk van de opbrengst genoeg? Want dat zou ook niet gratis zijn. Nee, nee, nee.
+
+11:46
+Verkoper
+Wel, als ik u een ontdekje van de sleur mag geven. De financiële zaken gaan we sowieso bespreken.
+
+11:50
+Klant
+Neutraal
+Ja.
+
+11:51
+Verkoper
+Die professionele verhuurpartner verdient u op korte termijn. Automatisch is uw rendement dan ook al iets genomen.
+
+11:55
+Klant
+Neutraal
+Ja, ja, ja. Dat is het probleem.
+
+11:57
+Verkoper
+Ja, wel. Kijk, ja. U zei met juiste dat er zeker altijd betaald moet worden. Vandaar dat u ook aan die oudere mensen.
+
+12:03
+Klant
+Neutraal
+Ja, ja.
+
+12:04
+Verkoper
+Omdat wij eigenlijk met een voorafbetaling systeem werken. Of die renovaties.
+
+12:10
+Klant
+Neutraal
+Ja, ja.
+
+12:11
+Verkoper
+Dat valt eigenlijk allemaal onder hetzelfde. Vandaar dat we met dat professioneel begeleiden.
+
+12:15
+Klant
+Neutraal
+Ja.
+
+12:16
+Verkoper
+U eigenlijk weet, ik heb altijd mijn geld. En zij gaan mij eigenlijk nooit meer betalen. Ik kan met mijn kleinkind doen wat ik wil. En het geld komt ook altijd op de rekening.
+
+12:22
+Klant
+Neutraal
+Ja.
+
+12:23
+Verkoper
+Zijn er nog andere zaken die u zegt, die vind ik toch ook belangrijk voor een investeerder?
+
+12:27
+Klant
+Neutraal
+Ja, ja, ja.
+
+12:28
+Verkoper
+Ah, wat zijn de andere...
+
+12:29
+Klant
+Neutraal
+Ja, ja, ja. Ja, ja, ja. Ja, nee vraag, ja.
+
+12:32
+Verkoper
+Oké. Max Vengel, wat verwacht u dan eigenlijk nog?
+
+12:36
+Klant
+Neutraal
+Eigenlijk, dat is dus een beetje waar ik naar op zoek ben eigenlijk. Allee, indien dat het financiële plaatsje klopt.
+
+12:42
+Verkoper
+Ja, ja, ja. Tuurlijk, tuurlijk. Ja, ja, ja. Wel, dus eigenlijk, meneer Standaard, we hebben juist een keer overlopen. Indien dat het financiële plaatsje klopt, kan ik er dan van uitgaan. Wat is het nu weer, jongen?
+
+12:52
+Klant
+Neutraal
+Alternatief.
+
+12:53
+Verkoper
+Oef.
+
+12:54
+Klant
+Neutraal
+Ah, ja, ja. Ha, ha, ha.
+
+12:56
+Verkoper
+Ja, wel. Mag ik eens vragen?
+
+12:58
+Klant
+Neutraal
+Ah, ja.
+
+12:59
+Verkoper
+Wat zie je dan eigenlijk nog als alternatief?
+
+13:02
+Klant
+Neutraal
+Ha, ha, ha.
+
+13:03
+Verkoper
+Ja, ja, ja. Ik ga mijn zinnetjes snijden.
+
+13:06
+Klant
+Neutraal
+Oké, ja, ja.
+
+13:07
+Verkoper
+Goed. Ja, misschien nog een alternatief.
+
+13:09
+Klant
+Twijfel
+In de buurt zou ik misschien dan een paar dagen een appartement bijkopen. Een nieuwbouw. Want ze zijn achter een hoek hier nog een blok aan het zetten. Daar zou ik dan misschien een paar dagen iets bijkopen. Maar ik zal het later verhuurden eigenlijk. Allee, of ik wil zeggen, mijn makelaar werkt de hele tijd voor mij.
+
+13:23
+Verkoper
+Verhuurd.
+
+13:24
+Klant
+Neutraal
+Het schijnt dat je daar ook niet veel zorgen in hebt. Maar dat ben ik niet heel zeker.
+
+13:27
+Verkoper
+Nee, nee. Oké. Dus eigenlijk. Misschien eens kijken. Afhangen dat het voor jou kiest? Of voor ons?
+
+13:35
+Klant
+Neutraal
+Goh.
+
+13:36
+Verkoper
+Ja, wat zou dat afhangen?
+
+13:37
+Klant
+Neutraal
+De prijs natuurlijk.
+
+13:38
+Verkoper
+Ja, ja.
+
+13:39
+Klant
+Neutraal
+Ik heb de prijs daar. Achter een hoek. Maar ik weet natuurlijk ook niet wat dat voor jou kiest.
+
+13:43
+Verkoper
+Ja, ja, ja.
+
+13:44
+Klant
+Neutraal
+Nee, dat is waar.
+
+13:45
+Verkoper
+Dat is waar. Wel, ja. Ik versta het eigenlijk niet zo goed. Enerzijds. Je zegt mij daar juist. Ik wil zeker zijn dat ze altijd gaan betalen.
+
+13:52
+Klant
+Neutraal
+Ja.
+
+13:53
+Verkoper
+De vraag is.
+
+13:54
+Klant
+Neutraal
+Ja.
+
+13:55
+Verkoper
+Professionele huur.
+
+13:56
+Klant
+Neutraal
+Inderdaad.
+
+13:57
+Verkoper
+Dat kan de makelaar ook gaan doen. Wat ik mij dan zelf afvraag. Dat je zeker wilt dat ze altijd gaan betalen. En dat je niet dezelfde situatie gaat meemaken. Hoe dan zou jij dat eigenlijk gaan doen?
+
+14:06
+Klant
+Neutraal
+De makelaar?
+
+14:07
+Verkoper
+Ja.
+
+14:08
+Klant
+Neutraal
+Had ik die kundes dan niet? Ik heb dat nog nooit niet gedaan.
+
+14:11
+Verkoper
+Nee, jawel. Ja, dat bedoel ik dat ik het zeg. We zitten toch al even in de sector. Dat is eigenlijk praktisch onmogelijk. Maar hé. De vrouw kan nu zelf doen. Maar ik had vernoemd dat je die 6000 euro niet wil mislopen. Ik zeg niet dat je dat gaat mislopen.
+
+14:24
+Klant
+Neutraal
+Ja, ja, nee.
+
+14:25
+Verkoper
+Maar de kans is er wel altijd.
+
+14:26
+Klant
+Neutraal
+Ja. Ik wil dat nooit meer meemaken.
+
+14:30
+Verkoper
+Dat kun je niet echt gaan zeggen.
+
+14:33
+Klant
+Neutraal
+Oké, ik ga gewoon klassiek appartement doen. En mijn professionele verhuurpartner.
+
+14:37
+Verkoper
+Nee, dat is niet onmogelijk.
+
+14:39
+Klant
+Neutraal
+Dat is onmogelijk.
+
+14:41
+Verkoper
+Dus ja, ik versta je wel. Ik heb je wel begrepen. Dat zal inderdaad wel een mooi project zijn.
+
+14:45
+Klant
+Neutraal
+Natuurlijk.
+
+14:46
+Verkoper
+Wie heeft het al meegemaakt? De vraag is dan. Tot wanneer is dat dan nog een goed alternatief?
+
+14:51
+Klant
+Uitstel
+Ja. Zo had ik er nog niet over nagedacht. Inderdaad.
+
+14:55
+Verkoper
+Inderdaad. Dan is dat misschien geen alternatief. Zijn er zo nog zaken dat je zegt?
+
+15:01
+Klant
+Neutraal
+Oh ja, dat was eigenlijk zo'n beetje, oftewel een stuk klassiek appartement.
+
+15:04
+Verkoper
+Wat? Wat zei jij daar?
+
+15:06
+Klant
+Neutraal
+Ja, ja. Nee.
+
+15:08
+Verkoper
+Ja, dat zijn dan nog andere zaken.
+
+15:09
+Klant
+Neutraal
+Ja, ja. Ja.
+
+15:11
+Verkoper
+Maar eigenlijk kan ik er dan van uitgaan, ja, in dat financiële plaatsje klopt dat die volgende investering een businessvest zal zijn.
+
+15:19
+Klant
+Neutraal
+Ja, klopt inderdaad.
+
+15:20
+Verkoper
+Dat is de prijs. Perfect, perfect. Mag ik eens vragen welk budget?
+
+15:25
+Klant
+Neutraal
+Budget?
+
+15:26
+Verkoper
+Ja. Oké, het budget is goed gehad. We mogen gewoon verder.
+
+15:29
+Klant
+Neutraal
+Doe eens een proof van sluiting en dan zien we. Ja, wel.
+
+15:32
+Verkoper
+Dan doe ik een résumé weer al, meneer, wat dan hiervoor of daar.
+
+15:35
+Klant
+Neutraal
+Ja.
+
+15:36
+Verkoper
+Mag ik eens vragen, indien we eigenlijk tot een samenwerking kunnen komen, zou je dan liefst toch die op het tweede hebben of die op het vierde?
+
+15:44
+Klant
+Neutraal
+Liefst op die op het vierde.
+
+15:45
+Verkoper
+Die op het vierde. Ah, perfect.
+
+15:47
+Klant
+Neutraal
+Maar wel.
+
+15:48
+Verkoper
+Mag ik vragen waarom juist?
+
+15:49
+Klant
+Neutraal
+Voor het uitzicht. Nou.
+
+15:51
+Verkoper
+Dat verliezen we waarschijnlijk niet. Het is gewoon, ik zei het ook toen, ik vind het ook fantastisch.
+
+15:55
+Klant
+Neutraal
+Nee, inderdaad.
+
+15:56
+Verkoper
+Logisch. Nu. Ja, wat ik echt zou voorstellen. Meneer, standaard dat we het doen, is dat wij een tweede afspraak maken. Doe je dat liefst hier terug op locatie?
+
+16:05
+Klant
+Neutraal
+Ik zal wel een keer willen zien natuurlijk.
+
+16:07
+Verkoper
+Ja, ja, oké. Op locatie. En dan ook, kijk voor die unit uitverkoop te gaan halen. Zo ben je eigenlijk zeker dat die niet op het tweede gaat zitten en dat dat uitzicht wel heeft.
+
+16:15
+Klant
+Neutraal
+Ja, ja.
+
+16:16
+Verkoper
+Mag ik eens vragen, wanneer zou dat het beste lukken voor u? Zou dat nog aan het einde van de week kunnen of eerder begin volgende week?
+
+16:21
+Klant
+Uitstel
+Oh ja, ik zou dat toch wel eens natuurlijk een keer willen bespreken met mijn kinderen. Want ik zei het, het wordt al iets zouder. Het is eigenlijk ook voor door te schuiven naar mijn kinderen later. Dus het is toch ook wel belangrijk dat zij dat goed vinden.
+
+16:30
+Verkoper
+Ja, ja, ja, ja. Tuurlijk. Dat is logisch, ja. Ja, ik zou het ook liefst willen dat mijn ouders dat...
+
+16:35
+Klant
+Neutraal
+Ja, ja, nee, nee.
+
+16:36
+Verkoper
+Tuurlijk. Wat zijn dan de zaken waarop u zegt, die zou ik toch met mijn kinderen willen bespreken?
+
+16:40
+Klant
+Interesse
+Wel, dat is het concept dat ik zo wel een keer aan hen er wil uitleggen. Ik denk wel dat dat hen er wel gaat aanspreken. Want ze willen graag zo weinig mogelijk doen.
+
+16:49
+Verkoper
+Ah ja, ja, ja, ja.
+
+16:53
+Klant
+Neutraal
+Dus ik wil dat een keer uitleggen, maar ik denk wel dat dat goed zou zijn. Maar daarachter kunnen wij eigenlijk wel wat mee aanspreken.
+
+16:58
+Verkoper
+Ah wel, perfect. Wel, wat ik eigenlijk zo voorstel, dat kunnen we dan ook inderdaad doen. Nu, voor uw kinderen, dat concept. Ik kan er wel van uitgaan als ze dat goed van vinden. Het is vrij logisch. Zij hebben er ook altijd baat in. Nu, los van die kinderen. Hoe staat u er eigenlijk zelf tegenover?
+
+17:14
+Klant
+Neutraal
+Het was eigenlijk zoiets waar ik naar op zoek was, persoonlijk zelf. Dus ik sta er wel goed tegen.
+
+17:19
+Verkoper
+Het is natuurlijk ook voor u... We hopen toch bij dat u dat vijf tot tien jaar nog zeker kunt delen. Zo uitleg ik nu ook nog niet. Ah, dat is daar inderdaad. Nu, ik zou mij een score kunnen geven van één tot tien. Hoeveel zou je het project geven?
+
+17:33
+Klant
+Neutraal
+Er is het wel in acht, ja.
+
+17:34
+Verkoper
+Oké, oké, oké. Dat is wel mooi natuurlijk. Maar eigenlijk, als ik het goed begrijp, in ieder geval die kinderen een akkoord geven, dan kunnen we wel zaken.
+
+17:42
+Klant
+Neutraal
+Ja.
+
+17:43
+Verkoper
+Ja, ja, ja, logisch. Maar ik voorstel dat we eigenlijk een tweede afspraak gaan inplannen.
+
+17:48
+Klant
+Neutraal
+Ja.
+
+17:49
+Verkoper
+Dan heeft u ondertussen eigenlijk de tijd om uw kinderen te gaan contacteren. En neem ze gewoon mee.
+
+17:53
+Klant
+Neutraal
+Ah, ja.
+
+17:54
+Verkoper
+En hem niet nog vragen. Maar logisch, u zal zelf ook nog vragen hebben. En dan zien ze het ook. De eerste keer een keer, dan weten ze het. Dan gaan ze direct zeggen, ja of nee. Is het goed?
+
+18:02
+Klant
+Neutraal
+Ja, maar dan moet dat wel de zondag zijn.
+
+18:04
+Verkoper
+Ja, geen probleem, geen probleem. Ja, zondag. Normaal doe ik dat niet. Maar ik zal zondag een keer komen.
+
+18:10
+Klant
+Neutraal
+Ah, dat is vreemd.
+
+18:11
+Verkoper
+Voormiddag, namiddag?
+
+18:12
+Klant
+Neutraal
+Eerst en dan namiddag.
+
+18:13
+Verkoper
+Ja. Veertien uur?
+
+18:15
+Klant
+Neutraal
+Veertien uur dertig.
+
+18:16
+Verkoper
+Ja. Dat kan ik nog uitstapen. Dat is goed.
+
+18:19
+Klant
+Neutraal
+Nee, dat doe ik niet.
+
+18:20
+Verkoper
+Wel, veertien uur dertig. Oké, goed. Cooling down, hè. Nu, meneer Sander, zou ik u gewoon vragen. Stel, we zien elkaar daar terug. En wij lopen daar op de site rond. En u vraagt, ja kom, we gaan naar het vierde gaan kijken.
+
+18:35
+Klant
+Neutraal
+Nou.
+
+18:36
+Verkoper
+U vindt dat gezegd prachtig, maar jammer genoeg moet ik u laten weten dat die eigenlijk al verkocht is. Wat zou je daarvoor vinden?
+
+18:44
+Klant
+Neutraal
+Ja, dat is een beetje het lot eigenlijk dan, natuurlijk. Kijk, ik maak nooit geen haastige beslissingen, eigenlijk. Dus op die manier is dat... Dat pak ik niet in op het tweede, hè. Op het tweede.
+
+18:58
+Verkoper
+Zou dat geen probleem zijn?
+
+19:00
+Klant
+Neutraal
+Oh ja.
+
+19:02
+Verkoper
+Ja. Dat kan, hè. Meneer, ik versta dat wel. Nu, laat me toe dat ik zeg, ik versta het eigenlijk niet goed. Het zijn allemaal deze zaken, denk ik wel. Er zijn niet echt meer... Logisch is wel, wil je geld inderdaad dat dat op voorhand komt.
+
+19:15
+Klant
+Neutraal
+Ja, ja. Dat versta ik allemaal wel. Zeker als je er al twintig hebt, kun je dat niet blijven. Van je kleinkinderen kun je niet, maar wel zo dat geld binnenkomt.
+
+19:23
+Verkoper
+Maar ja, als je dan je kinderen als goed vindt, zou dat eigenlijk allemaal wel zien zitten.
+
+19:27
+Klant
+Neutraal
+Ja, eigenlijk wel.
+
+19:29
+Verkoper
+De vraag is dan, ja. Ik ben er vrij van overtuigd dat ik met de doen op het tweede niet echt de plezier ga doen. Dat we het best verdienen van het vierde gaan. Nu, vandaar dat ik het eigenlijk niet zo goed versta. Omdat je op al die zaken zegt, maar ja. Enerzijds kan het wel zijn dat je zegt, ja. Mijn ervaring leert mij dat we maar met drie type mensen te maken hebben. Mensen dat zeggen, ja, inderdaad, het is dat wat ik wil. Kan niet aankomen. Puur door financiële middelen. Je kunt er ook niet aan doen, dat is jammer. Maar ze zeggen, ja, het gaat toch niet lukken. Anderzijds zijn dat mensen dat zeggen, zoals u ook, ja, inderdaad. Het is dat wat ik wil doen op het vierde, of hoe het zegt. En dan eigenlijk ook voor een definitieve reservering gaan. Of aankopen, of voor een optie gaan. Mijn financiële voordeel aankoppelt. Dus gewoon, laten we dat doen. Of mensen, ik denk dat u daar een beetje bent. Dat zegt, oké, het is eigenlijk allemaal wel goed. Maar het gaat toch nog eigenlijk niet gaan voor de beslissing. Maar enerzijds, dat kan hé. Ik heb het al gezien. Enerzijds kan dat zijn dat dat op angst wijst. Je zegt, oké, maar gaat dat mijn verwachtingen wel oplossen? Gaat het niet te snel? Ga ik er later geen spijt van krijgen? Of anderzijds. Mensen zeggen, dat is toch iets dat ik mis. Dat is niet op tafel aan het voorstellen. Maar ik moet eens vragen, waar zou ik u mogen plaatsen?
+
+20:42
+Klant
+Neutraal
+Ik moet zeggen, ik vind het ook wel een beetje duur eigenlijk, Rob. Zoals ik eerlijk ben.
+
+20:46
+Verkoper
+Ja, ik ben blij dat u eerlijk bent. Mag ik eens vragen, hoe bedoelt u het te duur?
+
+20:51
+Klant
+Neutraal
+Ah wel, ik ben een keer, ja. Kijk, je is ook een beetje op de markt hé. Het is niet het enige wat ik aan je vraag.
+
+20:56
+Verkoper
+Ja, ja.
+
+20:57
+Klant
+Neutraal
+Ik heb een keer bij jullie collega's eigenlijk gekeken. Bij Kandor. Die bieden eigenlijk hetzelfde concept. Het is nu wel in Brussel gelegen eigenlijk. Maar het is daar toch een 20.000 euro goedkoop.
+
+21:09
+Verkoper
+Oh, ik wou juist vragen hoeveel te duur 20.000 euro. Oké, oké. Moet ik nu eens vragen, hoe lang zit u zelf al vast te investeren? Dat is op lange termijnen vast. Dat koop je niet voor een jaar of twee bijtouwen natuurlijk. Je kunt dus thuis slapen.
+
+21:21
+Klant
+Neutraal
+20 jaar.
+
+21:23
+Verkoper
+En los van de prijs, bij gelijke prijzen. Wat gaat u voorkeur doen?
+
+21:27
+Klant
+Neutraal
+Nou toch hier de Zeebrug, omdat die locatie mij qua verliefd ook wel wat meer aanspreekt.
+
+21:32
+Verkoper
+En nog zaken?
+
+21:35
+Klant
+Neutraal
+Ik denk wel. Op zich gaat het concept een klein beetje hetzelfde. Het is voornamelijk de locatie dat mij aanspreekt.
+
+21:40
+Verkoper
+Ja, het is eigenlijk de locatie. Natuurlijk, meer standaard. Je moet er eigenlijk aan kiezen hé. Enerzijds zou je zeggen zelf. We zien een vastgoedinvestering op 20 jaar. Een vastgoedinvestering op 20 jaar. De vraag is maar natuurlijk voor u hé. Die locatie, hoe belangrijk is dat voor u? Enerzijds kun je ervoor kiezen om te zeggen ja. Ik ga de prijs laten doorwegen. Maar we spreken weer. 20.000 euro op 20 jaar. Dat is 1000 euro per jaar. Dat is 100 euro per maand. Dat is 3 euro per dag. En een koffie per dag of een half pak sigaret per dag. Ligt aan dezelfde zin. Dat kan je langzamerhand doen. De vraag is maar, hoe belangrijk is voor u die locatie? Om dat gedurende 20 jaar wel te hebben. Of niet te hebben. Ligt dat nu niet op? Tegen die koffie. Dus eigenlijk, hoe moet u het gaan bekijken? U kan eigenlijk gaan kiezen. U heeft eigenlijk 2 keuzes. Of, u kiest ervoor. Ik ga bij Canor gaan aankopen. Of bij Ruzi en Zeebrugge gaan aankopen. Dan kan u eigenlijk hierom zeggen. Ik ga die koffie per dag toegelaten doorwegen. Die 3 euro. Dat is voor mij het belangrijkste. Maar ik ga wel op een locatie zitten waar ik niet achter sta. Waar ik geen toekomstperspectieven zie. Waar ik geen groei zie. Dat ga je allemaal niet hebben. Of, u kiest ervoor en u zegt. Ja, nee. Kijk. Ik wil het toch. Een jaar 1, 2, 10, 15. Voor mij en mijn kinderen. Altijd. Die 3 euro per dag.
+
+23:09
+Klant
+Neutraal
+O, ik ga dat een keer doen.
+
+23:11
+Verkoper
+Die 3 euro per dag.
+
+23:14
+Klant
+Neutraal
+Ik ga er niet in. Dat is voor mij het belangrijkste.
+
+23:18
+Verkoper
+Ja, met al het respect voor uw keuze. Het is een offer.
+
+23:26
+Klant
+Twijfel
+Ja, dat is juist. Dan is het misschien toch beter dat ik voor Alicie...
+
+23:30
+Verkoper
+Dat dacht ik ook.
+
+23:31
+Klant
+Neutraal
+Dan wil ik zelf ook een keer kijken voor een unit uitverkopen.
+
+23:35
+Verkoper
+Ja. Dat is goed.
+
+23:37
+Klant
+Vraag
+En hoe werkt dat juist hier?
+
+23:39
+Verkoper
+Moet ik dat u nog uitleggen?
+
+23:40
+Klant
+Neutraal
+Jazeker.
+
+23:46
+Verkoper
+Het is eigenlijk zeer simpel.
+
+23:47
+Klant
+Neutraal
+Ja.
+
+23:50
+Verkoper
+Het is eigenlijk een overeenkomst. Het is een bedrijf natuurlijk. Maar vooral eigenlijk tussen u en mij.
+
+23:55
+Klant
+Vraag
+En hoe werkt dat?
+
+23:56
+Verkoper
+Zoals u eigenlijk hier kan lezen. De constructies worden eigenlijk uit verkoop gehaald. Wat wil dat zeggen? Mijn collega's kunnen dat niet meer gaan aanbieden. En ik kan dat ook niet meer gaan aanbieden. Allee, voor mij... Ik zou het gewoon zo doen. Maar omdat ik een sympathieke voor mij heb versat. En mijn collega's kan ik dat niet uitleggen. Nu was dat er eigenlijk... En nu dat u zo'n optie neemt. In die jaren. Ziet u? De constructies worden uit verkoop gehaald. De constructies worden uit verkoop gehaald. Maar verder is het zonder verdere kosten, lasten, verbindenissen. U gaat niet meer gebeld worden. Dat is het eigenlijk allemaal niet. Ik hoop ook dat u begrijpt dat we dat niet gratis kunnen doen. Want anders neemt iedereen dat. Er zijn eigenlijk twee verschillen. Enerzijds hebben we een van 2,50. Anderzijds eentje van 5,00. Ik zie u al denken. Wat is nu het verschil?
+
+24:37
+Klant
+Twijfel
+Kunnen we ze dan langer uit verkoop halen misschien?
+
+24:39
+Verkoper
+Dat doet het eigenlijk niet goed. Dan hebben we eigenlijk onderling. Het enige verschil dat erin is. Is het dubbel voordeel. Die van 2,50 resulteert in een korting van 5,00. En die van 5,00 in een korting van 1,00. Anderzijds moest u er wat uit. Dat kun je niet doen. Dat is ook nog altijd geen probleem. Of we kunnen het verlengen. Dat kan eigenlijk ook allemaal. Het geld blijft nog altijd vijf jaar geldig binnen de firma. Dus die kan nog altijd daarop genomen worden. Ik indexeer dat met tien procent. Het is eigenlijk al beter als dat op de bank staat. Maar ik zeg het. Daarvoor moet u het niet doen. Zo bent u zeker. Ik kan hem uit verkoop halen.
+
+25:11
+Klant
+Neutraal
+Ik kan erover nadenken. Ik kan bij mijn kinderen komen kijken. Als ik het aankoop. Is het een dien op het vierde? Niet een dien op het tweede.
+
+25:17
+Verkoper
+Want dat gaat u altijd pijn doen.
+
+25:18
+Klant
+Neutraal
+Ja, ja. En is het niet...
+
+25:20
+Verkoper
+Zonder verdere kosten te verbinden.
+
+25:21
+Klant
+Neutraal
+Maakt ook niet zoveel uit. Moet ik eens vragen.
+
+25:24
+Verkoper
+Heeft u dan dus die van 2,50? Of wil u die van 5,00?
+
+25:26
+Klant
+Neutraal
+Dat ga ik liefst voor de grootste korting natuurlijk. Maar voordat ik dat teken erop. Vraag me nu wel af. Want ik had gelezen in die brochures dat dat op erfpakt is.
+
+25:38
+Verkoper
+Inderdaad, dat klopt.
+
+25:40
+Klant
+Neutraal
+Is dat wel doorverkoop?
+
+25:41
+Verkoper
+Natuurlijk.
+
+25:42
+Klant
+Neutraal
+Moet ik eens vragen.
+
+25:43
+Verkoper
+Waarom denkt u van niet?
+
+25:44
+Klant
+Twijfel
+Ik weet niet. Je ziet dat zo niet veel passeren. Allee, of ken ik daar eigenlijk niet veel van? Ja, nee, nee. Want dat is ondergrond zeker?
+
+25:49
+Verkoper
+Ja, inderdaad. Dat klopt, dat klopt. Enerzijds is dat nodig. Om de exploitatie te garanderen. Je kan via een vruchtgebruik werken. Dat is ja een kamer.
+
+25:56
+Klant
+Neutraal
+Ja, inderdaad.
+
+25:57
+Verkoper
+Dat is eigenlijk goed. Dat kun je wel. Dan koop je wel de grond erbij. Natuurlijk de vraag is maar. Hoe lang is dat? Dat is de eerste vraag. 25 jaar. Wie gaat dat kopen? Is de tweede vraag. Want ja, je kan gaan kiezen enerzijds om met een erfpocht te werken.
+
+26:18
+Klant
+Neutraal
+Ja.
+
+26:20
+Verkoper
+Nu. Of. Voor. Met een vruchtgebruik te gaan werken. Zoals bij Kander.
+
+26:29
+Klant
+Neutraal
+Erfpocht.
+
+26:30
+Verkoper
+99 jaar. Dat wordt altijd verlengd. Als dat beschengd, doorgekoopt, erfd. Stel u dat voor aan uw kinderen. Dat blijft gewoon 99 jaar. Eigenlijk heeft u altijd zakelijk gebleven. Waarom? Oneindig. Oneindig. Levenslang. U heeft dat altijd. Waarom doen wij dat? Want we kunnen eigenlijk ook met vol grond verkopen. Waarom doen wij dat nu eigenlijk? Dat is vrij simpel en vrij logisch. Omdat wij eigenlijk ook exploitants zijn. Wij willen die uitdaging eigenlijk levenslang garanderen. En dat u altijd weet. Die vrouwvertaling vond dat zo goed. Die professionele verandering vond dat zo goed. Wij gaan dat altijd gaan doen. En dat kunnen wij in de erfpocht achterop nemen. Dat is de ene keuze. Of. We zouden via een vruchtgebruik kunnen werken. Dat koopt u inderdaad met volle eigendom. Wat eigenlijk zeer schoon klinkt. Maar hoe werkt dat nu eigenlijk? Dat is voor 25 jaar.
+
+27:16
+Klant
+Neutraal
+Maximum?
+
+27:17
+Verkoper
+Maximum. En de vraag is dan, wat na 25 jaar? Dan zit u eigenlijk in hetzelfde gebouw. De vaccins zijn hetzelfde, maar er is geen exploitant meer. U bent niet zeker van de uitbating. Het is het uitnichtst met 200 eigenaars. In een gebouw waar geen exploitant aanwezig is. Hoe gaat u dat overkopen? U gaat het dan nu rendement gaan halen. Zit u? Dus vandaar dat we eigenlijk als exploitant op die manier te werken zijn. Is dat duidelijk?
+
+27:46
+Klant
+Neutraal
+Ja, dat is duidelijk.
+
+27:47
+Verkoper
+Nou, voilà. Nu... We zullen dan hier nog eenmaal...
+
+27:52
+Klant
+Vraag
+Wat is dat?
+
+27:53
+Verkoper
+Dat is het antwoordje.
+
+27:54
+Klant
+Neutraal
+Ah, ja.
+
+27:55
+Verkoper
+Max Rijn werkt dan liefst samen met exploitatie op erfpocht. En we hebben liever een opvruchtgebruik. Ja, mag ik het zo uitleggen? Dat we liever een...
+
+28:03
+Klant
+Neutraal
+Ja, ja.
+
+28:04
+Verkoper
+...op erfpocht hebben.
+
+28:05
+Klant
+Neutraal
+Ah ja, inderdaad.
+
+28:06
+Verkoper
+Om dan een keer terug te kunnen verkopen in doorverkoop. Dat is een normale vraag, want je ziet dat ook niet veel. Omdat veel mensen dat via ons kopen. Dat kun je niet veel op de markt zien, dat is logisch. Daar wordt ook niet zoveel verkocht. Als ik u kan aantonen dat er een normale omstandigheden als gewoon doorverkoopbaar is, kunnen we dan zeggen... Dan is het voor mij...
+
+28:28
+Klant
+Neutraal
+Ja, ja.
+
+28:29
+Verkoper
+Dan leg ik dat uit. Dan toon ik die whatsappjes. Die whatsappjes, doorverkoop, dvk. Ja?
+
+28:36
+Klant
+Neutraal
+Dat is goed. Oh ja.
+
+28:41
+Verkoper
+Heel mooi, hè?
+
+28:43
+Klant
+Uitstel
+Ah, dat heb ik nog niet gezien.
+
+28:45
+Verkoper
+Maar jij speelt ook een heel goed klant, hè? Je speelt nog een goed klant. Dat is ook belangrijk, hè, maar...
+
+28:50
+Klant
+Neutraal
+Hoe heb je dat uitgezet? Want ik had het niet zo gehoord.
+
+28:53
+Verkoper
+Oké, hoe je dat uitgezet hebt, kunnen we...
