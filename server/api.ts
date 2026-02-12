@@ -3144,25 +3144,19 @@ app.get("/api/v2/analysis/list", async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId as string;
 
-    let query = supabase
-      .from('conversation_analyses')
-      .select('id, user_id, title, status, error, created_at, completed_at, result')
-      .order('created_at', { ascending: false });
+    let queryText = 'SELECT id, user_id, title, status, error, created_at, completed_at, result FROM conversation_analyses';
+    const params: any[] = [];
 
     if (userId) {
-      query = query.eq('user_id', userId);
+      queryText += ' WHERE user_id = $1';
+      params.push(userId);
     }
 
-    const { data, error } = await query;
+    queryText += ' ORDER BY created_at DESC';
 
-    if (error) {
-      if (error.message?.includes('conversation_analyses') && error.message?.includes('schema cache')) {
-        return res.json({ analyses: [] });
-      }
-      return res.status(500).json({ error: error.message });
-    }
+    const { rows } = await pool.query(queryText, params);
 
-    const analyses = (data || []).map(row => {
+    const analyses = rows.map(row => {
       const result = row.result as any;
       return {
         id: row.id,
