@@ -3193,6 +3193,48 @@ app.get("/api/v2/analysis/list", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/api/v2/chat/feedback", express.json(), async (req: Request, res: Response) => {
+  try {
+    const { messageId, sessionId, userId, feedback, messageText, debugInfo } = req.body;
+
+    if (!messageId || !feedback) {
+      return res.status(400).json({ error: 'messageId and feedback are required' });
+    }
+
+    if (feedback === null) {
+      await pool.query('DELETE FROM chat_feedback WHERE message_id = $1 AND user_id = $2', [messageId, userId]);
+      return res.json({ success: true, action: 'removed' });
+    }
+
+    await pool.query(
+      `INSERT INTO chat_feedback (message_id, session_id, user_id, feedback, message_text, debug_info)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (message_id, user_id) DO UPDATE SET feedback = $4, created_at = NOW()`,
+      [messageId, sessionId, userId, feedback, messageText, debugInfo ? JSON.stringify(debugInfo) : null]
+    );
+
+    if (feedback === 'down') {
+      console.log(`[Feedback] Thumbs-down from ${userId} on message ${messageId}: "${(messageText || '').slice(0, 100)}..."`);
+    }
+
+    res.json({ success: true, feedback });
+  } catch (err: any) {
+    console.error('[Feedback] Error:', err);
+    res.status(500).json({ error: err.message || 'Feedback opslaan mislukt' });
+  }
+});
+
+app.get("/api/v2/admin/feedback", async (req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM chat_feedback WHERE feedback = 'down' ORDER BY created_at DESC LIMIT 50`
+    );
+    res.json({ feedback: rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Health check - now shows FULL engine
 app.get("/api/health", (req, res) => {
   res.json({ 

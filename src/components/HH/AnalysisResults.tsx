@@ -131,7 +131,7 @@ export function AnalysisResults({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FullAnalysisResult | null>(null);
 
-  const conversationId = navigationData?.conversationId;
+  const conversationId = navigationData?.conversationId || sessionStorage.getItem('analysisId');
 
   const [processingStep, setProcessingStep] = useState<string | null>(null);
 

@@ -39,7 +39,7 @@ import { getCodeBadgeColors } from "../../utils/phaseColors";
 import { hideItem, getHiddenIds } from "../../utils/hiddenItems";
 
 interface AnalysisProps {
-  navigate?: (page: string) => void;
+  navigate?: (page: string, data?: any) => void;
   isAdmin?: boolean;
 }
 
@@ -80,8 +80,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
 
   const openTranscript = (conv: ConversationRecord) => {
     if (conv.status === 'completed') {
-      sessionStorage.setItem('analysisId', conv.id);
-      navigate?.('analysis-results');
+      navigate?.('analysis-results', { conversationId: conv.id });
     }
   };
 
@@ -489,16 +488,25 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                         </p>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-1.5">
-                          {conv.techniquesUsed.length > 0 ? conv.techniquesUsed.map((tech, idx) => (
-                            <span
-                              key={idx}
-                              style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
-                              className="inline-flex items-center justify-center min-w-[40px] h-10 px-2 rounded-full text-[11px] font-mono font-semibold"
-                            >
-                              {tech}
-                            </span>
-                          )) : (
+                        <div className="flex flex-wrap gap-1">
+                          {conv.techniquesUsed.length > 0 ? (
+                            <>
+                              {conv.techniquesUsed.slice(0, 4).map((tech, idx) => (
+                                <span
+                                  key={idx}
+                                  style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}
+                                  className="inline-flex items-center justify-center min-w-[32px] h-7 px-1.5 rounded-full text-[10px] font-mono font-semibold"
+                                >
+                                  {tech}
+                                </span>
+                              ))}
+                              {conv.techniquesUsed.length > 4 && (
+                                <span className="inline-flex items-center justify-center h-7 px-2 rounded-full text-[10px] font-medium text-hh-muted bg-hh-ui-100">
+                                  +{conv.techniquesUsed.length - 4}
+                                </span>
+                              )}
+                            </>
+                          ) : (
                             <span className="text-hh-muted text-[12px]">—</span>
                           )}
                         </div>

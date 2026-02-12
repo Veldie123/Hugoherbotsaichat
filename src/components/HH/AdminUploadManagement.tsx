@@ -45,7 +45,7 @@ import {
 import { hideItem, getHiddenIds } from "../../utils/hiddenItems";
 
 interface AdminUploadManagementProps {
-  navigate?: (page: string) => void;
+  navigate?: (page: string, data?: any) => void;
 }
 
 interface UploadItem {
@@ -167,8 +167,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
 
   const openTranscript = (upload: UploadItem) => {
     if (upload.status === 'completed') {
-      sessionStorage.setItem('analysisId', upload.id);
-      navigate?.('analysis-results');
+      navigate?.('analysis-results', { conversationId: upload.id });
     }
   };
 

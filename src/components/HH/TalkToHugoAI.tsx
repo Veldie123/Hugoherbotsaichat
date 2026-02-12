@@ -49,6 +49,11 @@ import {
   RotateCcw,
   AlertCircle,
   Menu,
+  Copy,
+  Check,
+  ThumbsUp,
+  ThumbsDown,
+  MoreHorizontal,
 } from "lucide-react";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
@@ -72,6 +77,7 @@ interface Message {
   timestamp: Date;
   technique?: string;
   debugInfo?: MessageDebugInfo;
+  feedback?: "up" | "down" | null;
 }
 
 type ChatMode = "chat" | "audio" | "video";
@@ -114,6 +120,7 @@ export function TalkToHugoAI({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
   const [activeHelpMessageId, setActiveHelpMessageId] = useState<string | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<ChatMode>("chat");
   const [sessionTimer, setSessionTimer] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -860,58 +867,102 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
     }
   };
 
+  const handleCopyMessage = async (messageId: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch {}
+  };
+
+  const handleMessageFeedback = async (messageId: string, feedback: "up" | "down") => {
+    setMessages(prev => prev.map(m => 
+      m.id === messageId ? { ...m, feedback: m.feedback === feedback ? null : feedback } : m
+    ));
+
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+
+    const newFeedback = message.feedback === feedback ? null : feedback;
+
+    try {
+      await fetch('/api/v2/chat/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId,
+          sessionId: null,
+          userId: user?.id,
+          feedback: newFeedback,
+          messageText: message.text,
+          debugInfo: message.debugInfo,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch {}
+  };
+
   const renderChatInterface = () => (
     <div className="h-full flex flex-col bg-white">
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
-            <div className="flex flex-col gap-1">
-              <div className={`max-w-[80%] p-3 rounded-2xl ${
+          <div key={message.id} className={`group flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
+            <div className={`flex flex-col ${message.sender === "hugo" ? "items-end" : "items-start"} max-w-[80%]`}>
+              <div className={`p-3 rounded-2xl ${
                 message.sender === "hugo"
                   ? "bg-hh-ink text-white rounded-br-md"
-                  : "bg-hh-ui-100 text-hh-text rounded-bl-md"
+                  : "bg-hh-ui-50 text-hh-text rounded-bl-md"
               }`}>
-                <p className="text-[14px] leading-[20px]">{message.text}</p>
+                <p className="text-[14px] leading-[22px] whitespace-pre-wrap">{message.text}</p>
               </div>
               
-              {/* Lampje voor AI berichten - toont debug/hulp info */}
               {message.sender === "ai" && (
-                <div className="flex items-start gap-2">
+                <div className="flex items-center gap-0.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={() => handleHelpClick(message)}
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs transition-colors ${
-                      activeHelpMessageId === message.id
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-600"
-                    }`}
+                    onClick={() => handleCopyMessage(message.id, message.text)}
+                    className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    title="Kopieer"
                   >
-                    <Lightbulb className="w-3.5 h-3.5" />
-                    <span>Hulp</span>
+                    {copiedMessageId === message.id ? (
+                      <Check className="w-3.5 h-3.5 text-green-500" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
                   </button>
-                  
-                  {/* Debug tooltip wanneer actief */}
-                  {activeHelpMessageId === message.id && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-slate-700 max-w-[250px]">
-                      {message.debugInfo ? (
-                        <div className="space-y-1">
-                          {message.debugInfo.houding && (
-                            <p><span className="font-medium">Houding:</span> {message.debugInfo.houding}</p>
-                          )}
-                          {message.debugInfo.expectedTechnique && (
-                            <p className="text-amber-700 cursor-pointer hover:underline" onClick={() => handleHelpClick(message)}>
-                              <span className="font-medium">Verwachte techniek:</span> {message.debugInfo.expectedTechnique}
-                              <span className="ml-1 text-amber-500">→ Toon in sidebar</span>
-                            </p>
-                          )}
-                          {message.debugInfo.detectedSignals && message.debugInfo.detectedSignals.length > 0 && (
-                            <p><span className="font-medium">Signalen:</span> {message.debugInfo.detectedSignals.join(', ')}</p>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-slate-500">Klik om hulp te krijgen bij dit onderwerp. De sidebar toont relevante technieken.</p>
-                      )}
-                    </div>
-                  )}
+                  <button
+                    onClick={() => handleMessageFeedback(message.id, "up")}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      message.feedback === "up"
+                        ? "text-green-600 bg-green-50"
+                        : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                    }`}
+                    title="Goed antwoord"
+                  >
+                    <ThumbsUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleMessageFeedback(message.id, "down")}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      message.feedback === "down"
+                        ? "text-red-500 bg-red-50"
+                        : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                    }`}
+                    title="Slecht antwoord"
+                  >
+                    <ThumbsDown className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const lastUserMsg = [...messages].reverse().find(m => m.sender === "hugo");
+                      if (lastUserMsg) {
+                        setInputText(lastUserMsg.text);
+                      }
+                    }}
+                    className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    title="Opnieuw proberen"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
             </div>
@@ -919,8 +970,8 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         ))}
         {isStreaming && streamingText && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] p-3 rounded-2xl bg-hh-ui-100 text-hh-text rounded-bl-md">
-              <p className="text-[14px] leading-[20px]">{streamingText}<span className="animate-pulse">▌</span></p>
+            <div className="max-w-[80%] p-3 rounded-2xl bg-hh-ui-50 text-hh-text rounded-bl-md">
+              <p className="text-[14px] leading-[22px] whitespace-pre-wrap">{streamingText}<span className="animate-pulse">▌</span></p>
             </div>
           </div>
         )}
