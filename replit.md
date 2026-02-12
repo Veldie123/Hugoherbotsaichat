@@ -9,6 +9,7 @@ The HugoHerbots.ai Sales Coach App is a React, TypeScript, and Vite-based applic
 - The user prefers a workflow that supports iterative development and visible progress.
 - The user wants the agent to ask for confirmation before making significant architectural or feature changes.
 - The user prefers detailed explanations for complex technical decisions.
+- **CRITICAL: NEVER change SSOT JSON files** (`config/ssot/*.json`) without FIRST showing the user exactly: (1) what the current value is, (2) what the proposed new value is, and (3) why the change is needed. Wait for explicit approval before making any SSOT changes. This applies to `evaluator_overlay.json`, `technieken_index.json`, `coach_overlay.json`, `coach_overlay_v3.json`, `coach_overlay_v3_1.json`, and `hugo_persona.json`.
 
 ## CRITICAL: Developer Preview Routes for Screenshots
 **NEVER screenshot `/` (root URL) - it shows the landing page which requires no auth and is useless for validation.**
