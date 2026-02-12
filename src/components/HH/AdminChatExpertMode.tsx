@@ -708,7 +708,7 @@ export function AdminChatExpertMode({
       <div className="flex h-[calc(100vh-4rem)]">
         {/* Left Sidebar - EPIC Techniques (HIDDEN in Expert mode) */}
         {difficultyLevel !== "onbewuste_kunde" && (
-          <div className="w-[280px] flex-shrink-0 overflow-y-auto h-full">
+          <div className="w-[280px] max-w-[50vw] flex-shrink-0 overflow-y-auto h-full">
             <EPICSidebar
               fasesAccordionOpen={fasesAccordionOpen}
               setFasesAccordionOpen={setFasesAccordionOpen}
