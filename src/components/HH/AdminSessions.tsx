@@ -54,6 +54,7 @@ import {
   Settings,
 } from "lucide-react";
 import { CustomCheckbox } from "../ui/custom-checkbox";
+import { hideItem, getHiddenIds } from "../../utils/hiddenItems";
 
 interface AdminSessionsProps {
   navigate?: (page: string) => void;
@@ -162,6 +163,12 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => getHiddenIds('admin', 'chat'));
+
+  const handleDeleteSession = (id: string) => {
+    hideItem('admin', 'chat', id);
+    setHiddenIds(new Set(getHiddenIds('admin', 'chat')));
+  };
   
   useEffect(() => {
     async function fetchSessions() {
@@ -364,7 +371,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
     }
   };
 
-  const filteredSessions = sessions.filter((session) => {
+  const filteredSessions = sessions.filter((session) => !hiddenIds.has(session.id)).filter((session) => {
     const matchesSearch =
       session.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
       session.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -833,9 +840,9 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                             <Flag className="w-4 h-4 mr-2" />
                             {session.flagged ? "Unflag" : "Flag for Review"}
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-hh-error">
+                          <DropdownMenuItem onClick={() => handleDeleteSession(session.id)} className="text-red-600 focus:text-red-600">
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Verwijder
+                            Verwijderen
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -947,11 +954,11 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                           {session.flagged ? "Unflag" : "Flag for Review"}
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                          onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                          className="text-hh-error"
+                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDeleteSession(session.id); }}
+                          className="text-red-600 focus:text-red-600"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          Verwijder
+                          Verwijderen
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

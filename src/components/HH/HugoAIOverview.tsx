@@ -35,8 +35,10 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  Trash2,
 } from "lucide-react";
 import { getFaseNaam } from "../../data/technieken-service";
+import { hideItem, getHiddenIds } from "../../utils/hiddenItems";
 import { getCodeBadgeColors } from "../../utils/phaseColors";
 import { TranscriptDialog, TranscriptSession } from "./TranscriptDialog";
 
@@ -127,6 +129,12 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => getHiddenIds('user', 'chat'));
+
+  const handleDeleteSession = (id: string) => {
+    hideItem('user', 'chat', id);
+    setHiddenIds(new Set(getHiddenIds('user', 'chat')));
+  };
   
   const demoSessions: Session[] = useMemo(() => {
     const demoTranscript = [
@@ -230,6 +238,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   };
 
   const filteredSessions = sessions
+    .filter((session) => !hiddenIds.has(session.id))
     .filter((session) => {
       const matchesSearch =
         searchQuery === "" ||
@@ -612,6 +621,10 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                               <Eye className="w-4 h-4 mr-2" />
                               Bekijk details
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDeleteSession(session.id)} className="text-red-600 focus:text-red-600">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Verwijderen
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -651,6 +664,10 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       <DropdownMenuItem onClick={(e: Event) => { e.stopPropagation(); openTranscript(session); }}>
                         <Eye className="w-4 h-4 mr-2" />
                         Bekijk details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteSession(session.id)} className="text-red-600 focus:text-red-600">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Verwijderen
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

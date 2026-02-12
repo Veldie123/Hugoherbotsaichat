@@ -42,6 +42,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { hideItem, getHiddenIds } from "../../utils/hiddenItems";
 
 interface AdminUploadManagementProps {
   navigate?: (page: string) => void;
@@ -73,6 +74,12 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => getHiddenIds('admin', 'analysis'));
+
+  const handleDelete = (id: string) => {
+    hideItem('admin', 'analysis', id);
+    setHiddenIds(new Set(getHiddenIds('admin', 'analysis')));
+  };
 
   const selectionMode = selectedIds.length > 0;
 
@@ -171,7 +178,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
     );
   };
 
-  const filteredUploads = uploads.filter((upload) => {
+  const filteredUploads = uploads.filter((upload) => !hiddenIds.has(upload.id)).filter((upload) => {
     if (searchQuery && 
         !upload.user.toLowerCase().includes(searchQuery.toLowerCase()) && 
         !upload.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -607,9 +614,9 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                             <Download className="w-4 h-4 mr-2" />
                             Download
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-hh-error">
+                          <DropdownMenuItem onClick={() => handleDelete(upload.id)} className="text-red-600 focus:text-red-600">
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Verwijder
+                            Verwijderen
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

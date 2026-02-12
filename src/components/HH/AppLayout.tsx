@@ -22,6 +22,7 @@ import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { useNotifications } from "../../contexts/NotificationContext";
+import { getHiddenIds } from "../../utils/hiddenItems";
 
 interface HistoryItem {
   id: string;
@@ -203,7 +204,7 @@ export function AppLayout({
 
                 {!collapsed && isActive && (
                   <div className="mt-1 ml-2 pl-4 border-l-2 border-hh-border space-y-0.5">
-                    {history.slice(0, 5).map((histItem) => (
+                    {history.filter(h => !getHiddenIds('user', item.historyType === 'chat' ? 'chat' : 'analysis').has(h.id)).slice(0, 5).map((histItem) => (
                       <button
                         key={histItem.id}
                         onClick={() => {
@@ -301,7 +302,7 @@ export function AppLayout({
 
                   {isActive && (
                     <div className="mt-1 ml-3 pl-4 border-l-2 border-hh-border space-y-0.5">
-                      {history.slice(0, 5).map((histItem) => (
+                      {history.filter(h => !getHiddenIds('user', item.historyType === 'chat' ? 'chat' : 'analysis').has(h.id)).slice(0, 5).map((histItem) => (
                         <button
                           key={histItem.id}
                           onClick={() => {

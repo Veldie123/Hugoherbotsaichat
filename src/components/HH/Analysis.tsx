@@ -32,9 +32,11 @@ import {
   ArrowDown,
   Mic,
   BarChart2,
+  Trash2,
 } from "lucide-react";
 
 import { getCodeBadgeColors } from "../../utils/phaseColors";
+import { hideItem, getHiddenIds } from "../../utils/hiddenItems";
 
 interface AnalysisProps {
   navigate?: (page: string) => void;
@@ -69,6 +71,12 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => getHiddenIds('user', 'analysis'));
+
+  const handleDelete = (id: string) => {
+    hideItem('user', 'analysis', id);
+    setHiddenIds(new Set(getHiddenIds('user', 'analysis')));
+  };
 
   const openTranscript = (conv: ConversationRecord) => {
     if (conv.status === 'completed') {
@@ -181,6 +189,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   };
 
   const filteredConversations = conversations.filter((conv) => {
+    if (hiddenIds.has(conv.id)) return false;
     const matchesSearch = searchQuery === "" ||
       conv.title.toLowerCase().includes(searchQuery.toLowerCase());
     const processingStatuses = ['transcribing', 'analyzing', 'evaluating', 'generating_report'];
@@ -526,6 +535,10 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                               <Eye className="w-4 h-4 mr-2" />
                               Bekijk Details
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDelete(conv.id)} className="text-red-600 focus:text-red-600">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Verwijderen
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -572,6 +585,10 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                         <DropdownMenuItem onClick={() => openTranscript(conv)}>
                           <Eye className="w-4 h-4 mr-2" />
                           Bekijk details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(conv.id)} className="text-red-600 focus:text-red-600">
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Verwijderen
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
