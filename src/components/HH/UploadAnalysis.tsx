@@ -374,6 +374,11 @@ export function UploadAnalysis({
 
     setIsUploading(true);
     setUploadError(null);
+    setAnalysisStatus({
+      conversationId: '',
+      status: 'uploading',
+      step: 'Uploaden...',
+    });
 
     try {
       let result: any;
@@ -381,6 +386,12 @@ export function UploadAnalysis({
       if (selectedFile.size > CHUNK_SIZE) {
         result = await uploadChunked(selectedFile, user.id);
       } else {
+        setAnalysisStatus({
+          conversationId: '',
+          status: 'uploading',
+          step: `Uploaden & comprimeren...`,
+        });
+
         const formData = new FormData();
         formData.append('file', selectedFile);
         formData.append('title', title);
@@ -398,6 +409,7 @@ export function UploadAnalysis({
         if (!response.ok) {
           setUploadError(result.error || 'Upload mislukt');
           setIsUploading(false);
+          setAnalysisStatus(null);
           return;
         }
       }
@@ -413,6 +425,7 @@ export function UploadAnalysis({
     } catch (err: any) {
       setUploadError(err.message || 'Er ging iets mis bij het uploaden');
       setIsUploading(false);
+      setAnalysisStatus(null);
     }
   };
 
@@ -604,13 +617,14 @@ export function UploadAnalysis({
                 </div>
                 <div className="flex gap-1.5 mb-3">
                   {['uploading', 'transcribing', 'analyzing', 'evaluating', 'generating_report', 'completed'].map((step, i) => {
-                    const currentIndex = ['uploading', 'transcribing', 'analyzing', 'evaluating', 'generating_report', 'completed'].indexOf(analysisStatus.status);
+                    const steps = ['uploading', 'transcribing', 'analyzing', 'evaluating', 'generating_report', 'completed'];
+                    const currentIndex = steps.indexOf(analysisStatus.status);
+                    const isActive = currentIndex >= i;
                     return (
                       <div
                         key={step}
-                        className={`h-2 flex-1 rounded-full transition-all duration-500 ${
-                          currentIndex >= i ? 'bg-[#3C9A6E]' : 'bg-hh-ui-200'
-                        }`}
+                        className="h-2 flex-1 rounded-full transition-all duration-500"
+                        style={{ backgroundColor: isActive ? '#3C9A6E' : '#e2e5e9' }}
                       />
                     );
                   })}
