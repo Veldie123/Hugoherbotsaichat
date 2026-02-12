@@ -229,6 +229,9 @@ export function AnalysisResults({
       'twijfel': { label: 'Twijfel', color: 'bg-hh-warn/10 text-hh-warn' },
       'bezwaar': { label: 'Bezwaar', color: 'bg-hh-destructive/10 text-hh-destructive' },
       'uitstel': { label: 'Uitstel', color: 'bg-orange-100 text-orange-700' },
+      'negatief': { label: 'Negatief', color: 'bg-hh-destructive/10 text-hh-destructive' },
+      'vaag': { label: 'Vaag', color: 'bg-hh-warn/10 text-hh-warn' },
+      'ontwijkend': { label: 'Ontwijkend', color: 'bg-orange-100 text-orange-700' },
       'neutraal': { label: 'Neutraal', color: 'bg-hh-ui-100 text-hh-muted' },
     };
     return labels[houding] || labels['neutraal'];
@@ -456,28 +459,30 @@ export function AnalysisResults({
       const turn = transcript.find(t => t.idx === e.turnIdx);
       return {
         text: `${bestTech?.id} ${bestTech?.naam} – ${bestTech?.quality === 'perfect' ? 'perfect' : 'goed'} toegepast`,
-        quote: turn?.text?.substring(0, 120) || '',
+        quote: (turn?.text && turn.text.length > 120 ? turn.text.substring(0, 120) + '...' : turn?.text || ''),
         turnIdx: e.turnIdx,
       };
     });
 
+  const strengthTechIds = new Set(strengths.map(s => s.text.split(' ')[0]));
+
   const improvements = rawImprovements.length > 0 ? rawImprovements : [
     ...evaluations
-      .filter(e => e.techniques.some(t => t.quality === 'bijna' || t.quality === 'gemist'))
+      .filter(e => e.techniques.some(t => (t.quality === 'bijna' || t.quality === 'gemist') && !strengthTechIds.has(t.id)))
       .slice(0, 3)
       .map(e => {
-        const weakTech = e.techniques.find(t => t.quality === 'gemist') || e.techniques.find(t => t.quality === 'bijna');
+        const weakTech = e.techniques.find(t => (t.quality === 'gemist' || t.quality === 'bijna') && !strengthTechIds.has(t.id)) || e.techniques.find(t => t.quality === 'gemist') || e.techniques.find(t => t.quality === 'bijna');
         const turn = transcript.find(t => t.idx === e.turnIdx);
         return {
           text: `${weakTech?.id} ${weakTech?.naam} – kan beter worden toegepast`,
-          quote: turn?.text?.substring(0, 120) || '',
+          quote: (turn?.text && turn.text.length > 120 ? turn.text.substring(0, 120) + '...' : turn?.text || ''),
           turnIdx: e.turnIdx,
           betterApproach: '',
         };
       }),
     ...missedOpportunities.slice(0, 2).map(opp => ({
       text: opp.description,
-      quote: opp.sellerSaid?.substring(0, 120) || '',
+      quote: (opp.sellerSaid && opp.sellerSaid.length > 120 ? opp.sellerSaid.substring(0, 120) + '...' : opp.sellerSaid || ''),
       turnIdx: opp.turnIdx,
       betterApproach: opp.betterQuestion,
     })),
@@ -520,6 +525,26 @@ export function AnalysisResults({
           </div>
         </div>
 
+        <div className="flex gap-2 border-b border-hh-border pb-0">
+          {[
+            { value: 'overview', label: 'Overzicht' },
+            { value: 'timeline', label: 'Transcript + Evaluatie' },
+            { value: 'transcript', label: 'Gemiste Kansen' },
+          ].map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value as any)}
+              className={`px-4 py-2.5 text-[14px] font-medium rounded-t-lg transition-colors ${
+                activeTab === tab.value
+                  ? 'bg-[#1B2B4D] text-white'
+                  : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100 border-b-2 border-transparent'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <Card className="p-6 rounded-[16px] shadow-hh-md border-hh-border">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
             <div className="text-center col-span-2 lg:col-span-1">
@@ -554,26 +579,6 @@ export function AnalysisResults({
             </Button>
           </div>
         </Card>
-
-        <div className="flex gap-2 border-b border-hh-border pb-0">
-          {[
-            { value: 'overview', label: 'Overzicht' },
-            { value: 'timeline', label: 'Transcript + Evaluatie' },
-            { value: 'transcript', label: 'Gemiste Kansen' },
-          ].map(tab => (
-            <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value as any)}
-              className={`px-4 py-2.5 text-[14px] font-medium rounded-t-lg transition-colors ${
-                activeTab === tab.value
-                  ? 'bg-[#1B2B4D] text-white'
-                  : 'text-hh-muted hover:text-hh-text hover:bg-hh-ui-100'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
 
           {activeTab === 'overview' && (<div className="mt-6 space-y-6">
             <div className="grid sm:grid-cols-2 gap-6">
@@ -737,13 +742,15 @@ export function AnalysisResults({
                           <p className="text-[14px] leading-[22px] text-hh-text mb-2">{turn.text}</p>
 
                           {evaluation && evaluation.techniques.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-2">
+                            <div className="space-y-2 mt-3">
                               {evaluation.techniques.map((tech, i) => {
                                 const badge = getQualityBadge(tech.quality);
                                 return (
-                                  <Badge key={i} variant="outline" className={`${badge.color} text-[11px]`}>
-                                    {tech.quality === 'gemist' ? '✗' : '✓'} {tech.id} {tech.naam}
-                                  </Badge>
+                                  <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${badge.color}`}>
+                                    <span className="text-[13px] font-medium">
+                                      {tech.quality === 'gemist' ? '✗' : '✓'} {tech.id} {tech.naam}
+                                    </span>
+                                  </div>
                                 );
                               })}
                             </div>
@@ -806,6 +813,7 @@ export function AnalysisResults({
                           )}
                         </div>
 
+                        {opp.betterQuestion && (
                         <div className="p-3 rounded bg-hh-primary/5 border border-hh-primary/10">
                           <div className="flex gap-2">
                             <Lightbulb className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
@@ -814,6 +822,7 @@ export function AnalysisResults({
                             </p>
                           </div>
                         </div>
+                        )}
                       </div>
                     );
                   })}

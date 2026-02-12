@@ -51,7 +51,7 @@ export interface TurnEvaluation {
 
 export interface CustomerSignalResult {
   turnIdx: number;
-  houding: 'vraag' | 'twijfel' | 'bezwaar' | 'uitstel' | 'interesse' | 'akkoord' | 'neutraal';
+  houding: 'vraag' | 'twijfel' | 'bezwaar' | 'uitstel' | 'interesse' | 'akkoord' | 'neutraal' | 'negatief' | 'vaag' | 'ontwijkend';
   confidence: number;
   recommendedTechniqueIds: string[];
   currentPhase: number;
@@ -483,11 +483,11 @@ async function classifyCustomerHouding(text: string, phase: number): Promise<Cus
   const lower = text.toLowerCase();
 
   const quickPatterns: Array<{ signal: CustomerSignal; patterns: string[] }> = [
-    { signal: 'vraag', patterns: ['hoe werkt', 'wat kost', 'kunt u uitleggen', 'wat houdt in', 'hoe zit het met', 'wat is het', 'waarom is', 'hoeveel'] },
-    { signal: 'positief', patterns: ['dat is exact', 'dat past', 'dat sluit aan', 'dat helpt', 'dat is voldoende', 'interessant', 'klinkt goed', 'dat wil ik', 'graag', 'prima', 'akkoord', 'deal'] },
-    { signal: 'negatief', patterns: ['dat voldoet niet', 'dat past niet', 'te weinig', 'ik zoek iets anders', 'niet interessant'] },
-    { signal: 'vaag', patterns: ['misschien', 'zou kunnen', 'we zullen zien', 'lijkt interessant', 'eventueel', 'hangt ervan af'] },
-    { signal: 'ontwijkend', patterns: ['moeilijk te zeggen', 'dat varieert', 'dat is een goede vraag', 'maakt niet uit'] },
+    { signal: 'vraag', patterns: ['hoe werkt', 'wat kost', 'kunt u uitleggen', 'wat houdt in', 'hoe zit het met', 'wat is het', 'waarom is', 'hoeveel', 'kunt u mij', 'kunt ge mij', 'wat bedoelt u', 'wat bedoel je'] },
+    { signal: 'positief', patterns: ['dat is exact', 'dat past', 'dat sluit aan', 'dat helpt', 'dat is voldoende', 'interessant', 'klinkt goed', 'dat wil ik', 'graag', 'prima', 'akkoord', 'deal', 'absoluut', 'zeker', 'heel belangrijk', 'wel belangrijk', 'toch wel belangrijk', 'dat is belangrijk', 'rendement', 'dat klopt', 'inderdaad', 'kan dat zeker', 'kan zeker', 'dat is zo'] },
+    { signal: 'negatief', patterns: ['dat voldoet niet', 'dat past niet', 'te weinig', 'ik zoek iets anders', 'niet interessant', 'niet bewezen', 'niet inslaagt', 'teleurgesteld', 'slechte ervaring', 'vertrouw het niet', 'niet tevreden', 'jammer', 'spijtig'] },
+    { signal: 'vaag', patterns: ['misschien', 'zou kunnen', 'we zullen zien', 'eventueel', 'hangt ervan af', 'je weet maar nooit', 'dat hangt af'] },
+    { signal: 'ontwijkend', patterns: ['moeilijk te zeggen', 'dat varieert', 'dat is een goede vraag', 'maakt niet uit', 'geen idee', 'weet ik niet zo'] },
   ];
 
   if (phase >= 2) {
@@ -518,13 +518,15 @@ async function classifyCustomerHouding(text: string, phase: number): Promise<Cus
           role: 'system',
           content: `Classificeer deze klantuitspraak in een verkoopgesprek (fase ${phase}).
 
-Kies exact één houding:
-- positief: antwoord is in lijn met aanbod/verwachtingen
-- negatief: antwoord is niet in lijn met aanbod
-- vaag: schijninstemming zonder concreet criterium
-- ontwijkend: te algemeen antwoord
+Kies exact één houding op basis van de INHOUD en TOON van wat de klant zegt:
+- positief: klant toont interesse, bevestigt, is enthousiast, deelt relevante informatie die wijst op koopintentie, noemt wat belangrijk is voor hen
+- negatief: klant uit ontevredenheid, kritiek op huidige situatie, frustratie, teleurstelling (bijv. over bestaande leverancier/bank/product)
+- vaag: klant geeft geen duidelijk standpunt, blijft oppervlakkig, zegt ja maar zonder overtuiging
+- ontwijkend: klant wijkt bewust af van de vraag, geeft geen inhoudelijk antwoord
 - vraag: klant stelt een vraag
-${phase >= 2 ? '- twijfel: klant is onzeker\n- bezwaar: klant brengt tegenargument\n- uitstel: klant wil beslissing uitstellen' : ''}
+${phase >= 2 ? '- twijfel: klant is onzeker over beslissing\n- bezwaar: klant brengt tegenargument tegen het aanbod\n- uitstel: klant wil beslissing uitstellen' : ''}
+
+BELANGRIJK: Als de klant uitgebreid vertelt over hun situatie, ervaringen of behoeften, is dit NIET ontwijkend of neutraal. Beoordeel de emotionele lading en inhoud.
 
 Antwoord als JSON: {"houding": "..."}`
         },
@@ -566,9 +568,9 @@ export async function detectCustomerSignals(turns: TranscriptTurn[], evaluations
 
   const signalHoudingMap: Record<string, CustomerSignalResult['houding']> = {
     'positief': 'interesse',
-    'negatief': 'neutraal',
-    'vaag': 'neutraal',
-    'ontwijkend': 'neutraal',
+    'negatief': 'negatief',
+    'vaag': 'vaag',
+    'ontwijkend': 'ontwijkend',
     'vraag': 'vraag',
     'twijfel': 'twijfel',
     'bezwaar': 'bezwaar',
@@ -946,17 +948,6 @@ Klant: "${m.customerSaid.substring(0, 150)}"`).join('\n\n');
           }
         } catch {}
       } catch {
-        for (const m of toEnrich) {
-          if (!m.betterQuestion) {
-            m.betterQuestion = 'Vraag door naar de impact: "Wat zou het voor u betekenen als we dit samen oplossen?"';
-          }
-        }
-      }
-    }
-
-    for (const m of missed) {
-      if (!m.betterQuestion) {
-        m.betterQuestion = 'Vraag door naar de impact: "Wat zou het voor u betekenen als we dit samen oplossen?"';
       }
     }
   }
@@ -991,12 +982,18 @@ Stijl: concreet, coachend, niet academisch. Gebruik "je" (informeel). Geef concr
 
 EPIC staat voor: Explore (2.1), Probe (2.2), Impact (2.3), Commitment (2.4).
 
+REGELS:
+- strengths: technieken die goed of perfect werden toegepast. Gebruik het techniek-ID en naam. De quote moet letterlijk uit het transcript komen en relevant zijn voor die techniek.
+- improvements: technieken die beter konden. De quote moet het moment tonen waar het misging. betterApproach moet concreet uitleggen wat de verkoper anders had moeten zeggen/doen.
+- microExperiments: 3 concrete oefentips gebaseerd op de SPECIFIEKE zwakke punten uit dit gesprek. Verwijs naar de exacte situatie of techniek die gemist werd. Geen generieke tips.
+- Een techniek mag NIET in zowel strengths als improvements voorkomen.
+
 Genereer het rapport als JSON met deze structuur:
 {
   "summaryMarkdown": "Korte samenvatting in markdown (3-4 zinnen)",
-  "strengths": [{"text": "wat ging goed", "quote": "citaat uit gesprek", "turnIdx": 0}],
-  "improvements": [{"text": "wat kan beter", "quote": "citaat", "turnIdx": 0, "betterApproach": "wat je beter had kunnen doen"}],
-  "microExperiments": ["experiment 1", "experiment 2", "experiment 3"],
+  "strengths": [{"text": "techniek-ID techniek-naam – kwaliteit (perfect/goed)", "quote": "letterlijk citaat uit gesprek", "turnIdx": 0}],
+  "improvements": [{"text": "techniek-ID techniek-naam – wat er mis was", "quote": "letterlijk citaat uit gesprek", "turnIdx": 0, "betterApproach": "concreet alternatief"}],
+  "microExperiments": ["concrete oefening gebaseerd op specifiek verbeterpunt 1", "concrete oefening 2", "concrete oefening 3"],
   "overallScore": 65
 }
 
@@ -1068,11 +1065,7 @@ Schrijf het coachrapport.`
       summaryMarkdown: 'Het coachrapport kon niet volledig worden gegenereerd.',
       strengths: [],
       improvements: [],
-      microExperiments: [
-        'Oefen met het stellen van impactvragen na elke klanttwijfel.',
-        'Gebruik de Probe-techniek: vertel een kort verhaal voordat je een meningsvraag stelt.',
-        'Vraag altijd commitment voordat je naar fase 3 gaat.',
-      ],
+      microExperiments: [],
       overallScore: phaseCoverage.overall,
     };
   }

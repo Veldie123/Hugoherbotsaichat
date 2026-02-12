@@ -29,6 +29,7 @@ import {
   Lock,
   Target,
   Lightbulb,
+  Bell,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useUser } from "../../contexts/UserContext";
@@ -608,7 +609,7 @@ export function UploadAnalysis({
                       <div
                         key={step}
                         className={`h-2 flex-1 rounded-full transition-all duration-500 ${
-                          currentIndex >= i ? 'bg-hh-primary' : 'bg-hh-ui-200'
+                          currentIndex >= i ? 'bg-[#3C9A6E]' : 'bg-hh-ui-200'
                         }`}
                       />
                     );
@@ -622,6 +623,12 @@ export function UploadAnalysis({
                   <span>Rapport</span>
                   <span>Klaar</span>
                 </div>
+                {analysisStatus.status !== 'completed' && (
+                  <p className="text-[12px] leading-[18px] text-hh-muted mt-3 flex items-center gap-1.5">
+                    <Bell className="w-3.5 h-3.5" />
+                    Je kan gerust verder werken — je krijgt een melding via het belletje rechtsboven zodra de analyse klaar is.
+                  </p>
+                )}
               </div>
             )}
 
