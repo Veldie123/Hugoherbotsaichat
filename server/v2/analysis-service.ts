@@ -87,6 +87,38 @@ export interface MissedOpportunity {
   betterQuestion: string;
 }
 
+export interface CoachMoment {
+  id: string;
+  timestamp: string;
+  turnIndex: number;
+  phase: number;
+  label: string;
+  type: 'big_win' | 'quick_fix' | 'turning_point';
+  customerSignal?: string;
+  sellerText: string;
+  customerText: string;
+  whyItMatters: string;
+  betterAlternative: string;
+  recommendedTechniques: string[];
+  replay: {
+    startTurnIndex: number;
+    contextTurns: number;
+  };
+}
+
+export interface CoachDebriefMessage {
+  type: 'coach_text' | 'moment_ref' | 'scoreboard';
+  text?: string;
+  momentId?: string;
+  cta?: string[];
+}
+
+export interface CoachDebrief {
+  oneliner: string;
+  epicMomentum: string;
+  messages: CoachDebriefMessage[];
+}
+
 export interface AnalysisInsights {
   phaseCoverage: PhaseCoverage;
   missedOpportunities: MissedOpportunity[];
@@ -95,6 +127,8 @@ export interface AnalysisInsights {
   improvements: Array<{ text: string; quote: string; turnIdx: number; betterApproach: string }>;
   microExperiments: string[];
   overallScore: number;
+  coachDebrief?: CoachDebrief;
+  moments?: CoachMoment[];
 }
 
 export interface FullAnalysisResult {
@@ -1072,6 +1106,197 @@ Schrijf het coachrapport.`
   }
 }
 
+export async function generateCoachArtifacts(
+  turns: TranscriptTurn[],
+  evaluations: TurnEvaluation[],
+  signals: CustomerSignalResult[],
+  phaseCoverage: PhaseCoverage,
+  missedOpps: MissedOpportunity[],
+  insights: AnalysisInsights
+): Promise<{ coachDebrief: CoachDebrief; moments: CoachMoment[] }> {
+  const formatTimestamp = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const determinePhase = (turnIdx: number): number => {
+    const signal = signals.find(s => s.turnIdx === turnIdx);
+    if (signal?.currentPhase) return signal.currentPhase;
+    const eval_ = evaluations.find(e => e.turnIdx === turnIdx);
+    if (eval_ && eval_.techniques.length > 0) {
+      const firstTech = eval_.techniques[0].id;
+      if (firstTech.startsWith('0') || firstTech.startsWith('1')) return 1;
+      if (firstTech.startsWith('2')) return 2;
+      if (firstTech.startsWith('3')) return 3;
+      if (firstTech.startsWith('4')) return 4;
+    }
+    return 1;
+  };
+
+  const turnSummaries = turns.map(t => `[${t.idx}][${t.speaker}][${formatTimestamp(t.startMs)}] "${t.text.substring(0, 200)}"`).join('\n');
+  const evalSummaries = evaluations.map(e => {
+    const techs = e.techniques.map(t => `${t.id} ${t.naam} (${t.quality}, score:${t.score})`).join(', ');
+    return `Turn ${e.turnIdx}: ${techs || 'geen techniek'} - ${e.rationale.substring(0, 100)}`;
+  }).join('\n');
+  const signalSummaries = signals.map(s => `Turn ${s.turnIdx}: ${s.houding} (${Math.round(s.confidence * 100)}%) [fase ${s.currentPhase}]`).join('\n');
+  const missedSummaries = missedOpps.map(m => `Turn ${m.turnIdx}: ${m.type} - ${m.description} | Verkoper: "${m.sellerSaid.substring(0, 100)}" | Klant: "${m.customerSaid.substring(0, 100)}" | Beter: "${m.betterQuestion.substring(0, 100)}"`).join('\n');
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5.1',
+      messages: [
+        {
+          role: 'system',
+          content: `Je bent Hugo Herbots, verkoopcoach. Je genereert een coach-debrief en 3 key moments uit een verkoopgesprek.
+
+STIJL: Coachend, direct, informeel ("je"). GEEN rapport-taal, GEEN schoolcijfers. Praat alsof je naast de verkoper zit na het gesprek.
+
+Je output is JSON met deze structuur:
+{
+  "oneliner": "1 zin die de kern samenvat, coachend en specifiek (bv: 'Je EPIC zit goed. Je laat kansen liggen op commitment → daardoor blijft de klant twijfelen.')",
+  "epicMomentum": "Kort (1-2 zinnen) over hoe goed de EPIC-flow liep. Geen percentages, wel concreet (bv: 'Je Explore was sterk, maar je sprong te snel naar aanbeveling zonder Impact te maken.')",
+  "moments": [
+    {
+      "type": "big_win",
+      "turnIndex": 0,
+      "label": "Korte beschrijving van het moment (bv: 'Sterke doorvraag op pijnpunt')",
+      "whyItMatters": "Waarom dit goed was, in coachtaal (bv: 'Hier liet je de klant zijn eigen probleem verwoorden. Dat is goud — want dan hoef jij het niet meer te verkopen.')",
+      "betterAlternative": "",
+      "recommendedTechniques": ["2.1"]
+    },
+    {
+      "type": "quick_fix",
+      "turnIndex": 0,
+      "label": "Korte beschrijving (bv: 'Gemiste kans om door te vragen')",
+      "whyItMatters": "Waarom dit een quick fix is (bv: 'De klant gaf hier een koopsignaal maar je ging door met je presentatie. Eén vraag had het verschil gemaakt.')",
+      "betterAlternative": "Concreet wat de verkoper had kunnen zeggen (bv: 'Stel je voor dat je dat probleem oplost — wat zou dat betekenen voor jullie team?')",
+      "recommendedTechniques": ["2.3"]
+    },
+    {
+      "type": "turning_point",
+      "turnIndex": 0,
+      "label": "Korte beschrijving (bv: 'Hier kantelde het gesprek')",
+      "whyItMatters": "Waarom dit het scharnierpunt was (bv: 'Dit was HET moment om commitment te vragen. De klant was klaar, maar je ging terug naar features.')",
+      "betterAlternative": "Wat de verkoper hier had moeten doen",
+      "recommendedTechniques": ["2.4"]
+    }
+  ],
+  "debriefMessages": [
+    {"type": "coach_text", "text": "Opening van de debrief — 1-2 zinnen die het gesprek contextualiseren"},
+    {"type": "moment_ref", "momentType": "big_win"},
+    {"type": "coach_text", "text": "Overgang naar verbeterpunt — kort, coachend"},
+    {"type": "moment_ref", "momentType": "quick_fix"},
+    {"type": "coach_text", "text": "Overgang naar scharnierpunt"},
+    {"type": "moment_ref", "momentType": "turning_point"},
+    {"type": "coach_text", "text": "Afsluitende coaching — 1-2 zinnen, positief, actiegericht"}
+  ]
+}
+
+REGELS:
+- big_win: het sterkste moment van de verkoper. Positief, concreet. Geen betterAlternative nodig (laat leeg).
+- quick_fix: iets dat met 1 kleine aanpassing veel beter kan. Concreet betterAlternative verplicht.
+- turning_point: HET scharnierpunt met de hoogste impact. Dit is waar het gesprek een andere kant op had gekund. Concreet betterAlternative verplicht.
+- turnIndex moet verwijzen naar een echte turn uit het transcript (gebruik de [idx] nummers).
+- debriefMessages: dit wordt gerenderd als een chat van Hugo. Elke message is kort (max 2 zinnen). moment_ref verwijst naar het type moment.
+- recommendedTechniques: gebruik techniek-IDs (bv "2.1", "2.3", "1.2").
+- Schrijf in het Nederlands.`
+        },
+        {
+          role: 'user',
+          content: `TRANSCRIPT (${turns.length} turns):
+${turnSummaries}
+
+TECHNIEK-EVALUATIES:
+${evalSummaries}
+
+KLANTSIGNALEN:
+${signalSummaries}
+
+GEMISTE KANSEN:
+${missedSummaries || 'Geen'}
+
+FASE SCORES: Opening ${phaseCoverage.phase1.score}% | EPIC ${phaseCoverage.phase2.overall.score}% (E:${phaseCoverage.phase2.explore.score}% P:${phaseCoverage.phase2.probe.score}% I:${phaseCoverage.phase2.impact.score}% C:${phaseCoverage.phase2.commit.score}%) | Aanbeveling ${phaseCoverage.phase3.score}% | Beslissing ${phaseCoverage.phase4.score}% | Overall: ${phaseCoverage.overall}%
+
+Genereer de coach debrief + 3 moments.`
+        }
+      ],
+      max_tokens: 2000,
+      temperature: 0.7,
+    });
+
+    const content = response.choices[0]?.message?.content?.trim() || '';
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      const moments: CoachMoment[] = (parsed.moments || []).slice(0, 3).map((m: any, idx: number) => {
+        const turnIdx = m.turnIndex ?? 0;
+        const turn = turns.find(t => t.idx === turnIdx);
+        const prevTurn = turns.find(t => t.idx === turnIdx - 1) || turns.find(t => t.idx === turnIdx + 1);
+        const signal = signals.find(s => s.turnIdx === turnIdx);
+
+        return {
+          id: `m-${turn ? formatTimestamp(turn.startMs).replace(':', '') : idx}`,
+          timestamp: turn ? formatTimestamp(turn.startMs) : '00:00',
+          turnIndex: turnIdx,
+          phase: determinePhase(turnIdx),
+          label: m.label || `Moment ${idx + 1}`,
+          type: m.type || (['big_win', 'quick_fix', 'turning_point'][idx] as any),
+          customerSignal: signal?.houding,
+          sellerText: turn?.speaker === 'seller' ? turn.text : (prevTurn?.speaker === 'seller' ? prevTurn.text : ''),
+          customerText: turn?.speaker === 'customer' ? turn.text : (prevTurn?.speaker === 'customer' ? prevTurn.text : ''),
+          whyItMatters: m.whyItMatters || '',
+          betterAlternative: m.betterAlternative || '',
+          recommendedTechniques: m.recommendedTechniques || [],
+          replay: {
+            startTurnIndex: Math.max(0, turnIdx - 2),
+            contextTurns: 4,
+          },
+        };
+      });
+
+      const debriefMessages: CoachDebriefMessage[] = (parsed.debriefMessages || []).map((msg: any) => {
+        if (msg.type === 'moment_ref') {
+          const moment = moments.find(m => m.type === msg.momentType);
+          return {
+            type: 'moment_ref' as const,
+            momentId: moment?.id || moments[0]?.id || '',
+            cta: ['play', 'see_why'],
+          };
+        }
+        return {
+          type: 'coach_text' as const,
+          text: msg.text || '',
+        };
+      });
+
+      const coachDebrief: CoachDebrief = {
+        oneliner: parsed.oneliner || `Je gesprek laat potentie zien. Laten we kijken waar je het verschil kunt maken.`,
+        epicMomentum: parsed.epicMomentum || `De EPIC-flow had sterkere momenten en gemiste kansen.`,
+        messages: debriefMessages,
+      };
+
+      console.log(`[Analysis] Coach artifacts generated: ${moments.length} moments, ${debriefMessages.length} debrief messages`);
+      return { coachDebrief, moments };
+    }
+
+    throw new Error('Geen geldig JSON in coach artifacts');
+  } catch (err: any) {
+    console.warn('[Analysis] Coach artifact generation failed:', err.message);
+    return {
+      coachDebrief: {
+        oneliner: 'Laten we je gesprek samen doornemen.',
+        epicMomentum: 'De EPIC-flow wordt geanalyseerd.',
+        messages: [{ type: 'coach_text', text: 'Laten we kijken naar de belangrijkste momenten uit je gesprek.' }],
+      },
+      moments: [],
+    };
+  }
+}
+
 async function persistStatusToDb(conversationId: string, status: string, extra?: Record<string, any>): Promise<void> {
   try {
     const sets = ['status = $1'];
@@ -1184,6 +1409,10 @@ export async function runFullAnalysis(
     analysisJobs.set(conversationId, { ...job });
     await persistStatusToDb(conversationId, 'generating_report');
     const insights = await generateCoachReport(turns, evaluations, signals, phaseCoverage, missedOpps);
+
+    const { coachDebrief, moments } = await generateCoachArtifacts(turns, evaluations, signals, phaseCoverage, missedOpps, insights);
+    insights.coachDebrief = coachDebrief;
+    insights.moments = moments;
 
     job.status = 'completed';
     job.completedAt = new Date().toISOString();

@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Download,
   ChevronRight,
+  ChevronDown,
   ThumbsUp,
   ThumbsDown,
   Lightbulb,
@@ -21,6 +22,14 @@ import {
   Zap,
   Calendar,
   Clock,
+  Play,
+  Trophy,
+  Wrench,
+  RotateCcw,
+  Sparkles,
+  ArrowRight,
+  Send,
+  X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -90,6 +99,38 @@ interface MissedOpportunity {
   betterQuestion: string;
 }
 
+interface CoachMoment {
+  id: string;
+  timestamp: string;
+  turnIndex: number;
+  phase: number;
+  label: string;
+  type: 'big_win' | 'quick_fix' | 'turning_point';
+  customerSignal?: string;
+  sellerText: string;
+  customerText: string;
+  whyItMatters: string;
+  betterAlternative: string;
+  recommendedTechniques: string[];
+  replay: {
+    startTurnIndex: number;
+    contextTurns: number;
+  };
+}
+
+interface CoachDebriefMessage {
+  type: 'coach_text' | 'moment_ref' | 'scoreboard';
+  text?: string;
+  momentId?: string;
+  cta?: string[];
+}
+
+interface CoachDebrief {
+  oneliner: string;
+  epicMomentum: string;
+  messages: CoachDebriefMessage[];
+}
+
 interface AnalysisInsights {
   phaseCoverage: PhaseCoverage;
   missedOpportunities: MissedOpportunity[];
@@ -98,6 +139,8 @@ interface AnalysisInsights {
   improvements: Array<{ text: string; quote: string; turnIdx: number; betterApproach: string }>;
   microExperiments: string[];
   overallScore: number;
+  coachDebrief?: CoachDebrief;
+  moments?: CoachMoment[];
 }
 
 interface FullAnalysisResult {
@@ -129,10 +172,20 @@ export function AnalysisResults({
   isAdmin = false,
   navigationData,
 }: AnalysisResultsProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "transcript">("overview");
+  const [activeTab, setActiveTab] = useState<"coach" | "timeline">("coach");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FullAnalysisResult | null>(null);
+  const [expandedMoment, setExpandedMoment] = useState<string | null>(null);
+
+  const [replayMoment, setReplayMoment] = useState<CoachMoment | null>(null);
+  const [replayContext, setReplayContext] = useState<any>(null);
+  const [replayHistory, setReplayHistory] = useState<Array<{ role: 'seller' | 'customer'; content: string }>>([]);
+  const [replayInput, setReplayInput] = useState('');
+  const [replayLoading, setReplayLoading] = useState(false);
+  const [replayFeedback, setReplayFeedback] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionResult, setActionResult] = useState<{ momentId: string; type: string; data: any } | null>(null);
 
   const [resolvedConversationId, setResolvedConversationId] = useState<string | null>(
     navigationData?.conversationId || sessionStorage.getItem('analysisId') || null
@@ -305,6 +358,77 @@ export function AnalysisResults({
     }
 
     return 1;
+  };
+
+  const startReplay = async (moment: CoachMoment) => {
+    if (!resolvedConversationId) return;
+    setReplayMoment(moment);
+    setReplayHistory([]);
+    setReplayFeedback(null);
+    setReplayLoading(true);
+    try {
+      const res = await fetch('/api/v2/analysis/replay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analysisId: resolvedConversationId, startTurnIndex: moment.turnIndex }),
+      });
+      if (!res.ok) throw new Error('Replay start failed');
+      const data = await res.json();
+      setReplayContext(data);
+    } catch {
+      setReplayContext(null);
+    }
+    setReplayLoading(false);
+  };
+
+  const sendReplayMessage = async () => {
+    if (!replayInput.trim() || !resolvedConversationId || !replayMoment) return;
+    const msg = replayInput.trim();
+    setReplayInput('');
+    setReplayLoading(true);
+    setReplayFeedback(null);
+
+    const newHistory = [...replayHistory, { role: 'seller' as const, content: msg }];
+    setReplayHistory(newHistory);
+
+    try {
+      const res = await fetch('/api/v2/analysis/replay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysisId: resolvedConversationId,
+          startTurnIndex: replayMoment.turnIndex,
+          userMessage: msg,
+          replayHistory: newHistory,
+        }),
+      });
+      if (!res.ok) throw new Error('Replay failed');
+      const data = await res.json();
+      setReplayHistory([...newHistory, { role: 'customer', content: data.customerReply || 'Geen reactie ontvangen.' }]);
+      if (data.feedback) setReplayFeedback(data.feedback);
+    } catch {
+      setReplayHistory([...newHistory, { role: 'customer', content: 'Er ging iets mis. Probeer opnieuw.' }]);
+    }
+    setReplayLoading(false);
+  };
+
+  const runCoachAction = async (momentId: string, actionType: string) => {
+    if (!resolvedConversationId) return;
+    setActionLoading(`${momentId}-${actionType}`);
+    setActionResult(null);
+    try {
+      const res = await fetch('/api/v2/analysis/coach-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analysisId: resolvedConversationId, momentId, actionType }),
+      });
+      if (!res.ok) throw new Error('Action failed');
+      const data = await res.json();
+      setActionResult({ momentId, type: actionType, data });
+    } catch {
+      setActionResult(null);
+    }
+    setActionLoading(null);
   };
 
   const handleExportPDF = async () => {
@@ -596,168 +720,412 @@ export function AnalysisResults({
 
         <div className="flex gap-2 pb-0">
           {[
-            { value: 'overview', label: 'Overzicht' },
-            { value: 'timeline', label: 'Transcript + Evaluatie' },
-            { value: 'transcript', label: 'Gemiste Kansen' },
+            { value: 'coach', label: 'Coach View', icon: Sparkles },
+            { value: 'timeline', label: 'Transcript + Evaluatie', icon: MessageSquare },
           ].map(tab => (
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value as any)}
-              className={`px-4 py-2.5 text-[14px] font-medium rounded-full transition-colors ${
+              className={`px-4 py-2.5 text-[14px] font-medium rounded-full transition-colors flex items-center gap-2 ${
                 activeTab === tab.value
                   ? 'bg-hh-primary text-white'
                   : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100'
               }`}
             >
+              <tab.icon className="w-4 h-4" />
               {tab.label}
             </button>
           ))}
         </div>
 
-        <Card className="p-6 rounded-[16px] shadow-hh-md border-hh-border">
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
-            <div className="text-center col-span-2 lg:col-span-1">
-              <p className="text-[14px] leading-[20px] text-hh-muted mb-2">Overall Score</p>
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <span className={`text-[40px] leading-[48px] ${getScoreColor(overallScore)}`}>
-                  {overallScore}
-                </span>
-                <span className="text-[24px] leading-[32px] text-hh-muted">/ 100</span>
+        {/* Phase scores only shown in timeline tab */}
+
+        {activeTab === 'coach' && (<div className="space-y-6">
+          <Card className="p-6 rounded-[16px] shadow-hh-md border-hh-border bg-gradient-to-br from-white to-slate-50">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-hh-primary flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <Badge variant="outline" className={getScoreBgColor(overallScore)}>
-                {overallScore >= 80 ? "Excellent" : overallScore >= 60 ? "Goed" : "Verbetering nodig"}
-              </Badge>
+              <div className="flex-1">
+                <p className="text-[18px] leading-[26px] text-hh-text font-medium">
+                  {insights.coachDebrief?.oneliner || `Laten we je gesprek samen doornemen.`}
+                </p>
+                <p className="text-[14px] leading-[20px] text-hh-muted mt-2">
+                  {insights.coachDebrief?.epicMomentum || `De EPIC-flow wordt geanalyseerd.`}
+                </p>
+              </div>
             </div>
 
-            {phaseScores.map((ps) => (
-              <div key={ps.phase} className="text-center">
-                <p className="text-[12px] leading-[16px] text-hh-muted mb-1">{ps.label}</p>
-                <p className="text-[11px] leading-[14px] text-hh-muted/70 mb-2">{ps.sublabel}</p>
-                <span className={`text-[28px] leading-[36px] ${getScoreColor(ps.score)}`}>
-                  {ps.score}%
-                </span>
-                <Progress value={ps.score} indicatorColor="#3C9A6E" className="h-1.5 mt-2" />
+            <div className="flex flex-wrap items-center gap-2 mt-5 pt-4 border-t border-hh-border">
+              {phaseScores.map((ps) => (
+                <div key={ps.phase} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-hh-border">
+                  <span className="text-[11px] text-hh-muted">{ps.sublabel}</span>
+                  <span className={`text-[13px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
+                </div>
+              ))}
+              <div className="ml-auto">
+                <Button variant="outline" size="sm" className="gap-1.5 text-[12px]" onClick={handleExportPDF}>
+                  <Download className="w-3.5 h-3.5" />
+                  PDF
+                </Button>
               </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 mt-6 pt-6 border-t border-hh-border">
-            <Button variant="outline" className="gap-2" onClick={handleExportPDF}>
-              <Download className="w-4 h-4" />
-              Download rapport (PDF)
-            </Button>
-          </div>
-        </Card>
-
-          {activeTab === 'overview' && (<div className="mt-6 space-y-6">
-            <div className="grid sm:grid-cols-2 gap-6">
-              <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-                <h4 className="text-hh-text mb-4 flex items-center gap-2">
-                  <ThumbsUp className="w-5 h-5 text-hh-success" />
-                  Sterke punten ({strengths.length})
-                </h4>
-                <div className="space-y-3">
-                  {strengths.map((s, i) => (
-                    <div key={i} className="p-3 rounded-lg bg-hh-success/5 border border-hh-success/10">
-                      <p className="text-[14px] leading-[20px] text-hh-text mb-1">{s.text}</p>
-                      {s.quote && (
-                        <p className="text-[13px] leading-[18px] text-hh-muted italic">"{s.quote}"</p>
-                      )}
-                    </div>
-                  ))}
-                  {strengths.length === 0 && (
-                    <p className="text-[14px] leading-[20px] text-hh-muted">Geen sterke punten gedetecteerd</p>
-                  )}
-                </div>
-              </Card>
-
-              <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-                <h4 className="text-hh-text mb-4 flex items-center gap-2">
-                  <ThumbsDown className="w-5 h-5 text-hh-destructive" />
-                  Verbeterpunten ({improvements.length})
-                </h4>
-                <div className="space-y-3">
-                  {improvements.map((imp, i) => (
-                    <div key={i} className="p-3 rounded-lg bg-hh-destructive/5 border border-hh-destructive/10">
-                      <p className="text-[14px] leading-[20px] text-hh-text mb-1">{imp.text}</p>
-                      {imp.quote && (
-                        <p className="text-[13px] leading-[18px] text-hh-muted italic mb-1">"{imp.quote}"</p>
-                      )}
-                      {imp.betterApproach && (
-                        <div className="mt-2 p-2 rounded bg-hh-primary/5 border border-hh-primary/10">
-                          <p className="text-[12px] leading-[17px] text-hh-primary">
-                            <strong>Beter:</strong> {imp.betterApproach}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {improvements.length === 0 && (
-                    <p className="text-[14px] leading-[20px] text-hh-muted">Geen verbeterpunten gedetecteerd</p>
-                  )}
-                </div>
-              </Card>
             </div>
+          </Card>
 
-            {microExperiments.length > 0 && (
-              <Card className="p-6 rounded-[16px] shadow-hh-md border-hh-primary bg-gradient-to-br from-hh-primary/5 to-transparent">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-hh-primary flex items-center justify-center">
-                      <Zap className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-hh-text mb-3">Micro-experimenten van Hugo</h3>
-                    <p className="text-[14px] leading-[20px] text-hh-muted mb-4">
-                      Probeer deze concrete oefeningen in je volgende gesprek:
-                    </p>
-                    <ol className="space-y-2 text-hh-text list-decimal list-inside">
-                      {microExperiments.map((exp, i) => (
-                        <li key={i} className="text-[14px] leading-[22px]">{exp}</li>
-                      ))}
-                    </ol>
-                    <div className="mt-4 pt-4 border-t border-hh-primary/20">
-                      <Button className="gap-2" onClick={() => navigate?.("talk-to-hugo")}>
-                        Oefen met Hugo
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            )}
+          {(() => {
+            const moments = insights.moments || [];
+            const momentConfig: Record<string, { icon: any; color: string; bgColor: string; borderColor: string; accentColor: string; label: string }> = {
+              'big_win': { icon: Trophy, color: 'text-emerald-700', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200', accentColor: 'bg-emerald-600', label: 'Big Win' },
+              'quick_fix': { icon: Wrench, color: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', accentColor: 'bg-amber-500', label: 'Quick Fix' },
+              'turning_point': { icon: RotateCcw, color: 'text-rose-700', bgColor: 'bg-rose-50', borderColor: 'border-rose-200', accentColor: 'bg-rose-600', label: 'Scharnierpunt' },
+            };
 
-            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-              <h4 className="text-hh-text mb-3 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-hh-primary" />
-                Fase Details
-              </h4>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {phaseScores.map((ps) => {
-                  const phaseInfo = PHASE_LABELS[ps.phase];
+            return moments.length > 0 ? (
+              <div className="space-y-4">
+                {moments.map((moment) => {
+                  const config = momentConfig[moment.type] || momentConfig['quick_fix'];
+                  const MomentIcon = config.icon;
+                  const isExpanded = expandedMoment === moment.id;
+
                   return (
-                    <div key={ps.phase} className={`p-4 rounded-lg border ${phaseInfo.bgColor}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={`text-[14px] font-semibold ${phaseInfo.color}`}>{phaseInfo.name}</span>
-                        <span className={`text-[18px] font-bold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
-                      </div>
-                      <p className="text-[12px] text-hh-muted mb-2">{phaseInfo.description}</p>
-                      {ps.data && ps.data.techniquesFound && ps.data.techniquesFound.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {ps.data.techniquesFound.map((t, i) => (
-                            <Badge key={i} variant="outline" className={`text-[11px] ${getQualityBadge(t.quality).color}`}>
-                              {t.id} {t.naam}
-                            </Badge>
-                          ))}
+                    <Card key={moment.id} className={`rounded-[16px] shadow-hh-sm border overflow-hidden ${config.borderColor}`}>
+                      <div className={`px-6 py-4 ${config.bgColor}`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full ${config.accentColor} flex items-center justify-center flex-shrink-0`}>
+                            <MomentIcon className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <Badge variant="outline" className={`text-[11px] ${config.color} ${config.borderColor}`}>
+                                {config.label}
+                              </Badge>
+                              <Badge variant="outline" className="text-[11px] text-hh-muted border-hh-border">
+                                {moment.timestamp}
+                              </Badge>
+                              {moment.customerSignal && (
+                                <Badge variant="outline" className="text-[11px] text-hh-muted border-hh-border">
+                                  {moment.customerSignal}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className={`text-[15px] font-semibold ${config.color}`}>{moment.label}</p>
+                          </div>
+                          <button
+                            onClick={() => setExpandedMoment(isExpanded ? null : moment.id)}
+                            className="p-2 rounded-full hover:bg-white/50 transition-colors"
+                          >
+                            {isExpanded ? <ChevronDown className="w-5 h-5 text-hh-muted" /> : <ChevronRight className="w-5 h-5 text-hh-muted" />}
+                          </button>
                         </div>
-                      )}
-                    </div>
+                      </div>
+
+                      <div className="px-6 py-4">
+                        <p className="text-[14px] leading-[22px] text-hh-text">{moment.whyItMatters}</p>
+
+                        {(moment.sellerText || moment.customerText) && (
+                          <div className="mt-3 space-y-2">
+                            {moment.sellerText && (
+                              <div className="flex gap-2 p-3 rounded-lg bg-hh-ui-50 border border-hh-border">
+                                <span className="text-[11px] font-medium text-hh-primary bg-hh-primary/10 px-1.5 py-0.5 rounded flex-shrink-0">Jij</span>
+                                <p className="text-[13px] leading-[18px] text-hh-text">
+                                  "{moment.sellerText.length > 150 ? moment.sellerText.substring(0, 150) + '...' : moment.sellerText}"
+                                </p>
+                              </div>
+                            )}
+                            {moment.customerText && (
+                              <div className="flex gap-2 p-3 rounded-lg bg-white border border-hh-border">
+                                <span className="text-[11px] font-medium text-hh-muted bg-hh-ui-100 px-1.5 py-0.5 rounded flex-shrink-0">Klant</span>
+                                <p className="text-[13px] leading-[18px] text-hh-text">
+                                  "{moment.customerText.length > 150 ? moment.customerText.substring(0, 150) + '...' : moment.customerText}"
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {isExpanded && moment.betterAlternative && (
+                          <div className="mt-3 p-4 rounded-lg bg-hh-primary/5 border border-hh-primary/15">
+                            <div className="flex gap-2 items-start">
+                              <Lightbulb className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-[12px] font-medium text-hh-primary mb-1">Wat had je kunnen zeggen?</p>
+                                <p className="text-[14px] leading-[20px] text-hh-text">"{moment.betterAlternative}"</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-hh-border/50">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-[12px]"
+                            onClick={() => setExpandedMoment(isExpanded ? null : moment.id)}
+                          >
+                            {isExpanded ? (
+                              <><ChevronDown className="w-3.5 h-3.5" /> Inklappen</>
+                            ) : (
+                              <><Lightbulb className="w-3.5 h-3.5" /> Wat had beter geweest?</>
+                            )}
+                          </Button>
+                          {moment.type !== 'big_win' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-[12px] border-hh-primary/30 text-hh-primary hover:bg-hh-primary/5"
+                              onClick={() => startReplay(moment)}
+                            >
+                              <Play className="w-3.5 h-3.5" /> Replay vanaf hier
+                            </Button>
+                          )}
+                          {moment.recommendedTechniques.length > 0 && (
+                            <div className="flex gap-1 ml-auto">
+                              {moment.recommendedTechniques.map((t, i) => (
+                                <Badge key={i} variant="outline" className="text-[10px] text-hh-muted">
+                                  {t}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {isExpanded && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-[11px] text-hh-muted"
+                              disabled={actionLoading === `${moment.id}-three_options`}
+                              onClick={() => runCoachAction(moment.id, 'three_options')}
+                            >
+                              {actionLoading === `${moment.id}-three_options` ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageSquare className="w-3 h-3" />}
+                              3 antwoord-opties
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-[11px] text-hh-muted"
+                              disabled={actionLoading === `${moment.id}-micro_drill`}
+                              onClick={() => runCoachAction(moment.id, 'micro_drill')}
+                            >
+                              {actionLoading === `${moment.id}-micro_drill` ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                              1 zin oefenen
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-[11px] text-hh-muted"
+                              disabled={actionLoading === `${moment.id}-hugo_demo`}
+                              onClick={() => runCoachAction(moment.id, 'hugo_demo')}
+                            >
+                              {actionLoading === `${moment.id}-hugo_demo` ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                              Laat Hugo het voordoen
+                            </Button>
+                          </div>
+                        )}
+
+                        {actionResult && actionResult.momentId === moment.id && (
+                          <div className="mt-3 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
+                            {actionResult.type === 'three_options' && actionResult.data.options && (
+                              <div className="space-y-2">
+                                <p className="text-[12px] font-medium text-hh-primary mb-2">3 antwoord-opties:</p>
+                                {actionResult.data.options.map((opt: any, i: number) => (
+                                  <div key={i} className="p-3 rounded-lg bg-white border border-hh-border">
+                                    <span className="text-[11px] font-medium text-hh-primary">{opt.style}</span>
+                                    <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{opt.text}"</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {actionResult.type === 'micro_drill' && actionResult.data.drill && (
+                              <div className="space-y-2">
+                                <p className="text-[12px] font-medium text-hh-primary">Micro-drill:</p>
+                                <p className="text-[13px] leading-[18px] text-hh-text">{actionResult.data.drill.instruction}</p>
+                                <div className="p-3 rounded-lg bg-white border border-hh-border mt-2">
+                                  <span className="text-[11px] font-medium text-hh-muted">Voorbeeld:</span>
+                                  <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{actionResult.data.drill.example}"</p>
+                                </div>
+                              </div>
+                            )}
+                            {actionResult.type === 'hugo_demo' && actionResult.data.demo && (
+                              <div className="space-y-2">
+                                <p className="text-[12px] font-medium text-hh-primary">Hugo zou zeggen:</p>
+                                <div className="p-3 rounded-lg bg-white border border-hh-primary/20">
+                                  <p className="text-[14px] leading-[20px] text-hh-text">"{actionResult.data.demo.response}"</p>
+                                </div>
+                                <p className="text-[12px] leading-[16px] text-hh-muted">{actionResult.data.demo.reasoning}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </Card>
                   );
                 })}
               </div>
+            ) : (
+              <Card className="p-8 rounded-[16px] shadow-hh-sm border-hh-border text-center">
+                <Sparkles className="w-8 h-8 text-hh-muted mx-auto mb-3" />
+                <p className="text-[14px] text-hh-muted">Coach momenten worden gegenereerd bij nieuwe analyses.</p>
+              </Card>
+            );
+          })()}
+
+          {insights.coachDebrief && insights.coachDebrief.messages.length > 0 && (
+            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
+              <h4 className="text-hh-text mb-4 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-hh-primary" />
+                Hugo's Debrief
+              </h4>
+              <div className="space-y-3">
+                {insights.coachDebrief.messages.map((msg, i) => {
+                  if (msg.type === 'coach_text' && msg.text) {
+                    return (
+                      <div key={i} className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-hh-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="w-4 h-4 text-hh-primary" />
+                        </div>
+                        <div className="bg-hh-ui-50 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
+                          <p className="text-[14px] leading-[22px] text-hh-text">{msg.text}</p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (msg.type === 'moment_ref' && msg.momentId) {
+                    const refMoment = (insights.moments || []).find(m => m.id === msg.momentId);
+                    if (!refMoment) return null;
+                    const typeLabels: Record<string, { label: string; color: string }> = {
+                      'big_win': { label: 'Big Win', color: 'text-emerald-600' },
+                      'quick_fix': { label: 'Quick Fix', color: 'text-amber-600' },
+                      'turning_point': { label: 'Scharnierpunt', color: 'text-rose-600' },
+                    };
+                    const tl = typeLabels[refMoment.type] || typeLabels['quick_fix'];
+                    return (
+                      <div key={i} className="flex gap-3 ml-11">
+                        <button
+                          onClick={() => setExpandedMoment(expandedMoment === refMoment.id ? null : refMoment.id)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-hh-border hover:border-hh-primary/30 hover:bg-hh-primary/5 transition-colors text-left"
+                        >
+                          <ArrowRight className="w-3.5 h-3.5 text-hh-primary" />
+                          <span className={`text-[12px] font-medium ${tl.color}`}>{tl.label}:</span>
+                          <span className="text-[13px] text-hh-text">{refMoment.label}</span>
+                        </button>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-hh-border">
+                <Button className="gap-2" onClick={() => navigate?.("talk-to-hugo")}>
+                  Bespreek met Hugo
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </Card>
-          </div>)}
+          )}
+          {replayMoment && (
+            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-primary/20 bg-gradient-to-b from-hh-primary/5 to-transparent">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-hh-text flex items-center gap-2">
+                  <Play className="w-5 h-5 text-hh-primary" />
+                  Replay: {replayMoment.label}
+                </h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-hh-muted"
+                  onClick={() => { setReplayMoment(null); setReplayHistory([]); setReplayFeedback(null); setReplayContext(null); }}
+                >
+                  <X className="w-4 h-4" /> Sluiten
+                </Button>
+              </div>
+
+              {replayContext && (
+                <div className="mb-4 p-3 rounded-lg bg-white/80 border border-hh-border">
+                  <p className="text-[12px] font-medium text-hh-primary mb-1">Doel van deze oefening:</p>
+                  <p className="text-[13px] leading-[18px] text-hh-text">{replayContext.goal}</p>
+                  {replayContext.recommendedTechniques?.length > 0 && (
+                    <div className="flex gap-1 mt-2">
+                      {replayContext.recommendedTechniques.map((t: string, i: number) => (
+                        <Badge key={i} variant="outline" className="text-[10px]">{t}</Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-3 mb-4 max-h-[300px] overflow-y-auto">
+                {replayContext?.context?.map((turn: any, i: number) => (
+                  <div key={`ctx-${i}`} className={`flex gap-2 ${turn.speaker === 'seller' ? 'justify-end' : ''}`}>
+                    <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-[13px] leading-[18px] ${
+                      turn.speaker === 'seller'
+                        ? 'bg-hh-primary/10 text-hh-text rounded-br-sm'
+                        : 'bg-hh-ui-100 text-hh-text rounded-bl-sm'
+                    } opacity-60`}>
+                      <span className="text-[10px] font-medium text-hh-muted block mb-0.5">
+                        {turn.speaker === 'seller' ? 'Jij (origineel)' : 'Klant (origineel)'}
+                      </span>
+                      {turn.text}
+                    </div>
+                  </div>
+                ))}
+
+                {replayHistory.map((msg, i) => (
+                  <div key={`replay-${i}`} className={`flex gap-2 ${msg.role === 'seller' ? 'justify-end' : ''}`}>
+                    <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-[13px] leading-[18px] ${
+                      msg.role === 'seller'
+                        ? 'bg-hh-primary text-white rounded-br-sm'
+                        : 'bg-white border border-hh-border text-hh-text rounded-bl-sm'
+                    }`}>
+                      <span className="text-[10px] font-medium opacity-70 block mb-0.5">
+                        {msg.role === 'seller' ? 'Jij (replay)' : 'Klant'}
+                      </span>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+
+                {replayLoading && (
+                  <div className="flex gap-2">
+                    <div className="px-3 py-2 rounded-2xl bg-hh-ui-100 rounded-bl-sm">
+                      <Loader2 className="w-4 h-4 animate-spin text-hh-muted" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {replayFeedback && (
+                <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <div className="flex gap-2 items-start">
+                    <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-[13px] leading-[18px] text-hh-text">{replayFeedback}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={replayInput}
+                  onChange={(e) => setReplayInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendReplayMessage()}
+                  placeholder="Typ je antwoord als verkoper..."
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-hh-border bg-white text-[14px] text-hh-text placeholder:text-hh-muted/50 focus:outline-none focus:border-hh-primary/50 focus:ring-2 focus:ring-hh-primary/10"
+                  disabled={replayLoading}
+                />
+                <Button
+                  onClick={sendReplayMessage}
+                  disabled={!replayInput.trim() || replayLoading}
+                  className="gap-1.5"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>)}
 
           {activeTab === 'timeline' && (<div className="mt-6">
             <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
@@ -833,72 +1201,6 @@ export function AnalysisResults({
             </Card>
           </div>)}
 
-          {activeTab === 'transcript' && (<div className="mt-6 space-y-6">
-            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-              <h3 className="text-hh-text mb-2 flex items-center gap-2">
-                <Target className="w-5 h-5 text-hh-destructive" />
-                Gemiste Kansen ({missedOpportunities.length})
-              </h3>
-              <p className="text-[14px] leading-[20px] text-hh-muted mb-6">
-                Momenten waar een betere reactie mogelijk was
-              </p>
-
-              {missedOpportunities.length === 0 ? (
-                <div className="text-center py-8">
-                  <CheckCircle2 className="w-8 h-8 text-hh-success mx-auto mb-2" />
-                  <p className="text-hh-text">Geen grote gemiste kansen gedetecteerd</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {missedOpportunities.map((opp, i) => {
-                    const turn = transcript.find(t => t.idx === opp.turnIdx);
-                    return (
-                      <div key={i} className="p-4 rounded-lg border border-hh-destructive/20 bg-hh-destructive/5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="border-hh-destructive/30 text-hh-destructive text-[11px]">
-                            {turn ? formatTime(turn.startMs) : `Turn ${opp.turnIdx}`}
-                          </Badge>
-                          <span className="text-[13px] leading-[18px] text-hh-destructive font-medium">
-                            {opp.description}
-                          </span>
-                        </div>
-
-                        <div className="space-y-2 mb-3">
-                          {opp.sellerSaid && (
-                            <div className="flex gap-2">
-                              <MessageSquare className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
-                              <p className="text-[13px] leading-[18px] text-hh-text">
-                                <strong>Verkoper:</strong> "{opp.sellerSaid}"
-                              </p>
-                            </div>
-                          )}
-                          {opp.customerSaid && (
-                            <div className="flex gap-2">
-                              <MessageSquare className="w-4 h-4 text-hh-muted flex-shrink-0 mt-0.5" />
-                              <p className="text-[13px] leading-[18px] text-hh-text">
-                                <strong>Klant:</strong> "{opp.customerSaid}"
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {opp.betterQuestion && (
-                        <div className="p-3 rounded bg-hh-primary/5 border border-hh-primary/10">
-                          <div className="flex gap-2">
-                            <Lightbulb className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
-                            <p className="text-[13px] leading-[18px] text-hh-primary">
-                              <strong>Beter:</strong> "{opp.betterQuestion}"
-                            </p>
-                          </div>
-                        </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Card>
-          </div>)}
       </div>
     </Layout>
   );

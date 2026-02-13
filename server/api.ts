@@ -3214,6 +3214,297 @@ app.get("/api/v2/analysis/list", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/api/v2/analysis/replay", express.json(), async (req: Request, res: Response) => {
+  try {
+    const { analysisId, startTurnIndex, userMessage, replayHistory } = req.body;
+
+    if (!analysisId || startTurnIndex === undefined) {
+      res.status(400).json({ error: 'analysisId en startTurnIndex zijn verplicht' });
+      return;
+    }
+
+    const { rows } = await pool.query(
+      'SELECT result FROM conversation_analyses WHERE id = $1 AND status = $2',
+      [analysisId, 'completed']
+    );
+
+    if (rows.length === 0 || !rows[0].result) {
+      res.status(404).json({ error: 'Analyse niet gevonden' });
+      return;
+    }
+
+    const analysisResult = rows[0].result;
+    const transcript = analysisResult.transcript || [];
+    const signals = analysisResult.signals || [];
+    const evaluations = analysisResult.evaluations || [];
+    const moments = analysisResult.insights?.moments || [];
+
+    const contextTurns = transcript.filter((t: any) => t.idx <= startTurnIndex).slice(-6);
+
+    const relevantSignals = signals.filter((s: any) => s.turnIdx <= startTurnIndex);
+    const signalAtTurn = relevantSignals.length > 0 ? relevantSignals[relevantSignals.length - 1] : null;
+    const customerAttitude = signalAtTurn?.houding || 'neutraal';
+
+    const moment = moments.find((m: any) => m.turnIndex === startTurnIndex);
+    const goal = moment?.whyItMatters || 'Oefen dit moment opnieuw.';
+    const recommendedTechniques = moment?.recommendedTechniques || [];
+
+    if (!userMessage) {
+      const contextSummary = contextTurns.map((t: any) => ({
+        speaker: t.speaker,
+        text: t.text.substring(0, 200),
+      }));
+
+      res.json({
+        type: 'replay_start',
+        context: contextSummary,
+        goal,
+        customerAttitude,
+        recommendedTechniques,
+        momentLabel: moment?.label || 'Replay moment',
+        momentType: moment?.type || 'quick_fix',
+      });
+      return;
+    }
+
+    const openai = new (await import('openai')).default({
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+    });
+
+    const history = (replayHistory || []).map((h: any) => ({
+      role: h.role === 'seller' ? 'user' as const : 'assistant' as const,
+      content: h.content,
+    }));
+
+    const contextText = contextTurns.map((t: any) =>
+      `[${t.speaker === 'seller' ? 'Verkoper' : 'Klant'}]: "${t.text.substring(0, 150)}"`
+    ).join('\n');
+
+    const customerResponse = await openai.chat.completions.create({
+      model: 'gpt-5.1',
+      messages: [
+        {
+          role: 'system',
+          content: `Je speelt een klant in een verkoopgesprek. Je reageert realistisch op de verkoper.
+
+CONTEXT (eerdere beurten uit het echte gesprek):
+${contextText}
+
+JE HOUDING: ${customerAttitude}
+Je bent ${customerAttitude === 'twijfel' ? 'twijfelend — je bent niet zeker, je hebt vragen' :
+  customerAttitude === 'bezwaar' ? 'bezorgd — je hebt concrete bezwaren' :
+  customerAttitude === 'uitstel' ? 'afhoudend — je wilt het uitstellen' :
+  customerAttitude === 'interesse' ? 'geïnteresseerd maar voorzichtig' :
+  'neutraal — je luistert maar bent nog niet overtuigd'}.
+
+REGELS:
+- Reageer als een echte klant, 1-3 zinnen
+- Blijf in karakter (${customerAttitude})
+- Als de verkoper een goede vraag stelt of goed doorvraagt, word je iets meer open
+- Als de verkoper pusht of niet luistert, word je iets meer gesloten
+- Spreek Nederlands
+- Geen emojis`
+        },
+        ...history,
+        { role: 'user', content: userMessage }
+      ],
+      max_tokens: 200,
+      temperature: 0.7,
+    });
+
+    const customerReply = customerResponse.choices[0]?.message?.content?.trim() || 'Hmm, ik weet het niet...';
+
+    const turnCount = (replayHistory || []).filter((h: any) => h.role === 'seller').length + 1;
+    let feedback = null;
+
+    if (turnCount >= 2) {
+      const feedbackResponse = await openai.chat.completions.create({
+        model: 'gpt-5.1',
+        messages: [
+          {
+            role: 'system',
+            content: `Je bent Hugo Herbots, verkoopcoach. Geef micro-feedback op de seller's laatste beurt in een replay-oefening.
+
+CONTEXT: De verkoper oefent een moment uit een echt gesprek opnieuw.
+DOEL: ${goal}
+AANBEVOLEN TECHNIEKEN: ${recommendedTechniques.join(', ')}
+
+REGELS:
+- Max 2-3 zinnen
+- Coachend, niet oordelend
+- Concreet: wat deed de verkoper goed of wat kan beter?
+- Als het goed was: bevestig kort + vraag of ze nog een rep willen
+- Als het beter kan: geef 1 concreet alternatief
+- Nederlands, informeel ("je")`
+          },
+          {
+            role: 'user',
+            content: `De verkoper zei: "${userMessage}"\nDe klant reageerde: "${customerReply}"\n\nGeef micro-feedback.`
+          }
+        ],
+        max_tokens: 200,
+        temperature: 0.6,
+      });
+
+      feedback = feedbackResponse.choices[0]?.message?.content?.trim() || null;
+    }
+
+    res.json({
+      type: 'replay_response',
+      customerReply,
+      feedback,
+      turnCount,
+      customerAttitude,
+    });
+  } catch (err: any) {
+    console.error("[Replay] Error:", err);
+    res.status(500).json({ error: 'Replay kon niet worden gestart. Probeer opnieuw.' });
+  }
+});
+
+app.post("/api/v2/analysis/coach-action", express.json(), async (req: Request, res: Response) => {
+  try {
+    const { analysisId, momentId, actionType } = req.body;
+
+    if (!analysisId || !momentId || !actionType) {
+      res.status(400).json({ error: 'analysisId, momentId en actionType zijn verplicht' });
+      return;
+    }
+
+    const { rows } = await pool.query(
+      'SELECT result FROM conversation_analyses WHERE id = $1 AND status = $2',
+      [analysisId, 'completed']
+    );
+
+    if (rows.length === 0 || !rows[0].result) {
+      res.status(404).json({ error: 'Analyse niet gevonden' });
+      return;
+    }
+
+    const analysisResult = rows[0].result;
+    const moments = analysisResult.insights?.moments || [];
+    const moment = moments.find((m: any) => m.id === momentId);
+
+    if (!moment) {
+      res.status(404).json({ error: 'Moment niet gevonden' });
+      return;
+    }
+
+    const openai = new (await import('openai')).default({
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+    });
+
+    if (actionType === 'three_options') {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5.1',
+        messages: [
+          {
+            role: 'system',
+            content: `Je bent Hugo Herbots, verkoopcoach. Geef 3 concrete antwoord-opties die de verkoper had kunnen gebruiken op dit moment.
+
+CONTEXT:
+- De verkoper zei: "${moment.sellerText}"
+- De klant zei: "${moment.customerText}"
+- Klantsignaal: ${moment.customerSignal || 'neutraal'}
+- Aanbevolen technieken: ${moment.recommendedTechniques.join(', ')}
+
+Geef 3 opties met verschillende stijlen:
+1. Direct en assertief
+2. Empathisch en doorvragend
+3. Creatief/onverwacht
+
+Output als JSON array: [{"style": "Direct", "text": "..."}, {"style": "Empathisch", "text": "..."}, {"style": "Creatief", "text": "..."}]`
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+      });
+
+      const content = response.choices[0]?.message?.content?.trim() || '[]';
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      let options: any[] = [];
+      try { options = jsonMatch ? JSON.parse(jsonMatch[0]) : []; } catch { options = []; }
+
+      res.json({ type: 'three_options', options });
+      return;
+    }
+
+    if (actionType === 'micro_drill') {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5.1',
+        messages: [
+          {
+            role: 'system',
+            content: `Je bent Hugo Herbots, verkoopcoach. Geef een micro-drill oefening (1 zin schrijven) gebaseerd op dit moment.
+
+CONTEXT:
+- Moment: ${moment.label}
+- Klantsignaal: ${moment.customerSignal || 'neutraal'}
+- Aanbevolen technieken: ${moment.recommendedTechniques.join(', ')}
+- Klant zei: "${moment.customerText}"
+
+Geef:
+1. Een korte instructie (1 zin) wat de verkoper moet oefenen
+2. Een voorbeeld van een goede reactie
+
+Output als JSON: {"instruction": "...", "example": "..."}`
+          }
+        ],
+        max_tokens: 300,
+        temperature: 0.6,
+      });
+
+      const content = response.choices[0]?.message?.content?.trim() || '{}';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      let drill = { instruction: '', example: '' };
+      try { drill = jsonMatch ? JSON.parse(jsonMatch[0]) : drill; } catch {}
+
+      res.json({ type: 'micro_drill', drill });
+      return;
+    }
+
+    if (actionType === 'hugo_demo') {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5.1',
+        messages: [
+          {
+            role: 'system',
+            content: `Je bent Hugo Herbots, verkoopcoach. Laat zien hoe JIJ dit moment zou aanpakken.
+
+CONTEXT:
+- De klant zei: "${moment.customerText}"
+- Klantsignaal: ${moment.customerSignal || 'neutraal'}
+- Aanbevolen technieken: ${moment.recommendedTechniques.join(', ')}
+
+Geef:
+1. Wat jij zou zeggen (letterlijk, als verkoper)
+2. Waarom dit werkt (1 zin)
+
+Output als JSON: {"response": "...", "reasoning": "..."}`
+          }
+        ],
+        max_tokens: 300,
+        temperature: 0.6,
+      });
+
+      const content = response.choices[0]?.message?.content?.trim() || '{}';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      let demo = { response: '', reasoning: '' };
+      try { demo = jsonMatch ? JSON.parse(jsonMatch[0]) : demo; } catch {}
+
+      res.json({ type: 'hugo_demo', demo });
+      return;
+    }
+
+    res.status(400).json({ error: 'Onbekend actionType' });
+  } catch (err: any) {
+    console.error("[CoachAction] Error:", err);
+    res.status(500).json({ error: 'Coach actie kon niet worden uitgevoerd. Probeer opnieuw.' });
+  }
+});
+
 app.post("/api/v2/chat/feedback", express.json(), async (req: Request, res: Response) => {
   try {
     const { messageId, sessionId, userId, feedback, messageText, debugInfo } = req.body;
