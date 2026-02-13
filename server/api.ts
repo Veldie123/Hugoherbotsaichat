@@ -3309,7 +3309,7 @@ REGELS:
         ...history,
         { role: 'user', content: userMessage }
       ],
-      max_tokens: 200,
+      max_completion_tokens: 200,
       temperature: 0.7,
     });
 
@@ -3343,7 +3343,7 @@ REGELS:
             content: `De verkoper zei: "${userMessage}"\nDe klant reageerde: "${customerReply}"\n\nGeef micro-feedback.`
           }
         ],
-        max_tokens: 200,
+        max_completion_tokens: 200,
         temperature: 0.6,
       });
 
@@ -3418,7 +3418,7 @@ Geef 3 opties met verschillende stijlen:
 Output als JSON array: [{"style": "Direct", "text": "..."}, {"style": "Empathisch", "text": "..."}, {"style": "Creatief", "text": "..."}]`
           }
         ],
-        max_tokens: 500,
+        max_completion_tokens: 500,
         temperature: 0.7,
       });
 
@@ -3452,7 +3452,7 @@ Geef:
 Output als JSON: {"instruction": "...", "example": "..."}`
           }
         ],
-        max_tokens: 300,
+        max_completion_tokens: 300,
         temperature: 0.6,
       });
 
@@ -3485,7 +3485,7 @@ Geef:
 Output als JSON: {"response": "...", "reasoning": "..."}`
           }
         ],
-        max_tokens: 300,
+        max_completion_tokens: 300,
         temperature: 0.6,
       });
 

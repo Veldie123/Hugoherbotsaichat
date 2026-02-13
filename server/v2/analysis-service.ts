@@ -567,7 +567,7 @@ Antwoord als JSON: {"houding": "..."}`
         },
         { role: 'user', content: `Klant: "${text}"` }
       ],
-      max_tokens: 50,
+      max_completion_tokens: 50,
       temperature: 0.1,
     });
 
@@ -966,7 +966,7 @@ Klant: "${m.customerSaid.substring(0, 150)}"`).join('\n\n');
               content: `Genereer voor elk gemist moment een betere vraag:\n\n${batchPrompt}`
             }
           ],
-          max_tokens: 600,
+          max_completion_tokens: 600,
           temperature: 0.5,
           response_format: { type: 'json_object' },
         });
@@ -1062,7 +1062,7 @@ ${missedSummaries || 'Geen'}
 Schrijf het coachrapport.`
         }
       ],
-      max_tokens: 1500,
+      max_completion_tokens: 1500,
       temperature: 0.6,
     });
 
@@ -1222,7 +1222,7 @@ FASE SCORES: Opening ${phaseCoverage.phase1.score}% | EPIC ${phaseCoverage.phase
 Genereer de coach debrief + 3 moments.`
         }
       ],
-      max_tokens: 2000,
+      max_completion_tokens: 2000,
       temperature: 0.7,
     });
 

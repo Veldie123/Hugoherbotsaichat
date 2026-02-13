@@ -82,7 +82,7 @@ Focus op wat de verkoper daadwerkelijk heeft ontdekt. Als iets niet besproken is
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.5,
-      max_tokens: 1000,
+      max_completion_tokens: 1000,
       response_format: { type: 'json_object' }
     });
 
@@ -166,7 +166,7 @@ Focus op wat er daadwerkelijk besproken is. Als iets niet aan bod kwam, laat arr
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.5,
-      max_tokens: 1000,
+      max_completion_tokens: 1000,
       response_format: { type: 'json_object' }
     });
 

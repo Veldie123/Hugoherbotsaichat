@@ -977,7 +977,7 @@ export async function interpretAnswer(
       messages: [
         { role: 'user', content: prompt }
       ],
-      max_tokens: 500,
+      max_completion_tokens: 500,
       response_format: { type: 'json_object' }
     });
     
@@ -1077,7 +1077,7 @@ INSTRUCTIE: Reageer als Hugo Herbots. Kort, to the point, persoonlijk. Stel maxi
         { role: 'system', content: hugoPrompt },
         { role: 'user', content: userPrompt }
       ],
-      max_tokens: 1500,
+      max_completion_tokens: 1500,
       temperature: 0.7
     });
     
@@ -1140,7 +1140,7 @@ async function generateFallbackResponse(): Promise<string> {
         { role: 'system', content: 'Je bent Hugo Herbots, een vriendelijke sales coach.' },
         { role: 'user', content: 'Genereer een korte, vriendelijke vraag om meer context te verzamelen over de verkoper.' }
       ],
-      max_tokens: 100
+      max_completion_tokens: 100
     });
     
     return response.choices[0]?.message?.content?.trim() || 

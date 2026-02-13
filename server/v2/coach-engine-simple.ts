@@ -132,7 +132,7 @@ Antwoord altijd in het Nederlands.`;
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages,
-      max_tokens: 500,
+      max_completion_tokens: 500,
       temperature: 0.7
     });
 
@@ -175,7 +175,7 @@ Houd het kort (2-3 zinnen). Spreek in het Nederlands.`;
         { role: "system", content: systemPrompt },
         { role: "user", content: "Start het gesprek." }
       ],
-      max_tokens: 200,
+      max_completion_tokens: 200,
       temperature: 0.8
     });
 

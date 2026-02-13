@@ -213,7 +213,7 @@ Antwoord in JSON formaat:
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.8,
-      max_tokens: 500,
+      max_completion_tokens: 500,
       response_format: { type: 'json_object' }
     });
 
@@ -267,7 +267,7 @@ Antwoord in JSON formaat:
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: 500,
+      max_completion_tokens: 500,
       response_format: { type: 'json_object' }
     });
 
@@ -319,7 +319,7 @@ Antwoord in JSON formaat:
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: 500,
+      max_completion_tokens: 500,
       response_format: { type: 'json_object' }
     });
 
@@ -366,7 +366,7 @@ Antwoord in JSON formaat:
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: 600,
+      max_completion_tokens: 600,
       response_format: { type: 'json_object' }
     });
 
@@ -441,7 +441,7 @@ Antwoord in JSON formaat:
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: 1500,  // Verhoogd voor hiërarchische structuur
+      max_completion_tokens: 1500,  // Verhoogd voor hiërarchische structuur
       response_format: { type: 'json_object' }
     });
 
