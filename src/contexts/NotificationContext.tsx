@@ -124,6 +124,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const res = await fetch(
           `/api/v2/analysis/status/${item.conversationId}`
         );
+        if (res.status === 404) {
+          removePending(item.conversationId);
+          continue;
+        }
         if (!res.ok) continue;
         const data = await res.json();
 
