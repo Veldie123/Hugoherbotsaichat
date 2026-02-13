@@ -26,7 +26,7 @@ interface AnalysisResultsProps {
   analysisId?: string;
   isPreview?: boolean;
   isAdmin?: boolean;
-  navigationData?: { conversationId?: string };
+  navigationData?: { conversationId?: string; fromAdmin?: boolean };
 }
 
 interface TranscriptTurn {
@@ -503,7 +503,7 @@ export function AnalysisResults({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate?.("upload-analysis")}
+              onClick={() => navigate?.(navigationData?.fromAdmin ? "admin-uploads" : "analysis")}
               className="gap-1 -ml-2"
             >
               ← Terug naar analyses
@@ -536,7 +536,7 @@ export function AnalysisResults({
               onClick={() => setActiveTab(tab.value as any)}
               className={`px-4 py-2.5 text-[14px] font-medium rounded-t-lg transition-colors ${
                 activeTab === tab.value
-                  ? 'bg-[#1B2B4D] text-white'
+                  ? 'bg-hh-primary text-white border-b-2 border-hh-primary'
                   : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100 border-b-2 border-transparent'
               }`}
             >
@@ -567,7 +567,7 @@ export function AnalysisResults({
                 <span className={`text-[28px] leading-[36px] ${getScoreColor(ps.score)}`}>
                   {ps.score}%
                 </span>
-                <Progress value={ps.score} className="h-1.5 mt-2" />
+                <Progress value={ps.score} className="h-1.5 mt-2 [&_[data-slot=progress-indicator]]:bg-emerald-500" />
               </div>
             ))}
           </div>

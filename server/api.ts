@@ -3156,11 +3156,32 @@ app.get("/api/v2/analysis/list", async (req: Request, res: Response) => {
 
     const { rows } = await pool.query(queryText, params);
 
+    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+    let userMap: Record<string, { name: string; email: string }> = {};
+    if (userIds.length > 0) {
+      try {
+        const { data: users } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+        if (users?.users) {
+          for (const u of users.users) {
+            const firstName = u.user_metadata?.first_name || '';
+            const lastName = u.user_metadata?.last_name || '';
+            const name = [firstName, lastName].filter(Boolean).join(' ') || u.email?.split('@')[0] || 'Onbekend';
+            userMap[u.id] = { name, email: u.email || '' };
+          }
+        }
+      } catch (e) {
+        console.log('[Analysis] Could not fetch user names from Supabase:', (e as any)?.message);
+      }
+    }
+
     const analyses = rows.map(row => {
       const result = row.result as any;
+      const userInfo = userMap[row.user_id];
       return {
         id: row.id,
         userId: row.user_id,
+        userName: userInfo?.name || null,
+        userEmail: userInfo?.email || null,
         title: row.title,
         status: row.status,
         error: row.error,

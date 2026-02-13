@@ -22,7 +22,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { CustomCheckbox } from "../ui/custom-checkbox";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -97,17 +97,15 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             score >= 80 ? 'Excellent' :
             score >= 60 ? 'Good' : 'Needs Work';
           const createdAt = a.createdAt ? new Date(a.createdAt) : new Date();
-          const initials = (a.userId || 'AN')
-            .split(/[_@.-]/)
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((s: string) => s[0]?.toUpperCase() || '')
-            .join('');
+          const userName = a.userName || 'Anoniem';
+          const initials = userName !== 'Anoniem' 
+            ? userName.split(/\s+/).filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase() || '').join('')
+            : (a.userId || 'AN').split(/[_@.-]/).filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase() || '').join('');
 
           return {
             id: a.id,
-            user: a.userId || 'Anoniem',
-            userEmail: a.userId || '',
+            user: userName,
+            userEmail: a.userEmail || a.userId || '',
             userInitials: initials || 'AN',
             title: a.title || 'Untitled',
             type: 'Audio' as const,
@@ -132,8 +130,49 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
     };
 
     fetchAnalyses();
-    const interval = setInterval(fetchAnalyses, 10000);
-    return () => clearInterval(interval);
+  }, []);
+
+  const uploadsRef = useRef(uploads);
+  uploadsRef.current = uploads;
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/v2/analysis/list');
+        if (res.ok) {
+          const data = await res.json();
+          const mapped: UploadItem[] = (data.analyses || []).map((a: any) => {
+            const score = a.overallScore ?? null;
+            const quality = score === null ? 'Pending' :
+              score >= 80 ? 'Excellent' :
+              score >= 60 ? 'Good' : 'Needs Work';
+            const createdAt = a.createdAt ? new Date(a.createdAt) : new Date();
+            const userName = a.userName || 'Anoniem';
+            const initials = userName !== 'Anoniem' 
+              ? userName.split(/\s+/).filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase() || '').join('')
+              : (a.userId || 'AN').split(/[_@.-]/).filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase() || '').join('');
+            return {
+              id: a.id, user: userName, userEmail: a.userEmail || a.userId || '',
+              userInitials: initials || 'AN', title: a.title || 'Untitled',
+              type: 'Audio' as const,
+              duration: a.durationMs ? `${Math.floor(a.durationMs / 60000)}:${String(Math.floor((a.durationMs % 60000) / 1000)).padStart(2, '0')}` : '—',
+              score, quality, status: a.status,
+              date: createdAt.toLocaleDateString('nl-NL'),
+              time: createdAt.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
+              techniquesFound: a.techniquesFound || [],
+            };
+          });
+          setUploads(mapped);
+        }
+      } catch {}
+      const hasProcessing = uploadsRef.current.some(u => 
+        ['transcribing', 'analyzing', 'evaluating', 'generating_report'].includes(u.status)
+      );
+      timeoutId = setTimeout(poll, hasProcessing ? 10000 : 60000);
+    };
+    timeoutId = setTimeout(poll, 15000);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const stats = {
@@ -167,7 +206,7 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
 
   const openTranscript = (upload: UploadItem) => {
     if (upload.status === 'completed') {
-      navigate?.('analysis-results', { conversationId: upload.id });
+      navigate?.('analysis-results', { conversationId: upload.id, fromAdmin: true });
     }
   };
 

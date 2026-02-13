@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { AppLayout } from "./AppLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -123,8 +123,43 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
     };
     
     fetchAnalyses();
-    const interval = setInterval(fetchAnalyses, 10000);
-    return () => clearInterval(interval);
+  }, []);
+
+  const conversationsRef = useRef(conversations);
+  conversationsRef.current = conversations;
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/v2/analysis/list');
+        if (res.ok) {
+          const data = await res.json();
+          const mapped: ConversationRecord[] = (data.analyses || []).map((a: any) => ({
+            id: a.id,
+            title: a.title || 'Untitled',
+            date: a.createdAt ? new Date(a.createdAt).toLocaleDateString('nl-NL') : '',
+            duration: a.durationMs 
+              ? `${Math.floor(a.durationMs / 60000)}:${String(Math.floor((a.durationMs % 60000) / 1000)).padStart(2, '0')}`
+              : '—',
+            type: 'audio' as const,
+            techniquesUsed: a.techniquesFound || [],
+            score: a.overallScore ?? null,
+            status: a.status === 'completed' ? 'completed' : 
+                   a.status === 'failed' ? 'failed' : 
+                   a.status as any,
+            phaseCoverage: a.phaseCoverage || null,
+          }));
+          setConversations(mapped);
+        }
+      } catch {}
+      const hasProcessing = conversationsRef.current.some(c => 
+        ['transcribing', 'analyzing', 'evaluating', 'generating_report'].includes(c.status)
+      );
+      timeoutId = setTimeout(poll, hasProcessing ? 10000 : 60000);
+    };
+    timeoutId = setTimeout(poll, 15000);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const handleSort = (field: string) => {

@@ -103,7 +103,14 @@ export default function App() {
     checkAuthAndRoute();
   }, []);
 
-  const [navigationData, setNavigationData] = useState<Record<string, any> | undefined>();
+  const [navigationData, setNavigationData] = useState<Record<string, any> | undefined>(() => {
+    if (devPreviewPage === 'analysis-results') {
+      const params = new URLSearchParams(window.location.search);
+      const cid = params.get('id');
+      if (cid) return { conversationId: cid };
+    }
+    return undefined;
+  });
 
   const navigate = (page: Page | string, data?: Record<string, any>) => {
     console.log('🧭 Navigate called with:', page, data);
