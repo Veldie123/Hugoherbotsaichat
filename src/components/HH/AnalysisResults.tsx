@@ -31,7 +31,8 @@ import {
   Send,
   X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { getTechniekByNummer } from "../../data/technieken-service";
 
 interface AnalysisResultsProps {
   navigate?: (page: string, data?: any) => void;
@@ -192,6 +193,9 @@ export function AnalysisResults({
   );
 
   const [processingStep, setProcessingStep] = useState<string | null>(null);
+
+  const replayRef = useRef<HTMLDivElement>(null);
+  const actionResultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (navigationData?.conversationId && navigationData.conversationId !== resolvedConversationId) {
@@ -393,9 +397,10 @@ export function AnalysisResults({
       const data = await res.json();
       setReplayContext(data);
     } catch {
-      setReplayContext(null);
+      setReplayContext({ error: true, goal: 'Er ging iets mis bij het laden van de replay. Probeer het opnieuw.' });
     }
     setReplayLoading(false);
+    setTimeout(() => replayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   };
 
   const sendReplayMessage = async () => {
@@ -442,8 +447,10 @@ export function AnalysisResults({
       if (!res.ok) throw new Error('Action failed');
       const data = await res.json();
       setActionResult({ momentId, type: actionType, data });
-    } catch {
-      setActionResult(null);
+      setTimeout(() => actionResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    } catch (err) {
+      setActionResult({ momentId, type: actionType, data: { error: 'Er ging iets mis. Probeer het opnieuw.' } });
+      setTimeout(() => actionResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
     }
     setActionLoading(null);
   };
@@ -896,10 +903,10 @@ export function AnalysisResults({
                             </Button>
                           )}
                           {moment.recommendedTechniques.length > 0 && (
-                            <div className="flex gap-1 ml-auto">
+                            <div className="flex gap-1 ml-auto flex-wrap">
                               {moment.recommendedTechniques.map((t, i) => (
-                                <Badge key={i} variant="outline" className="text-[10px] text-hh-muted">
-                                  {t}
+                                <Badge key={i} variant="outline" className="text-[10px] text-hh-muted" title={t}>
+                                  {getTechniekByNummer(t)?.naam || t}
                                 </Badge>
                               ))}
                             </div>
@@ -942,7 +949,7 @@ export function AnalysisResults({
                         )}
 
                         {actionResult && actionResult.momentId === moment.id && (
-                          <div className="mt-3 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
+                          <div ref={actionResult?.momentId === moment.id ? actionResultRef : undefined} className="mt-3 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
                             {actionResult.type === 'three_options' && actionResult.data.options && (
                               <div className="space-y-2">
                                 <p className="text-[12px] font-medium text-hh-primary mb-2">3 antwoord-opties:</p>
@@ -971,6 +978,12 @@ export function AnalysisResults({
                                   <p className="text-[14px] leading-[20px] text-hh-text">"{actionResult.data.demo.response}"</p>
                                 </div>
                                 <p className="text-[12px] leading-[16px] text-hh-muted">{actionResult.data.demo.reasoning}</p>
+                              </div>
+                            )}
+                            {actionResult.data.error && (
+                              <div className="flex items-center gap-2 text-red-600">
+                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                <p className="text-[13px]">{actionResult.data.error}</p>
                               </div>
                             )}
                           </div>
@@ -1042,7 +1055,7 @@ export function AnalysisResults({
               </div>
             </Card>
           )}
-          {replayMoment && (
+          {replayMoment && (<div ref={replayRef}>
             <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-primary/20 bg-gradient-to-b from-hh-primary/5 to-transparent">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-hh-text flex items-center gap-2">
@@ -1059,14 +1072,23 @@ export function AnalysisResults({
                 </Button>
               </div>
 
-              {replayContext && (
+              {replayContext?.error && (
+                <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200">
+                  <div className="flex items-center gap-2 text-red-600">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <p className="text-[13px]">{replayContext.goal}</p>
+                  </div>
+                </div>
+              )}
+
+              {replayContext && !replayContext.error && (
                 <div className="mb-4 p-3 rounded-lg bg-white/80 border border-hh-border">
                   <p className="text-[12px] font-medium text-hh-primary mb-1">Doel van deze oefening:</p>
                   <p className="text-[13px] leading-[18px] text-hh-text">{replayContext.goal}</p>
                   {replayContext.recommendedTechniques?.length > 0 && (
                     <div className="flex gap-1 mt-2">
                       {replayContext.recommendedTechniques.map((t: string, i: number) => (
-                        <Badge key={i} variant="outline" className="text-[10px]">{t}</Badge>
+                        <Badge key={i} variant="outline" className="text-[10px]" title={t}>{getTechniekByNummer(t)?.naam || t}</Badge>
                       ))}
                     </div>
                   )}
@@ -1141,7 +1163,7 @@ export function AnalysisResults({
                 </Button>
               </div>
             </Card>
-          )}
+          </div>)}
         </div>)}
 
           {activeTab === 'timeline' && (<div className="mt-6">
