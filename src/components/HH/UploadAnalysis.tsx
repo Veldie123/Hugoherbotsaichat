@@ -87,6 +87,7 @@ export function UploadAnalysis({
   });
 
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isRestoredAnalysis = useRef(false);
 
   useEffect(() => {
     if (analysisStatus) {
@@ -99,6 +100,7 @@ export function UploadAnalysis({
 
   useEffect(() => {
     if (analysisStatus && analysisStatus.conversationId && !['completed', 'failed', 'uploading'].includes(analysisStatus.status)) {
+      isRestoredAnalysis.current = true;
       setIsUploading(true);
       pollAnalysisStatus(analysisStatus.conversationId);
     }
@@ -469,7 +471,11 @@ export function UploadAnalysis({
           setContext("");
           setConsentConfirmed(false);
           
-          if (navigate) {
+          if (isRestoredAnalysis.current) {
+            isRestoredAnalysis.current = false;
+            setAnalysisStatus(null);
+            localStorage.removeItem('hh_active_analysis');
+          } else if (navigate) {
             navigate("analysis-results", { conversationId });
           }
         } else if (data.status === 'failed') {
