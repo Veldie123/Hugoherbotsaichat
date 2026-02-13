@@ -78,9 +78,10 @@ export function UploadAnalysis({
       const stored = localStorage.getItem('hh_active_analysis');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed && !['completed', 'failed'].includes(parsed.status)) {
+        if (parsed && parsed.conversationId && !['completed', 'failed', 'uploading'].includes(parsed.status)) {
           return parsed;
         }
+        localStorage.removeItem('hh_active_analysis');
       }
     } catch {}
     return null;
@@ -90,10 +91,10 @@ export function UploadAnalysis({
   const isRestoredAnalysis = useRef(false);
 
   useEffect(() => {
-    if (analysisStatus) {
+    if (analysisStatus && analysisStatus.conversationId && !['uploading', 'completed', 'failed'].includes(analysisStatus.status)) {
       localStorage.setItem('hh_active_analysis', JSON.stringify(analysisStatus));
     }
-    if (analysisStatus?.status === 'completed' || analysisStatus?.status === 'failed') {
+    if (!analysisStatus || analysisStatus?.status === 'completed' || analysisStatus?.status === 'failed') {
       localStorage.removeItem('hh_active_analysis');
     }
   }, [analysisStatus]);
