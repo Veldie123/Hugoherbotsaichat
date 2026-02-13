@@ -194,6 +194,23 @@ export function AnalysisResults({
   const [processingStep, setProcessingStep] = useState<string | null>(null);
 
   useEffect(() => {
+    if (navigationData?.conversationId && navigationData.conversationId !== resolvedConversationId) {
+      setResolvedConversationId(navigationData.conversationId);
+      setResult(null);
+      setError(null);
+      setLoading(true);
+      setActiveTab("coach");
+      setExpandedMoment(null);
+      setReplayMoment(null);
+      setReplayContext(null);
+      setReplayHistory([]);
+      setReplayFeedback(null);
+      setActionLoading(null);
+      setActionResult(null);
+    }
+  }, [navigationData?.conversationId]);
+
+  useEffect(() => {
     if (resolvedConversationId) return;
     if (!navigationData?.autoLoadFirst) {
       setError('Geen analyse ID gevonden');
