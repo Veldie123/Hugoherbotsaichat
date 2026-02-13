@@ -275,17 +275,59 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   return (
     <Layout {...layoutProps}>
       <div className="p-6 space-y-6">
-        {/* Header with KPI Cards */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
-                Gespreksanalyse
-              </h1>
-              <p className="text-[16px] leading-[24px] text-hh-muted">
-                Upload gesprekken voor AI-analyse en feedback
-              </p>
+        {/* Header with KPI Cards top-right */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-shrink-0">
+            <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
+              Gespreksanalyse
+            </h1>
+            <p className="text-[16px] leading-[24px] text-hh-muted">
+              Upload gesprekken voor AI-analyse en feedback
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="flex flex-nowrap gap-2">
+              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
+                  <Video className="w-3.5 h-3.5 text-[#1e293b]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#6b7280] leading-none">Analyses</p>
+                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{conversations.length}</p>
+                </div>
+              </div>
+
+              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(61,154,110,0.12)' }}>
+                  <Eye className="w-3.5 h-3.5 text-[#3d9a6e]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#6b7280] leading-none">Geanalyseerd</p>
+                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{analyzedCount}</p>
+                </div>
+              </div>
+
+              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
+                  <Clock className="w-3.5 h-3.5 text-[#1e293b]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#6b7280] leading-none">Duur</p>
+                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{Math.floor(totalDuration / 60)}u {totalDuration % 60}m</p>
+                </div>
+              </div>
+
+              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
+                  <TrendingUp className="w-3.5 h-3.5 text-[#1e293b]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#6b7280] leading-none">Gem. Score</p>
+                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{avgScore}%</p>
+                </div>
+              </div>
             </div>
+
             <Button 
               className="gap-2 bg-hh-primary hover:bg-hh-primary/90 text-white"
               onClick={() => navigate?.("upload-analysis")}
@@ -293,48 +335,6 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               <Upload className="w-4 h-4 text-white" />
               Analyseer gesprek
             </Button>
-          </div>
-
-          <div className="flex flex-wrap lg:flex-nowrap gap-2 justify-end">
-            <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.1)' }}>
-                <Video className="w-3 h-3 text-[#1e293b]" />
-              </div>
-              <div>
-                <p className="text-[10px] text-[#6b7280] leading-none">Analyses</p>
-                <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{conversations.length}</p>
-              </div>
-            </div>
-
-            <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(61,154,110,0.1)' }}>
-                <Eye className="w-3 h-3 text-[#3d9a6e]" />
-              </div>
-              <div>
-                <p className="text-[10px] text-[#6b7280] leading-none">Geanalyseerd</p>
-                <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{analyzedCount}</p>
-              </div>
-            </div>
-
-            <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.1)' }}>
-                <Clock className="w-3 h-3 text-[#1e293b]" />
-              </div>
-              <div>
-                <p className="text-[10px] text-[#6b7280] leading-none">Duur</p>
-                <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{Math.floor(totalDuration / 60)}u {totalDuration % 60}m</p>
-              </div>
-            </div>
-
-            <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.1)' }}>
-                <TrendingUp className="w-3 h-3 text-[#1e293b]" />
-              </div>
-              <div>
-                <p className="text-[10px] text-[#6b7280] leading-none">Gem. Score</p>
-                <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{avgScore}%</p>
-              </div>
-            </div>
           </div>
         </div>
 
