@@ -19,6 +19,8 @@ import {
   Loader2,
   MessageSquare,
   Zap,
+  Calendar,
+  Clock,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -542,27 +544,52 @@ export function AnalysisResults({
               ← Terug naar analyses
             </Button>
           </div>
-          <h1 className="mb-2 text-[32px] leading-[40px] sm:text-[40px] sm:leading-[48px]">
-            {conversation.title}
-          </h1>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-hh-ui-50 rounded-full border border-hh-border">
-              <span className="text-[12px] text-hh-muted">Datum</span>
-              <span className="text-[13px] font-semibold text-hh-ink">{new Date(conversation.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-hh-ui-50 rounded-full border border-hh-border">
-              <span className="text-[12px] text-hh-muted">Turns</span>
-              <span className="text-[13px] font-semibold text-hh-ink">{transcript.length}</span>
-            </div>
-            {transcript.length > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-hh-ui-50 rounded-full border border-hh-border">
-                <span className="text-[12px] text-hh-muted">Duur</span>
-                <span className="text-[13px] font-semibold text-hh-ink">{formatTime(transcript[transcript.length - 1].endMs)}</span>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="mb-2 text-[32px] leading-[40px] sm:text-[40px] sm:leading-[48px] flex-shrink-0">
+              {conversation.title}
+            </h1>
+            <div className="flex flex-nowrap gap-2 items-center pt-1">
+              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
+                  <Calendar className="w-3.5 h-3.5 text-[#1e293b]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#6b7280] leading-none">Datum</p>
+                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{new Date(conversation.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</p>
+                </div>
               </div>
-            )}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-hh-ui-50 rounded-full border border-hh-border">
-              <span className="text-[12px] text-hh-muted">Score</span>
-              <span className={`text-[13px] font-semibold ${getScoreColor(overallScore)}`}>{overallScore}%</span>
+
+              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
+                  <MessageSquare className="w-3.5 h-3.5 text-[#1e293b]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#6b7280] leading-none">Turns</p>
+                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{transcript.length}</p>
+                </div>
+              </div>
+
+              {transcript.length > 0 && (
+                <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
+                    <Clock className="w-3.5 h-3.5 text-[#1e293b]" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-[#6b7280] leading-none">Duur</p>
+                    <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{formatTime(transcript[transcript.length - 1].endMs)}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(61,154,110,0.12)' }}>
+                  <TrendingUp className="w-3.5 h-3.5 text-[#3d9a6e]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#6b7280] leading-none">Score</p>
+                  <p className={`text-[14px] font-semibold leading-tight ${getScoreColor(overallScore)}`}>{overallScore}%</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -275,9 +275,9 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   return (
     <Layout {...layoutProps}>
       <div className="p-6 space-y-6">
-        {/* Header with KPI Cards top-right */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-shrink-0">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
             <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
               Gespreksanalyse
             </h1>
@@ -285,57 +285,72 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               Upload gesprekken voor AI-analyse en feedback
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            <div className="flex flex-nowrap gap-2">
-              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
-                  <Video className="w-3.5 h-3.5 text-[#1e293b]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-[#6b7280] leading-none">Analyses</p>
-                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{conversations.length}</p>
-                </div>
-              </div>
+          <Button 
+            className="gap-2 bg-hh-primary hover:bg-hh-primary/90 text-white"
+            onClick={() => navigate?.("upload-analysis")}
+          >
+            <Upload className="w-4 h-4 text-white" />
+            Analyseer gesprek
+          </Button>
+        </div>
 
-              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(61,154,110,0.12)' }}>
-                  <Eye className="w-3.5 h-3.5 text-[#3d9a6e]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-[#6b7280] leading-none">Geanalyseerd</p>
-                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{analyzedCount}</p>
-                </div>
-              </div>
-
-              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
-                  <Clock className="w-3.5 h-3.5 text-[#1e293b]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-[#6b7280] leading-none">Duur</p>
-                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{Math.floor(totalDuration / 60)}u {totalDuration % 60}m</p>
-                </div>
-              </div>
-
-              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
-                  <TrendingUp className="w-3.5 h-3.5 text-[#1e293b]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-[#6b7280] leading-none">Gem. Score</p>
-                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{avgScore}%</p>
-                </div>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#4F7396]/10 flex items-center justify-center">
+                <FileAudio className="w-4 h-4 sm:w-5 sm:h-5 text-[#4F7396]" />
               </div>
             </div>
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Totaal Analyses
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-emerald-600">
+              {conversations.length}
+            </p>
+          </Card>
 
-            <Button 
-              className="gap-2 bg-hh-primary hover:bg-hh-primary/90 text-white"
-              onClick={() => navigate?.("upload-analysis")}
-            >
-              <Upload className="w-4 h-4 text-white" />
-              Analyseer gesprek
-            </Button>
-          </div>
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
+              </div>
+            </div>
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Geanalyseerd
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-emerald-600">
+              {analyzedCount}
+            </p>
+          </Card>
+
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
+              </div>
+            </div>
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Totale Duur
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-orange-600">
+              {Math.floor(totalDuration / 60)}u {totalDuration % 60}m
+            </p>
+          </Card>
+
+          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-sky-500/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-sky-500" />
+              </div>
+            </div>
+            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
+              Gem. Score
+            </p>
+            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-emerald-600">
+              {avgScore}%
+            </p>
+          </Card>
         </div>
 
         {/* Filters & Search */}
