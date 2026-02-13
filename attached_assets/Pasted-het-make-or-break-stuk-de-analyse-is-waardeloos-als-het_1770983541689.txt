@@ -1,0 +1,372 @@
+het “make or break”-stuk: de analyse is waardeloos als het voelt als een rapport. Het moet voelen als: Hugo zag het, snapte het, en coacht je in 3 minuten naar een betere volgende poging — mét een mogelijkheid om het meteen te voelen door te replayen.
+
+Ik zou dit bouwen als één gesloten Coach Loop die zowel werkt op een opgenomen gesprek als op roleplay, met dezelfde onderliggende engine.
+
+1) North Star UX: van “rapport” naar “coach loop”
+De huidige UI (sterke/verbeterpunten) voelt als school
+
+Je screenshots tonen letterlijk “Sterke punten (5)” en “Verbeterpunten (5)” met lijstjes en badges. Dat is cognitief zwaar en emotioneel “oordeel”. Het probleem is niet je inhoud — het is de presentatievorm.
+
+De nieuwe default: Hugo Debrief (chat) + 3 momenten + 1 replay
+
+De analysepagina wordt geen dashboard met tabs, maar een coach debrief met acties.
+
+Bovenaan (10 seconden)
+
+Scoreboard (compact): “EPIC Momentum”, “Openingsfase”, “Closing readiness”, trend vs vorige 5 gesprekken, en een ranking hook (optioneel): “Top 35% deze maand”.
+
+Geen 34/100 “verbetering nodig”, maar:
+
+“Je EPIC zit goed. Je laat kansen liggen op commit → daardoor blijft de klant ‘twijfel’ houden.”
+
+Daarna (30–60 seconden)
+
+One Big Win (1 kaart)
+
+One Quick Fix (1 kaart)
+
+One Turning Point (1 kaart = gemiste kans met hoogste impact)
+
+Elke kaart heeft 3 knoppen:
+
+Play (audio + transcript snippet)
+
+Wat zei jij / Wat had beter geweest? (toon 1 alternatief)
+
+Probeer opnieuw vanaf hier (Start Replay Roleplay)
+
+Dit sluit 100% aan bij je eigen feedback-filosofie “dit is een gesprek, geen rapport” + “1 micro-experiment” (die staat al letterlijk in je feedback prompt). 
+
+feedback_prompt
+
+2) De kernfeature: “Replay vanaf dit moment” (voelen = geloven)
+
+Dit is wat je beschrijft: hier ging het fout → speel opnieuw → voel het verschil.
+
+Hoe het eruit ziet voor de gebruiker
+
+Op een “gemiste kans”-kaart (bv. 06:22):
+
+Hugo:
+“Hier zei de klant X. Jij reageerde met Y. Dit was hét moment om een commitmentvraag te stellen.”
+
+Knop: Replay vanaf 06:22
+
+UI schakelt naar een oefenscherm:
+
+links: mini-context (2–4 vorige turns + doel)
+
+rechts: chat (klant = AI)
+
+onderaan: “jij bent aan zet” (tekst of voice)
+
+Na jouw reply:
+
+klant reageert realistisch
+
+Hugo geeft micro-feedback (max 3 zinnen) + “nog 1 rep?”
+
+je doet 2–3 reps → klaar → scorebord update (klein, niet dramatisch)
+
+Belangrijk: niet “je had moeten…”, maar coachstijl: vragen, spiegelen, 1 concrete actie. Dat is ook exact hoe je COACH_CHAT prompt al is opgezet (dialoog, LSD, eigenaarschap). 
+
+coach_prompt
+
+3) Waarom dit ook technisch klopt met jouw engine (je hebt 80% al)
+
+Je engine-architectuur is al gebouwd rond:
+
+transcript + technieken detectie + houdingen/signalen
+
+customer dynamics (rapport/value tension/commit readiness)
+
+roleplay die reageert op HOUDING + DYNAMIEK
+
+coach en feedback prompts die expliciet “chat, geen rapport” afdwingen
+
+Dat staat allemaal al in je SSOT/overlays. 
+
+HUGO_V2_ARCHITECTUUR
+
+ 
+
+roleplay_prompt
+
+ 
+
+customer_dynamics
+
+ 
+
+klant_houdingen.v2.4
+
+Dus: dit is geen “nieuw product”, het is vooral:
+
+nieuwe output-artefacts uit je pipeline (coach-script + moments)
+
+nieuwe UI die die artefacts als coach-ervaring presenteert
+
+een Replay Orchestrator die roleplay kan starten vanaf turn N met dezelfde klantstaat
+
+4) Data-model: wat je moet opslaan om dit soepel te maken
+A) “CoachScript” (chatgestuurd, action-first)
+
+Voeg in analysis result JSONB een extra blok toe:
+
+{
+  "coach_debrief": {
+    "messages": [
+      {
+        "type": "coach_text",
+        "text": "Oké Robbe — je opening was goed gestructureerd. Je mist vooral commitment-momenten waardoor twijfel blijft hangen."
+      },
+      {
+        "type": "moment_ref",
+        "moment_id": "m-0622",
+        "cta": ["play", "try_again", "see_why"]
+      }
+    ]
+  }
+}
+
+
+Waarom dit werkt:
+
+Je UI kan dit renderen als een chat
+
+elke message kan acties triggeren (play/replay/drill/video)
+
+B) “Moments” (de echte goudmijn)
+
+Maak een gestandaardiseerd moment object:
+
+{
+  "id": "m-0622",
+  "timestamp": "06:22",
+  "turn_index": 41,
+  "phase": 2,
+  "label": "Gemiste commitment",
+  "type": "quick_fix",
+  "customer_signal": "twijfel",
+  "seller_text": "Ja, ja, ik merk het...",
+  "customer_text": "Eh, nee. Nee, ik weet niet wat dat...",
+  "why_it_matters": "Hier had je de twijfel kunnen uitdiepen + impact concretiseren → dan had je commitment kunnen vragen.",
+  "recommended_techniques": ["2.3", "2.4"],
+  "replay": {
+    "start_turn_index": 41,
+    "context_turns": 4
+  }
+}
+
+
+Bronnen die je hiervoor al hebt:
+
+technieken detectie (detectors) 
+
+detectors.v6.2
+
+technieken SSOT (wat/doel/hoe) 
+
+technieken_index.v1.0.1
+
+klanthoudingen (twijfel/uitstel/…) 
+
+klant_houdingen.v2.4
+
+C) “State at turn” (zodat replay écht hetzelfde aanvoelt)
+
+Cruciaal voor “feel the difference”:
+
+Per turn wil je kunnen reconstrueren:
+
+customer_attitude (houding)
+
+dynamics: rapport / valueTension / commitReadiness
+
+Je customer dynamics model bestaat al exact in die vorm. 
+
+customer_dynamics
+
+
+En je roleplay prompt verwacht letterlijk attitude + dynamics. 
+
+roleplay_prompt
+
+Praktisch:
+
+tijdens analyse pipeline: loop door turns en update dynamics
+
+sla om de X turns (of voor elk turn) een snapshot op in result.turn_state[]
+
+5) Replay Orchestrator: hoe start je roleplay vanaf een echte opname?
+Input
+
+analysisId
+
+startTurnIndex
+
+optioneel: goal (bv “commitment krijgen op criterium X”)
+
+Server flow
+
+Load analysis result → transcript turns tot startTurnIndex
+
+Reconstrueer:
+
+history (gesprek tot nu toe)
+
+attitude op startmoment
+
+dynamics snapshot op startmoment
+
+Start roleplay session met:
+
+persona policy: “reconstruct_from_real_call” (zelfde stijl)
+
+initial epic phase: afgeleid uit fase (explore/probe/impact/commit)
+
+Vanaf nu:
+
+user speelt verkoper
+
+AI speelt klant
+
+Na 2–3 beurten:
+
+run evaluator op seller turns (zoals je al doet)
+
+geef micro-feedback (feedback_prompt) 
+
+feedback_prompt
+
+update scoreboard delta
+
+Waarom dit technisch netjes is
+
+Je roleplay template is al exact “context + houding + dynamics + history + seller_message”. 
+
+roleplay_prompt
+
+
+Je hebt al practice flow rules en roleplay gates per techniek in je overlay. 
+
+coach_overlay_v3_1
+
+Dus je hoeft geen nieuw systeem te verzinnen; je “Replay” is gewoon een pre-seeded roleplay session.
+
+6) Acties die je “coach-achtig” maken (niet academisch)
+
+Je wil dat mensen niet lezen, maar doen. Dus elke feedback-unit eindigt in een actie.
+
+Ik zou 5 standaard CTA’s inbouwen (overal herbruikbaar):
+
+Replay vanaf hier
+
+Geef me 3 antwoord-opties (kort / direct / empathisch)
+
+1 zin oefenen (micro-drill: “Schrijf 1 commitmentvraag”)
+
+Laat Hugo het voordoen (audio/tekst voorbeeld)
+
+Bekijk 90 sec video (als je mapping hebt) 
+
+video_mapping
+
+Koppeling naar je bestaande practice catalog:
+
+aanbevolen technieken per moment → orchestrator unit → drills/roleplay (coach_overlay). 
+
+coach_overlay_v3_1
+
+SSOT geeft je stappenplan/voorbeelden voor “toon me hoe”. 
+
+technieken_index.v1.0.1
+
+7) Scoreboard zonder “rapportkaart”-gevoel
+
+Het doel van scoreboard is status + progress, niet “jij faalt”.
+
+Wat ik zou tonen:
+
+EPIC Momentum (hoe vaak Explore→Probe→Impact→Commit in flow zit)
+
+Missed Signal Recovery (hoe vaak je een twijfel/uitstel omzet naar duidelijkheid)
+
+Closing Readiness (heb je prerequisites: budget/timing/decision criteria)
+
+En vooral:
+
+trend (↑ vs vorige gesprekken)
+
+streaks (2 dagen op rij 1 replay gedaan)
+
+Dit maakt het competitief zonder schoolgevoel.
+
+8) Wat je pipeline concreet moet veranderen
+
+Je “Report generation” stap vervang je niet; je voegt erbovenop een “Coach artifact generation” toe:
+
+Nieuwe artifacts
+
+coach_debrief.messages[] (chat script + CTAs)
+
+moments[] (top 3 standaard, “see more” voor de rest)
+
+turn_state[] (attitude + dynamics snapshots)
+
+replay_presets[] (startpunten die je UI kan aanbieden)
+
+Je analyse-output blijft rijk (tabs/rapport) maar standaard toon je Coach View. Rapport blijft als “Download PDF” of “Advanced view”.
+
+9) MVP-scope (zodat je snel waarde voelt)
+
+Zonder extra complexiteit zou ik MVP doen in 3 stukken:
+
+MVP 1 — “Coach View” zonder replay
+
+bovenaan scoreboard
+
+3 momenten met play + “wat had je kunnen zeggen?”
+
+Hugo chat debrief op basis van die 3 momenten
+
+MVP 2 — Replay op 1 moment type
+
+alleen voor “Gemiste Kans: commitment” (2.4)
+
+start roleplay vanaf dat moment (pre-seeded history)
+
+2 reps + microfeedback
+
+MVP 3 — Volledige actions library
+
+drill mode per techniek
+
+video links
+
+“compare before/after” (diff view)
+
+10) Waarom dit jouw platform-identiteit scherp zet
+
+Jij wil: “Hugo is coach, niet evaluator.”
+Je prompts zeggen dat al letterlijk (“dialoog, geen rapport” / “eigenaarschap” / “1 micro-experiment”). 
+
+feedback_prompt
+
+ 
+
+coach_prompt
+
+De missing link is dat je UI en artifact-structuur nu nog “rapportkaart” uitstralen. Als je de output herstructureert naar coach script + acties + replay, dan voelt het als een echte coach die naast je zit.
+
+Als je dit bouwt, krijg je iets dat bijna geen enkele tool goed doet: niet analyseren om te weten, maar analyseren om te kunnen herhalen. Dat is precies het verschil tussen “scholarly” en “praktisch”.
+
+Wil je dat ik ook een concreet wireframe (componenten + states) uitschrijf voor:
+
+Coach Debrief Page
+
+Moment Card
+
+Replay Session UI
+
+After-Action microfeedback UI (2 reps + scoreboard delta)
