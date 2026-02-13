@@ -27,7 +27,7 @@ interface AnalysisResultsProps {
   analysisId?: string;
   isPreview?: boolean;
   isAdmin?: boolean;
-  navigationData?: { conversationId?: string; fromAdmin?: boolean };
+  navigationData?: { conversationId?: string; fromAdmin?: boolean; autoLoadFirst?: boolean };
 }
 
 interface TranscriptTurn {
@@ -132,14 +132,41 @@ export function AnalysisResults({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FullAnalysisResult | null>(null);
 
-  const conversationId = navigationData?.conversationId || sessionStorage.getItem('analysisId');
+  const [resolvedConversationId, setResolvedConversationId] = useState<string | null>(
+    navigationData?.conversationId || sessionStorage.getItem('analysisId') || null
+  );
 
   const [processingStep, setProcessingStep] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!conversationId) {
+    if (resolvedConversationId) return;
+    if (!navigationData?.autoLoadFirst) {
       setError('Geen analyse ID gevonden');
       setLoading(false);
+      return;
+    }
+    const loadFirst = async () => {
+      try {
+        const res = await fetch('/api/v2/analysis/list');
+        if (!res.ok) { setError('Kon analyses niet ophalen'); setLoading(false); return; }
+        const data = await res.json();
+        const analyses = data.analyses || [];
+        if (analyses.length > 0) {
+          setResolvedConversationId(analyses[0].id);
+        } else {
+          setError('Geen analyses gevonden');
+          setLoading(false);
+        }
+      } catch {
+        setError('Kon analyses niet ophalen');
+        setLoading(false);
+      }
+    };
+    loadFirst();
+  }, [resolvedConversationId, navigationData?.autoLoadFirst]);
+
+  useEffect(() => {
+    if (!resolvedConversationId) {
       return;
     }
 
@@ -147,7 +174,7 @@ export function AnalysisResults({
 
     const fetchResults = async () => {
       try {
-        const response = await fetch(`/api/v2/analysis/results/${conversationId}`);
+        const response = await fetch(`/api/v2/analysis/results/${resolvedConversationId}`);
         const data = await response.json();
 
         if (response.status === 202) {
@@ -191,7 +218,7 @@ export function AnalysisResults({
     return () => {
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [conversationId]);
+  }, [resolvedConversationId]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-hh-success";
@@ -415,7 +442,7 @@ export function AnalysisResults({
     doc.save(`${result.conversation.title || 'analyse'}-rapport.pdf`);
   };
 
-  const useAdminLayout = !!(navigationData?.fromAdmin || isAdmin);
+  const useAdminLayout = !!navigationData?.fromAdmin;
   const Layout = useAdminLayout
     ? ({ children: c }: { children: React.ReactNode }) => <AdminLayout currentPage="admin-uploads" navigate={navigate as (page: string) => void}>{c}</AdminLayout>
     : ({ children: c }: { children: React.ReactNode }) => <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>{c}</AppLayout>;

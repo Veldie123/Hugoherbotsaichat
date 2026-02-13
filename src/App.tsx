@@ -108,6 +108,7 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const cid = params.get('id');
       if (cid) return { conversationId: cid };
+      return { autoLoadFirst: true };
     }
     return undefined;
   });
