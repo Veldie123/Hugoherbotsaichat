@@ -207,19 +207,20 @@ export function AppLayout({
                     {history.filter(h => !getHiddenIds('user', item.historyType === 'chat' ? 'chat' : 'analysis').has(h.id)).slice(0, 5).map((histItem) => (
                       <button
                         key={histItem.id}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (onSelectHistoryItem) {
                             onSelectHistoryItem(histItem.id, item.historyType);
                           } else if (item.historyType === 'analysis') {
                             navigate?.('analysis-results', { conversationId: histItem.id });
                           } else {
                             sessionStorage.setItem("openSessionId", histItem.id);
-                            navigate?.(item.overviewPage);
+                            navigate?.('talk-to-hugo', { sessionId: histItem.id });
                           }
                         }}
-                        className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-left hover:bg-hh-ui-50 transition-colors group"
+                        className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-left hover:bg-hh-ui-50 transition-colors group cursor-pointer"
                       >
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pointer-events-none">
                           <p className="text-[13px] text-hh-text truncate group-hover:text-hh-ink">
                             {histItem.title}
                           </p>
@@ -307,20 +308,21 @@ export function AppLayout({
                       {history.filter(h => !getHiddenIds('user', item.historyType === 'chat' ? 'chat' : 'analysis').has(h.id)).slice(0, 5).map((histItem) => (
                         <button
                           key={histItem.id}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (onSelectHistoryItem) {
                               onSelectHistoryItem(histItem.id, item.historyType);
                             } else if (item.historyType === 'analysis') {
                               navigate?.('analysis-results', { conversationId: histItem.id });
                             } else {
                               sessionStorage.setItem("openSessionId", histItem.id);
-                              navigate?.(item.overviewPage);
+                              navigate?.('talk-to-hugo', { sessionId: histItem.id });
                             }
                             setMobileMenuOpen(false);
                           }}
-                          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-left hover:bg-hh-ui-50 transition-colors"
+                          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-left hover:bg-hh-ui-50 transition-colors cursor-pointer"
                         >
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 pointer-events-none">
                             <p className="text-[14px] text-hh-text truncate">{histItem.title}</p>
                             <p className="text-[12px] text-hh-muted">{histItem.date}</p>
                           </div>
