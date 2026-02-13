@@ -1,4 +1,5 @@
 import { AppLayout } from "./AppLayout";
+import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -414,9 +415,14 @@ export function AnalysisResults({
     doc.save(`${result.conversation.title || 'analyse'}-rapport.pdf`);
   };
 
+  const useAdminLayout = !!(navigationData?.fromAdmin || isAdmin);
+  const Layout = useAdminLayout
+    ? ({ children: c }: { children: React.ReactNode }) => <AdminLayout currentPage="admin-uploads" navigate={navigate as (page: string) => void}>{c}</AdminLayout>
+    : ({ children: c }: { children: React.ReactNode }) => <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>{c}</AppLayout>;
+
   if (loading || processingStep) {
     return (
-      <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>
+      <Layout>
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
           <div className="text-center space-y-4">
             <Loader2 className="w-8 h-8 text-hh-primary animate-spin mx-auto" />
@@ -428,13 +434,13 @@ export function AnalysisResults({
             )}
           </div>
         </div>
-      </AppLayout>
+      </Layout>
     );
   }
 
   if (error || !result) {
     return (
-      <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>
+      <Layout>
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
           <div className="text-center space-y-4">
             <AlertCircle className="w-8 h-8 text-hh-destructive mx-auto" />
@@ -444,7 +450,7 @@ export function AnalysisResults({
             </Button>
           </div>
         </div>
-      </AppLayout>
+      </Layout>
     );
   }
 
@@ -496,7 +502,7 @@ export function AnalysisResults({
   ];
 
   return (
-    <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>
+    <Layout>
       <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 overflow-y-auto h-[calc(100vh-4rem)]">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -512,20 +518,29 @@ export function AnalysisResults({
           <h1 className="mb-2 text-[32px] leading-[40px] sm:text-[40px] sm:leading-[48px]">
             {conversation.title}
           </h1>
-          <div className="flex items-center gap-4 text-[14px] leading-[20px] text-hh-muted">
-            <span>{new Date(conversation.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-            <span>•</span>
-            <span>{transcript.length} turns</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-hh-ui-50 rounded-full border border-hh-border">
+              <span className="text-[12px] text-hh-muted">Datum</span>
+              <span className="text-[13px] font-semibold text-hh-ink">{new Date(conversation.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-hh-ui-50 rounded-full border border-hh-border">
+              <span className="text-[12px] text-hh-muted">Turns</span>
+              <span className="text-[13px] font-semibold text-hh-ink">{transcript.length}</span>
+            </div>
             {transcript.length > 0 && (
-              <>
-                <span>•</span>
-                <span>{formatTime(transcript[transcript.length - 1].endMs)}</span>
-              </>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-hh-ui-50 rounded-full border border-hh-border">
+                <span className="text-[12px] text-hh-muted">Duur</span>
+                <span className="text-[13px] font-semibold text-hh-ink">{formatTime(transcript[transcript.length - 1].endMs)}</span>
+              </div>
             )}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-hh-ui-50 rounded-full border border-hh-border">
+              <span className="text-[12px] text-hh-muted">Score</span>
+              <span className={`text-[13px] font-semibold ${getScoreColor(overallScore)}`}>{overallScore}%</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-2 border-b border-hh-border pb-0">
+        <div className="flex gap-2 pb-0">
           {[
             { value: 'overview', label: 'Overzicht' },
             { value: 'timeline', label: 'Transcript + Evaluatie' },
@@ -534,10 +549,10 @@ export function AnalysisResults({
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value as any)}
-              className={`px-4 py-2.5 text-[14px] font-medium rounded-t-lg transition-colors ${
+              className={`px-4 py-2.5 text-[14px] font-medium rounded-full transition-colors ${
                 activeTab === tab.value
-                  ? 'bg-hh-primary text-white border-b-2 border-hh-primary'
-                  : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100 border-b-2 border-transparent'
+                  ? 'bg-hh-primary text-white'
+                  : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100'
               }`}
             >
               {tab.label}
@@ -567,7 +582,7 @@ export function AnalysisResults({
                 <span className={`text-[28px] leading-[36px] ${getScoreColor(ps.score)}`}>
                   {ps.score}%
                 </span>
-                <Progress value={ps.score} className="h-1.5 mt-2 [&_[data-slot=progress-indicator]]:bg-emerald-500" />
+                <Progress value={ps.score} indicatorColor="#3C9A6E" className="h-1.5 mt-2" />
               </div>
             ))}
           </div>
@@ -831,6 +846,6 @@ export function AnalysisResults({
             </Card>
           </div>)}
       </div>
-    </AppLayout>
+    </Layout>
   );
 }

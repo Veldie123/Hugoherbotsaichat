@@ -56,7 +56,7 @@ function formatTimeAgo(dateStr: string): string {
 
 const mainNavItems = [
   { id: "talk-to-hugo", label: "Hugo AI", icon: MessageSquare, historyType: "chat" as const, overviewPage: "hugo-overview" },
-  { id: "upload-analysis", label: "Gespreksanalyse", icon: FileSearch, historyType: "analysis" as const, overviewPage: "analysis" },
+  { id: "analysis", label: "Gespreksanalyse", icon: FileSearch, historyType: "analysis" as const, overviewPage: "analysis" },
 ];
 
 const defaultChatHistory: HistoryItem[] = [
@@ -133,7 +133,7 @@ export function AppLayout({
 
   const isNavItemActive = (itemId: string) => {
     const pageMap: Record<string, string[]> = {
-      "upload-analysis": ["analysis", "analysis-results", "upload-analysis"],
+      "analysis": ["analysis", "analysis-results", "upload-analysis"],
       "talk-to-hugo": ["hugo-overview", "talk-to-hugo", "roleplay", "roleplays"],
     };
     return pageMap[itemId]?.includes(currentPage) || false;
@@ -210,6 +210,8 @@ export function AppLayout({
                         onClick={() => {
                           if (onSelectHistoryItem) {
                             onSelectHistoryItem(histItem.id, item.historyType);
+                          } else if (item.historyType === 'analysis') {
+                            navigate?.('analysis-results', { conversationId: histItem.id });
                           } else {
                             sessionStorage.setItem("openSessionId", histItem.id);
                             navigate?.(item.overviewPage);
@@ -308,6 +310,8 @@ export function AppLayout({
                           onClick={() => {
                             if (onSelectHistoryItem) {
                               onSelectHistoryItem(histItem.id, item.historyType);
+                            } else if (item.historyType === 'analysis') {
+                              navigate?.('analysis-results', { conversationId: histItem.id });
                             } else {
                               sessionStorage.setItem("openSessionId", histItem.id);
                               navigate?.(item.overviewPage);
