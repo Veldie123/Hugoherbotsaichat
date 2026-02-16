@@ -17,17 +17,17 @@ export function ChatBubble({
   variant = 'default',
   children,
 }: ChatBubbleProps) {
-  const isSellerMessage = speaker === 'seller';
-  const defaultLabel = isSellerMessage ? 'Jij' : 'Klant';
+  const isCustomer = speaker === 'customer';
+  const defaultLabel = isCustomer ? 'Klant' : 'Jij';
   const displayLabel = label ?? defaultLabel;
   
   const opacityClass = variant === 'faded' ? 'opacity-60' : '';
 
   return (
-    <div className={`flex ${isSellerMessage ? 'justify-end' : 'justify-start'}`}>
-      <div className={`flex flex-col ${isSellerMessage ? 'items-end' : 'items-start'} max-w-[80%]`}>
+    <div className={`flex ${isCustomer ? 'justify-end' : 'justify-start'}`}>
+      <div className={`flex flex-col ${isCustomer ? 'items-end' : 'items-start'} max-w-[80%]`}>
         <div className="flex items-center gap-2 mb-1 px-3">
-          <span className={`text-[12px] font-medium ${isSellerMessage ? 'text-hh-muted' : 'text-hh-text'}`}>
+          <span className={`text-[12px] font-medium ${isCustomer ? 'text-hh-muted' : 'text-hh-text'}`}>
             {displayLabel}
           </span>
           {timestamp && (
@@ -39,7 +39,7 @@ export function ChatBubble({
 
         <div
           className={`p-3 rounded-2xl ${
-            isSellerMessage
+            isCustomer
               ? "bg-hh-ink text-white rounded-br-md"
               : "bg-hh-ui-50 text-hh-text rounded-bl-md"
           } ${opacityClass}`}
