@@ -4,6 +4,7 @@ import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
+import { ChatBubble } from "./ChatBubble";
 import {
   TrendingUp,
   CheckCircle2,
@@ -173,7 +174,10 @@ export function AnalysisResults({
   isAdmin = false,
   navigationData,
 }: AnalysisResultsProps) {
-  const [activeTab, setActiveTab] = useState<"coach" | "timeline">("coach");
+  const [activeTab, setActiveTab] = useState<"coach" | "timeline">(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') === 'timeline' ? 'timeline' : 'coach';
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FullAnalysisResult | null>(null);
@@ -849,20 +853,10 @@ export function AnalysisResults({
                         {(moment.sellerText || moment.customerText) && (
                           <div className="mt-3 space-y-2">
                             {moment.sellerText && (
-                              <div className="flex gap-2 p-3 rounded-lg bg-hh-ui-50 border border-hh-border">
-                                <span className="text-[11px] font-medium text-hh-primary bg-hh-primary/10 px-1.5 py-0.5 rounded flex-shrink-0">Jij</span>
-                                <p className="text-[13px] leading-[18px] text-hh-text">
-                                  "{moment.sellerText.length > 150 ? moment.sellerText.substring(0, 150) + '...' : moment.sellerText}"
-                                </p>
-                              </div>
+                              <ChatBubble speaker="seller" text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
                             )}
                             {moment.customerText && (
-                              <div className="flex gap-2 p-3 rounded-lg bg-white border border-hh-border">
-                                <span className="text-[11px] font-medium text-hh-muted bg-hh-ui-100 px-1.5 py-0.5 rounded flex-shrink-0">Klant</span>
-                                <p className="text-[13px] leading-[18px] text-hh-text">
-                                  "{moment.customerText.length > 150 ? moment.customerText.substring(0, 150) + '...' : moment.customerText}"
-                                </p>
-                              </div>
+                              <ChatBubble speaker="customer" text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
                             )}
                           </div>
                         )}
@@ -1095,40 +1089,29 @@ export function AnalysisResults({
                 </div>
               )}
 
-              <div className="space-y-3 mb-4 max-h-[300px] overflow-y-auto">
+              <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto">
                 {replayContext?.context?.map((turn: any, i: number) => (
-                  <div key={`ctx-${i}`} className={`flex gap-2 ${turn.speaker === 'seller' ? 'justify-end' : ''}`}>
-                    <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-[13px] leading-[18px] ${
-                      turn.speaker === 'seller'
-                        ? 'bg-hh-primary/10 text-hh-text rounded-br-sm'
-                        : 'bg-hh-ui-100 text-hh-text rounded-bl-sm'
-                    } opacity-60`}>
-                      <span className="text-[10px] font-medium text-hh-muted block mb-0.5">
-                        {turn.speaker === 'seller' ? 'Jij (origineel)' : 'Klant (origineel)'}
-                      </span>
-                      {turn.text}
-                    </div>
-                  </div>
+                  <ChatBubble
+                    key={`ctx-${i}`}
+                    speaker={turn.speaker === 'seller' ? 'seller' : 'customer'}
+                    text={turn.text}
+                    label={turn.speaker === 'seller' ? 'Jij (origineel)' : 'Klant (origineel)'}
+                    variant="faded"
+                  />
                 ))}
 
                 {replayHistory.map((msg, i) => (
-                  <div key={`replay-${i}`} className={`flex gap-2 ${msg.role === 'seller' ? 'justify-end' : ''}`}>
-                    <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-[13px] leading-[18px] ${
-                      msg.role === 'seller'
-                        ? 'bg-hh-primary text-white rounded-br-sm'
-                        : 'bg-white border border-hh-border text-hh-text rounded-bl-sm'
-                    }`}>
-                      <span className="text-[10px] font-medium opacity-70 block mb-0.5">
-                        {msg.role === 'seller' ? 'Jij (replay)' : 'Klant'}
-                      </span>
-                      {msg.content}
-                    </div>
-                  </div>
+                  <ChatBubble
+                    key={`replay-${i}`}
+                    speaker={msg.role === 'seller' ? 'seller' : 'customer'}
+                    text={msg.content}
+                    label={msg.role === 'seller' ? 'Jij (replay)' : 'Klant'}
+                  />
                 ))}
 
                 {replayLoading && (
                   <div className="flex gap-2">
-                    <div className="px-3 py-2 rounded-2xl bg-hh-ui-100 rounded-bl-sm">
+                    <div className="px-3 py-2 rounded-2xl bg-hh-ui-50 rounded-bl-md">
                       <Loader2 className="w-4 h-4 animate-spin text-hh-muted" />
                     </div>
                   </div>
@@ -1170,10 +1153,10 @@ export function AnalysisResults({
             <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
               <h3 className="text-hh-text mb-2">Transcript met EPIC Evaluatie</h3>
               <p className="text-[14px] leading-[20px] text-hh-muted mb-6">
-                Turn-by-turn transcript met gedetecteerde technieken, klantsignalen en fase-indicatie
+                Gesprek als chat met gedetecteerde technieken, klantsignalen en fase-indicatie
               </p>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {(() => {
                   let lastPhase: number | null = null;
                   return transcript.map((turn) => {
@@ -1186,52 +1169,36 @@ export function AnalysisResults({
                     return (
                       <div key={turn.idx}>
                         {showPhaseDivider && currentPhase && (
-                          <div className={`flex items-center gap-3 my-4 py-2 px-4 rounded-lg border ${PHASE_LABELS[currentPhase].bgColor}`}>
-                            <span className={`text-[13px] font-semibold ${PHASE_LABELS[currentPhase].color}`}>
+                          <div className="flex items-center gap-3 my-4">
+                            <div className="flex-1 h-px bg-hh-border" />
+                            <span className={`text-[12px] font-semibold px-3 py-1 rounded-full border ${PHASE_LABELS[currentPhase].bgColor} ${PHASE_LABELS[currentPhase].color}`}>
                               {PHASE_LABELS[currentPhase].name}
                             </span>
-                            <span className="text-[11px] text-hh-muted">{PHASE_LABELS[currentPhase].description}</span>
+                            <span className="text-[11px] text-hh-muted hidden sm:inline">{PHASE_LABELS[currentPhase].description}</span>
+                            <div className="flex-1 h-px bg-hh-border" />
                           </div>
                         )}
-                        <div className={`p-4 rounded-lg border ${
-                          turn.speaker === 'seller' ? 'bg-hh-ui-50 border-hh-border' : 'bg-white border-hh-ui-200'
-                        }`}>
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <span className="text-[13px] leading-[18px] text-hh-muted">
-                              {formatTime(turn.startMs)}
-                            </span>
-                            <Badge variant="outline" className={turn.speaker === 'seller' ? 'border-hh-primary text-hh-primary' : ''}>
-                              {turn.speaker === 'seller' ? 'Verkoper' : 'Klant'}
-                            </Badge>
-                            {turn.speaker === 'customer' && (
-                              <Badge className={`${getSignalLabel(signal?.houding || 'neutraal').color} text-[11px]`}>
-                                {getSignalLabel(signal?.houding || 'neutraal').label}
+                        <ChatBubble
+                          speaker={turn.speaker === 'seller' ? 'seller' : 'customer'}
+                          text={turn.text}
+                          timestamp={formatTime(turn.startMs)}
+                        >
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {turn.speaker === 'customer' && signal && signal.houding !== 'neutraal' && (
+                              <Badge className={`${getSignalLabel(signal.houding).color} text-[10px] px-2 py-0.5`}>
+                                {getSignalLabel(signal.houding).label}
                               </Badge>
                             )}
-                            {currentPhase && (
-                              <Badge variant="outline" className={`text-[10px] ${PHASE_LABELS[currentPhase].color} border-current/30`}>
-                                Fase {currentPhase}
-                              </Badge>
-                            )}
+                            {evaluation && evaluation.techniques.length > 0 && evaluation.techniques.map((tech, i) => {
+                              const badge = getQualityBadge(tech.quality);
+                              return (
+                                <Badge key={i} variant="outline" className={`text-[10px] px-2 py-0.5 ${badge.color}`}>
+                                  {tech.quality === 'gemist' ? '✗' : '✓'} {tech.naam || tech.id}
+                                </Badge>
+                              );
+                            })}
                           </div>
-
-                          <p className="text-[14px] leading-[22px] text-hh-text mb-2">{turn.text}</p>
-
-                          {evaluation && evaluation.techniques.length > 0 && (
-                            <div className="space-y-2 mt-3">
-                              {evaluation.techniques.map((tech, i) => {
-                                const badge = getQualityBadge(tech.quality);
-                                return (
-                                  <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${badge.color}`}>
-                                    <span className="text-[13px] font-medium">
-                                      {tech.quality === 'gemist' ? '✗' : '✓'} {tech.id} {tech.naam}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
+                        </ChatBubble>
                       </div>
                     );
                   });
