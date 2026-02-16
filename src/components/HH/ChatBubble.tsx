@@ -6,6 +6,7 @@ interface ChatBubbleProps {
   timestamp?: string;
   label?: string;
   variant?: 'default' | 'faded';
+  compact?: boolean;
   children?: React.ReactNode;
 }
 
@@ -15,6 +16,7 @@ export function ChatBubble({
   timestamp,
   label,
   variant = 'default',
+  compact = false,
   children,
 }: ChatBubbleProps) {
   const isCustomer = speaker === 'customer';
@@ -22,35 +24,39 @@ export function ChatBubble({
   const displayLabel = label ?? defaultLabel;
   
   const opacityClass = variant === 'faded' ? 'opacity-60' : '';
+  const maxWidth = compact ? 'max-w-[70%]' : 'max-w-[80%]';
+  const padding = compact ? 'px-3 py-2' : 'p-3';
+  const textSize = compact ? 'text-[13px] leading-[18px]' : 'text-[14px] leading-[22px]';
+  const labelSize = compact ? 'text-[11px]' : 'text-[12px]';
 
   return (
     <div className={`flex ${isCustomer ? 'justify-end' : 'justify-start'}`}>
-      <div className={`flex flex-col ${isCustomer ? 'items-end' : 'items-start'} max-w-[80%]`}>
-        <div className="flex items-center gap-2 mb-1 px-3">
-          <span className={`text-[12px] font-medium ${isCustomer ? 'text-hh-muted' : 'text-hh-text'}`}>
+      <div className={`flex flex-col ${isCustomer ? 'items-end' : 'items-start'} ${maxWidth}`}>
+        <div className={`flex items-center gap-2 mb-1 px-3`}>
+          <span className={`${labelSize} font-medium ${isCustomer ? 'text-hh-muted' : 'text-hh-text'}`}>
             {displayLabel}
           </span>
           {timestamp && (
-            <span className="text-[12px] text-hh-muted">
+            <span className={`${labelSize} text-hh-muted`}>
               {timestamp}
             </span>
           )}
         </div>
 
         <div
-          className={`p-3 rounded-2xl ${
+          className={`${padding} rounded-2xl ${
             isCustomer
               ? "bg-hh-ink text-white rounded-br-md"
               : "bg-hh-ui-50 text-hh-text rounded-bl-md"
           } ${opacityClass}`}
         >
-          <p className="text-[14px] leading-[22px] whitespace-pre-wrap">
+          <p className={`${textSize} whitespace-pre-wrap`}>
             {text}
           </p>
         </div>
 
         {children && (
-          <div className="mt-2">
+          <div className="mt-1.5">
             {children}
           </div>
         )}

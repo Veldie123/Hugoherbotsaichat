@@ -182,6 +182,22 @@ export function AnalysisResults({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FullAnalysisResult | null>(null);
   const [expandedMoment, setExpandedMoment] = useState<string | null>(null);
+  const conversationStorageKey = `viewedCoachMoments_${navigationData?.conversationId || sessionStorage.getItem('analysisId') || 'default'}`;
+  const [viewedMoments, setViewedMoments] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(conversationStorageKey);
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  const markMomentViewed = (momentId: string) => {
+    setViewedMoments(prev => {
+      const next = new Set(prev);
+      next.add(momentId);
+      try { localStorage.setItem(conversationStorageKey, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
 
   const [replayMoment, setReplayMoment] = useState<CoachMoment | null>(null);
   const [replayContext, setReplayContext] = useState<any>(null);
@@ -815,8 +831,10 @@ export function AnalysisResults({
                   const MomentIcon = config.icon;
                   const isExpanded = expandedMoment === moment.id;
 
+                  const isNew = !viewedMoments.has(moment.id);
+
                   return (
-                    <Card key={moment.id} className={`rounded-[16px] shadow-hh-sm border overflow-hidden ${config.borderColor}`}>
+                    <Card key={moment.id} className={`rounded-[16px] shadow-hh-sm border overflow-hidden ${config.borderColor} ${isNew ? 'ring-2 ring-hh-primary/20' : ''}`}>
                       <div className={`px-6 py-4 ${config.bgColor}`}>
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full ${config.accentColor} flex items-center justify-center flex-shrink-0`}>
@@ -835,11 +853,16 @@ export function AnalysisResults({
                                   {moment.customerSignal}
                                 </Badge>
                               )}
+                              {isNew && (
+                                <Badge className="text-[10px] bg-hh-primary text-white px-2 py-0.5 animate-pulse">
+                                  Nieuw
+                                </Badge>
+                              )}
                             </div>
                             <p className={`text-[15px] font-semibold ${config.color}`}>{moment.label}</p>
                           </div>
                           <button
-                            onClick={() => setExpandedMoment(isExpanded ? null : moment.id)}
+                            onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
                             className="p-2 rounded-full hover:bg-white/50 transition-colors"
                           >
                             {isExpanded ? <ChevronDown className="w-5 h-5 text-hh-muted" /> : <ChevronRight className="w-5 h-5 text-hh-muted" />}
@@ -853,15 +876,15 @@ export function AnalysisResults({
                         {(moment.sellerText || moment.customerText) && (
                           <div className="mt-3 space-y-2">
                             {moment.sellerText && (
-                              <ChatBubble speaker="seller" text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
+                              <ChatBubble compact speaker="seller" text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
                             )}
                             {moment.customerText && (
-                              <ChatBubble speaker="customer" text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
+                              <ChatBubble compact speaker="customer" text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
                             )}
                           </div>
                         )}
 
-                        {isExpanded && moment.betterAlternative && (
+                        {moment.betterAlternative && moment.type !== 'big_win' && (
                           <div className="mt-3 p-4 rounded-lg bg-hh-primary/5 border border-hh-primary/15">
                             <div className="flex gap-2 items-start">
                               <Lightbulb className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
@@ -873,70 +896,71 @@ export function AnalysisResults({
                           </div>
                         )}
 
+                        {moment.recommendedTechniques.length > 0 && (
+                          <div className="flex gap-1.5 mt-3 flex-wrap">
+                            {moment.recommendedTechniques.map((t, i) => (
+                              <Badge key={i} variant="outline" className="text-[11px] px-2.5 py-1 text-hh-primary border-hh-primary/30 bg-hh-primary/5 font-medium" title={t}>
+                                {getTechniekByNummer(t)?.naam || t}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-hh-border/50">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 text-[12px]"
-                            onClick={() => setExpandedMoment(isExpanded ? null : moment.id)}
-                          >
-                            {isExpanded ? (
-                              <><ChevronDown className="w-3.5 h-3.5" /> Inklappen</>
-                            ) : (
-                              <><Lightbulb className="w-3.5 h-3.5" /> Wat had beter geweest?</>
-                            )}
-                          </Button>
                           {moment.type !== 'big_win' && (
                             <Button
-                              variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[12px] border-hh-primary/30 text-hh-primary hover:bg-hh-primary/5"
+                              className="gap-1.5 text-[12px] bg-hh-primary hover:bg-hh-primary/90 text-white"
                               onClick={() => startReplay(moment)}
                             >
                               <Play className="w-3.5 h-3.5" /> Replay vanaf hier
                             </Button>
                           )}
-                          {moment.recommendedTechniques.length > 0 && (
-                            <div className="flex gap-1 ml-auto flex-wrap">
-                              {moment.recommendedTechniques.map((t, i) => (
-                                <Badge key={i} variant="outline" className="text-[10px] text-hh-muted" title={t}>
-                                  {getTechniekByNummer(t)?.naam || t}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-[12px] border-hh-primary/30 text-hh-primary hover:bg-hh-primary/5"
+                            onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
+                          >
+                            {isExpanded ? (
+                              <><ChevronDown className="w-3.5 h-3.5" /> Minder</>
+                            ) : (
+                              <><Sparkles className="w-3.5 h-3.5" /> Train dit moment</>
+                            )}
+                          </Button>
                         </div>
 
                         {isExpanded && (
-                          <div className="flex flex-wrap gap-2 mt-3">
+                          <div className="flex flex-wrap gap-2 mt-3 p-3 rounded-lg bg-hh-ui-50 border border-hh-border">
+                            <p className="w-full text-[12px] font-medium text-hh-text mb-1">Oefen met Hugo:</p>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[11px] text-hh-muted"
+                              className="gap-1.5 text-[12px] bg-white border-hh-border hover:border-hh-primary/40 hover:bg-hh-primary/5 text-hh-text"
                               disabled={actionLoading === `${moment.id}-three_options`}
                               onClick={() => runCoachAction(moment.id, 'three_options')}
                             >
-                              {actionLoading === `${moment.id}-three_options` ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageSquare className="w-3 h-3" />}
+                              {actionLoading === `${moment.id}-three_options` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5 text-hh-primary" />}
                               3 antwoord-opties
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[11px] text-hh-muted"
+                              className="gap-1.5 text-[12px] bg-white border-hh-border hover:border-amber-400 hover:bg-amber-50 text-hh-text"
                               disabled={actionLoading === `${moment.id}-micro_drill`}
                               onClick={() => runCoachAction(moment.id, 'micro_drill')}
                             >
-                              {actionLoading === `${moment.id}-micro_drill` ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                              {actionLoading === `${moment.id}-micro_drill` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-500" />}
                               1 zin oefenen
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[11px] text-hh-muted"
+                              className="gap-1.5 text-[12px] bg-white border-hh-border hover:border-hh-primary/40 hover:bg-hh-primary/5 text-hh-text"
                               disabled={actionLoading === `${moment.id}-hugo_demo`}
                               onClick={() => runCoachAction(moment.id, 'hugo_demo')}
                             >
-                              {actionLoading === `${moment.id}-hugo_demo` ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                              {actionLoading === `${moment.id}-hugo_demo` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-hh-primary" />}
                               Laat Hugo het voordoen
                             </Button>
                           </div>
@@ -996,11 +1020,16 @@ export function AnalysisResults({
           })()}
 
           {insights.coachDebrief && insights.coachDebrief.messages.length > 0 && (
-            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
-              <h4 className="text-hh-text mb-4 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-hh-primary" />
-                Hugo's Debrief
-              </h4>
+            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-primary/20 bg-gradient-to-br from-hh-primary/5 to-white mt-8">
+              <div className="flex items-center gap-3 mb-5 pb-3 border-b border-hh-primary/10">
+                <div className="w-10 h-10 rounded-full bg-hh-primary flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-[16px] font-semibold text-hh-text">Hugo's Debrief</h4>
+                  <p className="text-[12px] text-hh-muted">Persoonlijke aanbevelingen voor je volgende gesprek</p>
+                </div>
+              </div>
               <div className="space-y-3">
                 {insights.coachDebrief.messages.map((msg, i) => {
                   if (msg.type === 'coach_text' && msg.text) {
