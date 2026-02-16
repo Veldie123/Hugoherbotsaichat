@@ -125,6 +125,7 @@ export function TalkToHugoAI({
   const [sessionTimer, setSessionTimer] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [hasActiveSession, setHasActiveSession] = useState(false);
@@ -355,7 +356,13 @@ export function TalkToHugoAI({
         throw new Error(errorData.message || errorData.error || "Kon LiveKit niet initialiseren");
       }
       
-      const { token, url } = await response.json();
+      const data = await response.json();
+      const token = data.token;
+      const url = data.livekitUrl || data.url;
+      
+      if (!url) {
+        throw new Error("Geen LiveKit URL ontvangen van server");
+      }
       
       // Create and connect room
       const room = new Room();
@@ -443,6 +450,10 @@ export function TalkToHugoAI({
     return () => {
       stopHeygenAvatar();
       stopLiveKitAudio();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
     };
   }, [stopHeygenAvatar, stopLiveKitAudio]);
   
@@ -801,7 +812,59 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
   };
 
   const handleDictation = () => {
-    setIsRecording(!isRecording);
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert("Je browser ondersteunt spraakherkenning niet. Gebruik Chrome of Edge.");
+      return;
+    }
+
+    if (isRecording && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'nl-NL';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    const existingText = inputText;
+    let finalTranscript = '';
+
+    recognition.onresult = (event: any) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+        } else {
+          interim = transcript;
+        }
+      }
+      const prefix = existingText ? existingText.trimEnd() + ' ' : '';
+      const spoken = (finalTranscript + interim).trim();
+      setInputText(prefix + spoken);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("[Dictation] Error:", event.error);
+      if (event.error !== 'no-speech') {
+        setIsRecording(false);
+        recognitionRef.current = null;
+      }
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
   };
 
   const getModeIcon = () => {
@@ -1017,8 +1080,8 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            placeholder="Type je bericht..."
-            className="flex-1"
+            placeholder={isRecording ? "Luistert... spreek nu" : "Type je bericht..."}
+            className={`flex-1 ${isRecording ? "border-red-300 bg-red-50/30" : ""}`}
             disabled={isStreaming}
           />
           <Button
@@ -1026,9 +1089,9 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             size="icon"
             onClick={handleDictation}
             disabled={isStreaming}
-            className={`flex-shrink-0 ${isRecording ? "bg-red-50 border-red-300 text-red-600" : ""}`}
+            className={`flex-shrink-0 transition-all ${isRecording ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-200 animate-pulse" : "hover:bg-hh-ui-50"}`}
           >
-            <Mic className="w-4 h-4 text-[#4F7396]" />
+            {isRecording ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-[#4F7396]" />}
           </Button>
           <Button
             onClick={handleSendMessage}
