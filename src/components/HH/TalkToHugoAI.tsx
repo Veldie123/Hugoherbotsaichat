@@ -54,6 +54,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   MoreHorizontal,
+  Plus,
 } from "lucide-react";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
@@ -1076,11 +1077,21 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
 
       <div className="p-4 border-t border-hh-border bg-white">
         <div className="flex gap-2 items-end">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {}}
+            disabled={isStreaming}
+            className="flex-shrink-0 rounded-full w-9 h-9 border-hh-border hover:bg-hh-ui-50 text-[#4F7396]"
+            title="Bestand toevoegen"
+          >
+            <Plus className="w-5 h-5" />
+          </Button>
           <Input
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            placeholder={isRecording ? "Luistert... spreek nu" : "Type je bericht..."}
+            placeholder={isRecording ? "Luistert... spreek nu" : "Typ je bericht..."}
             className={`flex-1 ${isRecording ? "border-red-300 bg-red-50/30" : ""}`}
             disabled={isStreaming}
           />
