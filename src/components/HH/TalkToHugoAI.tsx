@@ -1297,7 +1297,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                 className="flex-shrink-0 rounded-full w-9 h-9 border-hh-border hover:bg-hh-ui-50 text-[#4F7396]"
                 title="Bestand toevoegen"
               >
-                <Plus className="w-5 h-5" />
+                <Paperclip className="w-4 h-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" side="top" className="w-56 p-1.5" sideOffset={8}>
@@ -1674,26 +1674,26 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               {!assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
-                  className="lg:hidden p-2 -ml-2 text-amber-500 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
+                  className="lg:hidden p-2 -ml-1 rounded-full bg-amber-50 text-amber-500 hover:bg-amber-100 hover:text-amber-600 transition-colors"
                   aria-label="Technieken & hulp"
                   title="Technieken & hulp"
                 >
-                  <Lightbulb className="w-5 h-5" />
+                  <Lightbulb className="w-4 h-4" strokeWidth={1.75} />
                 </button>
               )}
               {/* Desktop: Lightbulb help icon - toggles EPIC sidebar (Piano concept) */}
               {!assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-                  className={`hidden lg:flex p-2 -ml-2 rounded-lg transition-colors ${
+                  className={`hidden lg:flex p-2 -ml-1 rounded-full transition-colors ${
                     desktopSidebarOpen 
                       ? "bg-amber-100 text-amber-600" 
-                      : "text-hh-muted hover:text-amber-500 hover:bg-amber-50"
+                      : "bg-amber-50 text-amber-400 hover:text-amber-500 hover:bg-amber-100"
                   }`}
                   aria-label="Toon E.P.I.C. technieken"
                   title="Toon E.P.I.C. technieken"
                 >
-                  <Lightbulb className="w-5 h-5" />
+                  <Lightbulb className="w-4 h-4" strokeWidth={1.75} />
                 </button>
               )}
               <h2 className="text-[16px] lg:text-[18px] text-hh-text font-semibold whitespace-nowrap">Hugo AI</h2>
@@ -1722,28 +1722,28 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             {/* Right: Mode toggle + Stop (Niveau is now auto-adaptive, hidden) */}
             <div className="flex items-center gap-3">
 
-              {/* Mode toggle - compact icon buttons with bigger touch targets on mobile */}
-              <div className="flex items-center bg-hh-ui-50 rounded-lg p-0.5 sm:p-1">
+              {/* Mode toggle - refined icon buttons matching input bar style */}
+              <div className="flex items-center bg-hh-ui-50 rounded-full p-0.5">
                 <button
                   onClick={() => setChatMode("chat")}
-                  className={`p-2.5 sm:p-2 rounded-md transition-all ${chatMode === "chat" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
+                  className={`p-2 rounded-full transition-all ${chatMode === "chat" ? "bg-white shadow-sm text-hh-ink" : "text-[#4F7396]/60 hover:text-[#4F7396]"}`}
                   title="Chat"
                 >
-                  <MessageSquare className="w-[18px] h-[18px] sm:w-4 sm:h-4 text-current" />
+                  <MessageSquare className="w-4 h-4" strokeWidth={1.5} />
                 </button>
                 <button
                   onClick={() => setChatMode("audio")}
-                  className={`p-2.5 sm:p-2 rounded-md transition-all ${chatMode === "audio" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
+                  className={`p-2 rounded-full transition-all ${chatMode === "audio" ? "bg-white shadow-sm text-hh-ink" : "text-[#4F7396]/60 hover:text-[#4F7396]"}`}
                   title="Bellen"
                 >
-                  <Phone className="w-[18px] h-[18px] sm:w-4 sm:h-4 text-current" />
+                  <Phone className="w-4 h-4" strokeWidth={1.5} />
                 </button>
                 <button
                   onClick={() => setChatMode("video")}
-                  className={`p-2.5 sm:p-2 rounded-md transition-all ${chatMode === "video" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
+                  className={`p-2 rounded-full transition-all ${chatMode === "video" ? "bg-white shadow-sm text-hh-ink" : "text-[#4F7396]/60 hover:text-[#4F7396]"}`}
                   title="Video"
                 >
-                  <Video className="w-[18px] h-[18px] sm:w-4 sm:h-4 text-current" />
+                  <Video className="w-4 h-4" strokeWidth={1.5} />
                 </button>
               </div>
               
