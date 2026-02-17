@@ -424,7 +424,7 @@ export function AppLayout({
               </Button>
 
               {notifOpen && (
-                <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-hh-border z-50 overflow-hidden">
+                <div className="absolute right-0 top-12 w-[calc(100vw-2rem)] sm:w-96 max-w-[384px] bg-white rounded-xl shadow-xl border border-hh-border z-50 overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-hh-border">
                     <span className="text-[15px] font-semibold text-hh-ink">Notificaties</span>
                     {unreadCount > 0 && (

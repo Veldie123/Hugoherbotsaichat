@@ -1110,7 +1110,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((message) => (
           <div key={message.id} className={`group flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
-            <div className={`flex flex-col ${message.sender === "hugo" ? "items-end" : "items-start"} max-w-[80%]`}>
+            <div className={`flex flex-col ${message.sender === "hugo" ? "items-end" : "items-start"} max-w-[85%] sm:max-w-[75%] lg:max-w-[65%]`}>
               <div className={`p-3 rounded-2xl ${
                 message.sender === "hugo"
                   ? "bg-hh-ink text-white rounded-br-md"
@@ -1366,14 +1366,14 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <Button
             onClick={handleSendMessage}
             disabled={(!inputText.trim() && attachedFiles.length === 0) || isLoading || isStreaming}
-            className="bg-[#4F7396] hover:bg-[#4F7396]/90 gap-2"
+            className="bg-[#4F7396] hover:bg-[#4F7396]/90 gap-2 px-3 sm:px-4"
           >
             {isLoading || isStreaming ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />
             ) : (
               <Send className="w-4 h-4 text-white" />
             )}
-            <span className="text-white">{isLoading || isStreaming ? "Bezig..." : "Verzend"}</span>
+            <span className="text-white hidden sm:inline">{isLoading || isStreaming ? "Bezig..." : "Verzend"}</span>
           </Button>
         </div>
       </div>
@@ -1674,11 +1674,11 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               {!assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
-                  className="lg:hidden p-2 -ml-2 text-hh-muted hover:text-hh-text rounded-lg hover:bg-hh-ui-100 transition-colors"
+                  className="lg:hidden p-2 -ml-2 text-amber-500 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
                   aria-label="Technieken & hulp"
                   title="Technieken & hulp"
                 >
-                  <Menu className="w-5 h-5" />
+                  <Lightbulb className="w-5 h-5" />
                 </button>
               )}
               {/* Desktop: Lightbulb help icon - toggles EPIC sidebar (Piano concept) */}
@@ -1722,28 +1722,28 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             {/* Right: Mode toggle + Stop (Niveau is now auto-adaptive, hidden) */}
             <div className="flex items-center gap-3">
 
-              {/* Mode toggle - compact icon buttons */}
-              <div className="flex items-center bg-hh-ui-50 rounded-lg p-1">
+              {/* Mode toggle - compact icon buttons with bigger touch targets on mobile */}
+              <div className="flex items-center bg-hh-ui-50 rounded-lg p-0.5 sm:p-1">
                 <button
                   onClick={() => setChatMode("chat")}
-                  className={`p-2 rounded-md transition-all ${chatMode === "chat" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
+                  className={`p-2.5 sm:p-2 rounded-md transition-all ${chatMode === "chat" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
                   title="Chat"
                 >
-                  <MessageSquare className="w-4 h-4 text-current" />
+                  <MessageSquare className="w-[18px] h-[18px] sm:w-4 sm:h-4 text-current" />
                 </button>
                 <button
                   onClick={() => setChatMode("audio")}
-                  className={`p-2 rounded-md transition-all ${chatMode === "audio" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
+                  className={`p-2.5 sm:p-2 rounded-md transition-all ${chatMode === "audio" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
                   title="Bellen"
                 >
-                  <Phone className="w-4 h-4 text-current" />
+                  <Phone className="w-[18px] h-[18px] sm:w-4 sm:h-4 text-current" />
                 </button>
                 <button
                   onClick={() => setChatMode("video")}
-                  className={`p-2 rounded-md transition-all ${chatMode === "video" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
+                  className={`p-2.5 sm:p-2 rounded-md transition-all ${chatMode === "video" ? "bg-white shadow-sm text-hh-ink" : "text-hh-muted hover:text-hh-text"}`}
                   title="Video"
                 >
-                  <Video className="w-4 h-4 text-current" />
+                  <Video className="w-[18px] h-[18px] sm:w-4 sm:h-4 text-current" />
                 </button>
               </div>
               

@@ -767,16 +767,16 @@ export function AnalysisResults({
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[17px] leading-[26px] text-hh-text font-medium">
+              <p className="text-[15px] sm:text-[17px] leading-[24px] sm:leading-[26px] text-hh-text font-medium" style={{ overflowWrap: 'break-word' }}>
                 {insights.coachDebrief?.oneliner || `Laten we je gesprek samen doornemen.`}
               </p>
-              <p className="text-[14px] leading-[20px] text-hh-muted mt-1.5">
+              <p className="text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-hh-muted mt-1.5" style={{ overflowWrap: 'break-word' }}>
                 {insights.coachDebrief?.epicMomentum || `De EPIC-flow wordt geanalyseerd.`}
               </p>
 
-              <div className="flex flex-wrap items-center gap-2 mt-4">
-                {phaseScores.map((ps) => (
-                  <span key={ps.phase} className="text-[12px] text-hh-muted">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 sm:mt-4">
+                {phaseScores.map((ps, idx) => (
+                  <span key={ps.phase} className="text-[11px] sm:text-[12px] text-hh-muted whitespace-nowrap">
                     {ps.sublabel} <span className={`font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
                   </span>
                 ))}
@@ -787,7 +787,7 @@ export function AnalysisResults({
                   {insights.coachDebrief.messages.map((msg, i) => {
                     if (msg.type === 'coach_text' && msg.text) {
                       return (
-                        <p key={i} className="text-[14px] leading-[22px] text-hh-text/80">{msg.text}</p>
+                        <p key={i} className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-hh-text/80" style={{ overflowWrap: 'break-word' }}>{msg.text}</p>
                       );
                     }
                     if (msg.type === 'moment_ref' && msg.momentId) {
