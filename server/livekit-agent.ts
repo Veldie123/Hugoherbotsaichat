@@ -19,7 +19,7 @@ import {
 import * as silero from '@livekit/agents-plugin-silero';
 import * as elevenlabsPlugin from '@livekit/agents-plugin-elevenlabs';
 import { fileURLToPath } from 'node:url';
-import { humanizeSpeechPlainText } from './v2/speech-humanizer';
+import { getHumanizerForModel } from './v2/speech-humanizer';
 
 interface HugoSessionState {
   sessionId: string | null;
@@ -114,13 +114,18 @@ export default defineAgent({
     let debounceTimer: NodeJS.Timeout | null = null;
     
     // Use ElevenLabs plugin with Hugo Herbots' cloned voice
+    // Note: eleven_v3 is NOT yet supported by LiveKit plugin (requires single-stream WebSocket)
+    // Using eleven_flash_v2_5 for lowest latency with good quality
+    // When LiveKit adds v3 support, change TTS_MODEL to 'eleven_v3' for emotion tags
+    const TTS_MODEL = 'eleven_flash_v2_5';
     const hugoTTS = new elevenlabsPlugin.TTS({
       voiceId: 'sOsTzBXVBqNYMd5L4sCU',
-      model: 'eleven_turbo_v2_5',
+      model: TTS_MODEL,
       apiKey: process.env.ELEVENLABS_API_KEY,
-      streamingLatency: 3,
+      streamingLatency: 2,
     });
-    console.log('[LiveKit Agent] Using Hugo Herbots voice - voiceId: sOsTzBXVBqNYMd5L4sCU');
+    const humanize = getHumanizerForModel(TTS_MODEL);
+    console.log(`[LiveKit Agent] Using Hugo voice (${TTS_MODEL}) - voiceId: sOsTzBXVBqNYMd5L4sCU`);
     
     // Create session WITHOUT LLM - we use V2 engine exclusively
     const session = new voice.AgentSession({
@@ -170,7 +175,7 @@ export default defineAgent({
         console.log('[LiveKit Agent] V2 response:', response.substring(0, 100));
         
         // Humanize the response for more natural speech (pauses, hesitations)
-        const humanizedResponse = humanizeSpeechPlainText(response);
+        const humanizedResponse = humanize(response);
         console.log('[LiveKit Agent] Humanized response:', humanizedResponse.substring(0, 120));
         
         await session.say(humanizedResponse);
@@ -255,7 +260,7 @@ export default defineAgent({
       console.log(`[LiveKit Agent] V2 Session: ${sessionId}`);
       
       // Humanize and send greeting immediately
-      const humanizedGreeting = humanizeSpeechPlainText(greeting);
+      const humanizedGreeting = humanize(greeting);
       try {
         await session.say(humanizedGreeting);
         console.log('[LiveKit Agent] Greeting sent (humanized)');
