@@ -713,52 +713,28 @@ export function AnalysisResults({
             </Button>
           </div>
           <div className="flex items-start justify-between gap-4">
-            <h1 className="mb-2 text-[32px] leading-[40px] sm:text-[40px] sm:leading-[48px] flex-shrink-0">
-              {conversation.title}
-            </h1>
-            <div className="flex flex-nowrap gap-2 items-center pt-1">
-              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
-                  <Calendar className="w-3.5 h-3.5 text-[#1e293b]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-[#6b7280] leading-none">Datum</p>
-                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{new Date(conversation.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</p>
-                </div>
-              </div>
-
-              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
-                  <MessageSquare className="w-3.5 h-3.5 text-[#1e293b]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-[#6b7280] leading-none">Turns</p>
-                  <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{transcript.length}</p>
-                </div>
-              </div>
-
-              {transcript.length > 0 && (
-                <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(30,41,59,0.12)' }}>
-                    <Clock className="w-3.5 h-3.5 text-[#1e293b]" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-[#6b7280] leading-none">Duur</p>
-                    <p className="text-[14px] font-semibold text-[#1e293b] leading-tight">{formatTime(transcript[transcript.length - 1].endMs)}</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="px-3 py-2 bg-white rounded-lg border border-[#e5e7eb] shadow-sm flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(61,154,110,0.12)' }}>
-                  <TrendingUp className="w-3.5 h-3.5 text-[#3d9a6e]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-[#6b7280] leading-none">Score</p>
-                  <p className={`text-[14px] font-semibold leading-tight ${getScoreColor(overallScore)}`}>{overallScore}%</p>
-                </div>
-              </div>
+            <div>
+              <h1 className="text-[28px] leading-[36px] sm:text-[32px] sm:leading-[40px]">
+                {conversation.title}
+              </h1>
+              <p className="text-[13px] text-hh-muted mt-1 flex items-center gap-1.5 flex-wrap">
+                <span>{new Date(conversation.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                <span className="text-hh-border">·</span>
+                <span>{transcript.length} turns</span>
+                {transcript.length > 0 && (
+                  <>
+                    <span className="text-hh-border">·</span>
+                    <span>{formatTime(transcript[transcript.length - 1].endMs)}</span>
+                  </>
+                )}
+                <span className="text-hh-border">·</span>
+                <span className={`font-semibold ${getScoreColor(overallScore)}`}>{overallScore}%</span>
+              </p>
             </div>
+            <Button variant="outline" size="sm" className="gap-1.5 text-[12px] flex-shrink-0" onClick={handleExportPDF}>
+              <Download className="w-3.5 h-3.5" />
+              PDF
+            </Button>
           </div>
         </div>
 
@@ -784,300 +760,238 @@ export function AnalysisResults({
 
         {/* Phase scores only shown in timeline tab */}
 
-        {activeTab === 'coach' && (<div className="space-y-6">
-          <Card className="p-6 rounded-[16px] shadow-hh-md border-hh-border bg-gradient-to-br from-white to-slate-50">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-hh-primary flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[18px] leading-[26px] text-hh-text font-medium">
-                  {insights.coachDebrief?.oneliner || `Laten we je gesprek samen doornemen.`}
-                </p>
-                <p className="text-[14px] leading-[20px] text-hh-muted mt-2">
-                  {insights.coachDebrief?.epicMomentum || `De EPIC-flow wordt geanalyseerd.`}
-                </p>
-              </div>
-            </div>
+        {activeTab === 'coach' && (<div className="space-y-5">
 
-            <div className="flex flex-wrap items-center gap-2 mt-5 pt-4 border-t border-hh-border">
-              {phaseScores.map((ps) => (
-                <div key={ps.phase} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-hh-border">
-                  <span className="text-[11px] text-hh-muted">{ps.sublabel}</span>
-                  <span className={`text-[13px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
-                </div>
-              ))}
-              <div className="ml-auto">
-                <Button variant="outline" size="sm" className="gap-1.5 text-[12px]" onClick={handleExportPDF}>
-                  <Download className="w-3.5 h-3.5" />
-                  PDF
-                </Button>
-              </div>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-hh-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
-          </Card>
+            <div className="flex-1 min-w-0">
+              <p className="text-[17px] leading-[26px] text-hh-text font-medium">
+                {insights.coachDebrief?.oneliner || `Laten we je gesprek samen doornemen.`}
+              </p>
+              <p className="text-[14px] leading-[20px] text-hh-muted mt-1.5">
+                {insights.coachDebrief?.epicMomentum || `De EPIC-flow wordt geanalyseerd.`}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                {phaseScores.map((ps) => (
+                  <span key={ps.phase} className="text-[12px] text-hh-muted">
+                    {ps.sublabel} <span className={`font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
+                  </span>
+                ))}
+              </div>
+
+              {insights.coachDebrief && insights.coachDebrief.messages.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-hh-border/50 space-y-2.5">
+                  {insights.coachDebrief.messages.map((msg, i) => {
+                    if (msg.type === 'coach_text' && msg.text) {
+                      return (
+                        <p key={i} className="text-[14px] leading-[22px] text-hh-text/80">{msg.text}</p>
+                      );
+                    }
+                    if (msg.type === 'moment_ref' && msg.momentId) {
+                      const refMoment = (insights.moments || []).find(m => m.id === msg.momentId);
+                      if (!refMoment) return null;
+                      const typeLabels: Record<string, { label: string; color: string }> = {
+                        'big_win': { label: 'Big Win', color: 'text-emerald-600' },
+                        'quick_fix': { label: 'Quick Fix', color: 'text-amber-600' },
+                        'turning_point': { label: 'Scharnierpunt', color: 'text-rose-600' },
+                      };
+                      const tl = typeLabels[refMoment.type] || typeLabels['quick_fix'];
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => { setExpandedMoment(expandedMoment === refMoment.id ? null : refMoment.id); markMomentViewed(refMoment.id); }}
+                          className="flex items-center gap-1.5 text-[13px] text-hh-primary hover:underline"
+                        >
+                          <ArrowRight className="w-3 h-3" />
+                          <span className={`font-medium ${tl.color}`}>{tl.label}:</span>
+                          <span>{refMoment.label}</span>
+                        </button>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <div className="pt-2">
+                    <Button size="sm" className="gap-1.5 text-[13px]" onClick={() => navigate?.("talk-to-hugo")}>
+                      Bespreek met Hugo <ChevronRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="h-px bg-hh-border/60" />
 
           {(() => {
             const moments = insights.moments || [];
-            const momentConfig: Record<string, { icon: any; color: string; bgColor: string; borderColor: string; accentColor: string; label: string }> = {
-              'big_win': { icon: Trophy, color: 'text-emerald-700', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200', accentColor: 'bg-emerald-600', label: 'Big Win' },
-              'quick_fix': { icon: Wrench, color: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', accentColor: 'bg-amber-500', label: 'Quick Fix' },
-              'turning_point': { icon: RotateCcw, color: 'text-rose-700', bgColor: 'bg-rose-50', borderColor: 'border-rose-200', accentColor: 'bg-rose-600', label: 'Scharnierpunt' },
+            const momentConfig: Record<string, { icon: any; accentBorder: string; color: string; label: string }> = {
+              'big_win': { icon: Trophy, accentBorder: 'border-l-emerald-500', color: 'text-emerald-600', label: 'Big Win' },
+              'quick_fix': { icon: Wrench, accentBorder: 'border-l-amber-500', color: 'text-amber-600', label: 'Quick Fix' },
+              'turning_point': { icon: RotateCcw, accentBorder: 'border-l-rose-500', color: 'text-rose-600', label: 'Scharnierpunt' },
             };
 
             return moments.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {moments.map((moment) => {
                   const config = momentConfig[moment.type] || momentConfig['quick_fix'];
                   const MomentIcon = config.icon;
                   const isExpanded = expandedMoment === moment.id;
-
                   const isNew = !viewedMoments.has(moment.id);
 
                   return (
-                    <Card key={moment.id} className={`rounded-[16px] shadow-hh-sm border overflow-hidden ${config.borderColor} ${isNew ? 'ring-2 ring-hh-primary/20' : ''}`}>
-                      <div className={`px-6 py-4 ${config.bgColor}`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full ${config.accentColor} flex items-center justify-center flex-shrink-0`}>
-                            <MomentIcon className="w-5 h-5 text-white" />
+                    <div key={moment.id} className={`rounded-xl border border-hh-border/80 border-l-[3px] ${config.accentBorder} bg-white overflow-hidden`}>
+                      <button
+                        onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
+                        className="w-full px-5 py-3.5 flex items-center gap-3 text-left hover:bg-hh-ui-50/50 transition-colors"
+                      >
+                        <MomentIcon className={`w-[18px] h-[18px] ${config.color} flex-shrink-0`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[11px] font-semibold uppercase tracking-wide ${config.color}`}>{config.label}</span>
+                            <span className="text-[11px] text-hh-muted">{moment.timestamp}</span>
+                            {isNew && <span className="w-2 h-2 rounded-full bg-hh-primary flex-shrink-0" />}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <Badge variant="outline" className={`text-[11px] ${config.color} ${config.borderColor}`}>
-                                {config.label}
-                              </Badge>
-                              <Badge variant="outline" className="text-[11px] text-hh-muted border-hh-border">
-                                {moment.timestamp}
-                              </Badge>
-                              {moment.customerSignal && (
-                                <Badge variant="outline" className="text-[11px] text-hh-muted border-hh-border">
-                                  {moment.customerSignal}
-                                </Badge>
+                          <p className="text-[14px] font-medium text-hh-text mt-0.5 truncate">{moment.label}</p>
+                        </div>
+                        <ChevronRight className={`w-4 h-4 text-hh-muted transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} />
+                      </button>
+
+                      {isExpanded && (
+                        <div className="px-5 pb-5 pt-1 border-t border-hh-border/40">
+                          <p className="text-[14px] leading-[22px] text-hh-text/80 mt-2">{moment.whyItMatters}</p>
+
+                          {(moment.sellerText || moment.customerText) && (
+                            <div className="mt-3 space-y-2">
+                              {moment.sellerText && (
+                                <ChatBubble compact speaker="seller" text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
                               )}
-                              {isNew && (
-                                <Badge className="text-[10px] bg-hh-primary text-white px-2 py-0.5 animate-pulse">
-                                  Nieuw
-                                </Badge>
+                              {moment.customerText && (
+                                <ChatBubble compact speaker="customer" text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
                               )}
                             </div>
-                            <p className={`text-[15px] font-semibold ${config.color}`}>{moment.label}</p>
-                          </div>
-                          <button
-                            onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
-                            className="p-2 rounded-full hover:bg-white/50 transition-colors"
-                          >
-                            {isExpanded ? <ChevronDown className="w-5 h-5 text-hh-muted" /> : <ChevronRight className="w-5 h-5 text-hh-muted" />}
-                          </button>
-                        </div>
-                      </div>
+                          )}
 
-                      <div className="px-6 py-4">
-                        <p className="text-[14px] leading-[22px] text-hh-text">{moment.whyItMatters}</p>
-
-                        {(moment.sellerText || moment.customerText) && (
-                          <div className="mt-3 space-y-2">
-                            {moment.sellerText && (
-                              <ChatBubble compact speaker="seller" text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
-                            )}
-                            {moment.customerText && (
-                              <ChatBubble compact speaker="customer" text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
-                            )}
-                          </div>
-                        )}
-
-                        {moment.betterAlternative && moment.type !== 'big_win' && (
-                          <div className="mt-3 p-4 rounded-lg bg-hh-primary/5 border border-hh-primary/15">
-                            <div className="flex gap-2 items-start">
-                              <Lightbulb className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
-                              <div>
-                                <p className="text-[12px] font-medium text-hh-primary mb-1">Wat had je kunnen zeggen?</p>
-                                <p className="text-[14px] leading-[20px] text-hh-text">"{moment.betterAlternative}"</p>
+                          {moment.betterAlternative && moment.type !== 'big_win' && (
+                            <div className="mt-3 p-3 rounded-lg bg-hh-primary/5 border border-hh-primary/10">
+                              <div className="flex gap-2 items-start">
+                                <Lightbulb className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <p className="text-[11px] font-medium text-hh-primary mb-0.5">Wat had je kunnen zeggen?</p>
+                                  <p className="text-[13px] leading-[19px] text-hh-text">"{moment.betterAlternative}"</p>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )}
-
-                        {moment.recommendedTechniques.length > 0 && (
-                          <div className="flex gap-1.5 mt-3 flex-wrap">
-                            {moment.recommendedTechniques.map((t, i) => (
-                              <Badge key={i} variant="outline" className="text-[11px] px-2.5 py-1 text-hh-primary border-hh-primary/30 bg-hh-primary/5 font-medium" title={t}>
-                                {getTechniekByNummer(t)?.naam || t}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-
-                        <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-hh-border/50">
-                          {moment.type !== 'big_win' && (
-                            <Button
-                              size="sm"
-                              className="gap-1.5 text-[12px] bg-hh-primary hover:bg-hh-primary/90 text-white"
-                              onClick={() => startReplay(moment)}
-                            >
-                              <Play className="w-3.5 h-3.5" /> Replay vanaf hier
-                            </Button>
                           )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 text-[12px] border-hh-primary/30 text-hh-primary hover:bg-hh-primary/5"
-                            onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
-                          >
-                            {isExpanded ? (
-                              <><ChevronDown className="w-3.5 h-3.5" /> Minder</>
-                            ) : (
-                              <><Sparkles className="w-3.5 h-3.5" /> Train dit moment</>
-                            )}
-                          </Button>
-                        </div>
 
-                        {isExpanded && (
-                          <div className="flex flex-wrap gap-2 mt-3 p-3 rounded-lg bg-hh-ui-50 border border-hh-border">
-                            <p className="w-full text-[12px] font-medium text-hh-text mb-1">Oefen met Hugo:</p>
+                          {moment.recommendedTechniques.length > 0 && (
+                            <div className="flex gap-1.5 mt-3 flex-wrap">
+                              {moment.recommendedTechniques.map((t, i) => (
+                                <Badge key={i} variant="outline" className="text-[10px] px-2 py-0.5 text-hh-primary border-hh-primary/20 bg-hh-primary/5" title={t}>
+                                  {getTechniekByNummer(t)?.naam || t}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-hh-border/40">
+                            {moment.type !== 'big_win' && (
+                              <Button
+                                size="sm"
+                                className="gap-1.5 text-[12px] bg-hh-primary hover:bg-hh-primary/90 text-white"
+                                onClick={() => startReplay(moment)}
+                              >
+                                <Play className="w-3.5 h-3.5" /> Replay
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[12px] bg-white border-hh-border hover:border-hh-primary/40 hover:bg-hh-primary/5 text-hh-text"
+                              className="gap-1.5 text-[12px] border-hh-border text-hh-text hover:bg-hh-ui-50"
                               disabled={actionLoading === `${moment.id}-three_options`}
                               onClick={() => runCoachAction(moment.id, 'three_options')}
                             >
-                              {actionLoading === `${moment.id}-three_options` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5 text-hh-primary" />}
-                              3 antwoord-opties
+                              {actionLoading === `${moment.id}-three_options` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5 text-hh-muted" />}
+                              3 opties
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[12px] bg-white border-hh-border hover:border-amber-400 hover:bg-amber-50 text-hh-text"
+                              className="gap-1.5 text-[12px] border-hh-border text-hh-text hover:bg-hh-ui-50"
                               disabled={actionLoading === `${moment.id}-micro_drill`}
                               onClick={() => runCoachAction(moment.id, 'micro_drill')}
                             >
-                              {actionLoading === `${moment.id}-micro_drill` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-500" />}
-                              1 zin oefenen
+                              {actionLoading === `${moment.id}-micro_drill` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-hh-muted" />}
+                              Drill
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[12px] bg-white border-hh-border hover:border-hh-primary/40 hover:bg-hh-primary/5 text-hh-text"
+                              className="gap-1.5 text-[12px] border-hh-border text-hh-text hover:bg-hh-ui-50"
                               disabled={actionLoading === `${moment.id}-hugo_demo`}
                               onClick={() => runCoachAction(moment.id, 'hugo_demo')}
                             >
-                              {actionLoading === `${moment.id}-hugo_demo` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-hh-primary" />}
-                              Laat Hugo het voordoen
+                              {actionLoading === `${moment.id}-hugo_demo` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-hh-muted" />}
+                              Hugo demo
                             </Button>
                           </div>
-                        )}
 
-                        {actionResult && actionResult.momentId === moment.id && (
-                          <div ref={actionResult?.momentId === moment.id ? actionResultRef : undefined} className="mt-3 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
-                            {actionResult.type === 'three_options' && actionResult.data.options && (
-                              <div className="space-y-2">
-                                <p className="text-[12px] font-medium text-hh-primary mb-2">3 antwoord-opties:</p>
-                                {actionResult.data.options.map((opt: any, i: number) => (
-                                  <div key={i} className="p-3 rounded-lg bg-white border border-hh-border">
-                                    <span className="text-[11px] font-medium text-hh-primary">{opt.style}</span>
-                                    <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{opt.text}"</p>
+                          {actionResult && actionResult.momentId === moment.id && (
+                            <div ref={actionResult?.momentId === moment.id ? actionResultRef : undefined} className="mt-3 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
+                              {actionResult.type === 'three_options' && actionResult.data.options && (
+                                <div className="space-y-2">
+                                  <p className="text-[12px] font-medium text-hh-primary mb-2">3 antwoord-opties:</p>
+                                  {actionResult.data.options.map((opt: any, i: number) => (
+                                    <div key={i} className="p-3 rounded-lg bg-white border border-hh-border">
+                                      <span className="text-[11px] font-medium text-hh-primary">{opt.style}</span>
+                                      <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{opt.text}"</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {actionResult.type === 'micro_drill' && actionResult.data.drill && (
+                                <div className="space-y-2">
+                                  <p className="text-[12px] font-medium text-hh-primary">Micro-drill:</p>
+                                  <p className="text-[13px] leading-[18px] text-hh-text">{actionResult.data.drill.instruction}</p>
+                                  <div className="p-3 rounded-lg bg-white border border-hh-border mt-2">
+                                    <span className="text-[11px] font-medium text-hh-muted">Voorbeeld:</span>
+                                    <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{actionResult.data.drill.example}"</p>
                                   </div>
-                                ))}
-                              </div>
-                            )}
-                            {actionResult.type === 'micro_drill' && actionResult.data.drill && (
-                              <div className="space-y-2">
-                                <p className="text-[12px] font-medium text-hh-primary">Micro-drill:</p>
-                                <p className="text-[13px] leading-[18px] text-hh-text">{actionResult.data.drill.instruction}</p>
-                                <div className="p-3 rounded-lg bg-white border border-hh-border mt-2">
-                                  <span className="text-[11px] font-medium text-hh-muted">Voorbeeld:</span>
-                                  <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{actionResult.data.drill.example}"</p>
                                 </div>
-                              </div>
-                            )}
-                            {actionResult.type === 'hugo_demo' && actionResult.data.demo && (
-                              <div className="space-y-2">
-                                <p className="text-[12px] font-medium text-hh-primary">Hugo zou zeggen:</p>
-                                <div className="p-3 rounded-lg bg-white border border-hh-primary/20">
-                                  <p className="text-[14px] leading-[20px] text-hh-text">"{actionResult.data.demo.response}"</p>
+                              )}
+                              {actionResult.type === 'hugo_demo' && actionResult.data.demo && (
+                                <div className="space-y-2">
+                                  <p className="text-[12px] font-medium text-hh-primary">Hugo zou zeggen:</p>
+                                  <div className="p-3 rounded-lg bg-white border border-hh-primary/20">
+                                    <p className="text-[14px] leading-[20px] text-hh-text">"{actionResult.data.demo.response}"</p>
+                                  </div>
+                                  <p className="text-[12px] leading-[16px] text-hh-muted">{actionResult.data.demo.reasoning}</p>
                                 </div>
-                                <p className="text-[12px] leading-[16px] text-hh-muted">{actionResult.data.demo.reasoning}</p>
-                              </div>
-                            )}
-                            {actionResult.data.error && (
-                              <div className="flex items-center gap-2 text-red-600">
-                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                                <p className="text-[13px]">{actionResult.data.error}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </Card>
+                              )}
+                              {actionResult.data.error && (
+                                <div className="flex items-center gap-2 text-red-600">
+                                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                  <p className="text-[13px]">{actionResult.data.error}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
             ) : (
-              <Card className="p-8 rounded-[16px] shadow-hh-sm border-hh-border text-center">
-                <Sparkles className="w-8 h-8 text-hh-muted mx-auto mb-3" />
+              <div className="py-8 text-center">
+                <Sparkles className="w-6 h-6 text-hh-muted mx-auto mb-2" />
                 <p className="text-[14px] text-hh-muted">Coach momenten worden gegenereerd bij nieuwe analyses.</p>
-              </Card>
+              </div>
             );
           })()}
-
-          {insights.coachDebrief && insights.coachDebrief.messages.length > 0 && (
-            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-primary/20 bg-gradient-to-br from-hh-primary/5 to-white mt-8">
-              <div className="flex items-center gap-3 mb-5 pb-3 border-b border-hh-primary/10">
-                <div className="w-10 h-10 rounded-full bg-hh-primary flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-[16px] font-semibold text-hh-text">Hugo's Debrief</h4>
-                  <p className="text-[12px] text-hh-muted">Persoonlijke aanbevelingen voor je volgende gesprek</p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                {insights.coachDebrief.messages.map((msg, i) => {
-                  if (msg.type === 'coach_text' && msg.text) {
-                    return (
-                      <div key={i} className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-hh-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Sparkles className="w-4 h-4 text-hh-primary" />
-                        </div>
-                        <div className="bg-hh-ui-50 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
-                          <p className="text-[14px] leading-[22px] text-hh-text">{msg.text}</p>
-                        </div>
-                      </div>
-                    );
-                  }
-                  if (msg.type === 'moment_ref' && msg.momentId) {
-                    const refMoment = (insights.moments || []).find(m => m.id === msg.momentId);
-                    if (!refMoment) return null;
-                    const typeLabels: Record<string, { label: string; color: string }> = {
-                      'big_win': { label: 'Big Win', color: 'text-emerald-600' },
-                      'quick_fix': { label: 'Quick Fix', color: 'text-amber-600' },
-                      'turning_point': { label: 'Scharnierpunt', color: 'text-rose-600' },
-                    };
-                    const tl = typeLabels[refMoment.type] || typeLabels['quick_fix'];
-                    return (
-                      <div key={i} className="flex gap-3 ml-11">
-                        <button
-                          onClick={() => setExpandedMoment(expandedMoment === refMoment.id ? null : refMoment.id)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-hh-border hover:border-hh-primary/30 hover:bg-hh-primary/5 transition-colors text-left"
-                        >
-                          <ArrowRight className="w-3.5 h-3.5 text-hh-primary" />
-                          <span className={`text-[12px] font-medium ${tl.color}`}>{tl.label}:</span>
-                          <span className="text-[13px] text-hh-text">{refMoment.label}</span>
-                        </button>
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-
-              <div className="mt-5 pt-4 border-t border-hh-border">
-                <Button className="gap-2" onClick={() => navigate?.("talk-to-hugo")}>
-                  Bespreek met Hugo
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </Card>
-          )}
           {replayMoment && (<div ref={replayRef}>
             <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-primary/20 bg-gradient-to-b from-hh-primary/5 to-transparent">
               <div className="flex items-center justify-between mb-4">
