@@ -55,7 +55,7 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 const mainNavItems = [
-  { id: "talk-to-hugo", label: "Hugo AI", icon: MessageSquare, historyType: "chat" as const, overviewPage: "hugo-overview" },
+  { id: "talk-to-hugo", label: "Talk to Hugo AI", icon: MessageSquare, historyType: "chat" as const, overviewPage: "hugo-overview" },
   { id: "analysis", label: "Gespreksanalyse", icon: FileSearch, historyType: "analysis" as const, overviewPage: "analysis" },
 ];
 
@@ -195,7 +195,7 @@ export function AppLayout({
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   {!collapsed && (
                     <span className="text-[14px] leading-[20px] font-medium whitespace-nowrap">
-                      {item.label === "Hugo AI" ? (
+                      {item.label === "Talk to Hugo AI" ? (
                         <>Hugo <sup className="text-[10px]">AI</sup></>
                       ) : item.label}
                     </span>

@@ -30,6 +30,7 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { StopRoleplayDialog } from "./StopRoleplayDialog";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Send,
   ChevronDown,
@@ -55,6 +56,11 @@ import {
   ThumbsDown,
   MoreHorizontal,
   Plus,
+  FileText,
+  Image,
+  FileAudio,
+  Paperclip,
+  File,
 } from "lucide-react";
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
@@ -71,6 +77,23 @@ interface MessageDebugInfo {
   detectedSignals?: string[];
 }
 
+interface FileAttachment {
+  id: string;
+  file: File;
+  name: string;
+  type: string;
+  size: number;
+  preview?: string;
+}
+
+interface MessageAttachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  preview?: string;
+}
+
 interface Message {
   id: string;
   sender: "hugo" | "ai";
@@ -79,6 +102,7 @@ interface Message {
   technique?: string;
   debugInfo?: MessageDebugInfo;
   feedback?: "up" | "down" | null;
+  attachments?: MessageAttachment[];
 }
 
 type ChatMode = "chat" | "audio" | "video";
@@ -126,6 +150,10 @@ export function TalkToHugoAI({
   const [sessionTimer, setSessionTimer] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
+  const [filePopoverOpen, setFilePopoverOpen] = useState(false);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -614,18 +642,37 @@ export function TalkToHugoAI({
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isLoading || isStreaming) return;
+    const hasFiles = attachedFiles.length > 0;
+    if ((!inputText.trim() && !hasFiles) || isLoading || isStreaming) return;
+
+    const messageAttachments: MessageAttachment[] = attachedFiles.map((f) => ({
+      id: f.id,
+      name: f.name,
+      type: f.type,
+      size: f.size,
+      preview: f.preview,
+    }));
 
     const userMessage: Message = {
       id: Date.now().toString(),
       sender: "hugo",
-      text: inputText,
+      text: inputText || (hasFiles ? `${attachedFiles.length} bestand${attachedFiles.length > 1 ? "en" : ""} geüpload` : ""),
       timestamp: new Date(),
+      attachments: messageAttachments.length > 0 ? messageAttachments : undefined,
     };
 
-    const messageText = inputText;
+    const audioFiles = attachedFiles.filter((f) => f.type.startsWith("audio/"));
+    const attachmentContext = hasFiles
+      ? `[Gebruiker heeft ${attachedFiles.length} bestand${attachedFiles.length > 1 ? "en" : ""} geüpload: ${attachedFiles.map((f) => `${f.name} (${f.type}, ${formatFileSize(f.size)})`).join(", ")}]`
+      : "";
+    const messageText = inputText
+      ? (hasFiles ? `${inputText}\n\n${attachmentContext}` : inputText)
+      : attachmentContext;
+
+    attachedFiles.forEach((f) => { if (f.preview) URL.revokeObjectURL(f.preview); });
     setMessages(prev => [...prev, userMessage]);
     setInputText("");
+    setAttachedFiles([]);
 
     // Auto-start a general coach session if no active session exists
     if (!hasActiveSession) {
@@ -868,6 +915,61 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
     setIsRecording(true);
   };
 
+  const handleFileSelect = (acceptTypes: string) => {
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = acceptTypes;
+      fileInputRef.current.click();
+    }
+    setFilePopoverOpen(false);
+  };
+
+  const processFiles = (files: FileList | File[]) => {
+    const newAttachments: FileAttachment[] = Array.from(files).map((file) => {
+      const attachment: FileAttachment = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        file,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      };
+      if (file.type.startsWith("image/")) {
+        attachment.preview = URL.createObjectURL(file);
+      }
+      return attachment;
+    });
+    setAttachedFiles((prev) => [...prev, ...newAttachments]);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processFiles(e.target.files);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAttachedFile = (id: string) => {
+    setAttachedFiles((prev) => {
+      const file = prev.find((f) => f.id === id);
+      if (file?.preview) URL.revokeObjectURL(file.preview);
+      return prev.filter((f) => f.id !== id);
+    });
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <Image className="w-4 h-4" />;
+    if (type.startsWith("audio/")) return <FileAudio className="w-4 h-4" />;
+    if (type.includes("pdf") || type.includes("document") || type.includes("text")) return <FileText className="w-4 h-4" />;
+    return <File className="w-4 h-4" />;
+  };
+
   const getModeIcon = () => {
     switch (chatMode) {
       case "audio": return <Mic className="w-3.5 h-3.5" />;
@@ -966,8 +1068,45 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
     } catch {}
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
+    }
+  };
+
   const renderChatInterface = () => (
-    <div className="h-full flex flex-col bg-white">
+    <div
+      className={`h-full flex flex-col bg-white relative ${isDraggingOver ? "ring-2 ring-[#4F7396] ring-inset" : ""}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDraggingOver && (
+        <div className="absolute inset-0 bg-[#4F7396]/5 z-10 flex items-center justify-center pointer-events-none">
+          <div className="bg-white border-2 border-dashed border-[#4F7396] rounded-2xl px-8 py-6 shadow-lg">
+            <div className="flex flex-col items-center gap-2">
+              <Paperclip className="w-8 h-8 text-[#4F7396]" />
+              <p className="text-[15px] font-medium text-hh-text">Sleep bestanden hier</p>
+              <p className="text-[12px] text-hh-muted">Audio, documenten, afbeeldingen</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((message) => (
           <div key={message.id} className={`group flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
@@ -977,7 +1116,42 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                   ? "bg-hh-ink text-white rounded-br-md"
                   : "bg-hh-ui-50 text-hh-text rounded-bl-md"
               }`}>
-                <p className="text-[14px] leading-[22px] whitespace-pre-wrap">{message.text}</p>
+                {message.attachments && message.attachments.length > 0 && (
+                  <div className={`flex flex-wrap gap-2 ${message.text ? "mb-2" : ""}`}>
+                    {message.attachments.map((att) => (
+                      <div
+                        key={att.id}
+                        className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 ${
+                          message.sender === "hugo"
+                            ? "bg-white/15"
+                            : "bg-white border border-hh-border"
+                        }`}
+                      >
+                        {att.preview ? (
+                          <img src={att.preview} alt={att.name} className="w-8 h-8 rounded object-cover" />
+                        ) : (
+                          <div className={`w-6 h-6 rounded flex items-center justify-center ${
+                            message.sender === "hugo" ? "text-white/80" : "text-[#4F7396]"
+                          }`}>
+                            {att.type.startsWith("audio/") ? <FileAudio className="w-4 h-4" /> :
+                             att.type.startsWith("image/") ? <Image className="w-4 h-4" /> :
+                             att.type.includes("pdf") || att.type.includes("document") ? <FileText className="w-4 h-4" /> :
+                             <File className="w-4 h-4" />}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className={`text-[12px] font-medium truncate max-w-[140px] ${
+                            message.sender === "hugo" ? "text-white" : "text-hh-text"
+                          }`}>{att.name}</p>
+                          <p className={`text-[10px] ${
+                            message.sender === "hugo" ? "text-white/60" : "text-hh-muted"
+                          }`}>{formatFileSize(att.size)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {message.text && <p className="text-[14px] leading-[22px] whitespace-pre-wrap">{message.text}</p>}
               </div>
               
               {message.sender === "ai" && (
@@ -1075,18 +1249,103 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         </div>
       )}
 
-      <div className="p-4 border-t border-hh-border bg-white">
-        <div className="flex gap-2 items-end">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {}}
-            disabled={isStreaming}
-            className="flex-shrink-0 rounded-full w-9 h-9 border-hh-border hover:bg-hh-ui-50 text-[#4F7396]"
-            title="Bestand toevoegen"
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
+      <div className="border-t border-hh-border bg-white">
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={handleFileInputChange}
+        />
+
+        {attachedFiles.length > 0 && (
+          <div className="px-4 pt-3 pb-1 flex gap-2 flex-wrap">
+            {attachedFiles.map((file) => (
+              <div
+                key={file.id}
+                className="group relative flex items-center gap-2 bg-hh-ui-50 border border-hh-border rounded-lg px-3 py-2 max-w-[220px]"
+              >
+                {file.preview ? (
+                  <img src={file.preview} alt={file.name} className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-[#4F7396]/10 flex items-center justify-center flex-shrink-0 text-[#4F7396]">
+                    {getFileIcon(file.type)}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] font-medium text-hh-text truncate">{file.name}</p>
+                  <p className="text-[11px] text-hh-muted">{formatFileSize(file.size)}</p>
+                </div>
+                <button
+                  onClick={() => removeAttachedFile(file.id)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-hh-ink text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="p-4 flex gap-2 items-end">
+          <Popover open={filePopoverOpen} onOpenChange={setFilePopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={isStreaming}
+                className="flex-shrink-0 rounded-full w-9 h-9 border-hh-border hover:bg-hh-ui-50 text-[#4F7396]"
+                title="Bestand toevoegen"
+              >
+                <Plus className="w-5 h-5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="top" className="w-56 p-1.5" sideOffset={8}>
+              <div className="flex flex-col">
+                <button
+                  onClick={() => handleFileSelect("audio/*")}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-hh-ui-50 transition-colors text-left"
+                >
+                  <FileAudio className="w-4 h-4 text-[#4F7396]" />
+                  <div>
+                    <p className="text-[13px] font-medium text-hh-text">Audio-opname</p>
+                    <p className="text-[11px] text-hh-muted">Gesprek laten analyseren</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleFileSelect("image/*")}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-hh-ui-50 transition-colors text-left"
+                >
+                  <Image className="w-4 h-4 text-[#4F7396]" />
+                  <div>
+                    <p className="text-[13px] font-medium text-hh-text">Afbeelding</p>
+                    <p className="text-[11px] text-hh-muted">Screenshot of foto</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleFileSelect(".pdf,.doc,.docx,.txt,.pptx,.ppt,.xls,.xlsx")}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-hh-ui-50 transition-colors text-left"
+                >
+                  <FileText className="w-4 h-4 text-[#4F7396]" />
+                  <div>
+                    <p className="text-[13px] font-medium text-hh-text">Document</p>
+                    <p className="text-[11px] text-hh-muted">Script, presentatie, PDF</p>
+                  </div>
+                </button>
+                <div className="border-t border-hh-border my-1" />
+                <button
+                  onClick={() => handleFileSelect("*")}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-hh-ui-50 transition-colors text-left"
+                >
+                  <Paperclip className="w-4 h-4 text-[#4F7396]" />
+                  <div>
+                    <p className="text-[13px] font-medium text-hh-text">Ander bestand</p>
+                    <p className="text-[11px] text-hh-muted">Elk bestandstype</p>
+                  </div>
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
           <Input
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -1106,7 +1365,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           </Button>
           <Button
             onClick={handleSendMessage}
-            disabled={!inputText.trim() || isLoading || isStreaming}
+            disabled={(!inputText.trim() && attachedFiles.length === 0) || isLoading || isStreaming}
             className="bg-[#4F7396] hover:bg-[#4F7396]/90 gap-2"
           >
             {isLoading || isStreaming ? (
@@ -1438,6 +1697,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                 </button>
               )}
               <h2 className="text-[16px] lg:text-[18px] text-hh-text font-semibold whitespace-nowrap">Hugo AI</h2>
+              {/* Header label kept as "Hugo AI" for compact display; sidebar uses full "Talk to Hugo AI" */}
               {selectedTechnique && (
                 <>
                   <div className="flex items-center gap-2 min-w-0">
