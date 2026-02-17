@@ -438,154 +438,144 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
 
   return (
     <AdminLayout currentPage="admin-sessions" navigate={navigate}>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
-              Talk to Hugo <sup className="text-[18px]">AI</sup>
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-[24px] sm:text-[32px] leading-[30px] sm:leading-[40px] text-hh-text whitespace-nowrap">
+              Talk to Hugo <sup className="text-[14px] sm:text-[18px]">AI</sup>
             </h1>
-            <p className="text-[16px] leading-[24px] text-hh-muted">
-              Alle training sessies: AI roleplay, uploads en live analyses
-            </p>
+            <div className="hidden sm:flex items-center gap-2">
+              <Button variant="outline" className="gap-2" size="sm">
+                <Download className="w-4 h-4" />
+                Export Data
+              </Button>
+              <Button variant="outline" className="gap-2" size="sm" onClick={() => navigate?.("admin-config-review")}>
+                <Settings className="w-4 h-4" />
+                Config Review
+              </Button>
+              <Button className="gap-2 bg-red-600 hover:bg-red-700" size="sm" onClick={() => navigate?.("admin-chat-expert")}>
+                <Sparkles className="w-4 h-4" />
+                Expert Mode
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline"
-              className="gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export Data
+          {/* Mobile: buttons row below title */}
+          <div className="flex sm:hidden items-center gap-2 mt-2">
+            <Button variant="outline" size="sm" className="gap-1.5 text-[12px] flex-1">
+              <Download className="w-3.5 h-3.5" />
+              Export
             </Button>
-            <Button 
-              variant="outline"
-              className="gap-2"
-              onClick={() => navigate?.("admin-config-review")}
-            >
-              <Settings className="w-4 h-4" />
-              Config Review
+            <Button variant="outline" size="sm" className="gap-1.5 text-[12px] flex-1" onClick={() => navigate?.("admin-config-review")}>
+              <Settings className="w-3.5 h-3.5" />
+              Config
             </Button>
-            <Button 
-              className="gap-2 bg-red-600 hover:bg-red-700"
-              onClick={() => navigate?.("admin-chat-expert")}
-            >
-              <Sparkles className="w-4 h-4" />
-              Chat Expert Mode
+            <Button className="gap-1.5 text-[12px] bg-red-600 hover:bg-red-700 flex-1" size="sm" onClick={() => navigate?.("admin-chat-expert")}>
+              <Sparkles className="w-3.5 h-3.5" />
+              Expert
             </Button>
           </div>
+          <p className="text-[13px] sm:text-[16px] leading-[18px] sm:leading-[24px] text-hh-muted mt-1.5">
+            Alle training sessies: AI roleplay, uploads en live analyses
+          </p>
         </div>
 
-        {/* Statistics Cards - Exact zoals AdminDashboard */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
-            <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-600/10 flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+        {/* Statistics - Desktop: full cards */}
+        <div className="hidden lg:grid grid-cols-4 gap-4">
+          <Card className="p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-full bg-purple-600/10 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-purple-600" />
               </div>
-              <Badge
-                variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
-              >
-                +15%
-              </Badge>
+              <Badge variant="outline" className="text-[11px] px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20">+15%</Badge>
             </div>
-            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
-              Total Sessies
-            </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
-              {stats.totalSessions}
-            </p>
+            <p className="text-[13px] text-hh-muted mb-2">Total Sessies</p>
+            <p className="text-[28px] leading-[36px] text-hh-ink">{stats.totalSessions}</p>
           </Card>
+          <Card className="p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-full bg-hh-success/10 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-hh-success" />
+              </div>
+              <Badge variant="outline" className="text-[11px] px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20">+8%</Badge>
+            </div>
+            <p className="text-[13px] text-hh-muted mb-2">Excellent Quality</p>
+            <p className="text-[28px] leading-[36px] text-hh-ink">{stats.excellentCount}</p>
+          </Card>
+          <Card className="p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-full bg-blue-600/10 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
+              </div>
+              <Badge variant="outline" className="text-[11px] px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20">+2.3%</Badge>
+            </div>
+            <p className="text-[13px] text-hh-muted mb-2">Gem. Score</p>
+            <p className="text-[28px] leading-[36px] text-hh-ink">{stats.avgScore}%</p>
+          </Card>
+          <Card className="p-5 rounded-[16px] shadow-hh-sm border-hh-border">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-full bg-hh-warn/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-hh-warn" />
+              </div>
+              <Badge variant="outline" className="text-[11px] px-2 py-0.5 bg-hh-error/10 text-hh-error border-hh-error/20">-5%</Badge>
+            </div>
+            <p className="text-[13px] text-hh-muted mb-2">Needs Improvement</p>
+            <p className="text-[28px] leading-[36px] text-hh-ink">{stats.needsWorkCount}</p>
+          </Card>
+        </div>
 
-          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
-            <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-success/10 flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-hh-success" />
-              </div>
-              <Badge
-                variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
-              >
-                +8%
-              </Badge>
-            </div>
-            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
-              Excellent Quality
-            </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
-              {stats.excellentCount}
-            </p>
-          </Card>
-
-          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
-            <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600/10 flex items-center justify-center">
-                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-              </div>
-              <Badge
-                variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-success/10 text-hh-success border-hh-success/20"
-              >
-                +2.3%
-              </Badge>
-            </div>
-            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
-              Gem. Score
-            </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
-              {stats.avgScore}%
-            </p>
-          </Card>
-
-          <Card className="p-4 sm:p-5 rounded-[16px] shadow-hh-sm border-hh-border">
-            <div className="flex items-start justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-hh-warn/10 flex items-center justify-center">
-                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-hh-warn" />
-              </div>
-              <Badge
-                variant="outline"
-                className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-hh-error/10 text-hh-error border-hh-error/20"
-              >
-                -5%
-              </Badge>
-            </div>
-            <p className="text-[12px] sm:text-[13px] leading-[16px] sm:leading-[18px] text-hh-muted mb-1 sm:mb-2">
-              Needs Improvement
-            </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
-              {stats.needsWorkCount}
-            </p>
-          </Card>
+        {/* Mobile: compact horizontal stat strip */}
+        <div className="flex lg:hidden items-center gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 rounded-lg flex-shrink-0">
+            <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
+            <span className="text-[12px] text-hh-muted">Sessies</span>
+            <span className="text-[14px] font-semibold text-hh-ink">{stats.totalSessions}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-green-50 rounded-lg flex-shrink-0">
+            <CheckCircle2 className="w-3.5 h-3.5 text-hh-success" />
+            <span className="text-[12px] text-hh-muted">Excellent</span>
+            <span className="text-[14px] font-semibold text-hh-ink">{stats.excellentCount}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 rounded-lg flex-shrink-0">
+            <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-[12px] text-hh-muted">Score</span>
+            <span className="text-[14px] font-semibold text-hh-ink">{stats.avgScore}%</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-orange-50 rounded-lg flex-shrink-0">
+            <AlertTriangle className="w-3.5 h-3.5 text-hh-warn" />
+            <span className="text-[12px] text-hh-muted">Needs Work</span>
+            <span className="text-[14px] font-semibold text-hh-ink">{stats.needsWorkCount}</span>
+          </div>
         </div>
 
         {/* Filters */}
-        <Card className="p-4 rounded-[16px] shadow-hh-sm border-hh-border">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
+        <Card className="p-3 sm:p-4 rounded-[16px] shadow-hh-sm border-hh-border">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex-1 relative min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
-                placeholder="Zoek sessies, gebruikers, technieken..."
+                placeholder="Zoek sessies, gebruikers..."
                 className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full lg:w-[220px]">
-                <SelectValue placeholder="Type" />
+              <SelectTrigger className="w-[110px] sm:w-[180px] flex-shrink-0">
+                <SelectValue placeholder="Alle Types" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Types</SelectItem>
                 <SelectItem value="ai-audio">AI Audio</SelectItem>
                 <SelectItem value="ai-video">AI Video</SelectItem>
                 <SelectItem value="ai-chat">AI Chat</SelectItem>
-                <SelectItem value="upload-audio">Rollenspel Upload (Audio)</SelectItem>
-                <SelectItem value="upload-video">Rollenspel Upload (Video)</SelectItem>
+                <SelectItem value="upload-audio">Upload Audio</SelectItem>
+                <SelectItem value="upload-video">Upload Video</SelectItem>
                 <SelectItem value="live-analysis">Live Analyse</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterQuality} onValueChange={setFilterQuality}>
-              <SelectTrigger className="w-full lg:w-[180px]">
+              <SelectTrigger className="w-[110px] sm:w-[160px] flex-shrink-0 hidden sm:flex">
                 <SelectValue placeholder="Kwaliteit" />
               </SelectTrigger>
               <SelectContent>
@@ -596,8 +586,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
               </SelectContent>
             </Select>
             
-            {/* View Toggle - Right Side */}
-            <div className="flex gap-1">
+            <div className="hidden md:flex gap-1 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -655,9 +644,55 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
           </Card>
         )}
 
-        {/* Sessions List/Grid */}
+        {/* Mobile Card Fallback (always shows on mobile regardless of viewMode) */}
+        <div className="md:hidden space-y-3">
+          {filteredSessions.map((session) => {
+            const scoreColor = session.score >= 80 ? "text-hh-success" : session.score >= 70 ? "text-blue-600" : "text-hh-warn";
+            return (
+              <Card
+                key={session.id}
+                className="p-4 rounded-[12px] shadow-hh-sm border-hh-border cursor-pointer hover:shadow-hh-md transition-shadow"
+                onClick={() => viewTranscript(session)}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Avatar className="w-7 h-7 flex-shrink-0">
+                      <AvatarFallback className="bg-purple-600/10 text-purple-600 text-[10px] font-semibold">
+                        {session.user.split(" ").map((n) => n[0]).join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-medium text-hh-text truncate">{session.title || session.user}</p>
+                      <p className="text-[11px] text-hh-muted truncate">{session.user} {session.workspace ? `• ${session.workspace}` : ''}</p>
+                    </div>
+                  </div>
+                  <span className={`text-[16px] font-bold flex-shrink-0 ${scoreColor}`}>
+                    {session.score}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-[11px] text-hh-muted">
+                  <span>{session.date}</span>
+                  <span>{session.duration}</span>
+                  <div className="flex items-center gap-1">
+                    {getTypeIcon(session.type)}
+                    <span>{getTypeLabel(session.type)}</span>
+                  </div>
+                  {session.flagged && <Flag className="w-3 h-3 text-red-600" />}
+                </div>
+              </Card>
+            );
+          })}
+          {filteredSessions.length === 0 && (
+            <div className="p-8 text-center">
+              <MessageSquare className="w-10 h-10 text-hh-muted mx-auto mb-3" />
+              <p className="text-[14px] text-hh-muted">Geen sessies gevonden</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: Sessions List/Grid */}
         {viewMode === "list" ? (
-          <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
+          <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden hidden md:block">
             <div className="overflow-x-auto">
               <table className="w-full">
               <thead className="bg-hh-ui-50 border-b border-hh-border">
@@ -863,8 +898,8 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
           )}
         </Card>
         ) : (
-          /* Grid View */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          /* Grid View - desktop only */
+          <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredSessions.map((session) => {
               const scoreColor = session.score >= 80
                 ? "bg-hh-success/10 text-hh-success border-hh-success/20"

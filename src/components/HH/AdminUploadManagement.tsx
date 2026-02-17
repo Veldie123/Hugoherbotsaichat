@@ -336,25 +336,28 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
 
   return (
     <AdminLayout currentPage="admin-uploads" navigate={navigate}>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-[32px] leading-[40px] text-hh-text mb-2">
+        <div>
+          <div className="flex items-center justify-between">
+            <h1 className="text-[24px] sm:text-[32px] leading-[30px] sm:leading-[40px] text-hh-text">
               Gespreksanalyse
             </h1>
-            <p className="text-[16px] leading-[24px] text-hh-muted">
-              Beheer en analyseer alle geüploade sales gesprekken
-            </p>
+            <Button variant="outline" className="gap-2 hidden sm:flex">
+              <Download className="w-4 h-4" />
+              Export Data
+            </Button>
+            <Button variant="outline" size="icon" className="sm:hidden">
+              <Download className="w-4 h-4" />
+            </Button>
           </div>
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export Data
-          </Button>
+          <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-hh-muted mt-1">
+            Beheer en analyseer alle geüploade sales gesprekken
+          </p>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Statistics - Desktop: full cards, Mobile: compact strip */}
+        <div className="hidden lg:grid grid-cols-4 gap-4">
           <Card className="p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-full bg-purple-600/10 flex items-center justify-center">
@@ -364,14 +367,9 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                 +24%
               </Badge>
             </div>
-            <p className="text-[13px] text-hh-muted mb-2">
-              Totaal Analyses
-            </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
-              {stats.totalAnalyses}
-            </p>
+            <p className="text-[13px] text-hh-muted mb-2">Totaal Analyses</p>
+            <p className="text-[28px] leading-[36px] text-hh-ink">{stats.totalAnalyses}</p>
           </Card>
-
           <Card className="p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-full bg-hh-success/10 flex items-center justify-center">
@@ -381,14 +379,9 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                 43%
               </Badge>
             </div>
-            <p className="text-[13px] text-hh-muted mb-2">
-              Excellent Quality
-            </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
-              {stats.excellentQuality}
-            </p>
+            <p className="text-[13px] text-hh-muted mb-2">Excellent Quality</p>
+            <p className="text-[28px] leading-[36px] text-hh-ink">{stats.excellentQuality}</p>
           </Card>
-
           <Card className="p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
@@ -398,14 +391,9 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                 +5%
               </Badge>
             </div>
-            <p className="text-[13px] text-hh-muted mb-2">
-              Gem. Score
-            </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
-              {stats.avgScore}%
-            </p>
+            <p className="text-[13px] text-hh-muted mb-2">Gem. Score</p>
+            <p className="text-[28px] leading-[36px] text-hh-ink">{stats.avgScore}%</p>
           </Card>
-
           <Card className="p-5 rounded-[16px] shadow-hh-sm border-hh-border">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
@@ -415,19 +403,39 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
                 15%
               </Badge>
             </div>
-            <p className="text-[13px] text-hh-muted mb-2">
-              Needs Improvement
-            </p>
-            <p className="text-[24px] sm:text-[28px] leading-[32px] sm:leading-[36px] text-hh-ink">
-              {stats.needsWork}
-            </p>
+            <p className="text-[13px] text-hh-muted mb-2">Needs Improvement</p>
+            <p className="text-[28px] leading-[36px] text-hh-ink">{stats.needsWork}</p>
           </Card>
         </div>
 
+        {/* Mobile: compact horizontal stat strip */}
+        <div className="flex lg:hidden items-center gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 rounded-lg flex-shrink-0">
+            <UploadIcon className="w-3.5 h-3.5 text-purple-600" />
+            <span className="text-[12px] text-hh-muted">Totaal</span>
+            <span className="text-[14px] font-semibold text-hh-ink">{stats.totalAnalyses}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-green-50 rounded-lg flex-shrink-0">
+            <CheckCircle2 className="w-3.5 h-3.5 text-hh-success" />
+            <span className="text-[12px] text-hh-muted">Excellent</span>
+            <span className="text-[14px] font-semibold text-hh-ink">{stats.excellentQuality}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 rounded-lg flex-shrink-0">
+            <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-[12px] text-hh-muted">Score</span>
+            <span className="text-[14px] font-semibold text-hh-ink">{stats.avgScore}%</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-orange-50 rounded-lg flex-shrink-0">
+            <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+            <span className="text-[12px] text-hh-muted">Needs Work</span>
+            <span className="text-[14px] font-semibold text-hh-ink">{stats.needsWork}</span>
+          </div>
+        </div>
+
         {/* Search & Filters */}
-        <Card className="p-4 rounded-[16px] shadow-hh-sm border-hh-border">
-          <div className="flex flex-col lg:flex-row gap-3">
-            <div className="flex-1 relative">
+        <Card className="p-3 sm:p-4 rounded-[16px] shadow-hh-sm border-hh-border">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex-1 relative min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted" />
               <Input
                 placeholder="Zoek op gebruiker, titel, email..."
@@ -437,17 +445,17 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
               />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full lg:w-[180px]">
-                <SelectValue placeholder="Alle Status" />
+              <SelectTrigger className="w-[140px] sm:w-[180px] flex-shrink-0">
+                <SelectValue placeholder="Alle Statussen" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="all">Alle Statussen</SelectItem>
                 <SelectItem value="completed">Voltooid</SelectItem>
                 <SelectItem value="processing">Verwerken</SelectItem>
                 <SelectItem value="failed">Mislukt</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex gap-2">
+            <div className="hidden md:flex gap-1 flex-shrink-0">
               <Button
                 variant={viewMode === "list" ? "default" : "ghost"}
                 size="icon"
@@ -468,8 +476,63 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
           </div>
         </Card>
 
-        {/* Table */}
-        <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden">
+        {/* Mobile Card Fallback */}
+        <div className="md:hidden space-y-3">
+          {!loading && filteredUploads.map((upload) => (
+            <Card
+              key={upload.id}
+              className="p-4 rounded-[12px] shadow-hh-sm border-hh-border cursor-pointer hover:shadow-hh-md transition-shadow"
+              onClick={() => openTranscript(upload)}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <Avatar className="w-7 h-7 flex-shrink-0">
+                    <AvatarFallback className="bg-purple-600/10 text-purple-600 text-[10px] font-semibold">
+                      {upload.userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-medium text-hh-text truncate">{upload.title}</p>
+                    <p className="text-[11px] text-hh-muted truncate">{upload.user}</p>
+                  </div>
+                </div>
+                {upload.score !== null ? (
+                  <span className={`text-[16px] font-bold flex-shrink-0 ${getScoreColor(upload.score)}`}>
+                    {upload.score}%
+                  </span>
+                ) : (
+                  <Badge className="bg-hh-muted/10 text-hh-muted border-hh-muted/20 text-[10px] flex-shrink-0">
+                    {upload.status}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-[11px] text-hh-muted">
+                <span>{upload.date}</span>
+                <span>{upload.duration}</span>
+                {upload.techniquesFound.length > 0 && (
+                  <Badge className="bg-purple-600/10 text-purple-600 border-purple-600/20 text-[10px] font-mono px-1.5 py-0">
+                    {upload.techniquesFound[0]}
+                  </Badge>
+                )}
+              </div>
+            </Card>
+          ))}
+          {loading && (
+            <div className="p-8 text-center">
+              <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-[14px] text-hh-muted">Analyses laden...</p>
+            </div>
+          )}
+          {!loading && filteredUploads.length === 0 && (
+            <div className="p-8 text-center">
+              <UploadIcon className="w-10 h-10 text-hh-muted mx-auto mb-3" />
+              <p className="text-[14px] text-hh-muted">Geen analyses gevonden</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table */}
+        <Card className="rounded-[16px] shadow-hh-sm border-hh-border overflow-hidden hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-hh-ui-50 border-b border-hh-border">
