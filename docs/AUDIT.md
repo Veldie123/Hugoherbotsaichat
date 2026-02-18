@@ -22,7 +22,7 @@
 ```
 Project ID: pckctmojjrrgzuufsqoo
 URL: https://pckctmojjrrgzuufsqoo.supabase.co
-Anon Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Anon Key: [STORED IN ENVIRONMENT VARIABLE: VITE_SUPABASE_ANON_KEY]
 ```
 
 ---

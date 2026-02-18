@@ -179,7 +179,7 @@ const handleSignup = async (e: React.FormEvent) => {
 curl -X POST \
   https://pckctmojjrrgzuufsqoo.supabase.co/functions/v1/make-server-b9a572ea/auth/signup \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBja2N0bW9qanJyZ3p1dWZzcW9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjgzODczMDksImV4cCI6MjA0Mzk2MzMwOX0.K1fqfQXbJU_xdjPgGNRaZ-Fvv7TkWz2ioukpDfZAzNg" \
+  -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" \
   -d '{
     "email": "test@hugoherbots.test",
     "password": "TestPassword123!",
@@ -204,7 +204,7 @@ curl -X POST \
 curl -X POST \
   https://pckctmojjrrgzuufsqoo.supabase.co/functions/v1/make-server-b9a572ea/auth/login \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBja2N0bW9qanJyZ3p1dWZzcW9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjgzODczMDksImV4cCI6MjA0Mzk2MzMwOX0.K1fqfQXbJU_xdjPgGNRaZ-Fvv7TkWz2ioukpDfZAzNg" \
+  -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" \
   -d '{
     "email": "test@hugoherbots.test",
     "password": "TestPassword123!"

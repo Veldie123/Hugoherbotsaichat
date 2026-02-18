@@ -859,8 +859,8 @@ app.listen(PORT, () => {
 ```env
 # Supabase
 VITE_SUPABASE_URL=https://xxxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... # Server-side only!
+VITE_SUPABASE_ANON_KEY=<your-anon-key-here>
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key-here> # Server-side only!
 
 # OpenAI
 VITE_OPENAI_API_KEY=sk-...
