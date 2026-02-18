@@ -1166,7 +1166,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               </div>
               
               {message.sender === "ai" && (
-                <div className="flex items-center gap-0.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-0.5 mt-1.5">
                   <button
                     onClick={() => handleCopyMessage(message.id, message.text)}
                     className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
@@ -1212,6 +1212,19 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
+                  {!assistanceConfig.blindPlay && (
+                    <button
+                      onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+                      className={`p-1.5 rounded-md transition-colors ${
+                        desktopSidebarOpen
+                          ? "text-[#4F7396] bg-[#4F7396]/10"
+                          : "text-slate-400 hover:text-[#4F7396] hover:bg-slate-100"
+                      }`}
+                      title="E.P.I.C. technieken bekijken"
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -1631,45 +1644,17 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
 
   return (
     <AppLayout currentPage="talk-to-hugo" navigate={navigate} isAdmin={isAdmin}>
-      <div className="flex h-[calc(100vh-4rem)]">
-        
-        {/* EPIC Sidebar hidden by default - only shows when user clicks help icon (Piano concept) */}
-        {!assistanceConfig.blindPlay && desktopSidebarOpen && (
-          <div className="hidden lg:block w-1/3 flex-shrink-0 h-full">
-            <EPICSidebar
-              fasesAccordionOpen={fasesAccordionOpen}
-              setFasesAccordionOpen={setFasesAccordionOpen}
-              houdingenAccordionOpen={houdingenAccordionOpen}
-              setHoudingenAccordionOpen={setHoudingenAccordionOpen}
-              expandedPhases={expandedPhases}
-              togglePhase={togglePhase}
-              setCurrentPhase={setCurrentPhase}
-              expandedParents={expandedParents}
-              toggleParentTechnique={toggleParentTechnique}
-              expandedHoudingen={expandedHoudingen}
-              toggleHouding={toggleHouding}
-              selectedTechnique={selectedTechniqueName}
-              setSelectedTechnique={setSelectedTechniqueName}
-              activeHouding={activeHouding}
-              recommendedTechnique={recommendedTechnique}
-              openTechniqueDetails={openTechniqueDetails}
-              startTechniqueChat={startTechniqueChat}
-              techniquesByPhase={techniquesByPhase}
-              phaseNames={phaseNames}
-              getFaseBadgeColor={getFaseBadgeColor}
-              getTopLevelTechniques={getTopLevelTechniques}
-              hasChildren={hasChildren}
-              getChildTechniques={getChildTechniques}
-              klantHoudingen={klantHoudingenArray}
-              difficultyLevel={difficultyLevel}
-              isUserView={true}
-            />
-          </div>
-        )}
-
-        <div className={`${assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'w-full lg:w-2/3'} flex-1 flex flex-col bg-white overflow-hidden`}>
-          {/* Clean header - mobile: help icon + title, desktop: title + controls */}
-          <div className="flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 border-b border-hh-border bg-white">
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        {/* Unified header row — one continuous border-bottom */}
+        <div className="flex items-stretch border-b border-hh-border flex-shrink-0">
+          {!assistanceConfig.blindPlay && desktopSidebarOpen && (
+            <div className="hidden lg:flex items-center px-4 w-1/3 flex-shrink-0 bg-white" style={{ borderRight: '1px solid #e2e8f0' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b', letterSpacing: '0.5px', margin: 0 }}>
+                E.P.I.C. TECHNIQUE
+              </h3>
+            </div>
+          )}
+          <div className={`${assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 bg-white`}>
             {/* Left: Help sidebar toggle + Title */}
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
               {/* Mobile: EPIC Tips button */}
@@ -1681,25 +1666,6 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                 >
                   <BookOpen className="w-3.5 h-3.5 text-[#4F7396]" />
                   <span className="text-[12px] font-medium text-hh-text">E.P.I.C.</span>
-                </button>
-              )}
-              {/* Desktop: EPIC Tips button - toggles sidebar */}
-              {!assistanceConfig.blindPlay && (
-                <button
-                  onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-                  className="hidden lg:flex items-center gap-1.5 px-3.5 py-2 -ml-1 rounded-lg transition-all duration-200"
-                  style={{
-                    border: desktopSidebarOpen ? '1.5px solid #4F7396' : '1.5px solid #cbd5e1',
-                    backgroundColor: desktopSidebarOpen ? 'rgba(79, 115, 150, 0.12)' : '#f8fafc',
-                    color: desktopSidebarOpen ? '#4F7396' : '#475569',
-                    boxShadow: desktopSidebarOpen ? '0 0 0 2px rgba(79, 115, 150, 0.15)' : '0 1px 2px rgba(0,0,0,0.05)',
-                    cursor: 'pointer',
-                  }}
-                  title="Klik om E.P.I.C. technieken te bekijken"
-                  aria-label="E.P.I.C. Tips"
-                >
-                  <BookOpen className="w-4 h-4" style={{ color: desktopSidebarOpen ? '#4F7396' : '#64748b' }} />
-                  <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.3px' }}>E.P.I.C.</span>
                 </button>
               )}
               <span className="text-[13px] text-hh-muted font-medium whitespace-nowrap flex items-center gap-1">
@@ -1749,26 +1715,64 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               )}
             </div>
           </div>
+        </div>
 
-          {/* Level transition notification banner */}
-          {levelTransitionMessage && (
-            <div className="px-6 py-3 bg-gradient-to-r from-[#4F7396]/10 to-[#4F7396]/5 border-b border-[#4F7396]/20">
-              <div className="flex items-center justify-between">
-                <span className="text-[14px] text-hh-ink font-medium">{levelTransitionMessage}</span>
-                <button 
-                  onClick={() => setLevelTransitionMessage(null)}
-                  className="text-hh-muted hover:text-hh-ink transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+        {/* Body: EPIC sidebar content + Chat content side by side */}
+        <div className="flex flex-1 overflow-hidden">
+          {!assistanceConfig.blindPlay && desktopSidebarOpen && (
+            <div className="hidden lg:block w-1/3 flex-shrink-0 h-full overflow-y-auto bg-white" style={{ borderRight: '1px solid #e2e8f0' }}>
+              <EPICSidebar
+                fasesAccordionOpen={fasesAccordionOpen}
+                setFasesAccordionOpen={setFasesAccordionOpen}
+                houdingenAccordionOpen={houdingenAccordionOpen}
+                setHoudingenAccordionOpen={setHoudingenAccordionOpen}
+                expandedPhases={expandedPhases}
+                togglePhase={togglePhase}
+                setCurrentPhase={setCurrentPhase}
+                expandedParents={expandedParents}
+                toggleParentTechnique={toggleParentTechnique}
+                expandedHoudingen={expandedHoudingen}
+                toggleHouding={toggleHouding}
+                selectedTechnique={selectedTechniqueName}
+                setSelectedTechnique={setSelectedTechniqueName}
+                activeHouding={activeHouding}
+                recommendedTechnique={recommendedTechnique}
+                openTechniqueDetails={openTechniqueDetails}
+                startTechniqueChat={startTechniqueChat}
+                techniquesByPhase={techniquesByPhase}
+                phaseNames={phaseNames}
+                getFaseBadgeColor={getFaseBadgeColor}
+                getTopLevelTechniques={getTopLevelTechniques}
+                hasChildren={hasChildren}
+                getChildTechniques={getChildTechniques}
+                klantHoudingen={klantHoudingenArray}
+                difficultyLevel={difficultyLevel}
+                isUserView={true}
+                hideHeader={true}
+              />
             </div>
           )}
 
-          <div className="flex-1 overflow-hidden">
-            {renderMainContent()}
-          </div>
+          <div className={`${assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex flex-col bg-white overflow-hidden`}>
+            {/* Level transition notification banner */}
+            {levelTransitionMessage && (
+              <div className="px-6 py-3 bg-gradient-to-r from-[#4F7396]/10 to-[#4F7396]/5 border-b border-[#4F7396]/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-[14px] text-hh-ink font-medium">{levelTransitionMessage}</span>
+                  <button 
+                    onClick={() => setLevelTransitionMessage(null)}
+                    className="text-hh-muted hover:text-hh-ink transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
 
+            <div className="flex-1 overflow-hidden">
+              {renderMainContent()}
+            </div>
+          </div>
         </div>
       </div>
 

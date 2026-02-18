@@ -39,6 +39,7 @@ interface EPICSidebarProps {
   isUserView?: boolean;
   completedTechniques?: string[];
   currentUnlockedPhase?: number;
+  hideHeader?: boolean;
 }
 
 const PHASE_CIRCLE_COLORS: Record<number, string> = {
@@ -82,6 +83,7 @@ export function EPICSidebar({
   isUserView = false,
   completedTechniques = ["0.1", "0.2", "0.3", "0.4", "0.5", "1.1", "1.2"],
   currentUnlockedPhase = 2,
+  hideHeader = false,
 }: EPICSidebarProps) {
   
   const isTechniqueLocked = (techniqueNumber: string) => {
@@ -122,12 +124,14 @@ export function EPICSidebar({
 
   if (isUserView) {
     return (
-      <div className="h-full bg-white flex flex-col" style={{ borderRight: '1px solid #e2e8f0' }}>
-        <div className="flex items-center px-4 py-3 lg:py-4 border-b border-hh-border bg-white flex-shrink-0">
-          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b', letterSpacing: '0.5px', margin: 0 }}>
-            E.P.I.C. TECHNIQUE
-          </h3>
-        </div>
+      <div className="h-full bg-white flex flex-col" style={hideHeader ? {} : { borderRight: '1px solid #e2e8f0' }}>
+        {!hideHeader && (
+          <div className="flex items-center px-4 py-3 lg:py-4 border-b border-hh-border bg-white flex-shrink-0">
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b', letterSpacing: '0.5px', margin: 0 }}>
+              E.P.I.C. TECHNIQUE
+            </h3>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <div className="space-y-1">
