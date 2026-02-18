@@ -207,6 +207,7 @@ export function AnalysisResults({
   const [replayFeedback, setReplayFeedback] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionResult, setActionResult] = useState<{ momentId: string; type: string; data: any } | null>(null);
+  const [debriefExpanded, setDebriefExpanded] = useState(false);
 
   const [resolvedConversationId, setResolvedConversationId] = useState<string | null>(
     navigationData?.conversationId || sessionStorage.getItem('analysisId') || null
@@ -782,45 +783,66 @@ export function AnalysisResults({
                 ))}
               </div>
 
-              {insights.coachDebrief && insights.coachDebrief.messages.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-hh-border/50 space-y-2.5">
-                  {insights.coachDebrief.messages.map((msg, i) => {
-                    if (msg.type === 'coach_text' && msg.text) {
-                      return (
-                        <p key={i} className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-hh-text/80" style={{ overflowWrap: 'break-word' }}>{msg.text}</p>
-                      );
-                    }
-                    if (msg.type === 'moment_ref' && msg.momentId) {
-                      const refMoment = (insights.moments || []).find(m => m.id === msg.momentId);
-                      if (!refMoment) return null;
-                      const typeLabels: Record<string, { label: string; color: string }> = {
-                        'big_win': { label: 'Big Win', color: 'text-emerald-600' },
-                        'quick_fix': { label: 'Quick Fix', color: 'text-amber-600' },
-                        'turning_point': { label: 'Scharnierpunt', color: 'text-rose-600' },
-                      };
-                      const tl = typeLabels[refMoment.type] || typeLabels['quick_fix'];
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => { setExpandedMoment(expandedMoment === refMoment.id ? null : refMoment.id); markMomentViewed(refMoment.id); }}
-                          className="flex items-center gap-1.5 text-[13px] text-hh-primary hover:underline"
-                        >
-                          <ArrowRight className="w-3 h-3" />
-                          <span className={`font-medium ${tl.color}`}>{tl.label}:</span>
-                          <span>{refMoment.label}</span>
-                        </button>
-                      );
-                    }
-                    return null;
-                  })}
+              {insights.coachDebrief && insights.coachDebrief.messages.length > 0 && (() => {
+                const allMessages = insights.coachDebrief.messages;
+                const visibleMessages = debriefExpanded ? allMessages : allMessages.slice(0, 1);
+                const hasMore = allMessages.length > 1;
 
-                  <div className="pt-4 mt-2">
-                    <Button size="sm" className="gap-1.5 text-[13px] bg-emerald-600 hover:bg-emerald-700" onClick={() => navigate?.("talk-to-hugo")}>
-                      Bespreek met Hugo <ChevronRight className="w-3.5 h-3.5" />
-                    </Button>
+                const renderMessage = (msg: CoachDebriefMessage, i: number) => {
+                  if (msg.type === 'coach_text' && msg.text) {
+                    return (
+                      <p key={i} className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-hh-text/80" style={{ overflowWrap: 'break-word' }}>{msg.text}</p>
+                    );
+                  }
+                  if (msg.type === 'moment_ref' && msg.momentId) {
+                    const refMoment = (insights.moments || []).find(m => m.id === msg.momentId);
+                    if (!refMoment) return null;
+                    const typeLabels: Record<string, { label: string; color: string }> = {
+                      'big_win': { label: 'Big Win', color: 'text-emerald-600' },
+                      'quick_fix': { label: 'Quick Fix', color: 'text-amber-600' },
+                      'turning_point': { label: 'Scharnierpunt', color: 'text-rose-600' },
+                    };
+                    const tl = typeLabels[refMoment.type] || typeLabels['quick_fix'];
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => { setExpandedMoment(expandedMoment === refMoment.id ? null : refMoment.id); markMomentViewed(refMoment.id); }}
+                        className="flex items-center gap-1.5 text-[13px] text-hh-primary hover:underline"
+                      >
+                        <ArrowRight className="w-3 h-3" />
+                        <span className={`font-medium ${tl.color}`}>{tl.label}:</span>
+                        <span>{refMoment.label}</span>
+                      </button>
+                    );
+                  }
+                  return null;
+                };
+
+                return (
+                  <div className="mt-4 pt-4 border-t border-hh-border/50 space-y-2.5">
+                    {visibleMessages.map((msg, i) => renderMessage(msg, i))}
+
+                    {hasMore && (
+                      <button
+                        onClick={() => setDebriefExpanded(!debriefExpanded)}
+                        className="flex items-center gap-1 text-[13px] font-medium text-hh-primary hover:underline mt-1"
+                      >
+                        {debriefExpanded ? (
+                          <><ChevronDown className="w-3.5 h-3.5" /> Minder tonen</>
+                        ) : (
+                          <><ChevronRight className="w-3.5 h-3.5" /> Lees meer</>
+                        )}
+                      </button>
+                    )}
+
+                    <div className="pt-4 mt-2">
+                      <Button size="sm" className="gap-1.5 text-[13px] bg-emerald-600 hover:bg-emerald-700" onClick={() => navigate?.("talk-to-hugo")}>
+                        Bespreek met Hugo <ChevronRight className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
 
@@ -861,11 +883,11 @@ export function AnalysisResults({
                       </button>
 
                       {isExpanded && (
-                        <div className="px-4 pb-4 pt-1 border-t border-hh-border/30">
+                        <div className="px-4 pb-4 pt-1 border-t border-hh-border/30 space-y-4">
                           <p className="text-[13px] sm:text-[14px] leading-[22px] text-hh-text/70 font-normal mt-2">{moment.whyItMatters}</p>
 
                           {(moment.sellerText || moment.customerText) && (
-                            <div className="mt-3 space-y-2">
+                            <div className="p-3 rounded-lg bg-hh-ui-50/60 border border-hh-border/20 space-y-2">
                               {moment.sellerText && (
                                 <ChatBubble compact speaker="seller" text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
                               )}
@@ -876,7 +898,7 @@ export function AnalysisResults({
                           )}
 
                           {moment.betterAlternative && moment.type !== 'big_win' && (
-                            <div className="mt-3 p-3 rounded-lg bg-hh-primary/5 border border-hh-primary/10">
+                            <div className="p-3 rounded-lg bg-hh-primary/5 border border-hh-primary/10">
                               <div className="flex gap-2 items-start">
                                 <Lightbulb className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
                                 <div>
@@ -888,7 +910,7 @@ export function AnalysisResults({
                           )}
 
                           {moment.recommendedTechniques.length > 0 && (
-                            <div className="flex gap-1.5 mt-3 flex-wrap">
+                            <div className="flex gap-1.5 flex-wrap">
                               {moment.recommendedTechniques.map((t, i) => (
                                 <Badge key={i} variant="outline" className="text-[10px] px-2 py-0.5 text-hh-primary border-hh-primary/20 bg-hh-primary/5" title={t}>
                                   {getTechniekByNummer(t)?.naam || t}
@@ -897,44 +919,44 @@ export function AnalysisResults({
                             </div>
                           )}
 
-                          <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-hh-border/30">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-3 border-t border-hh-border/30">
                             {moment.type !== 'big_win' && (
                               <Button
                                 size="sm"
-                                className="gap-1.5 text-[12px] bg-hh-ink hover:bg-hh-ink/90 text-white"
+                                className="gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 bg-hh-ink hover:bg-hh-ink/90 text-white"
                                 onClick={() => startReplay(moment)}
                               >
-                                <Play className="w-3.5 h-3.5" /> Replay
+                                <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Replay
                               </Button>
                             )}
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[12px] border-hh-border text-hh-text hover:bg-hh-ui-50"
+                              className="gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 border-hh-border text-hh-text hover:bg-hh-ui-50"
                               disabled={actionLoading === `${moment.id}-three_options`}
                               onClick={() => runCoachAction(moment.id, 'three_options')}
                             >
-                              {actionLoading === `${moment.id}-three_options` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5 text-hh-muted" />}
+                              {actionLoading === `${moment.id}-three_options` ? <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" /> : <MessageSquare className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hh-muted" />}
                               3 opties
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[12px] border-hh-border text-hh-text hover:bg-hh-ui-50"
+                              className="gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 border-hh-border text-hh-text hover:bg-hh-ui-50"
                               disabled={actionLoading === `${moment.id}-micro_drill`}
                               onClick={() => runCoachAction(moment.id, 'micro_drill')}
                             >
-                              {actionLoading === `${moment.id}-micro_drill` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-hh-muted" />}
+                              {actionLoading === `${moment.id}-micro_drill` ? <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" /> : <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hh-muted" />}
                               Drill
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 text-[12px] border-hh-border text-hh-text hover:bg-hh-ui-50"
+                              className="gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 border-hh-border text-hh-text hover:bg-hh-ui-50"
                               disabled={actionLoading === `${moment.id}-hugo_demo`}
                               onClick={() => runCoachAction(moment.id, 'hugo_demo')}
                             >
-                              {actionLoading === `${moment.id}-hugo_demo` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-hh-muted" />}
+                              {actionLoading === `${moment.id}-hugo_demo` ? <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" /> : <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hh-muted" />}
                               Hugo demo
                             </Button>
                           </div>
