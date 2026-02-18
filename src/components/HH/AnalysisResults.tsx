@@ -1098,7 +1098,7 @@ export function AnalysisResults({
                             {moment.type !== 'big_win' && (
                               <Button
                                 size="sm"
-                                className="gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 bg-hh-ink hover:bg-hh-ink/90 text-white"
+                                className={`gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 text-white ${adminColors ? 'bg-purple-600 hover:bg-purple-700' : 'bg-hh-ink hover:bg-hh-ink/90'}`}
                                 onClick={() => startReplay(moment)}
                               >
                                 <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Replay
