@@ -995,10 +995,10 @@ export function AnalysisResults({
                           {(moment.sellerText || moment.customerText) && (
                             <div className="p-3 rounded-lg bg-hh-ui-50/60 border border-hh-border/20 space-y-2">
                               {moment.sellerText && (
-                                <ChatBubble compact speaker="seller" text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
+                                <ChatBubble compact speaker="seller" adminColors={adminColors} text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
                               )}
                               {moment.customerText && (
-                                <ChatBubble compact speaker="customer" text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
+                                <ChatBubble compact speaker="customer" adminColors={adminColors} text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
                               )}
                             </div>
                           )}
@@ -1237,6 +1237,7 @@ export function AnalysisResults({
                     text={turn.text}
                     label={turn.speaker === 'seller' ? 'Jij (origineel)' : 'Klant (origineel)'}
                     variant="faded"
+                    adminColors={adminColors}
                   />
                 ))}
 
@@ -1246,6 +1247,7 @@ export function AnalysisResults({
                     speaker={msg.role === 'seller' ? 'seller' : 'customer'}
                     text={msg.content}
                     label={msg.role === 'seller' ? 'Jij (replay)' : 'Klant'}
+                    adminColors={adminColors}
                   />
                 ))}
 
@@ -1322,6 +1324,7 @@ export function AnalysisResults({
                           speaker={turn.speaker === 'seller' ? 'seller' : 'customer'}
                           text={turn.text}
                           timestamp={formatTime(turn.startMs)}
+                          adminColors={adminColors}
                         >
                           <div className="flex flex-wrap items-center gap-1.5">
                             {turn.speaker === 'customer' && signal && signal.houding !== 'neutraal' && (

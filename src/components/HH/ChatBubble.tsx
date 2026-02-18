@@ -7,6 +7,7 @@ interface ChatBubbleProps {
   label?: string;
   variant?: 'default' | 'faded';
   compact?: boolean;
+  adminColors?: boolean;
   children?: React.ReactNode;
 }
 
@@ -17,6 +18,7 @@ export function ChatBubble({
   label,
   variant = 'default',
   compact = false,
+  adminColors = false,
   children,
 }: ChatBubbleProps) {
   const isCustomer = speaker === 'customer';
@@ -46,8 +48,8 @@ export function ChatBubble({
         <div
           className={`${padding} rounded-2xl ${
             isCustomer
-              ? "bg-hh-ink text-white rounded-br-md"
-              : "bg-hh-ui-50 text-hh-text rounded-bl-md"
+              ? adminColors ? "bg-purple-600 text-white rounded-br-md" : "bg-hh-ink text-white rounded-br-md"
+              : adminColors ? "bg-purple-50 text-hh-text rounded-bl-md" : "bg-hh-ui-50 text-hh-text rounded-bl-md"
           } ${opacityClass}`}
         >
           <p className={`${textSize} whitespace-pre-wrap`}>
