@@ -899,15 +899,11 @@ ${msg}`;
               key={tab.value}
               onClick={() => setActiveTab(tab.value as any)}
               className={`px-4 py-2.5 text-[14px] font-medium rounded-full transition-colors flex items-center gap-2 ${
-                activeTab === tab.value
-                  ? adminColors ? 'bg-purple-600 text-white' : ''
-                  : 'hover:bg-hh-ui-100'
+                activeTab !== tab.value ? 'hover:bg-hh-ui-100' : ''
               }`}
-              style={activeTab === tab.value && !adminColors
-                ? { backgroundColor: '#3C9A6E', color: 'white' }
-                : activeTab !== tab.value
-                  ? { color: '#4B5563' }
-                  : {}
+              style={activeTab === tab.value
+                ? { backgroundColor: adminColors ? '#8B5CF6' : '#3C9A6E', color: 'white' }
+                : { color: '#4B5563' }
               }
             >
               <tab.icon className="w-4 h-4" />
@@ -922,7 +918,7 @@ ${msg}`;
 
           {/* Summary section */}
           <div className="flex items-start gap-4">
-            <div className={`w-10 h-10 rounded-full ${adminColors ? 'bg-purple-600' : ''} flex items-center justify-center flex-shrink-0 mt-0.5`} style={!adminColors ? { backgroundColor: '#3C9A6E' } : {}}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: adminColors ? '#8B5CF6' : '#3C9A6E' }}>
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -1046,16 +1042,15 @@ ${msg}`;
                   </button>
                 )}
                 <div className="pt-2">
-                  <Button
-                    size="sm"
-                    className="gap-1.5 text-[13px] text-white"
-                    style={{ backgroundColor: '#3C9A6E' }}
-                    onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
-                    onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
+                  <button
+                    className="inline-flex items-center justify-center gap-1.5 text-[13px] text-white h-8 rounded-md px-3 font-medium transition-all"
+                    style={{ backgroundColor: adminColors ? '#8B5CF6' : '#3C9A6E' }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#7C3AED' : '#2D7F57')}
+                    onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#8B5CF6' : '#3C9A6E')}
                     onClick={() => navigate?.("talk-to-hugo")}
                   >
                     <Sparkles className="w-3.5 h-3.5" /> Bespreek met Hugo <ChevronRight className="w-3.5 h-3.5" />
-                  </Button>
+                  </button>
                 </div>
               </div>
             );
@@ -1162,26 +1157,31 @@ ${msg}`;
                       {/* Primary Action: Replay */}
                       {moment.type !== 'big_win' ? (
                         <div className="pt-3 border-t border-hh-border/40">
-                          <Button
-                            className={`gap-2 text-[13px] h-10 px-5 text-white ${adminColors ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
-                            style={!adminColors ? { backgroundColor: '#3C9A6E' } : {}}
-                            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!adminColors) e.currentTarget.style.backgroundColor = '#2D7F57'; }}
-                            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { if (!adminColors) e.currentTarget.style.backgroundColor = '#3C9A6E'; }}
+                          <button
+                            className="inline-flex items-center justify-center gap-2 text-[13px] h-10 px-5 text-white rounded-md font-medium transition-all"
+                            style={{ backgroundColor: adminColors ? '#8B5CF6' : '#3C9A6E' }}
+                            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#7C3AED' : '#2D7F57')}
+                            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#8B5CF6' : '#3C9A6E')}
                             onClick={() => startReplay(moment)}
                           >
                             <Play className="w-4 h-4" /> Opnieuw oefenen
-                          </Button>
+                          </button>
                           <p className="text-[11px] text-hh-muted mt-1.5">Speel dit moment opnieuw en oefen een betere aanpak</p>
                         </div>
                       ) : (
                         <div className="pt-3 border-t border-hh-border/40">
-                          <Button
-                            variant="outline"
-                            className="gap-2 text-[13px] h-10 px-5 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                          <button
+                            className="inline-flex items-center justify-center gap-2 text-[13px] h-10 px-5 rounded-md font-medium transition-all border"
+                            style={adminColors
+                              ? { borderColor: '#8B5CF6', color: '#8B5CF6', backgroundColor: 'transparent' }
+                              : { borderColor: '#6EE7B7', color: '#047857', backgroundColor: 'transparent' }
+                            }
+                            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#F5F3FF' : '#ECFDF5')}
+                            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = 'transparent')}
                             onClick={() => navigate?.("talk-to-hugo")}
                           >
                             <Sparkles className="w-4 h-4" /> Bespreek met Hugo
-                          </Button>
+                          </button>
                         </div>
                       )}
 
