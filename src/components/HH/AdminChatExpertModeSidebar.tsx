@@ -122,18 +122,14 @@ export function EPICSidebar({
 
   if (isUserView) {
     return (
-      <div className="h-full bg-white overflow-y-auto" style={{ borderRight: '1px solid #e2e8f0' }}>
-        <div className="p-4 space-y-3">
+      <div className="h-full bg-white flex flex-col" style={{ borderRight: '1px solid #e2e8f0' }}>
+        <div className="flex items-center px-4 py-3 lg:py-4 border-b border-hh-border bg-white flex-shrink-0">
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b', letterSpacing: '0.5px', margin: 0 }}>
+            E.P.I.C. TECHNIQUE
+          </h3>
+        </div>
 
-          <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b', letterSpacing: '0.5px', marginBottom: '2px' }}>
-              E.P.I.C. TECHNIQUE
-            </h3>
-            <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-              {totalCompleted}/{totalTechniques} onderwerpen
-            </span>
-          </div>
-
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <div className="space-y-1">
             {Object.entries(phaseNames).map(([phaseNum, phaseName]) => {
               const phase = parseInt(phaseNum);

@@ -126,7 +126,7 @@ export function TechniqueDetailsDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:w-[50vw] sm:max-w-[50vw] p-0 overflow-hidden">
+      <SheetContent side="left" className="p-0 overflow-hidden" style={{ width: '100%', maxWidth: 'calc(64px + (100vw - 64px) * 0.3333)' }}>
         <div className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 pb-4">

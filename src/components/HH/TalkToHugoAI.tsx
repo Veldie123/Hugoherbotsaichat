@@ -150,6 +150,11 @@ export function TalkToHugoAI({
     setDesktopSidebarOpenRaw(open);
     window.dispatchEvent(new CustomEvent('sidebar-collapse-request', { detail: { collapsed: open } }));
   };
+  useEffect(() => {
+    if (desktopSidebarOpen) {
+      window.dispatchEvent(new CustomEvent('sidebar-collapse-request', { detail: { collapsed: true } }));
+    }
+  }, []);
   const [activeHelpMessageId, setActiveHelpMessageId] = useState<string | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<ChatMode>("chat");
@@ -1630,7 +1635,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         
         {/* EPIC Sidebar hidden by default - only shows when user clicks help icon (Piano concept) */}
         {!assistanceConfig.blindPlay && desktopSidebarOpen && (
-          <div className="hidden lg:block w-1/3 flex-shrink-0 overflow-y-auto h-full border-r border-hh-border">
+          <div className="hidden lg:block w-1/3 flex-shrink-0 h-full">
             <EPICSidebar
               fasesAccordionOpen={fasesAccordionOpen}
               setFasesAccordionOpen={setFasesAccordionOpen}
@@ -1682,15 +1687,19 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               {!assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-                  className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 -ml-1 rounded-full border transition-colors ${
-                    desktopSidebarOpen 
-                      ? "border-[#4F7396]/30 bg-[#4F7396]/10 text-[#4F7396]" 
-                      : "border-hh-border bg-white hover:bg-hh-ui-50 text-hh-text"
-                  }`}
+                  className="hidden lg:flex items-center gap-1.5 px-3.5 py-2 -ml-1 rounded-lg transition-all duration-200"
+                  style={{
+                    border: desktopSidebarOpen ? '1.5px solid #4F7396' : '1.5px solid #cbd5e1',
+                    backgroundColor: desktopSidebarOpen ? 'rgba(79, 115, 150, 0.12)' : '#f8fafc',
+                    color: desktopSidebarOpen ? '#4F7396' : '#475569',
+                    boxShadow: desktopSidebarOpen ? '0 0 0 2px rgba(79, 115, 150, 0.15)' : '0 1px 2px rgba(0,0,0,0.05)',
+                    cursor: 'pointer',
+                  }}
+                  title="Klik om E.P.I.C. technieken te bekijken"
                   aria-label="E.P.I.C. Tips"
                 >
-                  <BookOpen className="w-3.5 h-3.5" style={{ color: desktopSidebarOpen ? '#4F7396' : '#6B7280' }} />
-                  <span className="text-[12px] font-medium">E.P.I.C.</span>
+                  <BookOpen className="w-4 h-4" style={{ color: desktopSidebarOpen ? '#4F7396' : '#64748b' }} />
+                  <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.3px' }}>E.P.I.C.</span>
                 </button>
               )}
               <span className="text-[13px] text-hh-muted font-medium whitespace-nowrap flex items-center gap-1">
