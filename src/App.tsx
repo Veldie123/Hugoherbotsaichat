@@ -36,6 +36,7 @@ const DEV_PREVIEW_PAGES: Record<string, Page> = {
   'hugo-overview': 'hugo-overview',
   'analysis': 'analysis',
   'analysis-results': 'analysis-results',
+  'admin-analysis-results': 'analysis-results',
   'upload-analysis': 'upload-analysis',
   'landing': 'landing',
   'login': 'login',
@@ -57,11 +58,20 @@ function getDevPreviewPage(): Page | null {
   return null;
 }
 
+function getRawDevPath(): string | null {
+  const path = window.location.pathname;
+  if (path.startsWith('/_dev/')) {
+    return path.replace('/_dev/', '');
+  }
+  return null;
+}
+
 export default function App() {
   const devPreviewPage = getDevPreviewPage();
+  const rawDevPath = getRawDevPath();
   const [currentPage, setCurrentPage] = useState<Page | null>(devPreviewPage);
   const [isCheckingAuth, setIsCheckingAuth] = useState(!devPreviewPage);
-  const [isAdmin, setIsAdmin] = useState(devPreviewPage?.startsWith('admin-') || false);
+  const [isAdmin, setIsAdmin] = useState(rawDevPath?.startsWith('admin-') || false);
 
   console.log('📍 App.tsx rendered, currentPage:', currentPage);
 
@@ -107,8 +117,9 @@ export default function App() {
     if (devPreviewPage === 'analysis-results') {
       const params = new URLSearchParams(window.location.search);
       const cid = params.get('id');
-      if (cid) return { conversationId: cid };
-      return { autoLoadFirst: true };
+      const fromAdmin = rawDevPath === 'admin-analysis-results';
+      if (cid) return { conversationId: cid, fromAdmin };
+      return { autoLoadFirst: true, fromAdmin };
     }
     return undefined;
   });

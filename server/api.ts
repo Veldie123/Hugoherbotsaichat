@@ -3547,6 +3547,87 @@ app.get("/api/v2/admin/feedback", async (req: Request, res: Response) => {
   }
 });
 
+// ===========================================
+// ADMIN CORRECTIONS API
+// ===========================================
+
+// Ensure corrections table exists
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admin_corrections (
+        id SERIAL PRIMARY KEY,
+        analysis_id VARCHAR(255),
+        type VARCHAR(100) NOT NULL,
+        field VARCHAR(100) NOT NULL,
+        original_value TEXT,
+        new_value TEXT NOT NULL,
+        context TEXT,
+        submitted_by VARCHAR(100) DEFAULT 'admin',
+        status VARCHAR(20) DEFAULT 'pending',
+        reviewed_by VARCHAR(100),
+        reviewed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    console.log('[Admin] Corrections table ready');
+  } catch (err) {
+    console.error('[Admin] Failed to create corrections table:', err);
+  }
+})();
+
+app.post("/api/v2/admin/corrections", async (req: Request, res: Response) => {
+  try {
+    const { analysisId, type, field, originalValue, newValue, context, submittedBy } = req.body;
+    if (!type || !field || !newValue) {
+      return res.status(400).json({ error: 'Missing required fields: type, field, newValue' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO admin_corrections (analysis_id, type, field, original_value, new_value, context, submitted_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [analysisId || null, type, field, originalValue || '', newValue, context || '', submittedBy || 'admin']
+    );
+    res.json({ correction: rows[0], message: 'Correctie ingediend voor review' });
+  } catch (err: any) {
+    console.error('[Admin] Correction submit error:', err);
+    res.status(500).json({ error: err.message || 'Correctie opslaan mislukt' });
+  }
+});
+
+app.get("/api/v2/admin/corrections", async (req: Request, res: Response) => {
+  try {
+    const status = req.query.status as string || 'all';
+    let queryText = 'SELECT * FROM admin_corrections ORDER BY created_at DESC LIMIT 100';
+    let params: any[] = [];
+    if (status !== 'all') {
+      queryText = 'SELECT * FROM admin_corrections WHERE status = $1 ORDER BY created_at DESC LIMIT 100';
+      params = [status];
+    }
+    const { rows } = await pool.query(queryText, params);
+    res.json({ corrections: rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch("/api/v2/admin/corrections/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status, reviewedBy } = req.body;
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be approved or rejected' });
+    }
+    const { rows } = await pool.query(
+      `UPDATE admin_corrections SET status = $1, reviewed_by = $2, reviewed_at = NOW() WHERE id = $3 RETURNING *`,
+      [status, reviewedBy || 'admin', id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Correction not found' });
+    res.json({ correction: rows[0] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Health check - now shows FULL engine
 app.get("/api/health", (req, res) => {
   res.json({ 

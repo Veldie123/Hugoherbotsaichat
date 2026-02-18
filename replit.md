@@ -26,7 +26,8 @@ The app has built-in developer preview routes that bypass authentication. Use th
 **Route pattern:** `/_dev/<page-name>`
 
 **Available pages:**
-- `/_dev/analysis-results` - Analysis results page (most common for validation)
+- `/_dev/analysis-results` - Analysis results page (user view, most common for validation)
+- `/_dev/admin-analysis-results` - Analysis results page (admin view with purple accents and edit buttons)
 - `/_dev/analysis` - Analysis list page
 - `/_dev/upload-analysis` - Upload analysis page
 - `/_dev/talk-to-hugo` - Hugo AI chat interface

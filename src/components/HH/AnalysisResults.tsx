@@ -31,8 +31,12 @@ import {
   ArrowRight,
   Send,
   X,
+  Pencil,
+  Save,
+  AlertTriangle,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { getTechniekByNummer } from "../../data/technieken-service";
 
 interface AnalysisResultsProps {
@@ -208,6 +212,14 @@ export function AnalysisResults({
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionResult, setActionResult] = useState<{ momentId: string; type: string; data: any } | null>(null);
   const [debriefExpanded, setDebriefExpanded] = useState(false);
+  const [editingDebrief, setEditingDebrief] = useState(false);
+  const [editedOneliner, setEditedOneliner] = useState('');
+  const [editedEpicMomentum, setEditedEpicMomentum] = useState('');
+  const [editingMomentId, setEditingMomentId] = useState<string | null>(null);
+  const [editedMomentLabel, setEditedMomentLabel] = useState('');
+  const [editedMomentWhy, setEditedMomentWhy] = useState('');
+  const [editedMomentAlt, setEditedMomentAlt] = useState('');
+  const [submittingCorrection, setSubmittingCorrection] = useState(false);
 
   const [resolvedConversationId, setResolvedConversationId] = useState<string | null>(
     navigationData?.conversationId || sessionStorage.getItem('analysisId') || null
@@ -217,6 +229,40 @@ export function AnalysisResults({
 
   const replayRef = useRef<HTMLDivElement>(null);
   const actionResultRef = useRef<HTMLDivElement>(null);
+
+  const conversationId = resolvedConversationId;
+
+  const submitCorrection = async (type: string, field: string, originalValue: string, newValue: string, context?: string) => {
+    if (originalValue === newValue) return;
+    setSubmittingCorrection(true);
+    try {
+      const response = await fetch('/api/v2/admin/corrections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysisId: result?.conversation?.id || conversationId,
+          type,
+          field,
+          originalValue,
+          newValue,
+          context: context || `Analysis: ${result?.conversation?.title}`,
+          submittedBy: 'admin',
+        }),
+      });
+      if (response.ok) {
+        toast?.('Correctie ingediend voor review', { description: 'Verschijnt in Config Review' });
+      } else {
+        toast?.('Fout bij indienen correctie');
+      }
+    } catch (err) {
+      console.error('Correction submit error:', err);
+      toast?.('Fout bij indienen correctie');
+    } finally {
+      setSubmittingCorrection(false);
+      setEditingDebrief(false);
+      setEditingMomentId(null);
+    }
+  };
 
   useEffect(() => {
     if (navigationData?.conversationId && navigationData.conversationId !== resolvedConversationId) {
@@ -749,7 +795,7 @@ export function AnalysisResults({
               onClick={() => setActiveTab(tab.value as any)}
               className={`px-4 py-2.5 text-[14px] font-medium rounded-full transition-colors flex items-center gap-2 ${
                 activeTab === tab.value
-                  ? 'bg-hh-primary text-white'
+                  ? isAdmin ? 'bg-purple-600 text-white' : 'bg-hh-primary text-white'
                   : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100'
               }`}
             >
@@ -764,16 +810,74 @@ export function AnalysisResults({
         {activeTab === 'coach' && (<div className="space-y-5 max-w-[720px]">
 
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-hh-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className={`w-10 h-10 rounded-full ${isAdmin ? 'bg-purple-600' : 'bg-hh-primary'} flex items-center justify-center flex-shrink-0 mt-0.5`}>
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[15px] sm:text-[16px] leading-[24px] text-hh-text font-medium" style={{ overflowWrap: 'break-word' }}>
-                {insights.coachDebrief?.oneliner || `Laten we je gesprek samen doornemen.`}
-              </p>
-              <p className="text-[13px] sm:text-[14px] leading-[20px] text-hh-muted mt-1.5" style={{ overflowWrap: 'break-word' }}>
-                {insights.coachDebrief?.epicMomentum || `De EPIC-flow wordt geanalyseerd.`}
-              </p>
+              {isAdmin && editingDebrief ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editedOneliner}
+                    onChange={(e) => setEditedOneliner(e.target.value)}
+                    className="w-full px-3 py-2 text-[15px] leading-[22px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none"
+                    rows={2}
+                  />
+                  <textarea
+                    value={editedEpicMomentum}
+                    onChange={(e) => setEditedEpicMomentum(e.target.value)}
+                    className="w-full px-3 py-2 text-[13px] leading-[20px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none"
+                    rows={3}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="gap-1.5 text-[12px] bg-purple-600 hover:bg-purple-700"
+                      disabled={submittingCorrection}
+                      onClick={() => {
+                        submitCorrection('coach_debrief', 'oneliner', insights.coachDebrief?.oneliner || '', editedOneliner, 'Coach oneliner correctie');
+                        if (editedEpicMomentum !== (insights.coachDebrief?.epicMomentum || '')) {
+                          submitCorrection('coach_debrief', 'epicMomentum', insights.coachDebrief?.epicMomentum || '', editedEpicMomentum, 'EPIC momentum correctie');
+                        }
+                      }}
+                    >
+                      <Save className="w-3.5 h-3.5" /> Indienen voor review
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-[12px]"
+                      onClick={() => setEditingDebrief(false)}
+                    >
+                      Annuleren
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-purple-500 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Correcties gaan eerst naar Config Review
+                  </p>
+                </div>
+              ) : (
+                <div className="relative group">
+                  <p className="text-[15px] sm:text-[16px] leading-[24px] text-hh-text font-medium" style={{ overflowWrap: 'break-word' }}>
+                    {insights.coachDebrief?.oneliner || `Laten we je gesprek samen doornemen.`}
+                  </p>
+                  <p className="text-[13px] sm:text-[14px] leading-[20px] text-hh-muted mt-1.5" style={{ overflowWrap: 'break-word' }}>
+                    {insights.coachDebrief?.epicMomentum || `De EPIC-flow wordt geanalyseerd.`}
+                  </p>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        setEditedOneliner(insights.coachDebrief?.oneliner || '');
+                        setEditedEpicMomentum(insights.coachDebrief?.epicMomentum || '');
+                        setEditingDebrief(true);
+                      }}
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-600"
+                      title="Correctie indienen"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 sm:mt-4">
                 {phaseScores.map((ps, idx) => (
@@ -827,7 +931,7 @@ export function AnalysisResults({
                     {hasMore && (
                       <button
                         onClick={() => setDebriefExpanded(!debriefExpanded)}
-                        className="flex items-center gap-1 text-[13px] font-medium text-hh-primary hover:underline mt-1"
+                        className={`flex items-center gap-1 text-[13px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} hover:underline mt-1`}
                       >
                         {debriefExpanded ? (
                           <><ChevronDown className="w-3.5 h-3.5" /> Minder tonen</>
@@ -877,7 +981,7 @@ export function AnalysisResults({
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.color}`}>{config.label}</span>
                             <span className="text-[11px] text-hh-muted font-normal">{moment.timestamp}</span>
-                            {isNew && <span className="w-1.5 h-1.5 rounded-full bg-hh-primary flex-shrink-0" />}
+                            {isNew && <span className={`w-1.5 h-1.5 rounded-full ${isAdmin ? 'bg-purple-600' : 'bg-hh-primary'} flex-shrink-0`} />}
                           </div>
                           <p className="text-[13px] sm:text-[14px] font-normal text-hh-text mt-0.5 truncate">{moment.label}</p>
                         </div>
@@ -918,6 +1022,75 @@ export function AnalysisResults({
                                   {getTechniekByNummer(t)?.naam || t}
                                 </Badge>
                               ))}
+                            </div>
+                          )}
+
+                          {isAdmin && (
+                            <div className="pt-3 border-t border-purple-200/60">
+                              {editingMomentId === moment.id ? (
+                                <div className="space-y-2">
+                                  <div>
+                                    <label className="text-[11px] font-medium text-purple-600 mb-1 block">Moment label</label>
+                                    <input
+                                      value={editedMomentLabel}
+                                      onChange={(e) => setEditedMomentLabel(e.target.value)}
+                                      className="w-full px-3 py-1.5 text-[13px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[11px] font-medium text-purple-600 mb-1 block">Waarom belangrijk</label>
+                                    <textarea
+                                      value={editedMomentWhy}
+                                      onChange={(e) => setEditedMomentWhy(e.target.value)}
+                                      className="w-full px-3 py-1.5 text-[13px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none"
+                                      rows={2}
+                                    />
+                                  </div>
+                                  {moment.betterAlternative && (
+                                    <div>
+                                      <label className="text-[11px] font-medium text-purple-600 mb-1 block">Beter alternatief</label>
+                                      <textarea
+                                        value={editedMomentAlt}
+                                        onChange={(e) => setEditedMomentAlt(e.target.value)}
+                                        className="w-full px-3 py-1.5 text-[13px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none"
+                                        rows={2}
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      className="gap-1.5 text-[12px] bg-purple-600 hover:bg-purple-700"
+                                      disabled={submittingCorrection}
+                                      onClick={() => {
+                                        if (editedMomentLabel !== moment.label) submitCorrection('moment', 'label', moment.label, editedMomentLabel, `Moment: ${moment.id}`);
+                                        if (editedMomentWhy !== moment.whyItMatters) submitCorrection('moment', 'whyItMatters', moment.whyItMatters, editedMomentWhy, `Moment: ${moment.id}`);
+                                        if (editedMomentAlt !== (moment.betterAlternative || '')) submitCorrection('moment', 'betterAlternative', moment.betterAlternative || '', editedMomentAlt, `Moment: ${moment.id}`);
+                                      }}
+                                    >
+                                      <Save className="w-3.5 h-3.5" /> Indienen voor review
+                                    </Button>
+                                    <Button variant="outline" size="sm" className="text-[12px]" onClick={() => setEditingMomentId(null)}>
+                                      Annuleren
+                                    </Button>
+                                  </div>
+                                  <p className="text-[11px] text-purple-500 flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3" /> Correcties gaan eerst naar Config Review
+                                  </p>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setEditingMomentId(moment.id);
+                                    setEditedMomentLabel(moment.label);
+                                    setEditedMomentWhy(moment.whyItMatters);
+                                    setEditedMomentAlt(moment.betterAlternative || '');
+                                  }}
+                                  className="flex items-center gap-1.5 text-[12px] text-purple-600 hover:text-purple-700 font-medium"
+                                >
+                                  <Pencil className="w-3 h-3" /> Correctie indienen
+                                </button>
+                              )}
                             </div>
                           )}
 
