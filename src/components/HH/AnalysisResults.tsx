@@ -760,17 +760,17 @@ export function AnalysisResults({
 
         {/* Phase scores only shown in timeline tab */}
 
-        {activeTab === 'coach' && (<div className="space-y-5">
+        {activeTab === 'coach' && (<div className="space-y-5 max-w-[720px]">
 
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-hh-primary flex items-center justify-center flex-shrink-0 mt-0.5">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[15px] sm:text-[17px] leading-[24px] sm:leading-[26px] text-hh-text font-medium" style={{ overflowWrap: 'break-word' }}>
+              <p className="text-[15px] sm:text-[16px] leading-[24px] text-hh-text font-medium" style={{ overflowWrap: 'break-word' }}>
                 {insights.coachDebrief?.oneliner || `Laten we je gesprek samen doornemen.`}
               </p>
-              <p className="text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-hh-muted mt-1.5" style={{ overflowWrap: 'break-word' }}>
+              <p className="text-[13px] sm:text-[14px] leading-[20px] text-hh-muted mt-1.5" style={{ overflowWrap: 'break-word' }}>
                 {insights.coachDebrief?.epicMomentum || `De EPIC-flow wordt geanalyseerd.`}
               </p>
 
@@ -814,8 +814,8 @@ export function AnalysisResults({
                     return null;
                   })}
 
-                  <div className="pt-2">
-                    <Button size="sm" className="gap-1.5 text-[13px]" onClick={() => navigate?.("talk-to-hugo")}>
+                  <div className="pt-4 mt-2">
+                    <Button size="sm" className="gap-1.5 text-[13px] bg-emerald-600 hover:bg-emerald-700" onClick={() => navigate?.("talk-to-hugo")}>
                       Bespreek met Hugo <ChevronRight className="w-3.5 h-3.5" />
                     </Button>
                   </div>
@@ -843,26 +843,26 @@ export function AnalysisResults({
                   const isNew = !viewedMoments.has(moment.id);
 
                   return (
-                    <div key={moment.id} className={`rounded-xl border border-hh-border/80 border-l-[3px] ${config.accentBorder} bg-white overflow-hidden`}>
+                    <div key={moment.id} className={`rounded-xl border border-hh-border/60 border-l-[3px] ${config.accentBorder} bg-white overflow-hidden shadow-sm`}>
                       <button
                         onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
-                        className="w-full px-5 py-3.5 flex items-center gap-3 text-left hover:bg-hh-ui-50/50 transition-colors"
+                        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-hh-ui-50/30 transition-colors"
                       >
-                        <MomentIcon className={`w-[18px] h-[18px] ${config.color} flex-shrink-0`} />
+                        <MomentIcon className={`w-4 h-4 ${config.color} flex-shrink-0`} strokeWidth={1.75} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className={`text-[11px] font-semibold uppercase tracking-wide ${config.color}`}>{config.label}</span>
-                            <span className="text-[11px] text-hh-muted">{moment.timestamp}</span>
-                            {isNew && <span className="w-2 h-2 rounded-full bg-hh-primary flex-shrink-0" />}
+                            <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.color}`}>{config.label}</span>
+                            <span className="text-[11px] text-hh-muted font-normal">{moment.timestamp}</span>
+                            {isNew && <span className="w-1.5 h-1.5 rounded-full bg-hh-primary flex-shrink-0" />}
                           </div>
-                          <p className="text-[14px] font-medium text-hh-text mt-0.5 truncate">{moment.label}</p>
+                          <p className="text-[13px] sm:text-[14px] font-normal text-hh-text mt-0.5 truncate">{moment.label}</p>
                         </div>
-                        <ChevronRight className={`w-4 h-4 text-hh-muted transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} />
+                        <ChevronRight className={`w-3.5 h-3.5 text-hh-muted/60 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} />
                       </button>
 
                       {isExpanded && (
-                        <div className="px-5 pb-5 pt-1 border-t border-hh-border/40">
-                          <p className="text-[14px] leading-[22px] text-hh-text/80 mt-2">{moment.whyItMatters}</p>
+                        <div className="px-4 pb-4 pt-1 border-t border-hh-border/30">
+                          <p className="text-[13px] sm:text-[14px] leading-[22px] text-hh-text/70 font-normal mt-2">{moment.whyItMatters}</p>
 
                           {(moment.sellerText || moment.customerText) && (
                             <div className="mt-3 space-y-2">
@@ -897,11 +897,11 @@ export function AnalysisResults({
                             </div>
                           )}
 
-                          <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-hh-border/40">
+                          <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-hh-border/30">
                             {moment.type !== 'big_win' && (
                               <Button
                                 size="sm"
-                                className="gap-1.5 text-[12px] bg-hh-primary hover:bg-hh-primary/90 text-white"
+                                className="gap-1.5 text-[12px] bg-hh-ink hover:bg-hh-ink/90 text-white"
                                 onClick={() => startReplay(moment)}
                               >
                                 <Play className="w-3.5 h-3.5" /> Replay
@@ -1093,9 +1093,9 @@ export function AnalysisResults({
         </div>)}
 
           {activeTab === 'timeline' && (<div className="mt-6">
-            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-border">
+            <Card className="p-4 sm:p-6 rounded-[16px] shadow-hh-sm border-hh-border max-w-[780px]">
               <h3 className="text-hh-text mb-2">Transcript met EPIC Evaluatie</h3>
-              <p className="text-[14px] leading-[20px] text-hh-muted mb-6">
+              <p className="text-[13px] sm:text-[14px] leading-[20px] text-hh-muted mb-6">
                 Gesprek als chat met gedetecteerde technieken, klantsignalen en fase-indicatie
               </p>
 

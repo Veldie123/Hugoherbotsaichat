@@ -24,7 +24,7 @@ export function ChatBubble({
   const displayLabel = label ?? defaultLabel;
   
   const opacityClass = variant === 'faded' ? 'opacity-60' : '';
-  const maxWidth = compact ? 'max-w-[70%]' : 'max-w-[80%]';
+  const maxWidth = compact ? 'max-w-[70%]' : 'max-w-[75%] sm:max-w-[65%]';
   const padding = compact ? 'px-3 py-2' : 'p-3';
   const textSize = compact ? 'text-[13px] leading-[18px]' : 'text-[14px] leading-[22px]';
   const labelSize = compact ? 'text-[11px]' : 'text-[12px]';
