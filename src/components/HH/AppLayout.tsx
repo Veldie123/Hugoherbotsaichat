@@ -400,7 +400,7 @@ export function AppLayout({
 
             <Button
               onClick={() => navigate?.("talk-to-hugo")}
-              className="gap-2 bg-[#0F172A] hover:bg-[#1e293b] text-white h-10 px-3 sm:px-4"
+              className="gap-2 bg-[#00C389] hover:bg-[#00A876] text-white h-10 px-3 sm:px-4"
             >
               <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline text-[14px]">
@@ -473,7 +473,7 @@ export function AppLayout({
                                     {formatTimeAgo(notif.createdAt)}
                                   </span>
                                   {notif.type === "analysis_complete" && notif.conversationId && (
-                                    <span className="flex items-center gap-1 text-[11px] text-hh-primary font-medium">
+                                    <span className="flex items-center gap-1 text-[11px] text-hh-success font-medium">
                                       Bekijk resultaten
                                       <ExternalLink className="w-3 h-3" />
                                     </span>

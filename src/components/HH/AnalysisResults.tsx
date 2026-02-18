@@ -376,8 +376,8 @@ export function AnalysisResults({
   }, [resolvedConversationId]);
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-hh-success";
-    if (score >= 60) return "text-hh-warn";
+    if (score >= 70) return "text-hh-success";
+    if (score >= 50) return "text-hh-warn";
     return "text-hh-destructive";
   };
 
@@ -901,7 +901,7 @@ ${msg}`;
               onClick={() => setActiveTab(tab.value as any)}
               className={`px-4 py-2.5 text-[14px] font-medium rounded-full transition-colors flex items-center gap-2 ${
                 activeTab === tab.value
-                  ? adminColors ? 'bg-purple-600 text-white' : 'bg-hh-primary text-white'
+                  ? adminColors ? 'bg-purple-600 text-white' : 'bg-[#00C389] text-white'
                   : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100'
               }`}
             >
@@ -916,7 +916,7 @@ ${msg}`;
         {activeTab === 'coach' && (<div className="space-y-5 max-w-[720px]">
 
           <div className="flex items-start gap-4">
-            <div className={`w-10 h-10 rounded-full ${adminColors ? 'bg-purple-600' : 'bg-hh-primary'} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+            <div className={`w-10 h-10 rounded-full ${adminColors ? 'bg-purple-600' : 'bg-[#00C389]'} flex items-center justify-center flex-shrink-0 mt-0.5`}>
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -1037,7 +1037,7 @@ ${msg}`;
                     {hasMore && (
                       <button
                         onClick={() => setDebriefExpanded(!debriefExpanded)}
-                        className={`flex items-center gap-1 text-[13px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'} hover:underline mt-1`}
+                        className={`flex items-center gap-1 text-[13px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-success'} hover:underline mt-1`}
                       >
                         {debriefExpanded ? (
                           <><ChevronDown className="w-3.5 h-3.5" /> Minder tonen</>
@@ -1087,7 +1087,7 @@ ${msg}`;
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.color}`}>{config.label}</span>
                             <span className="text-[11px] text-hh-muted font-normal">{moment.timestamp}</span>
-                            {isNew && <span className={`w-1.5 h-1.5 rounded-full ${adminColors ? 'bg-purple-600' : 'bg-hh-primary'} flex-shrink-0`} />}
+                            {isNew && <span className={`w-1.5 h-1.5 rounded-full ${adminColors ? 'bg-purple-600' : 'bg-[#00C389]'} flex-shrink-0`} />}
                           </div>
                           <p className="text-[13px] sm:text-[14px] font-normal text-hh-text mt-0.5 truncate">{moment.label}</p>
                         </div>
@@ -1204,7 +1204,7 @@ ${msg}`;
                             {moment.type !== 'big_win' && (
                               <Button
                                 size="sm"
-                                className={`gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 text-white ${adminColors ? 'bg-purple-600 hover:bg-purple-700' : 'bg-hh-ink hover:bg-hh-ink/90'}`}
+                                className={`gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 text-white ${adminColors ? 'bg-purple-600 hover:bg-purple-700' : 'bg-[#00C389] hover:bg-[#00A876]'}`}
                                 onClick={() => startReplay(moment)}
                               >
                                 <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Replay

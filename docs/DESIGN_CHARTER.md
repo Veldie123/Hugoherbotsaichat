@@ -39,7 +39,9 @@ Raadpleeg dit document bij het ontwerpen van nieuwe pagina's of componenten.
 
 | Naam | Hex | Tailwind Class | Gebruik |
 |------|-----|----------------|---------|
-| **Steel Blue** | `#4F7396` | `bg-[#4F7396]` | User buttons, accenten |
+| **Green CTA** | `#00C389` | `bg-[#00C389]`, `hh-success` | CTA-knoppen, actieve tabs, positieve scores, send-knop, view toggles |
+| **Green Hover** | `#00A876` | `hover:bg-[#00A876]` | Hover states voor groene CTA-knoppen |
+| **Steel Blue** | `#4F7396` | `bg-[#4F7396]` | Informatie-iconen, subtiele achtergronden, drag overlays |
 | **Navy Dark** | `#1E2A3B` | `bg-[#1E2A3B]` | Donkere achtergronden user view |
 
 ---

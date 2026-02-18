@@ -695,7 +695,7 @@ export function UploadAnalysis({
                   <Button
                     onClick={handleUpload}
                     disabled={!title.trim() || isUploading || !consentConfirmed}
-                    className="w-full sm:w-auto gap-2"
+                    className="w-full sm:w-auto gap-2 bg-[#00C389] hover:bg-[#00A876] text-white"
                   >
                     <Upload className="w-4 h-4" />
                     Start analyse
@@ -760,7 +760,7 @@ export function UploadAnalysis({
                 }
               }}
               variant={copilotActive ? "destructive" : "default"}
-              className="w-full h-11 gap-2"
+              className={`w-full h-11 gap-2 ${!copilotActive ? 'bg-[#00C389] hover:bg-[#00A876] text-white' : ''}`}
             >
               {copilotActive ? (
                 <>
