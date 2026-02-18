@@ -402,9 +402,9 @@ export function AppLayout({
             <Button
               onClick={() => navigate?.("talk-to-hugo")}
               className="gap-2 text-white h-10 px-3 sm:px-4"
-              style={{ backgroundColor: '#3C9A6E' }}
-              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
-              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
+              style={{ backgroundColor: '#1F2937' }}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#374151')}
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#1F2937')}
             >
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline text-[14px]">
