@@ -660,6 +660,7 @@ export function AnalysisResults({
   };
 
   const useAdminLayout = !!navigationData?.fromAdmin;
+  const adminColors = useAdminLayout;
 
   const wrapLayout = (children: React.ReactNode) => {
     if (useAdminLayout) {
@@ -672,7 +673,7 @@ export function AnalysisResults({
     return wrapLayout(
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
         <div className="text-center space-y-4">
-          <Loader2 className={`w-8 h-8 ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} animate-spin mx-auto`} />
+          <Loader2 className={`w-8 h-8 ${adminColors ? 'text-purple-600' : 'text-hh-primary'} animate-spin mx-auto`} />
           <p className="text-hh-text font-medium">{processingStep || 'Resultaten laden...'}</p>
           {processingStep && (
             <p className="text-[14px] leading-[20px] text-hh-muted">
@@ -794,7 +795,7 @@ export function AnalysisResults({
               onClick={() => setActiveTab(tab.value as any)}
               className={`px-4 py-2.5 text-[14px] font-medium rounded-full transition-colors flex items-center gap-2 ${
                 activeTab === tab.value
-                  ? isAdmin ? 'bg-purple-600 text-white' : 'bg-hh-primary text-white'
+                  ? adminColors ? 'bg-purple-600 text-white' : 'bg-hh-primary text-white'
                   : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100'
               }`}
             >
@@ -809,7 +810,7 @@ export function AnalysisResults({
         {activeTab === 'coach' && (<div className="space-y-5 max-w-[720px]">
 
           <div className="flex items-start gap-4">
-            <div className={`w-10 h-10 rounded-full ${isAdmin ? 'bg-purple-600' : 'bg-hh-primary'} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+            <div className={`w-10 h-10 rounded-full ${adminColors ? 'bg-purple-600' : 'bg-hh-primary'} flex items-center justify-center flex-shrink-0 mt-0.5`}>
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -930,7 +931,7 @@ export function AnalysisResults({
                     {hasMore && (
                       <button
                         onClick={() => setDebriefExpanded(!debriefExpanded)}
-                        className={`flex items-center gap-1 text-[13px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} hover:underline mt-1`}
+                        className={`flex items-center gap-1 text-[13px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'} hover:underline mt-1`}
                       >
                         {debriefExpanded ? (
                           <><ChevronDown className="w-3.5 h-3.5" /> Minder tonen</>
@@ -980,7 +981,7 @@ export function AnalysisResults({
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.color}`}>{config.label}</span>
                             <span className="text-[11px] text-hh-muted font-normal">{moment.timestamp}</span>
-                            {isNew && <span className={`w-1.5 h-1.5 rounded-full ${isAdmin ? 'bg-purple-600' : 'bg-hh-primary'} flex-shrink-0`} />}
+                            {isNew && <span className={`w-1.5 h-1.5 rounded-full ${adminColors ? 'bg-purple-600' : 'bg-hh-primary'} flex-shrink-0`} />}
                           </div>
                           <p className="text-[13px] sm:text-[14px] font-normal text-hh-text mt-0.5 truncate">{moment.label}</p>
                         </div>
@@ -1003,11 +1004,11 @@ export function AnalysisResults({
                           )}
 
                           {moment.betterAlternative && moment.type !== 'big_win' && (
-                            <div className={`p-3 rounded-lg ${isAdmin ? 'bg-purple-600/5 border-purple-600/10' : 'bg-hh-primary/5 border-hh-primary/10'} border`}>
+                            <div className={`p-3 rounded-lg ${adminColors ? 'bg-purple-600/5 border-purple-600/10' : 'bg-hh-primary/5 border-hh-primary/10'} border`}>
                               <div className="flex gap-2 items-start">
-                                <Lightbulb className={`w-4 h-4 ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} flex-shrink-0 mt-0.5`} />
+                                <Lightbulb className={`w-4 h-4 ${adminColors ? 'text-purple-600' : 'text-hh-primary'} flex-shrink-0 mt-0.5`} />
                                 <div>
-                                  <p className={`text-[11px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} mb-0.5`}>Wat had je kunnen zeggen?</p>
+                                  <p className={`text-[11px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'} mb-0.5`}>Wat had je kunnen zeggen?</p>
                                   <p className="text-[13px] leading-[19px] text-hh-text">"{moment.betterAlternative}"</p>
                                 </div>
                               </div>
@@ -1017,7 +1018,7 @@ export function AnalysisResults({
                           {moment.recommendedTechniques.length > 0 && (
                             <div className="flex gap-1.5 flex-wrap">
                               {moment.recommendedTechniques.map((t, i) => (
-                                <Badge key={i} variant="outline" className={`text-[10px] px-2 py-0.5 ${isAdmin ? 'text-purple-600 border-purple-600/20 bg-purple-600/5' : 'text-hh-primary border-hh-primary/20 bg-hh-primary/5'}`} title={t}>
+                                <Badge key={i} variant="outline" className={`text-[10px] px-2 py-0.5 ${adminColors ? 'text-purple-600 border-purple-600/20 bg-purple-600/5' : 'text-hh-primary border-hh-primary/20 bg-hh-primary/5'}`} title={t}>
                                   {getTechniekByNummer(t)?.naam || t}
                                 </Badge>
                               ))}
@@ -1139,10 +1140,10 @@ export function AnalysisResults({
                             <div ref={actionResult?.momentId === moment.id ? actionResultRef : undefined} className="mt-3 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
                               {actionResult.type === 'three_options' && actionResult.data.options && (
                                 <div className="space-y-2">
-                                  <p className={`text-[12px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} mb-2`}>3 antwoord-opties:</p>
+                                  <p className={`text-[12px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'} mb-2`}>3 antwoord-opties:</p>
                                   {actionResult.data.options.map((opt: any, i: number) => (
                                     <div key={i} className="p-3 rounded-lg bg-white border border-hh-border">
-                                      <span className={`text-[11px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`}>{opt.style}</span>
+                                      <span className={`text-[11px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'}`}>{opt.style}</span>
                                       <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{opt.text}"</p>
                                     </div>
                                   ))}
@@ -1150,7 +1151,7 @@ export function AnalysisResults({
                               )}
                               {actionResult.type === 'micro_drill' && actionResult.data.drill && (
                                 <div className="space-y-2">
-                                  <p className={`text-[12px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`}>Micro-drill:</p>
+                                  <p className={`text-[12px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'}`}>Micro-drill:</p>
                                   <p className="text-[13px] leading-[18px] text-hh-text">{actionResult.data.drill.instruction}</p>
                                   <div className="p-3 rounded-lg bg-white border border-hh-border mt-2">
                                     <span className="text-[11px] font-medium text-hh-muted">Voorbeeld:</span>
@@ -1160,8 +1161,8 @@ export function AnalysisResults({
                               )}
                               {actionResult.type === 'hugo_demo' && actionResult.data.demo && (
                                 <div className="space-y-2">
-                                  <p className={`text-[12px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`}>Hugo zou zeggen:</p>
-                                  <div className={`p-3 rounded-lg bg-white border ${isAdmin ? 'border-purple-600/20' : 'border-hh-primary/20'}`}>
+                                  <p className={`text-[12px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'}`}>Hugo zou zeggen:</p>
+                                  <div className={`p-3 rounded-lg bg-white border ${adminColors ? 'border-purple-600/20' : 'border-hh-primary/20'}`}>
                                     <p className="text-[14px] leading-[20px] text-hh-text">"{actionResult.data.demo.response}"</p>
                                   </div>
                                   <p className="text-[12px] leading-[16px] text-hh-muted">{actionResult.data.demo.reasoning}</p>
@@ -1189,10 +1190,10 @@ export function AnalysisResults({
             );
           })()}
           {replayMoment && (<div ref={replayRef}>
-            <Card className={`p-6 rounded-[16px] shadow-hh-sm ${isAdmin ? 'border-purple-600/20 bg-gradient-to-b from-purple-600/5 to-transparent' : 'border-hh-primary/20 bg-gradient-to-b from-hh-primary/5 to-transparent'}`}>
+            <Card className={`p-6 rounded-[16px] shadow-hh-sm ${adminColors ? 'border-purple-600/20 bg-gradient-to-b from-purple-600/5 to-transparent' : 'border-hh-primary/20 bg-gradient-to-b from-hh-primary/5 to-transparent'}`}>
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-hh-text flex items-center gap-2">
-                  <Play className={`w-5 h-5 ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`} />
+                  <Play className={`w-5 h-5 ${adminColors ? 'text-purple-600' : 'text-hh-primary'}`} />
                   Replay: {replayMoment.label}
                 </h4>
                 <Button
@@ -1216,7 +1217,7 @@ export function AnalysisResults({
 
               {replayContext && !replayContext.error && (
                 <div className="mb-4 p-3 rounded-lg bg-white/80 border border-hh-border">
-                  <p className={`text-[12px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} mb-1`}>Doel van deze oefening:</p>
+                  <p className={`text-[12px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'} mb-1`}>Doel van deze oefening:</p>
                   <p className="text-[13px] leading-[18px] text-hh-text">{replayContext.goal}</p>
                   {replayContext.recommendedTechniques?.length > 0 && (
                     <div className="flex gap-1 mt-2">
@@ -1273,7 +1274,7 @@ export function AnalysisResults({
                   onChange={(e) => setReplayInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendReplayMessage()}
                   placeholder="Typ je antwoord als verkoper..."
-                  className={`flex-1 px-4 py-2.5 rounded-xl border border-hh-border bg-white text-[14px] text-hh-text placeholder:text-hh-muted/50 focus:outline-none ${isAdmin ? 'focus:border-purple-600/50 focus:ring-2 focus:ring-purple-600/10' : 'focus:border-hh-primary/50 focus:ring-2 focus:ring-hh-primary/10'}`}
+                  className={`flex-1 px-4 py-2.5 rounded-xl border border-hh-border bg-white text-[14px] text-hh-text placeholder:text-hh-muted/50 focus:outline-none ${adminColors ? 'focus:border-purple-600/50 focus:ring-2 focus:ring-purple-600/10' : 'focus:border-hh-primary/50 focus:ring-2 focus:ring-hh-primary/10'}`}
                   disabled={replayLoading}
                 />
                 <Button
