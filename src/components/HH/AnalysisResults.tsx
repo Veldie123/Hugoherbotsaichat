@@ -660,41 +660,41 @@ export function AnalysisResults({
   };
 
   const useAdminLayout = !!navigationData?.fromAdmin;
-  const Layout = useAdminLayout
-    ? ({ children: c }: { children: React.ReactNode }) => <AdminLayout currentPage="admin-uploads" navigate={navigate as (page: string) => void}>{c}</AdminLayout>
-    : ({ children: c }: { children: React.ReactNode }) => <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>{c}</AppLayout>;
+
+  const wrapLayout = (children: React.ReactNode) => {
+    if (useAdminLayout) {
+      return <AdminLayout currentPage="admin-uploads" navigate={navigate as (page: string) => void}>{children}</AdminLayout>;
+    }
+    return <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>{children}</AppLayout>;
+  };
 
   if (loading || processingStep) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-          <div className="text-center space-y-4">
-            <Loader2 className="w-8 h-8 text-hh-primary animate-spin mx-auto" />
-            <p className="text-hh-text font-medium">{processingStep || 'Resultaten laden...'}</p>
-            {processingStep && (
-              <p className="text-[14px] leading-[20px] text-hh-muted">
-                Dit kan enkele minuten duren afhankelijk van de lengte van het gesprek.
-              </p>
-            )}
-          </div>
+    return wrapLayout(
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-center space-y-4">
+          <Loader2 className={`w-8 h-8 ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} animate-spin mx-auto`} />
+          <p className="text-hh-text font-medium">{processingStep || 'Resultaten laden...'}</p>
+          {processingStep && (
+            <p className="text-[14px] leading-[20px] text-hh-muted">
+              Dit kan enkele minuten duren afhankelijk van de lengte van het gesprek.
+            </p>
+          )}
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (error || !result) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-          <div className="text-center space-y-4">
-            <AlertCircle className="w-8 h-8 text-hh-destructive mx-auto" />
-            <p className="text-hh-text">{error || 'Geen resultaten gevonden'}</p>
-            <Button variant="outline" onClick={() => navigate?.("upload-analysis")}>
-              Terug naar uploads
-            </Button>
-          </div>
+    return wrapLayout(
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-center space-y-4">
+          <AlertCircle className="w-8 h-8 text-hh-destructive mx-auto" />
+          <p className="text-hh-text">{error || 'Geen resultaten gevonden'}</p>
+          <Button variant="outline" onClick={() => navigate?.("upload-analysis")}>
+            Terug naar uploads
+          </Button>
         </div>
-      </Layout>
+      </div>
     );
   }
 
@@ -745,8 +745,7 @@ export function AnalysisResults({
     { phase: 4, label: 'Fase 4', sublabel: 'Beslissing', score: phaseCoverage?.phase4?.score ?? 0, data: phaseCoverage?.phase4 },
   ];
 
-  return (
-    <Layout>
+  return wrapLayout(
       <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 overflow-y-auto h-[calc(100vh-4rem)]">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -1004,11 +1003,11 @@ export function AnalysisResults({
                           )}
 
                           {moment.betterAlternative && moment.type !== 'big_win' && (
-                            <div className="p-3 rounded-lg bg-hh-primary/5 border border-hh-primary/10">
+                            <div className={`p-3 rounded-lg ${isAdmin ? 'bg-purple-600/5 border-purple-600/10' : 'bg-hh-primary/5 border-hh-primary/10'} border`}>
                               <div className="flex gap-2 items-start">
-                                <Lightbulb className="w-4 h-4 text-hh-primary flex-shrink-0 mt-0.5" />
+                                <Lightbulb className={`w-4 h-4 ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} flex-shrink-0 mt-0.5`} />
                                 <div>
-                                  <p className="text-[11px] font-medium text-hh-primary mb-0.5">Wat had je kunnen zeggen?</p>
+                                  <p className={`text-[11px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} mb-0.5`}>Wat had je kunnen zeggen?</p>
                                   <p className="text-[13px] leading-[19px] text-hh-text">"{moment.betterAlternative}"</p>
                                 </div>
                               </div>
@@ -1018,7 +1017,7 @@ export function AnalysisResults({
                           {moment.recommendedTechniques.length > 0 && (
                             <div className="flex gap-1.5 flex-wrap">
                               {moment.recommendedTechniques.map((t, i) => (
-                                <Badge key={i} variant="outline" className="text-[10px] px-2 py-0.5 text-hh-primary border-hh-primary/20 bg-hh-primary/5" title={t}>
+                                <Badge key={i} variant="outline" className={`text-[10px] px-2 py-0.5 ${isAdmin ? 'text-purple-600 border-purple-600/20 bg-purple-600/5' : 'text-hh-primary border-hh-primary/20 bg-hh-primary/5'}`} title={t}>
                                   {getTechniekByNummer(t)?.naam || t}
                                 </Badge>
                               ))}
@@ -1140,10 +1139,10 @@ export function AnalysisResults({
                             <div ref={actionResult?.momentId === moment.id ? actionResultRef : undefined} className="mt-3 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
                               {actionResult.type === 'three_options' && actionResult.data.options && (
                                 <div className="space-y-2">
-                                  <p className="text-[12px] font-medium text-hh-primary mb-2">3 antwoord-opties:</p>
+                                  <p className={`text-[12px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} mb-2`}>3 antwoord-opties:</p>
                                   {actionResult.data.options.map((opt: any, i: number) => (
                                     <div key={i} className="p-3 rounded-lg bg-white border border-hh-border">
-                                      <span className="text-[11px] font-medium text-hh-primary">{opt.style}</span>
+                                      <span className={`text-[11px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`}>{opt.style}</span>
                                       <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{opt.text}"</p>
                                     </div>
                                   ))}
@@ -1151,7 +1150,7 @@ export function AnalysisResults({
                               )}
                               {actionResult.type === 'micro_drill' && actionResult.data.drill && (
                                 <div className="space-y-2">
-                                  <p className="text-[12px] font-medium text-hh-primary">Micro-drill:</p>
+                                  <p className={`text-[12px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`}>Micro-drill:</p>
                                   <p className="text-[13px] leading-[18px] text-hh-text">{actionResult.data.drill.instruction}</p>
                                   <div className="p-3 rounded-lg bg-white border border-hh-border mt-2">
                                     <span className="text-[11px] font-medium text-hh-muted">Voorbeeld:</span>
@@ -1161,8 +1160,8 @@ export function AnalysisResults({
                               )}
                               {actionResult.type === 'hugo_demo' && actionResult.data.demo && (
                                 <div className="space-y-2">
-                                  <p className="text-[12px] font-medium text-hh-primary">Hugo zou zeggen:</p>
-                                  <div className="p-3 rounded-lg bg-white border border-hh-primary/20">
+                                  <p className={`text-[12px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`}>Hugo zou zeggen:</p>
+                                  <div className={`p-3 rounded-lg bg-white border ${isAdmin ? 'border-purple-600/20' : 'border-hh-primary/20'}`}>
                                     <p className="text-[14px] leading-[20px] text-hh-text">"{actionResult.data.demo.response}"</p>
                                   </div>
                                   <p className="text-[12px] leading-[16px] text-hh-muted">{actionResult.data.demo.reasoning}</p>
@@ -1190,10 +1189,10 @@ export function AnalysisResults({
             );
           })()}
           {replayMoment && (<div ref={replayRef}>
-            <Card className="p-6 rounded-[16px] shadow-hh-sm border-hh-primary/20 bg-gradient-to-b from-hh-primary/5 to-transparent">
+            <Card className={`p-6 rounded-[16px] shadow-hh-sm ${isAdmin ? 'border-purple-600/20 bg-gradient-to-b from-purple-600/5 to-transparent' : 'border-hh-primary/20 bg-gradient-to-b from-hh-primary/5 to-transparent'}`}>
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-hh-text flex items-center gap-2">
-                  <Play className="w-5 h-5 text-hh-primary" />
+                  <Play className={`w-5 h-5 ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`} />
                   Replay: {replayMoment.label}
                 </h4>
                 <Button
@@ -1217,7 +1216,7 @@ export function AnalysisResults({
 
               {replayContext && !replayContext.error && (
                 <div className="mb-4 p-3 rounded-lg bg-white/80 border border-hh-border">
-                  <p className="text-[12px] font-medium text-hh-primary mb-1">Doel van deze oefening:</p>
+                  <p className={`text-[12px] font-medium ${isAdmin ? 'text-purple-600' : 'text-hh-primary'} mb-1`}>Doel van deze oefening:</p>
                   <p className="text-[13px] leading-[18px] text-hh-text">{replayContext.goal}</p>
                   {replayContext.recommendedTechniques?.length > 0 && (
                     <div className="flex gap-1 mt-2">
@@ -1274,7 +1273,7 @@ export function AnalysisResults({
                   onChange={(e) => setReplayInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendReplayMessage()}
                   placeholder="Typ je antwoord als verkoper..."
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-hh-border bg-white text-[14px] text-hh-text placeholder:text-hh-muted/50 focus:outline-none focus:border-hh-primary/50 focus:ring-2 focus:ring-hh-primary/10"
+                  className={`flex-1 px-4 py-2.5 rounded-xl border border-hh-border bg-white text-[14px] text-hh-text placeholder:text-hh-muted/50 focus:outline-none ${isAdmin ? 'focus:border-purple-600/50 focus:ring-2 focus:ring-purple-600/10' : 'focus:border-hh-primary/50 focus:ring-2 focus:ring-hh-primary/10'}`}
                   disabled={replayLoading}
                 />
                 <Button
@@ -1348,6 +1347,5 @@ export function AnalysisResults({
           </div>)}
 
       </div>
-    </Layout>
   );
 }
