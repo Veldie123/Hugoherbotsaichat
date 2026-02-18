@@ -749,7 +749,7 @@ export function AnalysisResults({
               onClick={() => setActiveTab(tab.value as any)}
               className={`px-4 py-2.5 text-[14px] font-medium rounded-full transition-colors flex items-center gap-2 ${
                 activeTab === tab.value
-                  ? isAdmin ? 'bg-purple-600 text-white' : 'bg-hh-primary text-white'
+                  ? 'bg-hh-primary text-white'
                   : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100'
               }`}
             >
@@ -764,7 +764,7 @@ export function AnalysisResults({
         {activeTab === 'coach' && (<div className="space-y-5 max-w-[720px]">
 
           <div className="flex items-start gap-4">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isAdmin ? 'bg-purple-600' : 'bg-hh-primary'}`}>
+            <div className="w-10 h-10 rounded-full bg-hh-primary flex items-center justify-center flex-shrink-0 mt-0.5">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -827,7 +827,7 @@ export function AnalysisResults({
                     {hasMore && (
                       <button
                         onClick={() => setDebriefExpanded(!debriefExpanded)}
-                        className={`flex items-center gap-1 text-[13px] font-medium hover:underline mt-1 ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`}
+                        className="flex items-center gap-1 text-[13px] font-medium text-hh-primary hover:underline mt-1"
                       >
                         {debriefExpanded ? (
                           <><ChevronDown className="w-3.5 h-3.5" /> Minder tonen</>
@@ -877,7 +877,7 @@ export function AnalysisResults({
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.color}`}>{config.label}</span>
                             <span className="text-[11px] text-hh-muted font-normal">{moment.timestamp}</span>
-                            {isNew && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isAdmin ? 'bg-purple-600' : 'bg-hh-primary'}`} />}
+                            {isNew && <span className="w-1.5 h-1.5 rounded-full bg-hh-primary flex-shrink-0" />}
                           </div>
                           <p className="text-[13px] sm:text-[14px] font-normal text-hh-text mt-0.5 truncate">{moment.label}</p>
                         </div>
