@@ -1,7 +1,11 @@
 import fs from 'fs';
-import path from 'path';
+import OpenAI from 'openai';
 
 const API_BASE = 'http://localhost:3001';
+const MAX_TURNS_PER_TECHNIQUE = 8;
+const CONTEXT_GATHERING_MAX = 5;
+
+const openai = new OpenAI();
 
 interface UserProfile {
   id: string;
@@ -11,66 +15,59 @@ interface UserProfile {
   klantType: string;
   ervaring: string;
   description: string;
-}
-
-interface TurnRecord {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-interface TechniqueResult {
-  techniqueId: string;
-  techniqueName: string;
-  turns: TurnRecord[];
-  mode: 'coaching' | 'roleplay';
-  error?: string;
+  personality: string;
 }
 
 const USERS: UserProfile[] = [
   {
-    id: 'sim-user-1',
-    name: 'Jan (IT/SaaS)',
+    id: 'sim-jan-saas',
+    name: 'Jan Verstraeten',
     sector: 'IT & Software',
     product: 'CRM-platform voor middelgrote bedrijven',
     klantType: 'B2B',
     ervaring: 'ervaren',
-    description: 'Senior accountmanager bij een SaaS-bedrijf, verkoopt CRM-oplossingen aan middelgrote bedrijven. 8 jaar ervaring.'
+    description: 'Senior accountmanager bij een SaaS-bedrijf, verkoopt CRM-oplossingen aan middelgrote bedrijven. 8 jaar ervaring in tech sales.',
+    personality: 'Analytisch, stelt gerichte vragen, wil concrete frameworks. Soms te technisch in gesprekken met klanten. Redelijk zelfverzekerd maar wil altijd beter worden.'
   },
   {
-    id: 'sim-user-2',
-    name: 'Lisa (Bouw/Renovatie)',
+    id: 'sim-lisa-bouw',
+    name: 'Lisa De Smet',
     sector: 'Bouw & Renovatie',
     product: 'Totaalrenovaties voor particulieren',
     klantType: 'B2C',
     ervaring: 'junior',
-    description: 'Junior verkoopster bij een renovatiebedrijf, doet huisbezoeken bij particulieren. 1 jaar ervaring.'
+    description: 'Junior verkoopster bij een renovatiebedrijf, doet huisbezoeken bij particulieren. 1 jaar ervaring, komt uit interieurdesign.',
+    personality: 'Enthousiast maar onzeker, stelt veel vragen, worstelt met prijsgesprekken. Creatief maar mist verkoopstructuur. Soms te snel naar oplossingen.'
   },
   {
-    id: 'sim-user-3',
-    name: 'Thomas (Financieel)',
+    id: 'sim-thomas-fin',
+    name: 'Thomas Janssens',
     sector: 'Financiële dienstverlening',
-    product: 'Verzekeringspakketten en pensioenoplossingen',
+    product: 'Verzekeringspakketten en pensioenoplossingen voor KMOs',
     klantType: 'B2B',
     ervaring: 'gemiddeld',
-    description: 'Financieel adviseur, verkoopt verzekerings- en pensioenoplossingen aan KMO\'s. 4 jaar ervaring.'
+    description: 'Financieel adviseur, verkoopt verzekerings- en pensioenoplossingen aan KMOs. 4 jaar ervaring.',
+    personality: 'Correct en professioneel, soms te formeel waardoor hij afstandelijk overkomt. Goede productkennis maar mist emotionele connectie. Wil leren hoe hij meer vertrouwen wekt.'
   },
   {
-    id: 'sim-user-4',
-    name: 'Sarah (Horeca/Food)',
+    id: 'sim-sarah-food',
+    name: 'Sarah Peeters',
     sector: 'Horeca & Voeding',
-    product: 'Groothandel in premium ingrediënten voor restaurants',
+    product: 'Premium ingrediënten en seizoensproducten voor restaurants',
     klantType: 'B2B',
     ervaring: 'starter',
-    description: 'Net gestart als vertegenwoordiger bij een food-groothandel. Bezoekt chefs en restauranthouders. Eerste verkoopjob.'
+    description: 'Net gestart als vertegenwoordiger bij een food-groothandel. Bezoekt chefs en restauranthouders. Eerste verkoopjob, komt uit de horeca zelf.',
+    personality: 'Sociaal en warm, kent de horeca van binnenuit. Maar is onervaren in verkoop, durft niet goed te closen, is bang om pushy over te komen. Wil haar passie voor eten omzetten in verkoopresultaten.'
   },
   {
-    id: 'sim-user-5',
-    name: 'Marc (Medisch)',
+    id: 'sim-marc-med',
+    name: 'Marc Wouters',
     sector: 'Medische apparatuur',
-    product: 'Diagnostische apparatuur voor ziekenhuizen',
+    product: 'Diagnostische beeldvormingsapparatuur voor ziekenhuizen',
     klantType: 'B2B',
     ervaring: 'senior',
-    description: 'Key account manager medische devices, verkoopt aan ziekenhuizen en klinieken. 12 jaar ervaring, technisch sterk.'
+    description: 'Key account manager medische devices, verkoopt aan ziekenhuizen en klinieken. 12 jaar ervaring, biomedisch ingenieur van opleiding.',
+    personality: 'Zeer technisch sterk, geloofwaardig bij artsen. Maar leunt te veel op productfeatures in plaats van klantbaten. Lange salescycles van 6-18 maanden. Wil leren hoe hij sneller naar commitment gaat.'
   }
 ];
 
@@ -95,192 +92,163 @@ function getTechniqueList(): { id: string; naam: string; fase: string }[] {
     }));
 }
 
-function getUserMessage(user: UserProfile, technique: { id: string; naam: string }, mode: 'coaching' | 'roleplay'): string {
-  if (mode === 'coaching') {
-    const coachingPrompts = [
-      `Hoe pas ik "${technique.naam}" toe in mijn sector (${user.sector})? Ik verkoop ${user.product}.`,
-      `Kun je me uitleggen hoe "${technique.naam}" werkt? Ik ben ${user.ervaring} in verkoop en werk in ${user.sector}.`,
-      `Wat zijn de beste tips voor "${technique.naam}" als ik ${user.klantType} klanten bedien met ${user.product}?`,
-      `Ik wil "${technique.naam}" beter leren. Mijn context: ${user.description}`,
-      `Help me "${technique.naam}" te begrijpen. Ik verkoop ${user.product} aan ${user.klantType} klanten.`
-    ];
-    return coachingPrompts[Math.floor(Math.random() * coachingPrompts.length)];
-  } else {
-    const roleplayPrompts = [
-      `Laten we "${technique.naam}" oefenen. Jij bent een ${user.klantType === 'B2C' ? 'particuliere klant' : 'inkoper'} en ik verkoop ${user.product}.`,
-      `Kan ik "${technique.naam}" oefenen in een rollenspel? Ik ben verkoper van ${user.product} in ${user.sector}.`,
-      `Start een rollenspel voor "${technique.naam}". Scenario: ik bezoek een ${user.klantType === 'B2C' ? 'klant thuis' : 'bedrijf'} om ${user.product} voor te stellen.`
-    ];
-    return roleplayPrompts[Math.floor(Math.random() * roleplayPrompts.length)];
-  }
-}
-
-function getFollowUp(user: UserProfile, mode: 'coaching' | 'roleplay', turnIndex: number): string {
-  if (mode === 'coaching') {
-    const followUps = [
-      'Kun je een concreet voorbeeld geven hoe ik dit zou zeggen?',
-      'Wat als de klant daar negatief op reageert?',
-      'Hoe combineer ik dit met de vorige techniek die we besproken hebben?',
-      'Wat zijn de meest voorkomende fouten die verkopers hier maken?',
-      `Hoe zou dit er specifiek uitzien in ${user.sector}?`
-    ];
-    return followUps[turnIndex % followUps.length];
-  } else {
-    const roleplayFollowUps = [
-      `Goedemorgen, ik ben ${user.name.split(' ')[0]} van ons bedrijf. Leuk om u te ontmoeten.`,
-      'Dat is een goede vraag. Momenteel werken we met een andere leverancier, maar we zijn niet 100% tevreden.',
-      'Interessant. Wat zou dat voor ons concreet betekenen qua besparing?',
-      'Ik moet dit nog bespreken met mijn collega. Kan ik er even over nadenken?',
-      'Oké, dat klinkt goed. Wat zijn de volgende stappen?'
-    ];
-    return roleplayFollowUps[turnIndex % roleplayFollowUps.length];
-  }
-}
-
-async function callChatAPI(
-  message: string,
-  userId: string,
-  techniqueId: string,
-  conversationHistory: TurnRecord[]
+async function generateSellerResponse(
+  user: UserProfile,
+  hugoMessage: string,
+  conversationHistory: { role: string; content: string }[],
+  technique: { id: string; naam: string },
+  phase: string
 ): Promise<string> {
-  const resp = await fetch(`${API_BASE}/api/v2/chat`, {
+  const systemPrompt = `Je bent ${user.name}, een ${user.ervaring} verkoper in ${user.sector}.
+Profiel: ${user.description}
+Persoonlijkheid: ${user.personality}
+Je verkoopt: ${user.product} aan ${user.klantType} klanten.
+
+Je bent in gesprek met Hugo, je AI sales coach. Hij traint je in de techniek "${technique.naam}".
+De huidige fase is: ${phase}.
+
+REGELS:
+- Antwoord als een ECHTE verkoper, niet als een AI
+- Gebruik informeel Nederlands (Vlaams mag)
+- Wees realistisch: soms begrijp je het niet meteen, soms heb je een "aha-moment"
+- Als Hugo je iets vraagt over je sector/product, geef concrete details uit jouw wereld
+- Als Hugo een rollenspel doet, speel mee als verkoper (niet als klant)
+- Als Hugo coaching geeft, reageer met herkenning, vragen, of twijfels
+- Houd antwoorden kort en natuurlijk (2-4 zinnen typisch)
+- ${user.ervaring === 'starter' || user.ervaring === 'junior' ? 'Je bent soms onzeker en stelt veel vragen' : ''}
+- ${user.ervaring === 'senior' ? 'Je hebt sterke meningen maar staat open voor nieuwe inzichten' : ''}
+- Verwijs soms naar echte situaties uit je werk`;
+
+  const messages: any[] = [
+    { role: 'system', content: systemPrompt }
+  ];
+
+  for (const msg of conversationHistory.slice(-6)) {
+    messages.push({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content
+    });
+  }
+
+  messages.push({ role: 'user', content: `Hugo zegt: "${hugoMessage}"\n\nReageer als ${user.name}:` });
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages,
+    max_completion_tokens: 200,
+    temperature: 0.9
+  });
+
+  return completion.choices[0]?.message?.content || 'Hmm, interessant. Ga verder.';
+}
+
+async function generateContextAnswer(
+  user: UserProfile,
+  hugoQuestion: string
+): Promise<string> {
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `Je bent ${user.name}. Hugo (je AI coach) stelt je een vraag over je werk om je beter te leren kennen.
+Profiel: ${user.description}
+Sector: ${user.sector} | Product: ${user.product} | Klanttype: ${user.klantType}
+Antwoord kort, natuurlijk, in het Nederlands. 1-2 zinnen.`
+      },
+      { role: 'user', content: hugoQuestion }
+    ],
+    max_completion_tokens: 100,
+    temperature: 0.8
+  });
+
+  return completion.choices[0]?.message?.content || user.sector;
+}
+
+async function createSession(user: UserProfile, techniqueId: string): Promise<{ sessionId: string; initialMessage: string; phase: string }> {
+  const resp = await fetch(`${API_BASE}/api/v2/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message,
-      userId,
-      techniqueContext: { techniqueId },
-      conversationHistory,
-      sourceApp: 'simulation-test'
+      techniqueId,
+      mode: 'COACH_CHAT',
+      isExpert: false,
+      userId: user.id,
+      userName: user.name
     })
   });
 
   if (!resp.ok) {
-    throw new Error(`API error ${resp.status}: ${await resp.text()}`);
+    throw new Error(`Session creation failed ${resp.status}: ${await resp.text()}`);
   }
 
   const data = await resp.json();
-  return data.response || data.message || '[geen antwoord]';
+  return {
+    sessionId: data.sessionId,
+    initialMessage: data.initialMessage,
+    phase: data.phase || 'CONTEXT_GATHERING'
+  };
 }
 
-async function simulateTechnique(
+async function sendMessage(sessionId: string, content: string): Promise<{ response: string; phase: string }> {
+  const resp = await fetch(`${API_BASE}/api/v2/message`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId,
+      content,
+      isExpert: false
+    })
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Message failed ${resp.status}: ${await resp.text()}`);
+  }
+
+  const data = await resp.json();
+  return {
+    response: data.response,
+    phase: data.phase || 'COACH_CHAT'
+  };
+}
+
+async function runTechniqueSession(
   user: UserProfile,
-  technique: { id: string; naam: string },
-  mode: 'coaching' | 'roleplay'
-): Promise<TechniqueResult> {
-  const turns: TurnRecord[] = [];
-  const TURNS_PER_TECHNIQUE = 3;
+  technique: { id: string; naam: string }
+): Promise<{ turns: number; error?: string }> {
+  const { sessionId, initialMessage, phase } = await createSession(user, technique.id);
 
-  try {
-    const firstMessage = getUserMessage(user, technique, mode);
-    turns.push({ role: 'user', content: firstMessage });
+  let currentPhase = phase;
+  const history: { role: string; content: string }[] = [
+    { role: 'assistant', content: initialMessage }
+  ];
 
-    const firstResponse = await callChatAPI(firstMessage, user.id, technique.id, []);
-    turns.push({ role: 'assistant', content: firstResponse });
+  let contextTurns = 0;
+  while (currentPhase === 'CONTEXT_GATHERING' && contextTurns < CONTEXT_GATHERING_MAX) {
+    const answer = await generateContextAnswer(user, initialMessage);
+    history.push({ role: 'user', content: answer });
 
-    for (let i = 1; i < TURNS_PER_TECHNIQUE; i++) {
-      const followUp = getFollowUp(user, mode, i - 1);
-      turns.push({ role: 'user', content: followUp });
-
-      const response = await callChatAPI(followUp, user.id, technique.id, turns.slice(0, -1));
-      turns.push({ role: 'assistant', content: response });
-    }
-
-    return { techniqueId: technique.id, techniqueName: technique.naam, turns, mode };
-  } catch (error: any) {
-    return {
-      techniqueId: technique.id,
-      techniqueName: technique.naam,
-      turns,
-      mode,
-      error: error.message
-    };
-  }
-}
-
-function formatTranscript(user: UserProfile, results: TechniqueResult[]): string {
-  let output = `# Transcript: ${user.name}\n\n`;
-  output += `**Profiel:** ${user.description}\n`;
-  output += `**Sector:** ${user.sector} | **Product:** ${user.product} | **Klanttype:** ${user.klantType} | **Ervaring:** ${user.ervaring}\n`;
-  output += `**Datum:** ${new Date().toISOString().split('T')[0]}\n`;
-  output += `**Technieken besproken:** ${results.length}\n`;
-  output += `**Fouten:** ${results.filter(r => r.error).length}\n\n`;
-  output += `---\n\n`;
-
-  let currentFase = '';
-  for (const result of results) {
-    const fase = result.techniqueId.split('.')[0];
-    const faseNames: Record<string, string> = {
-      '0': 'Fase 0: Pre-contactfase',
-      '1': 'Fase 1: Openingsfase',
-      '2': 'Fase 2: Ontdekkingsfase (EPIC)',
-      '3': 'Fase 3: Aanbevelingsfase',
-      '4': 'Fase 4: Beslissingsfase'
-    };
-
-    if (fase !== currentFase) {
-      currentFase = fase;
-      output += `\n## ${faseNames[fase] || `Fase ${fase}`}\n\n`;
-    }
-
-    output += `### ${result.techniqueId}: ${result.techniqueName}\n`;
-    output += `*Modus: ${result.mode === 'coaching' ? '🎓 Coaching' : '🎭 Rollenspel'}*\n\n`;
-
-    if (result.error) {
-      output += `> ⚠️ FOUT: ${result.error}\n\n`;
-    }
-
-    for (const turn of result.turns) {
-      if (turn.role === 'user') {
-        output += `**${user.name.split(' ')[0]}:** ${turn.content}\n\n`;
-      } else {
-        output += `**Hugo:** ${turn.content}\n\n`;
-      }
-    }
-
-    output += `---\n\n`;
+    const result = await sendMessage(sessionId, answer);
+    history.push({ role: 'assistant', content: result.response });
+    currentPhase = result.phase;
+    contextTurns++;
+    await sleep(300);
   }
 
-  return output;
-}
+  let coachTurns = 0;
+  while (coachTurns < MAX_TURNS_PER_TECHNIQUE) {
+    const lastHugoMsg = history[history.length - 1]?.content || '';
+    const sellerReply = await generateSellerResponse(user, lastHugoMsg, history, technique, currentPhase);
+    history.push({ role: 'user', content: sellerReply });
 
-function formatSummary(allResults: Map<string, TechniqueResult[]>): string {
-  let output = `# Simulatie Samenvatting - 5 Gebruikers × Alle Technieken\n\n`;
-  output += `**Datum:** ${new Date().toISOString().split('T')[0]}\n\n`;
-
-  let totalTechniques = 0;
-  let totalErrors = 0;
-  let totalTurns = 0;
-
-  for (const [userId, results] of allResults) {
-    const user = USERS.find(u => u.id === userId)!;
-    const errors = results.filter(r => r.error).length;
-    const turns = results.reduce((sum, r) => sum + r.turns.length, 0);
-    totalTechniques += results.length;
-    totalErrors += errors;
-    totalTurns += turns;
-
-    output += `## ${user.name}\n`;
-    output += `- Technieken: ${results.length}\n`;
-    output += `- Beurten: ${turns}\n`;
-    output += `- Fouten: ${errors}\n`;
-    if (errors > 0) {
-      output += `- Falende technieken: ${results.filter(r => r.error).map(r => r.techniqueId).join(', ')}\n`;
-    }
-    output += `\n`;
+    const result = await sendMessage(sessionId, sellerReply);
+    history.push({ role: 'assistant', content: result.response });
+    currentPhase = result.phase;
+    coachTurns++;
+    await sleep(300);
   }
 
-  output += `## Totalen\n`;
-  output += `- Gebruikers: ${USERS.length}\n`;
-  output += `- Techniek-sessies: ${totalTechniques}\n`;
-  output += `- Totaal beurten: ${totalTurns}\n`;
-  output += `- Fouten: ${totalErrors}\n`;
-  output += `- Slagingspercentage: ${((1 - totalErrors / totalTechniques) * 100).toFixed(1)}%\n\n`;
-
-  output += `## Kwaliteitsanalyse\n\n`;
-  output += `*Wordt aangevuld na review van de transcripts*\n`;
-
-  return output;
+  return { turns: history.length };
 }
 
 async function sleep(ms: number) {
@@ -289,50 +257,54 @@ async function sleep(ms: number) {
 
 async function main() {
   const techniques = getTechniqueList();
-  console.log(`\n🚀 Simulatie gestart: ${USERS.length} gebruikers × ${techniques.length} technieken`);
-  console.log(`   Totaal verwacht: ${USERS.length * techniques.length} techniek-sessies, ${USERS.length * techniques.length * 3} API calls\n`);
+  const totalSessions = USERS.length * techniques.length;
 
-  const outputDir = 'docs/test-transcripts';
-  fs.mkdirSync(outputDir, { recursive: true });
+  console.log(`\n========================================`);
+  console.log(`  HUGO V2 CURSUS SIMULATIE`);
+  console.log(`  ${USERS.length} gebruikers x ${techniques.length} technieken = ${totalSessions} sessies`);
+  console.log(`  Geschatte duur: ${Math.round(totalSessions * 30 / 60)} minuten`);
+  console.log(`========================================\n`);
 
-  const allResults = new Map<string, TechniqueResult[]>();
+  let completedSessions = 0;
+  let failedSessions = 0;
+  const errors: string[] = [];
 
   for (let u = 0; u < USERS.length; u++) {
     const user = USERS[u];
-    const userResults: TechniqueResult[] = [];
-    console.log(`\n👤 [${u + 1}/${USERS.length}] Start: ${user.name}`);
+    console.log(`\n👤 [Gebruiker ${u + 1}/${USERS.length}] ${user.name} (${user.sector})`);
+    console.log(`   ${user.description}\n`);
 
     for (let t = 0; t < techniques.length; t++) {
       const technique = techniques[t];
-      const mode: 'coaching' | 'roleplay' = t % 3 === 2 ? 'roleplay' : 'coaching';
+      const progress = `[${completedSessions + failedSessions + 1}/${totalSessions}]`;
 
-      console.log(`  📖 [${t + 1}/${techniques.length}] ${technique.id}: ${technique.naam} (${mode})`);
+      process.stdout.write(`  ${progress} ${technique.id}: ${technique.naam}... `);
 
-      const result = await simulateTechnique(user, technique, mode);
-      userResults.push(result);
-
-      if (result.error) {
-        console.log(`    ⚠️ FOUT: ${result.error}`);
-      } else {
-        const lastResponse = result.turns[result.turns.length - 1]?.content || '';
-        console.log(`    ✅ ${result.turns.length} beurten, antwoord: ${lastResponse.substring(0, 80)}...`);
+      try {
+        const result = await runTechniqueSession(user, technique);
+        completedSessions++;
+        console.log(`✅ ${result.turns} beurten`);
+      } catch (err: any) {
+        failedSessions++;
+        const errorMsg = `${user.name} / ${technique.id}: ${err.message}`;
+        errors.push(errorMsg);
+        console.log(`❌ ${err.message.substring(0, 60)}`);
       }
 
-      await sleep(500);
+      await sleep(200);
     }
-
-    allResults.set(user.id, userResults);
-
-    const transcript = formatTranscript(user, userResults);
-    const filename = `transcript-${user.id}.md`;
-    fs.writeFileSync(path.join(outputDir, filename), transcript);
-    console.log(`  💾 Opgeslagen: ${outputDir}/${filename}`);
   }
 
-  const summary = formatSummary(allResults);
-  fs.writeFileSync(path.join(outputDir, 'SAMENVATTING.md'), summary);
-  console.log(`\n📊 Samenvatting opgeslagen: ${outputDir}/SAMENVATTING.md`);
-  console.log(`\n✅ Simulatie voltooid!`);
+  console.log(`\n========================================`);
+  console.log(`  SIMULATIE VOLTOOID`);
+  console.log(`  Geslaagd: ${completedSessions}/${totalSessions}`);
+  console.log(`  Mislukt: ${failedSessions}/${totalSessions}`);
+  if (errors.length > 0) {
+    console.log(`\n  Fouten:`);
+    errors.forEach(e => console.log(`    - ${e}`));
+  }
+  console.log(`\n  Alle sessies zijn zichtbaar in Admin > Sessions`);
+  console.log(`========================================\n`);
 }
 
 main().catch(err => {
