@@ -415,9 +415,9 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
                   size="icon"
                   className="relative"
                 >
-                  <Bell className="w-[18px] h-[18px]" strokeWidth={1.75} />
+                  <Bell className="w-5 h-5 text-gray-600" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 bg-red-600 text-white text-[9px] rounded-full flex items-center justify-center font-bold border-[1.5px] border-white">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
                       {unreadCount}
                     </span>
                   )}

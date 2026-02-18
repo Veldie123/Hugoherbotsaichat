@@ -423,24 +423,19 @@ export function AppLayout({
 
               {notifOpen && (
                 <>
-                  <div className="fixed inset-0 bg-black/20 z-40 sm:hidden" onClick={() => setNotifOpen(false)} />
-                  <div className="fixed inset-x-0 bottom-0 top-auto max-h-[85vh] sm:absolute sm:inset-auto sm:right-0 sm:top-12 sm:w-96 sm:max-h-[480px] sm:max-w-[384px] bg-white sm:rounded-xl rounded-t-2xl shadow-xl border border-hh-border z-50 overflow-hidden flex flex-col">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-hh-border flex-shrink-0">
-                      <span className="text-[15px] font-semibold text-hh-ink">Notificaties</span>
-                      <div className="flex items-center gap-3">
-                        {unreadCount > 0 && (
-                          <button
-                            onClick={() => markAllRead()}
-                            className="flex items-center gap-1 text-[12px] text-hh-primary hover:text-hh-primary/80 transition-colors"
-                          >
-                            <CheckCheck className="w-3.5 h-3.5" />
-                            Alles gelezen
-                          </button>
-                        )}
-                        <button onClick={() => setNotifOpen(false)} className="sm:hidden p-1 rounded-full hover:bg-gray-100">
-                          <X className="w-4 h-4 text-hh-muted" />
+                  <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                  <div className="absolute right-0 top-11 w-80 max-h-[400px] bg-white rounded-xl shadow-xl border border-hh-border z-50 overflow-hidden flex flex-col">
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-hh-border flex-shrink-0">
+                      <span className="text-[14px] font-semibold text-hh-ink">Notificaties</span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={() => markAllRead()}
+                          className="flex items-center gap-1 text-[12px] text-hh-primary hover:text-hh-primary/80 transition-colors"
+                        >
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          Alles gelezen
                         </button>
-                      </div>
+                      )}
                     </div>
                     <div className="flex-1 overflow-y-auto">
                       {notifications.length === 0 ? (
@@ -451,55 +446,41 @@ export function AppLayout({
                         notifications.slice(0, 20).map((notif) => (
                           <div
                             key={notif.id}
-                            className={`relative w-full text-left px-4 py-3 border-b border-hh-border/50 hover:bg-hh-ui-50 transition-colors group ${
+                            className={`relative w-full text-left px-3 py-2.5 border-b border-hh-border/50 hover:bg-hh-ui-50 transition-colors group cursor-pointer ${
                               !notif.read ? "bg-blue-50/50" : ""
                             }`}
+                            onClick={() => {
+                              markAsRead(notif.id);
+                              if (notif.type === "analysis_complete" && notif.conversationId && navigate) {
+                                navigate("analysis-results", { conversationId: notif.conversationId });
+                                setNotifOpen(false);
+                              }
+                            }}
                           >
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeNotification(notif.id);
-                              }}
-                              className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                              title="Verwijder notificatie"
-                            >
-                              <X className="w-3.5 h-3.5 text-hh-muted" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                markAsRead(notif.id);
-                                if (notif.type === "analysis_complete" && notif.conversationId && navigate) {
-                                  navigate("analysis-results", { conversationId: notif.conversationId });
-                                  setNotifOpen(false);
-                                }
-                              }}
-                              className="w-full text-left"
-                            >
-                              <div className="flex items-start gap-3">
-                                {!notif.read && (
-                                  <span className="mt-1.5 w-2 h-2 rounded-full bg-hh-primary flex-shrink-0" />
-                                )}
-                                <div className={`flex-1 min-w-0 ${notif.read ? "ml-5" : ""}`}>
-                                  <p className="text-[13px] sm:text-[14px] font-medium text-hh-ink pr-5">
-                                    {notif.title}
-                                  </p>
-                                  <p className="text-[12px] sm:text-[13px] text-hh-muted mt-0.5 leading-[18px]">
-                                    {notif.message}
-                                  </p>
-                                  <div className="flex items-center justify-between mt-2">
-                                    <span className="text-[11px] text-hh-muted">
-                                      {formatTimeAgo(notif.createdAt)}
+                            <div className="flex items-start gap-2.5">
+                              {!notif.read && (
+                                <span className="mt-1.5 w-2 h-2 rounded-full bg-hh-primary flex-shrink-0" />
+                              )}
+                              <div className={`flex-1 min-w-0 ${notif.read ? "ml-[18px]" : ""}`}>
+                                <p className="text-[13px] font-medium text-hh-ink truncate">
+                                  {notif.title}
+                                </p>
+                                <p className="text-[12px] text-hh-muted mt-0.5 line-clamp-1">
+                                  {notif.message}
+                                </p>
+                                <div className="flex items-center justify-between mt-1">
+                                  <span className="text-[11px] text-hh-muted">
+                                    {formatTimeAgo(notif.createdAt)}
+                                  </span>
+                                  {notif.type === "analysis_complete" && notif.conversationId && (
+                                    <span className="flex items-center gap-1 text-[11px] text-hh-primary font-medium">
+                                      Bekijk resultaten
+                                      <ExternalLink className="w-3 h-3" />
                                     </span>
-                                    {notif.type === "analysis_complete" && notif.conversationId && (
-                                      <span className="flex items-center gap-1 text-[12px] text-hh-primary font-medium">
-                                        Bekijk resultaten
-                                        <ExternalLink className="w-3 h-3" />
-                                      </span>
-                                    )}
-                                  </div>
+                                  )}
                                 </div>
                               </div>
-                            </button>
+                            </div>
                           </div>
                         ))
                       )}
