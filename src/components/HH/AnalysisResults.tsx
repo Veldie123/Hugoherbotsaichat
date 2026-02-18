@@ -227,6 +227,18 @@ export function AnalysisResults({
 
   const [processingStep, setProcessingStep] = useState<string | null>(null);
 
+  const [transcriptReplay, setTranscriptReplay] = useState<{
+    active: boolean;
+    fromTurnIdx: number;
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+    loading: boolean;
+    feedback: string | null;
+    turnCount: number;
+  }>({ active: false, fromTurnIdx: -1, messages: [], loading: false, feedback: null, turnCount: 0 });
+  const [transcriptReplayInput, setTranscriptReplayInput] = useState('');
+  const transcriptReplayRef = useRef<HTMLDivElement>(null);
+  const transcriptReplayInputRef = useRef<HTMLTextAreaElement>(null);
+
   const replayRef = useRef<HTMLDivElement>(null);
   const actionResultRef = useRef<HTMLDivElement>(null);
 
@@ -446,6 +458,100 @@ export function AnalysisResults({
     }
 
     return 1;
+  };
+
+  const startTranscriptReplay = (turnIdx: number) => {
+    if (!result) return;
+
+    const turnsUpTo = result.transcript.filter(t => t.idx < turnIdx);
+    const lastCustomerTurn = [...turnsUpTo].reverse().find(t => t.speaker === 'customer');
+    const customerText = lastCustomerTurn?.text || 'Ga verder...';
+
+    setTranscriptReplay({
+      active: true,
+      fromTurnIdx: turnIdx,
+      messages: [{ role: 'assistant', content: customerText }],
+      loading: false,
+      feedback: null,
+      turnCount: 0,
+    });
+    setTranscriptReplayInput('');
+
+    setTimeout(() => {
+      transcriptReplayInputRef.current?.focus();
+      transcriptReplayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 100);
+  };
+
+  const sendTranscriptReplayMessage = () => {
+    const msg = transcriptReplayInput.trim();
+    if (!msg || transcriptReplay.loading || !result) return;
+
+    const newMessages = [...transcriptReplay.messages, { role: 'user' as const, content: msg }];
+    const newTurnCount = transcriptReplay.turnCount + 1;
+    setTranscriptReplayInput('');
+    setTranscriptReplay(prev => ({ ...prev, messages: newMessages, loading: true, turnCount: newTurnCount }));
+
+    const turnsUpTo = result.transcript.filter(t => t.idx < transcriptReplay.fromTurnIdx);
+    const contextSummary = turnsUpTo.slice(-8).map(t => `${t.speaker === 'seller' ? 'Verkoper' : 'Klant'}: ${t.text}`).join('\n');
+    const originalSellerText = result.transcript.find(t => t.idx === transcriptReplay.fromTurnIdx)?.text || '';
+
+    const shouldGiveFeedback = newTurnCount >= 3;
+
+    const conversationHistory = newMessages.map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content,
+    }));
+
+    const message = shouldGiveFeedback
+      ? `[SYSTEM] Je bent nu Hugo, de sales coach. De verkoper heeft dit deel van het gesprek opnieuw gespeeld. Geef korte, constructieve feedback vergeleken met het origineel. Wees bemoedigend maar eerlijk. Max 4 zinnen. Spreek Nederlands.
+
+Origineel antwoord verkoper: "${originalSellerText}"
+
+Replay gesprek:
+${newMessages.map(m => `${m.role === 'user' ? 'Verkoper' : 'Klant'}: ${m.content}`).join('\n')}`
+      : `[SYSTEM] Je bent een klant in een verkoopgesprek. Speel de klant op basis van dit eerdere gesprek:
+${contextSummary}
+
+De verkoper probeert dit moment opnieuw. Blijf in karakter. Antwoord kort en natuurlijk (1-3 zinnen). Spreek Nederlands.
+
+${msg}`;
+
+    fetch('/api/v2/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        conversationHistory: shouldGiveFeedback ? [] : conversationHistory.slice(0, -1),
+        sourceApp: 'transcript-replay',
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        const response = data.response || data.message || '';
+        if (shouldGiveFeedback) {
+          setTranscriptReplay(prev => ({ ...prev, loading: false, feedback: response }));
+        } else {
+          setTranscriptReplay(prev => ({
+            ...prev,
+            loading: false,
+            messages: [...prev.messages, { role: 'assistant', content: response }],
+          }));
+        }
+        setTimeout(() => {
+          transcriptReplayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          transcriptReplayInputRef.current?.focus();
+        }, 100);
+      })
+      .catch(() => {
+        setTranscriptReplay(prev => ({ ...prev, loading: false }));
+        toast.error('Fout bij replay');
+      });
+  };
+
+  const exitTranscriptReplay = () => {
+    setTranscriptReplay({ active: false, fromTurnIdx: -1, messages: [], loading: false, feedback: null, turnCount: 0 });
+    setTranscriptReplayInput('');
   };
 
   const startReplay = async (moment: CoachMoment) => {
@@ -1301,12 +1407,20 @@ export function AnalysisResults({
               <div className="space-y-3">
                 {(() => {
                   let lastPhase: number | null = null;
+                  const isReplayActive = transcriptReplay.active;
+                  const replayIdx = transcriptReplay.fromTurnIdx;
+
                   return transcript.map((turn) => {
                     const evaluation = evaluations.find(e => e.turnIdx === turn.idx);
                     const signal = signals.find(s => s.turnIdx === turn.idx);
                     const currentPhase = determinePhaseForTurn(turn.idx);
                     const showPhaseDivider = currentPhase !== null && currentPhase !== lastPhase;
                     if (currentPhase !== null) lastPhase = currentPhase;
+
+                    const isFadedByReplay = isReplayActive && turn.idx >= replayIdx;
+                    const isReplayPoint = isReplayActive && turn.idx === replayIdx;
+
+                    if (isFadedByReplay && !isReplayPoint) return null;
 
                     return (
                       <div key={turn.idx}>
@@ -1325,6 +1439,8 @@ export function AnalysisResults({
                           text={turn.text}
                           timestamp={formatTime(turn.startMs)}
                           adminColors={adminColors}
+                          variant={isReplayPoint ? 'faded' : 'default'}
+                          onReplay={turn.speaker === 'seller' && !isReplayActive ? () => startTranscriptReplay(turn.idx) : undefined}
                         >
                           <div className="flex flex-wrap items-center gap-1.5">
                             {turn.speaker === 'customer' && signal && signal.houding !== 'neutraal' && (
@@ -1342,6 +1458,98 @@ export function AnalysisResults({
                             })}
                           </div>
                         </ChatBubble>
+
+                        {isReplayPoint && (
+                          <div ref={transcriptReplayRef} className="mt-4 mb-2">
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="flex-1 h-px bg-emerald-300" />
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200">
+                                <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-[12px] font-medium text-emerald-700">
+                                  Replay vanaf {formatTime(turn.startMs)}
+                                </span>
+                                <span className="text-[11px] text-emerald-500">Hugo speelt de klant</span>
+                              </div>
+                              <button onClick={exitTranscriptReplay} className="p-1 rounded-full hover:bg-gray-100 transition-colors">
+                                <X className="w-4 h-4 text-hh-muted" />
+                              </button>
+                              <div className="flex-1 h-px bg-emerald-300" />
+                            </div>
+
+                            <div className="space-y-3">
+                              {transcriptReplay.messages.map((msg, i) => (
+                                <ChatBubble
+                                  key={`replay-${i}`}
+                                  speaker={msg.role === 'user' ? 'seller' : 'customer'}
+                                  text={msg.content}
+                                  label={msg.role === 'user' ? 'Jij (replay)' : 'Klant (Hugo)'}
+                                  isReplayMessage
+                                />
+                              ))}
+
+                              {transcriptReplay.loading && (
+                                <div className="flex justify-end">
+                                  <div className="flex items-center gap-2 px-4 py-3 bg-hh-ink/10 rounded-2xl rounded-br-md">
+                                    <div className="flex gap-1">
+                                      <span className="w-2 h-2 bg-hh-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                      <span className="w-2 h-2 bg-hh-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                      <span className="w-2 h-2 bg-hh-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {transcriptReplay.feedback && (
+                                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                                  <div className="flex gap-2.5 items-start">
+                                    <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                      <p className="text-[12px] font-semibold text-emerald-700 mb-1">Hugo's feedback</p>
+                                      <p className="text-[13px] leading-[20px] text-hh-text">{transcriptReplay.feedback}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2 mt-3">
+                                    <Button size="sm" variant="outline" onClick={exitTranscriptReplay} className="text-[12px] h-8">
+                                      Terug naar transcript
+                                    </Button>
+                                    <Button size="sm" variant="outline" onClick={() => {
+                                      setTranscriptReplay(prev => ({ ...prev, feedback: null, turnCount: 0 }));
+                                    }} className="text-[12px] h-8">
+                                      <RotateCcw className="w-3 h-3 mr-1" /> Nog een keer
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {!transcriptReplay.feedback && (
+                              <div className="flex gap-2 mt-4">
+                                <textarea
+                                  ref={transcriptReplayInputRef}
+                                  value={transcriptReplayInput}
+                                  onChange={(e) => setTranscriptReplayInput(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      sendTranscriptReplayMessage();
+                                    }
+                                  }}
+                                  placeholder="Typ je alternatieve antwoord..."
+                                  rows={1}
+                                  className="flex-1 px-4 py-2.5 rounded-xl border border-emerald-200 bg-white text-[14px] text-hh-text placeholder:text-hh-muted/50 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 resize-none"
+                                  disabled={transcriptReplay.loading}
+                                />
+                                <Button
+                                  onClick={sendTranscriptReplayMessage}
+                                  disabled={!transcriptReplayInput.trim() || transcriptReplay.loading}
+                                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white h-auto"
+                                >
+                                  <Send className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   });
