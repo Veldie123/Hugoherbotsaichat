@@ -1,11 +1,17 @@
 import fs from 'fs';
 import OpenAI from 'openai';
 
-const API_BASE = 'http://localhost:3001';
-const MAX_TURNS_PER_TECHNIQUE = 8;
-const CONTEXT_GATHERING_MAX = 5;
+const API_BASE = 'http://localhost:5000';
+const MAX_TURNS_PER_TECHNIQUE = 6;
+const LOG_FILE = '/tmp/simulation-user1.log';
 
 const openai = new OpenAI();
+
+function log(msg: string) {
+  const line = msg + '\n';
+  process.stdout.write(line);
+  fs.appendFileSync(LOG_FILE, line);
+}
 
 interface UserProfile {
   id: string;
@@ -18,7 +24,7 @@ interface UserProfile {
   personality: string;
 }
 
-const USERS: UserProfile[] = [
+const ALL_USERS: UserProfile[] = [
   {
     id: 'sim-jan-saas',
     name: 'Jan Verstraeten',
@@ -104,69 +110,66 @@ Profiel: ${user.description}
 Persoonlijkheid: ${user.personality}
 Je verkoopt: ${user.product} aan ${user.klantType} klanten.
 
-Je bent in gesprek met Hugo, je AI sales coach. Hij traint je in de techniek "${technique.naam}".
-De huidige fase is: ${phase}.
+Je bent in gesprek met Hugo, je AI sales coach. Hij traint je in de techniek "${technique.naam}" (fase ${technique.fase}).
+De huidige sessie-modus is: ${phase}.
 
 REGELS:
 - Antwoord als een ECHTE verkoper, niet als een AI
 - Gebruik informeel Nederlands (Vlaams mag)
 - Wees realistisch: soms begrijp je het niet meteen, soms heb je een "aha-moment"
 - Als Hugo je iets vraagt over je sector/product, geef concrete details uit jouw wereld
-- Als Hugo een rollenspel doet, speel mee als verkoper (niet als klant)
+- Als Hugo een rollenspel start, speel mee als verkoper
 - Als Hugo coaching geeft, reageer met herkenning, vragen, of twijfels
-- Houd antwoorden kort en natuurlijk (2-4 zinnen typisch)
+- Houd antwoorden kort en natuurlijk (2-4 zinnen typisch, max 5)
 - ${user.ervaring === 'starter' || user.ervaring === 'junior' ? 'Je bent soms onzeker en stelt veel vragen' : ''}
 - ${user.ervaring === 'senior' ? 'Je hebt sterke meningen maar staat open voor nieuwe inzichten' : ''}
-- Verwijs soms naar echte situaties uit je werk`;
+- Verwijs soms naar echte situaties uit je werk
+- NOOIT meta-commentaar geven over het gesprek zelf`;
 
   const messages: any[] = [
     { role: 'system', content: systemPrompt }
   ];
 
-  for (const msg of conversationHistory.slice(-6)) {
+  const recentHistory = conversationHistory.slice(-8);
+  for (const msg of recentHistory) {
     messages.push({
-      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      role: msg.role === 'user' ? 'assistant' : 'user',
       content: msg.content
     });
   }
 
-  messages.push({ role: 'user', content: `Hugo zegt: "${hugoMessage}"\n\nReageer als ${user.name}:` });
+  messages.push({ role: 'user', content: hugoMessage });
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages,
-    max_completion_tokens: 200,
-    temperature: 0.9
-  });
-
-  return completion.choices[0]?.message?.content || 'Hmm, interessant. Ga verder.';
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-5.1',
+      messages,
+      max_completion_tokens: 250,
+      temperature: 0.85
+    });
+    return completion.choices[0]?.message?.content || 'Ja, dat snap ik. Ga verder.';
+  } catch (err: any) {
+    log(`    [OpenAI seller] Error: ${err.message}`);
+    return 'Interessant, kun je daar wat meer over vertellen?';
+  }
 }
 
-async function generateContextAnswer(
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 120000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const resp = await fetch(url, { ...options, signal: controller.signal });
+    return resp;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function createSession(
   user: UserProfile,
-  hugoQuestion: string
-): Promise<string> {
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: `Je bent ${user.name}. Hugo (je AI coach) stelt je een vraag over je werk om je beter te leren kennen.
-Profiel: ${user.description}
-Sector: ${user.sector} | Product: ${user.product} | Klanttype: ${user.klantType}
-Antwoord kort, natuurlijk, in het Nederlands. 1-2 zinnen.`
-      },
-      { role: 'user', content: hugoQuestion }
-    ],
-    max_completion_tokens: 100,
-    temperature: 0.8
-  });
-
-  return completion.choices[0]?.message?.content || user.sector;
-}
-
-async function createSession(user: UserProfile, techniqueId: string): Promise<{ sessionId: string; initialMessage: string; phase: string }> {
-  const resp = await fetch(`${API_BASE}/api/v2/sessions`, {
+  techniqueId: string
+): Promise<{ sessionId: string; initialMessage: string; phase: string }> {
+  const resp = await fetchWithTimeout(`${API_BASE}/api/v2/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -176,10 +179,11 @@ async function createSession(user: UserProfile, techniqueId: string): Promise<{ 
       userId: user.id,
       userName: user.name
     })
-  });
+  }, 180000);
 
   if (!resp.ok) {
-    throw new Error(`Session creation failed ${resp.status}: ${await resp.text()}`);
+    const body = await resp.text();
+    throw new Error(`Session creation failed (${resp.status}): ${body.substring(0, 200)}`);
   }
 
   const data = await resp.json();
@@ -190,19 +194,19 @@ async function createSession(user: UserProfile, techniqueId: string): Promise<{ 
   };
 }
 
-async function sendMessage(sessionId: string, content: string): Promise<{ response: string; phase: string }> {
-  const resp = await fetch(`${API_BASE}/api/v2/message`, {
+async function sendMessage(
+  sessionId: string,
+  content: string
+): Promise<{ response: string; phase: string }> {
+  const resp = await fetchWithTimeout(`${API_BASE}/api/v2/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sessionId,
-      content,
-      isExpert: false
-    })
-  });
+    body: JSON.stringify({ sessionId, content, isExpert: false })
+  }, 120000);
 
   if (!resp.ok) {
-    throw new Error(`Message failed ${resp.status}: ${await resp.text()}`);
+    const body = await resp.text();
+    throw new Error(`Message failed (${resp.status}): ${body.substring(0, 200)}`);
   }
 
   const data = await resp.json();
@@ -212,102 +216,119 @@ async function sendMessage(sessionId: string, content: string): Promise<{ respon
   };
 }
 
-async function runTechniqueSession(
-  user: UserProfile,
-  technique: { id: string; naam: string }
-): Promise<{ turns: number; error?: string }> {
-  const { sessionId, initialMessage, phase } = await createSession(user, technique.id);
-
-  let currentPhase = phase;
-  const history: { role: string; content: string }[] = [
-    { role: 'assistant', content: initialMessage }
-  ];
-
-  let contextTurns = 0;
-  while (currentPhase === 'CONTEXT_GATHERING' && contextTurns < CONTEXT_GATHERING_MAX) {
-    const answer = await generateContextAnswer(user, initialMessage);
-    history.push({ role: 'user', content: answer });
-
-    const result = await sendMessage(sessionId, answer);
-    history.push({ role: 'assistant', content: result.response });
-    currentPhase = result.phase;
-    contextTurns++;
-    await sleep(300);
-  }
-
-  let coachTurns = 0;
-  while (coachTurns < MAX_TURNS_PER_TECHNIQUE) {
-    const lastHugoMsg = history[history.length - 1]?.content || '';
-    const sellerReply = await generateSellerResponse(user, lastHugoMsg, history, technique, currentPhase);
-    history.push({ role: 'user', content: sellerReply });
-
-    const result = await sendMessage(sessionId, sellerReply);
-    history.push({ role: 'assistant', content: result.response });
-    currentPhase = result.phase;
-    coachTurns++;
-    await sleep(300);
-  }
-
-  return { turns: history.length };
-}
-
-async function sleep(ms: number) {
+function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function main() {
+async function runFullCourse(user: UserProfile) {
   const techniques = getTechniqueList();
-  const totalSessions = USERS.length * techniques.length;
 
-  console.log(`\n========================================`);
-  console.log(`  HUGO V2 CURSUS SIMULATIE`);
-  console.log(`  ${USERS.length} gebruikers x ${techniques.length} technieken = ${totalSessions} sessies`);
-  console.log(`  Geschatte duur: ${Math.round(totalSessions * 30 / 60)} minuten`);
-  console.log(`========================================\n`);
+  fs.writeFileSync(LOG_FILE, '');
+  log(`\n${'='.repeat(60)}`);
+  log(`  CURSUS SIMULATIE: ${user.name}`);
+  log(`  ${user.description}`);
+  log(`  ${techniques.length} technieken van A tot Z`);
+  log(`${'='.repeat(60)}\n`);
 
-  let completedSessions = 0;
-  let failedSessions = 0;
-  const errors: string[] = [];
+  let completed = 0;
+  let failed = 0;
+  const failedTechs: string[] = [];
 
-  for (let u = 0; u < USERS.length; u++) {
-    const user = USERS[u];
-    console.log(`\n👤 [Gebruiker ${u + 1}/${USERS.length}] ${user.name} (${user.sector})`);
-    console.log(`   ${user.description}\n`);
+  for (let t = 0; t < techniques.length; t++) {
+    const technique = techniques[t];
+    const progress = `[${t + 1}/${techniques.length}]`;
 
-    for (let t = 0; t < techniques.length; t++) {
-      const technique = techniques[t];
-      const progress = `[${completedSessions + failedSessions + 1}/${totalSessions}]`;
+    log(`\n  ${progress} ${technique.id}: ${technique.naam}`);
 
-      process.stdout.write(`  ${progress} ${technique.id}: ${technique.naam}... `);
+    try {
+      const { sessionId, initialMessage, phase } = await createSession(user, technique.id);
+      log(`    Session: ${sessionId} | Phase: ${phase}`);
+      log(`    Hugo: "${initialMessage.substring(0, 100)}..."`);
 
-      try {
-        const result = await runTechniqueSession(user, technique);
-        completedSessions++;
-        console.log(`✅ ${result.turns} beurten`);
-      } catch (err: any) {
-        failedSessions++;
-        const errorMsg = `${user.name} / ${technique.id}: ${err.message}`;
-        errors.push(errorMsg);
-        console.log(`❌ ${err.message.substring(0, 60)}`);
+      const history: { role: string; content: string }[] = [
+        { role: 'assistant', content: initialMessage }
+      ];
+      let currentPhase = phase;
+      let turnCount = 0;
+
+      while (currentPhase === 'CONTEXT_GATHERING' && turnCount < 5) {
+        const answer = await generateSellerResponse(
+          user, history[history.length - 1].content, history, technique, currentPhase
+        );
+        log(`    ${user.name.split(' ')[0]}: "${answer.substring(0, 80)}..."`);
+        history.push({ role: 'user', content: answer });
+
+        const result = await sendMessage(sessionId, answer);
+        history.push({ role: 'assistant', content: result.response });
+        currentPhase = result.phase;
+        turnCount++;
+
+        if (currentPhase !== 'CONTEXT_GATHERING') {
+          log(`    → Transitie naar ${currentPhase}`);
+          log(`    Hugo: "${result.response.substring(0, 100)}..."`);
+        }
+        await sleep(500);
       }
 
-      await sleep(200);
+      let coachTurns = 0;
+      while (coachTurns < MAX_TURNS_PER_TECHNIQUE) {
+        const lastHugoMsg = history[history.length - 1].content;
+        const sellerReply = await generateSellerResponse(
+          user, lastHugoMsg, history, technique, currentPhase
+        );
+        log(`    ${user.name.split(' ')[0]}: "${sellerReply.substring(0, 80)}..."`);
+        history.push({ role: 'user', content: sellerReply });
+
+        const result = await sendMessage(sessionId, sellerReply);
+        history.push({ role: 'assistant', content: result.response });
+        currentPhase = result.phase;
+        coachTurns++;
+
+        log(`    Hugo: "${result.response.substring(0, 80)}..."`);
+        await sleep(500);
+      }
+
+      const totalTurns = history.length;
+      completed++;
+      log(`    ✅ Voltooid: ${totalTurns} berichten (${Math.ceil(totalTurns / 2)} beurten)`);
+
+    } catch (err: any) {
+      failed++;
+      failedTechs.push(`${technique.id}: ${err.message.substring(0, 80)}`);
+      log(`    ❌ FOUT: ${err.message.substring(0, 100)}`);
     }
+
+    await sleep(300);
   }
 
-  console.log(`\n========================================`);
-  console.log(`  SIMULATIE VOLTOOID`);
-  console.log(`  Geslaagd: ${completedSessions}/${totalSessions}`);
-  console.log(`  Mislukt: ${failedSessions}/${totalSessions}`);
-  if (errors.length > 0) {
-    console.log(`\n  Fouten:`);
-    errors.forEach(e => console.log(`    - ${e}`));
+  log(`\n${'='.repeat(60)}`);
+  log(`  RESULTAAT: ${user.name}`);
+  log(`  Voltooid: ${completed}/${techniques.length}`);
+  log(`  Mislukt: ${failed}/${techniques.length}`);
+  if (failedTechs.length > 0) {
+    log(`  Fouten:`);
+    failedTechs.forEach(e => log(`    - ${e}`));
   }
-  console.log(`\n  Alle sessies zijn zichtbaar in Admin > Sessions`);
-  console.log(`========================================\n`);
+  log(`  → Alle sessies zichtbaar in Admin > Sessions`);
+  log(`${'='.repeat(60)}\n`);
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const userIndex = args.includes('--user') ? parseInt(args[args.indexOf('--user') + 1]) - 1 : 0;
+
+  if (userIndex < 0 || userIndex >= ALL_USERS.length) {
+    console.error(`Ongeldige gebruiker. Kies 1-${ALL_USERS.length}`);
+    process.exit(1);
+  }
+
+  const user = ALL_USERS[userIndex];
+  log(`\nGekozen gebruiker: ${user.name} (${user.sector})`);
+
+  await runFullCourse(user);
 }
 
 main().catch(err => {
-  console.error('Fatal error:', err);
+  log(`Fatal error: ${err.message || err}`);
   process.exit(1);
 });
