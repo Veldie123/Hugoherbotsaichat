@@ -287,7 +287,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </p>
             </div>
             <Button 
-              className="gap-2 bg-[#00C389] hover:bg-[#00A876] text-white shrink-0 hidden sm:flex"
+              className="gap-2 bg-[#3C9A6E] hover:bg-[#2D7F57] text-white shrink-0 hidden sm:flex"
               onClick={() => navigate?.("upload-analysis")}
             >
               <Upload className="w-4 h-4 text-white" />
@@ -295,7 +295,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
             </Button>
           </div>
           <Button 
-            className="gap-2 bg-[#00C389] hover:bg-[#00A876] text-white w-full sm:hidden"
+            className="gap-2 bg-[#3C9A6E] hover:bg-[#2D7F57] text-white w-full sm:hidden"
             onClick={() => navigate?.("upload-analysis")}
           >
             <Upload className="w-4 h-4 text-white" />
@@ -399,7 +399,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  style={viewMode === "list" ? { backgroundColor: '#00C389', color: 'white' } : {}}
+                  style={viewMode === "list" ? { backgroundColor: '#3C9A6E', color: 'white' } : {}}
                   className={`hidden md:flex ${viewMode !== "list" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}`}
                 >
                   <List className="w-4 h-4 text-current" />
@@ -408,7 +408,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => setViewMode("grid")}
-                  style={viewMode === "grid" ? { backgroundColor: '#00C389', color: 'white' } : {}}
+                  style={viewMode === "grid" ? { backgroundColor: '#3C9A6E', color: 'white' } : {}}
                   className={`hidden md:flex ${viewMode !== "grid" ? "text-hh-muted hover:text-hh-text hover:bg-hh-ui-50" : "hover:opacity-90"}`}
                 >
                   <LayoutGrid className="w-4 h-4 text-current" />
@@ -446,7 +446,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               <p className="text-[16px] leading-[24px] text-hh-text mb-2">Nog geen analyses</p>
               <p className="text-[14px] text-hh-muted mb-4">Upload een gesprek om je eerste analyse te starten</p>
               <Button 
-                className="gap-2 bg-[#00C389] hover:bg-[#00A876] text-white"
+                className="gap-2 bg-[#3C9A6E] hover:bg-[#2D7F57] text-white"
                 onClick={() => navigate?.("upload-analysis")}
               >
                 <Upload className="w-4 h-4 text-white" />

@@ -1366,7 +1366,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <Button
             onClick={handleSendMessage}
             disabled={(!inputText.trim() && attachedFiles.length === 0) || isLoading || isStreaming}
-            className="bg-[#00C389] hover:bg-[#00A876] gap-2 px-3 sm:px-4"
+            className="bg-[#3C9A6E] hover:bg-[#2D7F57] gap-2 px-3 sm:px-4"
           >
             {isLoading || isStreaming ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />

@@ -30,7 +30,7 @@
   --hh-slate-600: var(--hh-indian-ink);  /* Body text */
   
   /* Feedback Colors - Subtle & Professional */
-  --hh-success: #10B981;           /* Emerald green - positive feedback */
+  --hh-success: #3C9A6E;           /* Forest green - CTA, positive states */
   --hh-warning: #F59E0B;           /* Amber - warnings, attention */
   --hh-error: #EF4444;             /* Red - errors, destructive */
   --hh-info: var(--hh-steel-blue); /* Steel blue - informational */

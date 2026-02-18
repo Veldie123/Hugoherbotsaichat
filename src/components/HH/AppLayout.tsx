@@ -400,7 +400,7 @@ export function AppLayout({
 
             <Button
               onClick={() => navigate?.("talk-to-hugo")}
-              className="gap-2 bg-[#00C389] hover:bg-[#00A876] text-white h-10 px-3 sm:px-4"
+              className="gap-2 bg-[#3C9A6E] hover:bg-[#2D7F57] text-white h-10 px-3 sm:px-4"
             >
               <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline text-[14px]">
