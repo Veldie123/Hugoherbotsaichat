@@ -20,7 +20,6 @@ import {
   BarChart3,
   Loader2,
   MessageSquare,
-  Zap,
   Calendar,
   Clock,
   Play,
@@ -919,8 +918,9 @@ ${msg}`;
 
         {/* Phase scores only shown in timeline tab */}
 
-        {activeTab === 'coach' && (<div className="space-y-5 max-w-[720px]">
+        {activeTab === 'coach' && (<div className="space-y-6 max-w-[820px]">
 
+          {/* Summary section */}
           <div className="flex items-start gap-4">
             <div className={`w-10 h-10 rounded-full ${adminColors ? 'bg-purple-600' : ''} flex items-center justify-center flex-shrink-0 mt-0.5`} style={!adminColors ? { backgroundColor: '#3C9A6E' } : {}}>
               <Sparkles className="w-5 h-5 text-white" />
@@ -941,10 +941,7 @@ ${msg}`;
                     rows={3}
                   />
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="gap-1.5 text-[12px] bg-purple-600 hover:bg-purple-700"
-                      disabled={submittingCorrection}
+                    <Button size="sm" className="gap-1.5 text-[12px] bg-purple-600 hover:bg-purple-700" disabled={submittingCorrection}
                       onClick={() => {
                         submitCorrection('coach_debrief', 'oneliner', insights.coachDebrief?.oneliner || '', editedOneliner, 'Coach oneliner correctie');
                         if (editedEpicMomentum !== (insights.coachDebrief?.epicMomentum || '')) {
@@ -954,14 +951,7 @@ ${msg}`;
                     >
                       <Save className="w-3.5 h-3.5" /> Indienen voor review
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-[12px]"
-                      onClick={() => setEditingDebrief(false)}
-                    >
-                      Annuleren
-                    </Button>
+                    <Button variant="outline" size="sm" className="text-[12px]" onClick={() => setEditingDebrief(false)}>Annuleren</Button>
                   </div>
                   <p className="text-[11px] text-purple-500 flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" /> Correcties gaan eerst naar Config Review
@@ -991,310 +981,255 @@ ${msg}`;
                 </div>
               )}
 
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 sm:mt-4">
-                {phaseScores.map((ps, idx) => (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3">
+                {phaseScores.map((ps) => (
                   <span key={ps.phase} className="text-[11px] sm:text-[12px] text-hh-muted whitespace-nowrap">
                     {ps.sublabel} <span className={`font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
                   </span>
                 ))}
               </div>
-
-              {insights.coachDebrief && insights.coachDebrief.messages.length > 0 && (() => {
-                const allMessages = insights.coachDebrief.messages;
-                const visibleMessages = debriefExpanded ? allMessages : allMessages.slice(0, 1);
-                const hasMore = allMessages.length > 1;
-
-                const renderMessage = (msg: CoachDebriefMessage, i: number) => {
-                  if (msg.type === 'coach_text' && msg.text) {
-                    return (
-                      <p key={i} className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-hh-text/80" style={{ overflowWrap: 'break-word' }}>{msg.text}</p>
-                    );
-                  }
-                  if (msg.type === 'moment_ref' && msg.momentId) {
-                    const refMoment = (insights.moments || []).find(m => m.id === msg.momentId);
-                    if (!refMoment) return null;
-                    const typeLabels: Record<string, { label: string; color: string; bg: string; border: string }> = {
-                      'big_win': { label: 'Big Win', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-                      'quick_fix': { label: 'Quick Fix', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
-                      'turning_point': { label: 'Scharnierpunt', color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200' },
-                    };
-                    const tl = typeLabels[refMoment.type] || typeLabels['quick_fix'];
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => { setExpandedMoment(expandedMoment === refMoment.id ? null : refMoment.id); markMomentViewed(refMoment.id); }}
-                        className={`flex items-start gap-2 w-full text-left px-3 py-2 rounded-lg ${tl.bg} border ${tl.border} hover:opacity-80 transition-opacity`}
-                      >
-                        <ArrowRight className={`w-3.5 h-3.5 ${tl.color} flex-shrink-0 mt-0.5`} />
-                        <div className="min-w-0">
-                          <span className={`text-[11px] font-semibold uppercase tracking-wider ${tl.color}`}>{tl.label}</span>
-                          <p className="text-[13px] leading-[18px] text-hh-text mt-0.5">{refMoment.label}</p>
-                        </div>
-                      </button>
-                    );
-                  }
-                  return null;
-                };
-
-                return (
-                  <div className="mt-4 pt-4 border-t border-hh-border/50 space-y-2.5">
-                    {visibleMessages.map((msg, i) => renderMessage(msg, i))}
-
-                    {hasMore && (
-                      <button
-                        onClick={() => setDebriefExpanded(!debriefExpanded)}
-                        className={`flex items-center gap-1 text-[13px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-success'} hover:underline mt-1`}
-                      >
-                        {debriefExpanded ? (
-                          <><ChevronDown className="w-3.5 h-3.5" /> Minder tonen</>
-                        ) : (
-                          <><ChevronRight className="w-3.5 h-3.5" /> Lees meer</>
-                        )}
-                      </button>
-                    )}
-
-                    <div className="pt-4 mt-2">
-                      <Button size="sm" className="gap-1.5 text-[13px] bg-emerald-600 hover:bg-emerald-700" onClick={() => navigate?.("talk-to-hugo")}>
-                        Bespreek met Hugo <ChevronRight className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })()}
             </div>
           </div>
 
-          <div className="h-px bg-hh-border/60" />
+          {/* Coach Debrief Messages */}
+          {insights.coachDebrief && insights.coachDebrief.messages.length > 0 && (() => {
+            const allMessages = insights.coachDebrief.messages;
+            const visibleMessages = debriefExpanded ? allMessages : allMessages.slice(0, 1);
+            const hasMore = allMessages.length > 1;
 
+            const renderMessage = (msg: CoachDebriefMessage, i: number) => {
+              if (msg.type === 'coach_text' && msg.text) {
+                return (
+                  <p key={i} className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-hh-text/80" style={{ overflowWrap: 'break-word' }}>{msg.text}</p>
+                );
+              }
+              if (msg.type === 'moment_ref' && msg.momentId) {
+                const refMoment = (insights.moments || []).find(m => m.id === msg.momentId);
+                if (!refMoment) return null;
+                const typeLabels: Record<string, { label: string; color: string; bg: string; border: string }> = {
+                  'big_win': { label: 'Big Win', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+                  'quick_fix': { label: 'Quick Fix', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
+                  'turning_point': { label: 'Scharnierpunt', color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200' },
+                };
+                const tl = typeLabels[refMoment.type] || typeLabels['quick_fix'];
+                return (
+                  <button
+                    key={i}
+                    onClick={() => { setExpandedMoment(expandedMoment === refMoment.id ? null : refMoment.id); markMomentViewed(refMoment.id); }}
+                    className={`flex items-start gap-2 w-full text-left px-3 py-2 rounded-lg ${tl.bg} border ${tl.border} hover:opacity-80 transition-opacity`}
+                  >
+                    <ArrowRight className={`w-3.5 h-3.5 ${tl.color} flex-shrink-0 mt-0.5`} />
+                    <div className="min-w-0">
+                      <span className={`text-[11px] font-semibold uppercase tracking-wider ${tl.color}`}>{tl.label}</span>
+                      <p className="text-[13px] leading-[18px] text-hh-text mt-0.5">{refMoment.label}</p>
+                    </div>
+                  </button>
+                );
+              }
+              return null;
+            };
+
+            return (
+              <div className="space-y-2.5 pl-14">
+                {visibleMessages.map((msg, i) => renderMessage(msg, i))}
+                {hasMore && (
+                  <button
+                    onClick={() => setDebriefExpanded(!debriefExpanded)}
+                    className={`flex items-center gap-1 text-[13px] font-medium ${adminColors ? 'text-purple-600' : ''} hover:underline mt-1`}
+                    style={!adminColors ? { color: '#3C9A6E' } : {}}
+                  >
+                    {debriefExpanded ? (
+                      <><ChevronDown className="w-3.5 h-3.5" /> Minder tonen</>
+                    ) : (
+                      <><ChevronRight className="w-3.5 h-3.5" /> Lees meer</>
+                    )}
+                  </button>
+                )}
+                <div className="pt-2">
+                  <Button
+                    size="sm"
+                    className="gap-1.5 text-[13px] text-white"
+                    style={{ backgroundColor: '#3C9A6E' }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
+                    onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
+                    onClick={() => navigate?.("talk-to-hugo")}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> Bespreek met Hugo <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Moment Cards - 2x2 Grid */}
           {(() => {
             const moments = insights.moments || [];
-            const momentConfig: Record<string, { icon: any; accentBorder: string; color: string; label: string }> = {
-              'big_win': { icon: Trophy, accentBorder: 'border-l-emerald-500', color: 'text-emerald-600', label: 'Big Win' },
-              'quick_fix': { icon: Wrench, accentBorder: 'border-l-amber-500', color: 'text-amber-600', label: 'Quick Fix' },
-              'turning_point': { icon: RotateCcw, accentBorder: 'border-l-rose-500', color: 'text-rose-600', label: 'Scharnierpunt' },
+            const momentConfig: Record<string, { icon: any; color: string; bg: string; border: string; label: string; hoverBg: string }> = {
+              'big_win': { icon: Trophy, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'Big Win', hoverBg: 'hover:bg-emerald-100/60' },
+              'quick_fix': { icon: Wrench, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', label: 'Quick Fix', hoverBg: 'hover:bg-amber-100/60' },
+              'turning_point': { icon: RotateCcw, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', label: 'Scharnierpunt', hoverBg: 'hover:bg-rose-100/60' },
             };
 
             return moments.length > 0 ? (
-              <div className="space-y-3">
-                {moments.map((moment) => {
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {moments.map((moment) => {
+                    const config = momentConfig[moment.type] || momentConfig['quick_fix'];
+                    const MomentIcon = config.icon;
+                    const isExpanded = expandedMoment === moment.id;
+
+                    return (
+                      <button
+                        key={moment.id}
+                        onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
+                        className={`text-left rounded-xl border-2 ${isExpanded ? config.border : 'border-hh-border/60'} ${config.bg} ${config.hoverBg} p-4 transition-all`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-9 h-9 rounded-lg ${config.bg} border ${config.border} flex items-center justify-center flex-shrink-0`}>
+                            <MomentIcon className={`w-4.5 h-4.5 ${config.color}`} strokeWidth={1.75} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`text-[10px] font-bold uppercase tracking-wider ${config.color}`}>{config.label}</span>
+                              <span className="text-[10px] text-hh-muted">{moment.timestamp}</span>
+                            </div>
+                            <p className="text-[13px] sm:text-[14px] leading-[20px] text-hh-text font-medium" style={{ overflowWrap: 'break-word' }}>{moment.label}</p>
+                          </div>
+                          <ChevronDown className={`w-4 h-4 text-hh-muted/60 transition-transform flex-shrink-0 mt-1 ${isExpanded ? 'rotate-180' : ''}`} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Expanded Detail Panel */}
+                {expandedMoment && (() => {
+                  const moment = moments.find(m => m.id === expandedMoment);
+                  if (!moment) return null;
                   const config = momentConfig[moment.type] || momentConfig['quick_fix'];
                   const MomentIcon = config.icon;
-                  const isExpanded = expandedMoment === moment.id;
-                  const isNew = !viewedMoments.has(moment.id);
 
                   return (
-                    <div key={moment.id} className={`rounded-xl border border-hh-border/60 border-l-[3px] ${config.accentBorder} bg-white overflow-hidden shadow-sm`}>
-                      <button
-                        onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
-                        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-hh-ui-50/30 transition-colors"
-                      >
-                        <MomentIcon className={`w-4 h-4 ${config.color} flex-shrink-0`} strokeWidth={1.75} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.color}`}>{config.label}</span>
-                            <span className="text-[11px] text-hh-muted font-normal">{moment.timestamp}</span>
-                            {isNew && <span className={`w-1.5 h-1.5 rounded-full ${adminColors ? 'bg-purple-600' : ''} flex-shrink-0`} style={!adminColors ? { backgroundColor: '#3C9A6E' } : {}} />}
+                    <div className={`rounded-xl border-2 ${config.border} bg-white p-5 sm:p-6 space-y-4 shadow-sm`}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <MomentIcon className={`w-5 h-5 ${config.color} flex-shrink-0 mt-0.5`} strokeWidth={1.75} />
+                          <div>
+                            <span className={`text-[11px] font-bold uppercase tracking-wider ${config.color}`}>{config.label}</span>
+                            <p className="text-[15px] leading-[22px] text-hh-text font-medium mt-0.5" style={{ overflowWrap: 'break-word' }}>{moment.label}</p>
                           </div>
-                          <p className="text-[13px] sm:text-[14px] font-normal text-hh-text mt-0.5 truncate">{moment.label}</p>
                         </div>
-                        <ChevronRight className={`w-3.5 h-3.5 text-hh-muted/60 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} />
-                      </button>
+                        <button onClick={() => setExpandedMoment(null)} className="p-1 rounded-lg hover:bg-hh-ui-100 text-hh-muted flex-shrink-0">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
 
-                      {isExpanded && (
-                        <div className="px-4 pb-4 pt-1 border-t border-hh-border/30 space-y-4">
-                          <p className="text-[13px] sm:text-[14px] leading-[22px] text-hh-text/70 font-normal mt-2">{moment.whyItMatters}</p>
+                      <p className="text-[13px] sm:text-[14px] leading-[22px] text-hh-text/75" style={{ overflowWrap: 'break-word' }}>{moment.whyItMatters}</p>
 
-                          {(moment.sellerText || moment.customerText) && (
-                            <div className="p-3 rounded-lg bg-hh-ui-50/60 border border-hh-border/20 space-y-2">
-                              {moment.sellerText && (
-                                <ChatBubble compact speaker="seller" adminColors={adminColors} text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
-                              )}
-                              {moment.customerText && (
-                                <ChatBubble compact speaker="customer" adminColors={adminColors} text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
-                              )}
-                            </div>
+                      {(moment.sellerText || moment.customerText) && (
+                        <div className="p-3 rounded-lg bg-hh-ui-50/60 border border-hh-border/20 space-y-2">
+                          {moment.sellerText && (
+                            <ChatBubble compact speaker="seller" adminColors={adminColors} text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
                           )}
-
-                          {moment.betterAlternative && moment.type !== 'big_win' && (
-                            <div className={`p-3 rounded-lg ${adminColors ? 'bg-purple-600/5 border-purple-600/10' : 'bg-hh-primary/5 border-hh-primary/10'} border`}>
-                              <div className="flex gap-2 items-start">
-                                <Lightbulb className={`w-4 h-4 ${adminColors ? 'text-purple-600' : 'text-hh-primary'} flex-shrink-0 mt-0.5`} />
-                                <div>
-                                  <p className={`text-[11px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'} mb-0.5`}>Wat had je kunnen zeggen?</p>
-                                  <p className="text-[13px] leading-[19px] text-hh-text">"{moment.betterAlternative}"</p>
-                                </div>
-                              </div>
-                            </div>
+                          {moment.customerText && (
+                            <ChatBubble compact speaker="customer" adminColors={adminColors} text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
                           )}
+                        </div>
+                      )}
 
-                          {moment.recommendedTechniques.length > 0 && (
-                            <div className="flex gap-1.5 flex-wrap">
-                              {moment.recommendedTechniques.map((t, i) => (
-                                <Badge key={i} variant="outline" className={`text-[10px] px-2 py-0.5 ${adminColors ? 'text-purple-600 border-purple-600/20 bg-purple-600/5' : 'text-hh-primary border-hh-primary/20 bg-hh-primary/5'}`} title={t}>
-                                  {getTechniekByNummer(t)?.naam || t}
-                                </Badge>
-                              ))}
+                      {moment.betterAlternative && moment.type !== 'big_win' && (
+                        <div className={`p-3 rounded-lg ${adminColors ? 'bg-purple-600/5 border-purple-600/10' : 'bg-hh-primary/5 border-hh-primary/10'} border`}>
+                          <div className="flex gap-2 items-start">
+                            <Lightbulb className={`w-4 h-4 ${adminColors ? 'text-purple-600' : 'text-hh-primary'} flex-shrink-0 mt-0.5`} />
+                            <div>
+                              <p className={`text-[11px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'} mb-0.5`}>Wat had je kunnen zeggen?</p>
+                              <p className="text-[13px] leading-[19px] text-hh-text">"{moment.betterAlternative}"</p>
                             </div>
-                          )}
-
-                          {useAdminLayout && (
-                            <div className="pt-3 border-t border-purple-200/60">
-                              {editingMomentId === moment.id ? (
-                                <div className="space-y-2">
-                                  <div>
-                                    <label className="text-[11px] font-medium text-purple-600 mb-1 block">Moment label</label>
-                                    <input
-                                      value={editedMomentLabel}
-                                      onChange={(e) => setEditedMomentLabel(e.target.value)}
-                                      className="w-full px-3 py-1.5 text-[13px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-[11px] font-medium text-purple-600 mb-1 block">Waarom belangrijk</label>
-                                    <textarea
-                                      value={editedMomentWhy}
-                                      onChange={(e) => setEditedMomentWhy(e.target.value)}
-                                      className="w-full px-3 py-1.5 text-[13px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none"
-                                      rows={2}
-                                    />
-                                  </div>
-                                  {moment.betterAlternative && (
-                                    <div>
-                                      <label className="text-[11px] font-medium text-purple-600 mb-1 block">Beter alternatief</label>
-                                      <textarea
-                                        value={editedMomentAlt}
-                                        onChange={(e) => setEditedMomentAlt(e.target.value)}
-                                        className="w-full px-3 py-1.5 text-[13px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none"
-                                        rows={2}
-                                      />
-                                    </div>
-                                  )}
-                                  <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      className="gap-1.5 text-[12px] bg-purple-600 hover:bg-purple-700"
-                                      disabled={submittingCorrection}
-                                      onClick={() => {
-                                        if (editedMomentLabel !== moment.label) submitCorrection('moment', 'label', moment.label, editedMomentLabel, `Moment: ${moment.id}`);
-                                        if (editedMomentWhy !== moment.whyItMatters) submitCorrection('moment', 'whyItMatters', moment.whyItMatters, editedMomentWhy, `Moment: ${moment.id}`);
-                                        if (editedMomentAlt !== (moment.betterAlternative || '')) submitCorrection('moment', 'betterAlternative', moment.betterAlternative || '', editedMomentAlt, `Moment: ${moment.id}`);
-                                      }}
-                                    >
-                                      <Save className="w-3.5 h-3.5" /> Indienen voor review
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="text-[12px]" onClick={() => setEditingMomentId(null)}>
-                                      Annuleren
-                                    </Button>
-                                  </div>
-                                  <p className="text-[11px] text-purple-500 flex items-center gap-1">
-                                    <AlertTriangle className="w-3 h-3" /> Correcties gaan eerst naar Config Review
-                                  </p>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    setEditingMomentId(moment.id);
-                                    setEditedMomentLabel(moment.label);
-                                    setEditedMomentWhy(moment.whyItMatters);
-                                    setEditedMomentAlt(moment.betterAlternative || '');
-                                  }}
-                                  className="flex items-center gap-1.5 text-[12px] text-purple-600 hover:text-purple-700 font-medium"
-                                >
-                                  <Pencil className="w-3 h-3" /> Correctie indienen
-                                </button>
-                              )}
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-3 border-t border-hh-border/30">
-                            {moment.type !== 'big_win' && (
-                              <Button
-                                size="sm"
-                                className={`gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 text-white ${adminColors ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
-                                style={!adminColors ? { backgroundColor: '#3C9A6E' } : {}}
-                                onClick={() => startReplay(moment)}
-                              >
-                                <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Replay
-                              </Button>
-                            )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 border-hh-border text-hh-text hover:bg-hh-ui-50"
-                              disabled={actionLoading === `${moment.id}-three_options`}
-                              onClick={() => runCoachAction(moment.id, 'three_options')}
-                            >
-                              {actionLoading === `${moment.id}-three_options` ? <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" /> : <MessageSquare className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hh-muted" />}
-                              3 opties
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 border-hh-border text-hh-text hover:bg-hh-ui-50"
-                              disabled={actionLoading === `${moment.id}-micro_drill`}
-                              onClick={() => runCoachAction(moment.id, 'micro_drill')}
-                            >
-                              {actionLoading === `${moment.id}-micro_drill` ? <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" /> : <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hh-muted" />}
-                              Drill
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] h-8 px-2.5 sm:px-3 border-hh-border text-hh-text hover:bg-hh-ui-50"
-                              disabled={actionLoading === `${moment.id}-hugo_demo`}
-                              onClick={() => runCoachAction(moment.id, 'hugo_demo')}
-                            >
-                              {actionLoading === `${moment.id}-hugo_demo` ? <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" /> : <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-hh-muted" />}
-                              Hugo demo
-                            </Button>
                           </div>
+                        </div>
+                      )}
 
-                          {actionResult && actionResult.momentId === moment.id && (
-                            <div ref={actionResult?.momentId === moment.id ? actionResultRef : undefined} className="mt-3 p-4 rounded-lg bg-hh-ui-50 border border-hh-border">
-                              {actionResult.type === 'three_options' && actionResult.data.options && (
-                                <div className="space-y-2">
-                                  <p className={`text-[12px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'} mb-2`}>3 antwoord-opties:</p>
-                                  {actionResult.data.options.map((opt: any, i: number) => (
-                                    <div key={i} className="p-3 rounded-lg bg-white border border-hh-border">
-                                      <span className={`text-[11px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'}`}>{opt.style}</span>
-                                      <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{opt.text}"</p>
-                                    </div>
-                                  ))}
+                      {moment.recommendedTechniques.length > 0 && (
+                        <div className="flex gap-1.5 flex-wrap">
+                          {moment.recommendedTechniques.map((t, i) => (
+                            <Badge key={i} variant="outline" className={`text-[10px] px-2 py-0.5 ${adminColors ? 'text-purple-600 border-purple-600/20 bg-purple-600/5' : 'text-hh-primary border-hh-primary/20 bg-hh-primary/5'}`} title={t}>
+                              {getTechniekByNummer(t)?.naam || t}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Primary Action: Replay */}
+                      {moment.type !== 'big_win' ? (
+                        <div className="pt-3 border-t border-hh-border/40">
+                          <Button
+                            className={`gap-2 text-[13px] h-10 px-5 text-white ${adminColors ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                            style={!adminColors ? { backgroundColor: '#3C9A6E' } : {}}
+                            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!adminColors) e.currentTarget.style.backgroundColor = '#2D7F57'; }}
+                            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { if (!adminColors) e.currentTarget.style.backgroundColor = '#3C9A6E'; }}
+                            onClick={() => startReplay(moment)}
+                          >
+                            <Play className="w-4 h-4" /> Opnieuw oefenen
+                          </Button>
+                          <p className="text-[11px] text-hh-muted mt-1.5">Speel dit moment opnieuw en oefen een betere aanpak</p>
+                        </div>
+                      ) : (
+                        <div className="pt-3 border-t border-hh-border/40">
+                          <Button
+                            variant="outline"
+                            className="gap-2 text-[13px] h-10 px-5 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                            onClick={() => navigate?.("talk-to-hugo")}
+                          >
+                            <Sparkles className="w-4 h-4" /> Bespreek met Hugo
+                          </Button>
+                        </div>
+                      )}
+
+                      {useAdminLayout && (
+                        <div className="pt-3 border-t border-purple-200/60">
+                          {editingMomentId === moment.id ? (
+                            <div className="space-y-2">
+                              <div>
+                                <label className="text-[11px] font-medium text-purple-600 mb-1 block">Moment label</label>
+                                <input value={editedMomentLabel} onChange={(e) => setEditedMomentLabel(e.target.value)} className="w-full px-3 py-1.5 text-[13px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30" />
+                              </div>
+                              <div>
+                                <label className="text-[11px] font-medium text-purple-600 mb-1 block">Waarom belangrijk</label>
+                                <textarea value={editedMomentWhy} onChange={(e) => setEditedMomentWhy(e.target.value)} className="w-full px-3 py-1.5 text-[13px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none" rows={2} />
+                              </div>
+                              {moment.betterAlternative && (
+                                <div>
+                                  <label className="text-[11px] font-medium text-purple-600 mb-1 block">Beter alternatief</label>
+                                  <textarea value={editedMomentAlt} onChange={(e) => setEditedMomentAlt(e.target.value)} className="w-full px-3 py-1.5 text-[13px] border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none" rows={2} />
                                 </div>
                               )}
-                              {actionResult.type === 'micro_drill' && actionResult.data.drill && (
-                                <div className="space-y-2">
-                                  <p className={`text-[12px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'}`}>Micro-drill:</p>
-                                  <p className="text-[13px] leading-[18px] text-hh-text">{actionResult.data.drill.instruction}</p>
-                                  <div className="p-3 rounded-lg bg-white border border-hh-border mt-2">
-                                    <span className="text-[11px] font-medium text-hh-muted">Voorbeeld:</span>
-                                    <p className="text-[13px] leading-[18px] text-hh-text mt-1">"{actionResult.data.drill.example}"</p>
-                                  </div>
-                                </div>
-                              )}
-                              {actionResult.type === 'hugo_demo' && actionResult.data.demo && (
-                                <div className="space-y-2">
-                                  <p className={`text-[12px] font-medium ${adminColors ? 'text-purple-600' : 'text-hh-primary'}`}>Hugo zou zeggen:</p>
-                                  <div className={`p-3 rounded-lg bg-white border ${adminColors ? 'border-purple-600/20' : 'border-hh-primary/20'}`}>
-                                    <p className="text-[14px] leading-[20px] text-hh-text">"{actionResult.data.demo.response}"</p>
-                                  </div>
-                                  <p className="text-[12px] leading-[16px] text-hh-muted">{actionResult.data.demo.reasoning}</p>
-                                </div>
-                              )}
-                              {actionResult.data.error && (
-                                <div className="flex items-center gap-2 text-red-600">
-                                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                                  <p className="text-[13px]">{actionResult.data.error}</p>
-                                </div>
-                              )}
+                              <div className="flex gap-2">
+                                <Button size="sm" className="gap-1.5 text-[12px] bg-purple-600 hover:bg-purple-700" disabled={submittingCorrection}
+                                  onClick={() => {
+                                    if (editedMomentLabel !== moment.label) submitCorrection('moment', 'label', moment.label, editedMomentLabel, `Moment: ${moment.id}`);
+                                    if (editedMomentWhy !== moment.whyItMatters) submitCorrection('moment', 'whyItMatters', moment.whyItMatters, editedMomentWhy, `Moment: ${moment.id}`);
+                                    if (editedMomentAlt !== (moment.betterAlternative || '')) submitCorrection('moment', 'betterAlternative', moment.betterAlternative || '', editedMomentAlt, `Moment: ${moment.id}`);
+                                  }}
+                                >
+                                  <Save className="w-3.5 h-3.5" /> Indienen voor review
+                                </Button>
+                                <Button variant="outline" size="sm" className="text-[12px]" onClick={() => setEditingMomentId(null)}>Annuleren</Button>
+                              </div>
+                              <p className="text-[11px] text-purple-500 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Correcties gaan eerst naar Config Review</p>
                             </div>
+                          ) : (
+                            <button onClick={() => { setEditingMomentId(moment.id); setEditedMomentLabel(moment.label); setEditedMomentWhy(moment.whyItMatters); setEditedMomentAlt(moment.betterAlternative || ''); }}
+                              className="flex items-center gap-1.5 text-[12px] text-purple-600 hover:text-purple-700 font-medium"
+                            >
+                              <Pencil className="w-3 h-3" /> Correctie indienen
+                            </button>
                           )}
                         </div>
                       )}
                     </div>
                   );
-                })}
-              </div>
+                })()}
+              </>
             ) : (
               <div className="py-8 text-center">
                 <Sparkles className="w-6 h-6 text-hh-muted mx-auto mb-2" />
@@ -1302,6 +1237,8 @@ ${msg}`;
               </div>
             );
           })()}
+
+          {/* Replay Section */}
           {replayMoment && (<div ref={replayRef}>
             <Card className={`p-6 rounded-[16px] shadow-hh-sm ${adminColors ? 'border-purple-600/20 bg-gradient-to-b from-purple-600/5 to-transparent' : 'border-hh-primary/20 bg-gradient-to-b from-hh-primary/5 to-transparent'}`}>
               <div className="flex items-center justify-between mb-4">
@@ -1309,10 +1246,7 @@ ${msg}`;
                   <Play className={`w-5 h-5 ${adminColors ? 'text-purple-600' : 'text-hh-primary'}`} />
                   Replay: {replayMoment.label}
                 </h4>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-hh-muted"
+                <Button variant="ghost" size="sm" className="text-hh-muted"
                   onClick={() => { setReplayMoment(null); setReplayHistory([]); setReplayFeedback(null); setReplayContext(null); }}
                 >
                   <X className="w-4 h-4" /> Sluiten
@@ -1344,32 +1278,13 @@ ${msg}`;
 
               <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto">
                 {replayContext?.context?.map((turn: any, i: number) => (
-                  <ChatBubble
-                    key={`ctx-${i}`}
-                    speaker={turn.speaker === 'seller' ? 'seller' : 'customer'}
-                    text={turn.text}
-                    label={turn.speaker === 'seller' ? 'Jij (origineel)' : 'Klant (origineel)'}
-                    variant="faded"
-                    adminColors={adminColors}
-                  />
+                  <ChatBubble key={`ctx-${i}`} speaker={turn.speaker === 'seller' ? 'seller' : 'customer'} text={turn.text} label={turn.speaker === 'seller' ? 'Jij (origineel)' : 'Klant (origineel)'} variant="faded" adminColors={adminColors} />
                 ))}
-
                 {replayHistory.map((msg, i) => (
-                  <ChatBubble
-                    key={`replay-${i}`}
-                    speaker={msg.role === 'seller' ? 'seller' : 'customer'}
-                    text={msg.content}
-                    label={msg.role === 'seller' ? 'Jij (replay)' : 'Klant'}
-                    adminColors={adminColors}
-                  />
+                  <ChatBubble key={`replay-${i}`} speaker={msg.role === 'seller' ? 'seller' : 'customer'} text={msg.content} label={msg.role === 'seller' ? 'Jij (replay)' : 'Klant'} adminColors={adminColors} />
                 ))}
-
                 {replayLoading && (
-                  <div className="flex gap-2">
-                    <div className="px-3 py-2 rounded-2xl bg-hh-ui-50 rounded-bl-md">
-                      <Loader2 className="w-4 h-4 animate-spin text-hh-muted" />
-                    </div>
-                  </div>
+                  <div className="flex gap-2"><div className="px-3 py-2 rounded-2xl bg-hh-ui-50 rounded-bl-md"><Loader2 className="w-4 h-4 animate-spin text-hh-muted" /></div></div>
                 )}
               </div>
 
@@ -1383,22 +1298,12 @@ ${msg}`;
               )}
 
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={replayInput}
-                  onChange={(e) => setReplayInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && sendReplayMessage()}
+                <input type="text" value={replayInput} onChange={(e) => setReplayInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendReplayMessage()}
                   placeholder="Typ je antwoord als verkoper..."
                   className={`flex-1 px-4 py-2.5 rounded-xl border border-hh-border bg-white text-[14px] text-hh-text placeholder:text-hh-muted/50 focus:outline-none ${adminColors ? 'focus:border-purple-600/50 focus:ring-2 focus:ring-purple-600/10' : 'focus:border-hh-primary/50 focus:ring-2 focus:ring-hh-primary/10'}`}
                   disabled={replayLoading}
                 />
-                <Button
-                  onClick={sendReplayMessage}
-                  disabled={!replayInput.trim() || replayLoading}
-                  className="gap-1.5"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
+                <Button onClick={sendReplayMessage} disabled={!replayInput.trim() || replayLoading} className="gap-1.5"><Send className="w-4 h-4" /></Button>
               </div>
             </Card>
           </div>)}

@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Eye,
   X,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -55,7 +56,7 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 const mainNavItems = [
-  { id: "talk-to-hugo", label: "Talk to Hugo AI", icon: MessageSquare, historyType: "chat" as const, overviewPage: "hugo-overview" },
+  { id: "talk-to-hugo", label: "Talk to Hugo AI", icon: Sparkles, historyType: "chat" as const, overviewPage: "hugo-overview" },
   { id: "analysis", label: "Gespreksanalyse", icon: FileSearch, historyType: "analysis" as const, overviewPage: "analysis" },
 ];
 
@@ -196,7 +197,7 @@ export function AppLayout({
                   {!collapsed && (
                     <span className="text-[14px] leading-[20px] font-medium whitespace-nowrap">
                       {item.label === "Talk to Hugo AI" ? (
-                        <>Hugo <sup className="text-[10px]">AI</sup></>
+                        <>Talk to Hugo<sup className="text-[10px] ml-0.5">AI</sup></>
                       ) : item.label}
                     </span>
                   )}
@@ -400,11 +401,14 @@ export function AppLayout({
 
             <Button
               onClick={() => navigate?.("talk-to-hugo")}
-              className="gap-2 bg-[#3C9A6E] hover:bg-[#2D7F57] text-white h-10 px-3 sm:px-4"
+              className="gap-2 text-white h-10 px-3 sm:px-4"
+              style={{ backgroundColor: '#3C9A6E' }}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
             >
-              <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline text-[14px]">
-                Talk to Hugo <sup className="text-[10px]">AI</sup>
+                Talk to Hugo<sup className="text-[10px] ml-0.5">AI</sup>
               </span>
             </Button>
 
