@@ -34,7 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Send,
   ChevronDown,
-  Lightbulb,
+  BookOpen,
   MessageSquare,
   Phone,
   Video,
@@ -143,7 +143,13 @@ export function TalkToHugoAI({
   const [levelTransitionMessage, setLevelTransitionMessage] = useState<string | null>(null);
   const [stopRoleplayDialogOpen, setStopRoleplayDialogOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpenRaw] = useState(
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('epic') === '1'
+  );
+  const setDesktopSidebarOpen = (open: boolean) => {
+    setDesktopSidebarOpenRaw(open);
+    window.dispatchEvent(new CustomEvent('sidebar-collapse-request', { detail: { collapsed: open } }));
+  };
   const [activeHelpMessageId, setActiveHelpMessageId] = useState<string | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<ChatMode>("chat");
@@ -1224,30 +1230,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         <div ref={messagesEndRef} />
       </div>
 
-      {selectedTechnique && messages.length > 0 && (
-        <div className="px-4 py-2 border-t border-hh-border bg-hh-ui-50 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRequestFeedback}
-            disabled={isLoading || isStreaming}
-            className="text-[12px] gap-1.5"
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            Feedback
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleEvaluate}
-            disabled={isLoading || isStreaming}
-            className="text-[12px] gap-1.5"
-          >
-            <Award className="w-3.5 h-3.5" />
-            Evaluatie
-          </Button>
-        </div>
-      )}
+      
 
       <div className="border-t border-hh-border bg-white">
         <input
@@ -1354,6 +1337,17 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             className={`flex-1 ${isRecording ? "border-red-300 bg-red-50/30" : ""}`}
             disabled={isStreaming}
           />
+          {messages.length > 2 && (
+            <button
+              onClick={handleRequestFeedback}
+              disabled={isLoading || isStreaming}
+              className="flex-shrink-0 flex items-center gap-1 px-2.5 py-2 rounded-full border border-hh-border bg-white hover:bg-hh-ui-50 transition-colors disabled:opacity-40"
+              title="Vraag Hugo om feedback"
+            >
+              <Award className="w-3.5 h-3.5 text-[#4F7396]" />
+              <span className="text-[11px] font-medium text-hh-muted hidden sm:inline">Feedback</span>
+            </button>
+          )}
           <Button
             variant="outline"
             size="icon"
@@ -1673,55 +1667,36 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <div className="flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 border-b border-hh-border bg-white">
             {/* Left: Help sidebar toggle + Title */}
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-              {/* Mobile: Menu icon for sidebar sheet */}
+              {/* Mobile: EPIC Tips button */}
               {!assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
-                  className="lg:hidden p-2 -ml-1 rounded-full bg-amber-50 text-amber-500 hover:bg-amber-100 hover:text-amber-600 transition-colors"
-                  aria-label="Technieken & hulp"
-                  title="Technieken & hulp"
+                  className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 -ml-1 rounded-full border border-hh-border bg-white hover:bg-hh-ui-50 transition-colors"
+                  aria-label="E.P.I.C. Tips"
                 >
-                  <Lightbulb className="w-4 h-4" strokeWidth={1.75} />
+                  <BookOpen className="w-3.5 h-3.5 text-[#4F7396]" />
+                  <span className="text-[12px] font-medium text-hh-text">E.P.I.C.</span>
                 </button>
               )}
-              {/* Desktop: Lightbulb help icon - toggles EPIC sidebar (Piano concept) */}
+              {/* Desktop: EPIC Tips button - toggles sidebar */}
               {!assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-                  className={`hidden lg:flex p-2 -ml-1 rounded-full transition-colors ${
+                  className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 -ml-1 rounded-full border transition-colors ${
                     desktopSidebarOpen 
-                      ? "bg-amber-100 text-amber-600" 
-                      : "bg-amber-50 text-amber-400 hover:text-amber-500 hover:bg-amber-100"
+                      ? "border-[#4F7396]/30 bg-[#4F7396]/10 text-[#4F7396]" 
+                      : "border-hh-border bg-white hover:bg-hh-ui-50 text-hh-text"
                   }`}
-                  aria-label="Toon E.P.I.C. technieken"
-                  title="Toon E.P.I.C. technieken"
+                  aria-label="E.P.I.C. Tips"
                 >
-                  <Lightbulb className="w-4 h-4" strokeWidth={1.75} />
+                  <BookOpen className="w-3.5 h-3.5" style={{ color: desktopSidebarOpen ? '#4F7396' : '#6B7280' }} />
+                  <span className="text-[12px] font-medium">E.P.I.C.</span>
                 </button>
               )}
               <span className="text-[13px] text-hh-muted font-medium whitespace-nowrap flex items-center gap-1">
-                Hugo AI <span className="text-[11px] text-hh-muted/60 font-normal">v1.0</span>
+                HugoGPT <span className="text-[11px] text-hh-muted/60 font-normal">v1.0</span>
                 <ChevronDown className="w-3 h-3 text-hh-muted/50" />
               </span>
-              {selectedTechnique && (
-                <>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Badge variant="outline" className="shrink-0 rounded-full bg-hh-ink/10 text-hh-ink border-hh-ink/20 font-mono text-[11px] px-2 py-0.5">
-                      {selectedTechnique}
-                    </Badge>
-                    {/* Hide technique name on mobile for cleaner header */}
-                    <span className="hidden sm:inline text-[13px] text-hh-text truncate max-w-[150px]">{selectedTechniqueName}</span>
-                  </div>
-                  {/* Only show clock in chat mode on desktop - audio/video have their own timer */}
-                  {chatMode === "chat" && (
-                    <div className="hidden sm:flex items-center gap-1 text-[13px] text-hh-muted shrink-0">
-                      <div className="h-4 w-px bg-hh-border shrink-0 mr-2" />
-                      <Clock className="w-3.5 h-3.5 text-[#4F7396]" />
-                      <span className="font-mono">{formatTime(sessionTimer)}</span>
-                    </div>
-                  )}
-                </>
-              )}
             </div>
             
             {/* Right: Mode toggle + Stop (Niveau is now auto-adaptive, hidden) */}

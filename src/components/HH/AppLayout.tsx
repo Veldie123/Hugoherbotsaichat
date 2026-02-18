@@ -78,6 +78,14 @@ export function AppLayout({
 }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleCollapseRequest = (e: CustomEvent) => {
+      setCollapsed(e.detail?.collapsed ?? true);
+    };
+    window.addEventListener('sidebar-collapse-request', handleCollapseRequest as EventListener);
+    return () => window.removeEventListener('sidebar-collapse-request', handleCollapseRequest as EventListener);
+  }, []);
   const [notifOpen, setNotifOpen] = useState(false);
   const [fetchedAnalysisHistory, setFetchedAnalysisHistory] = useState<HistoryItem[]>([]);
   const notifRef = useRef<HTMLDivElement>(null);
