@@ -287,7 +287,10 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               </p>
             </div>
             <Button 
-              className="gap-2 bg-[#3C9A6E] hover:bg-[#2D7F57] text-white shrink-0 hidden sm:flex"
+              className="gap-2 text-white shrink-0 hidden sm:flex"
+              style={{ backgroundColor: '#3C9A6E' }}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
               onClick={() => navigate?.("upload-analysis")}
             >
               <Upload className="w-4 h-4 text-white" />
@@ -295,7 +298,10 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
             </Button>
           </div>
           <Button 
-            className="gap-2 bg-[#3C9A6E] hover:bg-[#2D7F57] text-white w-full sm:hidden"
+            className="gap-2 text-white w-full sm:hidden"
+            style={{ backgroundColor: '#3C9A6E' }}
+            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
+            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
             onClick={() => navigate?.("upload-analysis")}
           >
             <Upload className="w-4 h-4 text-white" />
@@ -446,7 +452,10 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
               <p className="text-[16px] leading-[24px] text-hh-text mb-2">Nog geen analyses</p>
               <p className="text-[14px] text-hh-muted mb-4">Upload een gesprek om je eerste analyse te starten</p>
               <Button 
-                className="gap-2 bg-[#3C9A6E] hover:bg-[#2D7F57] text-white"
+                className="gap-2 text-white"
+                style={{ backgroundColor: '#3C9A6E' }}
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
                 onClick={() => navigate?.("upload-analysis")}
               >
                 <Upload className="w-4 h-4 text-white" />

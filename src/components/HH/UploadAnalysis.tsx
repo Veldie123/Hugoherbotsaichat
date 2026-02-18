@@ -695,7 +695,10 @@ export function UploadAnalysis({
                   <Button
                     onClick={handleUpload}
                     disabled={!title.trim() || isUploading || !consentConfirmed}
-                    className="w-full sm:w-auto gap-2 bg-[#3C9A6E] hover:bg-[#2D7F57] text-white"
+                    className="w-full sm:w-auto gap-2 text-white"
+                    style={{ backgroundColor: '#3C9A6E' }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
+                    onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
                   >
                     <Upload className="w-4 h-4" />
                     Start analyse
@@ -760,7 +763,10 @@ export function UploadAnalysis({
                 }
               }}
               variant={copilotActive ? "destructive" : "default"}
-              className={`w-full h-11 gap-2 ${!copilotActive ? 'bg-[#3C9A6E] hover:bg-[#2D7F57] text-white' : ''}`}
+              className={`w-full h-11 gap-2 ${!copilotActive ? 'text-white' : ''}`}
+              style={!copilotActive ? { backgroundColor: '#3C9A6E' } : {}}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => { if (!copilotActive) e.currentTarget.style.backgroundColor = '#2D7F57'; }}
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => { if (!copilotActive) e.currentTarget.style.backgroundColor = '#3C9A6E'; }}
             >
               {copilotActive ? (
                 <>

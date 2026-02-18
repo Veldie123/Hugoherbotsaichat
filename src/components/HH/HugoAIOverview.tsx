@@ -328,7 +328,9 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
           </div>
           <Button
             style={{ backgroundColor: '#3C9A6E', color: 'white' }}
-            className="hover:bg-[#2D7F57] gap-2"
+            className="gap-2"
+            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
+            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
             onClick={() => navigate?.("talk-to-hugo")}
           >
             <MessageSquare className="w-4 h-4 text-white" />
