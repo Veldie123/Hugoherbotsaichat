@@ -413,9 +413,9 @@ export function AppLayout({
                 className="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-hh-ui-50 transition-colors"
                 onClick={() => setNotifOpen(!notifOpen)}
               >
-                <Bell className="w-[18px] h-[18px] text-hh-muted" strokeWidth={1.75} />
+                <Bell className="w-5 h-5 text-gray-600" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-[#C53030] text-white text-[9px] font-bold leading-none shadow-sm border-[1.5px] border-white">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
