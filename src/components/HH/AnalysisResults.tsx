@@ -749,7 +749,7 @@ export function AnalysisResults({
               onClick={() => setActiveTab(tab.value as any)}
               className={`px-4 py-2.5 text-[14px] font-medium rounded-full transition-colors flex items-center gap-2 ${
                 activeTab === tab.value
-                  ? 'bg-hh-primary text-white'
+                  ? isAdmin ? 'bg-purple-600 text-white' : 'bg-hh-primary text-white'
                   : 'text-hh-text/60 hover:text-hh-text hover:bg-hh-ui-100'
               }`}
             >
@@ -764,7 +764,7 @@ export function AnalysisResults({
         {activeTab === 'coach' && (<div className="space-y-5 max-w-[720px]">
 
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-hh-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isAdmin ? 'bg-purple-600' : 'bg-hh-primary'}`}>
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -797,21 +797,23 @@ export function AnalysisResults({
                   if (msg.type === 'moment_ref' && msg.momentId) {
                     const refMoment = (insights.moments || []).find(m => m.id === msg.momentId);
                     if (!refMoment) return null;
-                    const typeLabels: Record<string, { label: string; color: string }> = {
-                      'big_win': { label: 'Big Win', color: 'text-emerald-600' },
-                      'quick_fix': { label: 'Quick Fix', color: 'text-amber-600' },
-                      'turning_point': { label: 'Scharnierpunt', color: 'text-rose-600' },
+                    const typeLabels: Record<string, { label: string; color: string; bg: string; border: string }> = {
+                      'big_win': { label: 'Big Win', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+                      'quick_fix': { label: 'Quick Fix', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
+                      'turning_point': { label: 'Scharnierpunt', color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200' },
                     };
                     const tl = typeLabels[refMoment.type] || typeLabels['quick_fix'];
                     return (
                       <button
                         key={i}
                         onClick={() => { setExpandedMoment(expandedMoment === refMoment.id ? null : refMoment.id); markMomentViewed(refMoment.id); }}
-                        className="flex items-center gap-1.5 text-[13px] text-hh-primary hover:underline"
+                        className={`flex items-start gap-2 w-full text-left px-3 py-2 rounded-lg ${tl.bg} border ${tl.border} hover:opacity-80 transition-opacity`}
                       >
-                        <ArrowRight className="w-3 h-3" />
-                        <span className={`font-medium ${tl.color}`}>{tl.label}:</span>
-                        <span>{refMoment.label}</span>
+                        <ArrowRight className={`w-3.5 h-3.5 ${tl.color} flex-shrink-0 mt-0.5`} />
+                        <div className="min-w-0">
+                          <span className={`text-[11px] font-semibold uppercase tracking-wider ${tl.color}`}>{tl.label}</span>
+                          <p className="text-[13px] leading-[18px] text-hh-text mt-0.5">{refMoment.label}</p>
+                        </div>
                       </button>
                     );
                   }
@@ -825,7 +827,7 @@ export function AnalysisResults({
                     {hasMore && (
                       <button
                         onClick={() => setDebriefExpanded(!debriefExpanded)}
-                        className="flex items-center gap-1 text-[13px] font-medium text-hh-primary hover:underline mt-1"
+                        className={`flex items-center gap-1 text-[13px] font-medium hover:underline mt-1 ${isAdmin ? 'text-purple-600' : 'text-hh-primary'}`}
                       >
                         {debriefExpanded ? (
                           <><ChevronDown className="w-3.5 h-3.5" /> Minder tonen</>
@@ -875,7 +877,7 @@ export function AnalysisResults({
                           <div className="flex items-center gap-2">
                             <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.color}`}>{config.label}</span>
                             <span className="text-[11px] text-hh-muted font-normal">{moment.timestamp}</span>
-                            {isNew && <span className="w-1.5 h-1.5 rounded-full bg-hh-primary flex-shrink-0" />}
+                            {isNew && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isAdmin ? 'bg-purple-600' : 'bg-hh-primary'}`} />}
                           </div>
                           <p className="text-[13px] sm:text-[14px] font-normal text-hh-text mt-0.5 truncate">{moment.label}</p>
                         </div>
