@@ -814,7 +814,7 @@ export function AnalysisResults({
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              {isAdmin && editingDebrief ? (
+              {useAdminLayout && editingDebrief ? (
                 <div className="space-y-2">
                   <textarea
                     value={editedOneliner}
@@ -863,7 +863,7 @@ export function AnalysisResults({
                   <p className="text-[13px] sm:text-[14px] leading-[20px] text-hh-muted mt-1.5" style={{ overflowWrap: 'break-word' }}>
                     {insights.coachDebrief?.epicMomentum || `De EPIC-flow wordt geanalyseerd.`}
                   </p>
-                  {isAdmin && (
+                  {useAdminLayout && (
                     <button
                       onClick={() => {
                         setEditedOneliner(insights.coachDebrief?.oneliner || '');
@@ -1025,7 +1025,7 @@ export function AnalysisResults({
                             </div>
                           )}
 
-                          {isAdmin && (
+                          {useAdminLayout && (
                             <div className="pt-3 border-t border-purple-200/60">
                               {editingMomentId === moment.id ? (
                                 <div className="space-y-2">
