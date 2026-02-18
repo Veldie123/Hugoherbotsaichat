@@ -1019,29 +1019,155 @@ ${msg}`;
 
             return moments.length > 0 ? (
               <div className="grid grid-cols-3 gap-4 mb-12">
-                {moments.slice(0, 3).map((moment) => {
+                {moments.slice(0, 3).map((moment, idx) => {
                   const config = momentConfig[moment.type] || momentConfig['quick_fix'];
                   const MomentIcon = config.icon;
                   const isExpanded = expandedMoment === moment.id;
 
                   return (
-                    <button
-                      key={moment.id}
-                      onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
-                      className="text-left rounded-2xl p-5 transition-all hover:shadow-md group"
-                      style={{ backgroundColor: config.bg, border: isExpanded ? `2px solid ${config.color}30` : '2px solid transparent' }}
-                    >
-                      <div className="flex items-center gap-2.5 mb-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: config.iconBg }}>
-                          <MomentIcon className="w-4 h-4" style={{ color: config.color }} strokeWidth={1.75} />
+                    <div key={moment.id} className="flex flex-col">
+                      <button
+                        onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
+                        className="text-left rounded-2xl p-5 transition-all group cursor-pointer flex-1"
+                        style={{
+                          backgroundColor: config.bg,
+                          border: isExpanded ? `2px solid ${config.color}40` : '2px solid transparent',
+                          boxShadow: isExpanded ? `0 4px 12px ${config.color}15` : 'none',
+                        }}
+                        onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                        onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                      >
+                        <div className="flex items-center gap-2.5 mb-3">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: config.iconBg }}>
+                            <MomentIcon className="w-4 h-4" style={{ color: config.color }} strokeWidth={1.75} />
+                          </div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: config.color }}>{config.label}</span>
                         </div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: config.color }}>{config.label}</span>
-                      </div>
-                      <p className="text-[14px] leading-[20px] text-hh-text font-medium" style={{ overflowWrap: 'break-word' }}>
-                        {moment.label}
-                      </p>
-                      <span className="text-[11px] text-hh-muted mt-2 block">{moment.timestamp}</span>
-                    </button>
+                        <p className="text-[14px] leading-[20px] text-hh-text font-medium mb-3" style={{ overflowWrap: 'break-word' }}>
+                          {moment.label}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-hh-muted">{moment.timestamp}</span>
+                          <span className="text-[11px] font-medium flex items-center gap-0.5 transition-colors" style={{ color: config.color }}>
+                            Bekijk <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : 'group-hover:translate-x-0.5'}`} />
+                          </span>
+                        </div>
+                      </button>
+
+                      {isExpanded && (() => {
+                        return (
+                          <div className="mt-3 rounded-2xl bg-white border border-gray-200 p-5 space-y-4 shadow-sm" style={{ borderTop: `3px solid ${config.color}30` }}>
+                            <p className="text-[13px] leading-[20px] text-hh-text/75" style={{ overflowWrap: 'break-word' }}>{moment.whyItMatters}</p>
+
+                            {(moment.sellerText || moment.customerText) && (
+                              <div className="rounded-xl bg-gray-50 p-4 space-y-3">
+                                {moment.sellerText && (
+                                  <div className="flex justify-start">
+                                    <div className="max-w-[85%]">
+                                      <p className="text-[11px] font-medium text-hh-text mb-1 px-1">Jij</p>
+                                      <div className={`px-3 py-2 rounded-2xl rounded-bl-md text-[13px] leading-[18px] ${adminColors ? 'bg-purple-50 text-hh-text' : 'bg-hh-ui-50 text-hh-text'}`}>
+                                        {moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                                {moment.customerText && (
+                                  <div className="flex justify-end">
+                                    <div className="max-w-[85%]">
+                                      <p className="text-[11px] font-medium text-hh-muted mb-1 px-1 text-right">Klant</p>
+                                      <div className={`px-3 py-2 rounded-2xl rounded-br-md text-[13px] leading-[18px] text-white ${adminColors ? 'bg-purple-600' : 'bg-hh-ink'}`}>
+                                        {moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {moment.betterAlternative && moment.type !== 'big_win' && (
+                              <div className="p-3 rounded-xl border" style={{ backgroundColor: adminColors ? '#9910FA08' : '#3C9A6E08', borderColor: adminColors ? '#9910FA15' : '#3C9A6E15' }}>
+                                <div className="flex gap-2 items-start">
+                                  <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: adminColors ? '#9910FA' : '#3C9A6E' }} />
+                                  <div>
+                                    <p className="text-[11px] font-medium mb-0.5" style={{ color: adminColors ? '#9910FA' : '#3C9A6E' }}>Wat had je kunnen zeggen?</p>
+                                    <p className="text-[13px] leading-[19px] text-hh-text">"{moment.betterAlternative}"</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {moment.recommendedTechniques.length > 0 && (
+                              <div className="flex gap-1.5 flex-wrap">
+                                {moment.recommendedTechniques.map((t, i) => (
+                                  <span key={i} className="text-[10px] px-2 py-0.5 rounded-full border font-medium"
+                                    style={{ color: adminColors ? '#9910FA' : '#4F7396', borderColor: adminColors ? '#9910FA20' : '#4F739620', backgroundColor: adminColors ? '#9910FA08' : '#4F739608' }}
+                                    title={t}
+                                  >
+                                    {getTechniekByNummer(t)?.naam || t}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {moment.type !== 'big_win' && (
+                              <div className="pt-3 border-t border-gray-100">
+                                <button
+                                  className="inline-flex items-center justify-center gap-2 text-[13px] h-10 px-6 text-white rounded-xl font-medium transition-all"
+                                  style={{ backgroundColor: adminColors ? '#9910FA' : '#3C9A6E' }}
+                                  onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#7C3AED' : '#2D7F57')}
+                                  onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#9910FA' : '#3C9A6E')}
+                                  onClick={() => startReplay(moment)}
+                                >
+                                  <Play className="w-4 h-4" /> Opnieuw oefenen
+                                </button>
+                              </div>
+                            )}
+
+                            {useAdminLayout && (
+                              <div className="pt-3 border-t border-gray-100">
+                                {editingMomentId === moment.id ? (
+                                  <div className="space-y-2">
+                                    <div>
+                                      <label className="text-[11px] font-medium mb-1 block" style={{ color: '#9910FA' }}>Moment label</label>
+                                      <input value={editedMomentLabel} onChange={(e) => setEditedMomentLabel(e.target.value)} className="w-full px-3 py-1.5 text-[13px] border rounded-lg focus:outline-none focus:ring-2" style={{ borderColor: '#9910FA40' }} />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-medium mb-1 block" style={{ color: '#9910FA' }}>Waarom belangrijk</label>
+                                      <textarea value={editedMomentWhy} onChange={(e) => setEditedMomentWhy(e.target.value)} className="w-full px-3 py-1.5 text-[13px] border rounded-lg focus:outline-none focus:ring-2 resize-none" style={{ borderColor: '#9910FA40' }} rows={2} />
+                                    </div>
+                                    {moment.betterAlternative && (
+                                      <div>
+                                        <label className="text-[11px] font-medium mb-1 block" style={{ color: '#9910FA' }}>Beter alternatief</label>
+                                        <textarea value={editedMomentAlt} onChange={(e) => setEditedMomentAlt(e.target.value)} className="w-full px-3 py-1.5 text-[13px] border rounded-lg focus:outline-none focus:ring-2 resize-none" style={{ borderColor: '#9910FA40' }} rows={2} />
+                                      </div>
+                                    )}
+                                    <div className="flex gap-2">
+                                      <Button size="sm" className="gap-1.5 text-[12px] text-white" style={{ backgroundColor: '#9910FA' }} disabled={submittingCorrection}
+                                        onClick={() => {
+                                          if (editedMomentLabel !== moment.label) submitCorrection('moment', 'label', moment.label, editedMomentLabel, `Moment: ${moment.id}`);
+                                          if (editedMomentWhy !== moment.whyItMatters) submitCorrection('moment', 'whyItMatters', moment.whyItMatters, editedMomentWhy, `Moment: ${moment.id}`);
+                                          if (editedMomentAlt !== (moment.betterAlternative || '')) submitCorrection('moment', 'betterAlternative', moment.betterAlternative || '', editedMomentAlt, `Moment: ${moment.id}`);
+                                        }}
+                                      >
+                                        <Save className="w-3.5 h-3.5" /> Indienen voor review
+                                      </Button>
+                                      <Button variant="outline" size="sm" className="text-[12px]" onClick={() => setEditingMomentId(null)}>Annuleren</Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button onClick={() => { setEditingMomentId(moment.id); setEditedMomentLabel(moment.label); setEditedMomentWhy(moment.whyItMatters); setEditedMomentAlt(moment.betterAlternative || ''); }}
+                                    className="flex items-center gap-1.5 text-[12px] font-medium"
+                                    style={{ color: '#9910FA' }}
+                                  >
+                                    <Pencil className="w-3 h-3" /> Correctie indienen
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   );
                 })}
               </div>
@@ -1049,131 +1175,6 @@ ${msg}`;
               <div className="py-12 text-center mb-12">
                 <Sparkles className="w-6 h-6 text-hh-muted mx-auto mb-2" />
                 <p className="text-[14px] text-hh-muted">Coach momenten worden gegenereerd bij nieuwe analyses.</p>
-              </div>
-            );
-          })()}
-
-          {/* Expanded Detail Panel — appears below 3-column grid */}
-          {expandedMoment && (() => {
-            const moments = insights.moments || [];
-            const moment = moments.find(m => m.id === expandedMoment);
-            if (!moment) return null;
-            const momentConfig: Record<string, { icon: any; color: string; bg: string; label: string }> = {
-              'big_win': { icon: Trophy, color: '#047857', bg: '#ECFDF5', label: 'Big Win' },
-              'quick_fix': { icon: Wrench, color: '#B45309', bg: '#FFFBEB', label: 'Quick Fix' },
-              'turning_point': { icon: RotateCcw, color: '#BE123C', bg: '#FFF1F2', label: 'Scharnierpunt' },
-            };
-            const config = momentConfig[moment.type] || momentConfig['quick_fix'];
-            const MomentIcon = config.icon;
-
-            return (
-              <div className="rounded-2xl bg-white border border-gray-200 p-6 space-y-4 shadow-sm mb-12 -mt-8">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <MomentIcon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: config.color }} strokeWidth={1.75} />
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: config.color }}>{config.label}</span>
-                      <p className="text-[15px] leading-[22px] text-hh-text font-medium mt-0.5" style={{ overflowWrap: 'break-word' }}>{moment.label}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => setExpandedMoment(null)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 flex-shrink-0">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <p className="text-[14px] leading-[22px] text-hh-text/75" style={{ overflowWrap: 'break-word' }}>{moment.whyItMatters}</p>
-
-                {(moment.sellerText || moment.customerText) && (
-                  <div className="p-3 rounded-xl bg-gray-50 space-y-2">
-                    {moment.sellerText && (
-                      <ChatBubble compact speaker="seller" adminColors={adminColors} text={moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText} />
-                    )}
-                    {moment.customerText && (
-                      <ChatBubble compact speaker="customer" adminColors={adminColors} text={moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText} />
-                    )}
-                  </div>
-                )}
-
-                {moment.betterAlternative && moment.type !== 'big_win' && (
-                  <div className="p-3 rounded-xl border" style={{ backgroundColor: adminColors ? '#9910FA08' : '#3C9A6E08', borderColor: adminColors ? '#9910FA15' : '#3C9A6E15' }}>
-                    <div className="flex gap-2 items-start">
-                      <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: adminColors ? '#9910FA' : '#3C9A6E' }} />
-                      <div>
-                        <p className="text-[11px] font-medium mb-0.5" style={{ color: adminColors ? '#9910FA' : '#3C9A6E' }}>Wat had je kunnen zeggen?</p>
-                        <p className="text-[13px] leading-[19px] text-hh-text">"{moment.betterAlternative}"</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {moment.recommendedTechniques.length > 0 && (
-                  <div className="flex gap-1.5 flex-wrap">
-                    {moment.recommendedTechniques.map((t, i) => (
-                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full border font-medium"
-                        style={{ color: adminColors ? '#9910FA' : '#4F7396', borderColor: adminColors ? '#9910FA20' : '#4F739620', backgroundColor: adminColors ? '#9910FA08' : '#4F739608' }}
-                        title={t}
-                      >
-                        {getTechniekByNummer(t)?.naam || t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {moment.type !== 'big_win' && (
-                  <div className="pt-3 border-t border-gray-100">
-                    <button
-                      className="inline-flex items-center justify-center gap-2 text-[13px] h-10 px-5 text-white rounded-lg font-medium transition-all"
-                      style={{ backgroundColor: adminColors ? '#9910FA' : '#3C9A6E' }}
-                      onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#7C3AED' : '#2D7F57')}
-                      onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#9910FA' : '#3C9A6E')}
-                      onClick={() => startReplay(moment)}
-                    >
-                      <Play className="w-4 h-4" /> Opnieuw oefenen
-                    </button>
-                  </div>
-                )}
-
-                {useAdminLayout && (
-                  <div className="pt-3 border-t border-gray-100">
-                    {editingMomentId === moment.id ? (
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-[11px] font-medium mb-1 block" style={{ color: '#9910FA' }}>Moment label</label>
-                          <input value={editedMomentLabel} onChange={(e) => setEditedMomentLabel(e.target.value)} className="w-full px-3 py-1.5 text-[13px] border rounded-lg focus:outline-none focus:ring-2" style={{ borderColor: '#9910FA40' }} />
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-medium mb-1 block" style={{ color: '#9910FA' }}>Waarom belangrijk</label>
-                          <textarea value={editedMomentWhy} onChange={(e) => setEditedMomentWhy(e.target.value)} className="w-full px-3 py-1.5 text-[13px] border rounded-lg focus:outline-none focus:ring-2 resize-none" style={{ borderColor: '#9910FA40' }} rows={2} />
-                        </div>
-                        {moment.betterAlternative && (
-                          <div>
-                            <label className="text-[11px] font-medium mb-1 block" style={{ color: '#9910FA' }}>Beter alternatief</label>
-                            <textarea value={editedMomentAlt} onChange={(e) => setEditedMomentAlt(e.target.value)} className="w-full px-3 py-1.5 text-[13px] border rounded-lg focus:outline-none focus:ring-2 resize-none" style={{ borderColor: '#9910FA40' }} rows={2} />
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          <Button size="sm" className="gap-1.5 text-[12px] text-white" style={{ backgroundColor: '#9910FA' }} disabled={submittingCorrection}
-                            onClick={() => {
-                              if (editedMomentLabel !== moment.label) submitCorrection('moment', 'label', moment.label, editedMomentLabel, `Moment: ${moment.id}`);
-                              if (editedMomentWhy !== moment.whyItMatters) submitCorrection('moment', 'whyItMatters', moment.whyItMatters, editedMomentWhy, `Moment: ${moment.id}`);
-                              if (editedMomentAlt !== (moment.betterAlternative || '')) submitCorrection('moment', 'betterAlternative', moment.betterAlternative || '', editedMomentAlt, `Moment: ${moment.id}`);
-                            }}
-                          >
-                            <Save className="w-3.5 h-3.5" /> Indienen voor review
-                          </Button>
-                          <Button variant="outline" size="sm" className="text-[12px]" onClick={() => setEditingMomentId(null)}>Annuleren</Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button onClick={() => { setEditingMomentId(moment.id); setEditedMomentLabel(moment.label); setEditedMomentWhy(moment.whyItMatters); setEditedMomentAlt(moment.betterAlternative || ''); }}
-                        className="flex items-center gap-1.5 text-[12px] font-medium"
-                        style={{ color: '#9910FA' }}
-                      >
-                        <Pencil className="w-3 h-3" /> Correctie indienen
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
             );
           })()}
@@ -1307,18 +1308,52 @@ ${msg}`;
                           variant={isReplayPoint ? 'faded' : 'default'}
                           onReplay={turn.speaker === 'seller' && !isReplayActive ? () => startTranscriptReplay(turn.idx) : undefined}
                         >
-                          <div className="flex flex-wrap items-center gap-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5 group/badges">
                             {turn.speaker === 'customer' && signal && signal.houding !== 'neutraal' && (
-                              <Badge className={`${getSignalLabel(signal.houding).color} text-[10px] px-2 py-0.5`}>
-                                {getSignalLabel(signal.houding).label}
-                              </Badge>
+                              <span className="relative inline-flex">
+                                <Badge className={`${getSignalLabel(signal.houding).color} text-[10px] px-2 py-0.5`}>
+                                  {getSignalLabel(signal.houding).label}
+                                </Badge>
+                                {useAdminLayout && (
+                                  <button
+                                    onClick={() => {
+                                      const options = ['interesse', 'twijfel', 'ontwijkend', 'bezwaar', 'koopsignaal', 'commitment', 'neutraal'];
+                                      const current = signal.houding;
+                                      const next = options[(options.indexOf(current) + 1) % options.length];
+                                      submitCorrection('signal', 'houding', current, next, `Turn ${turn.idx}: signaal ${current} → ${next}`);
+                                    }}
+                                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover/badges:opacity-100 transition-opacity"
+                                    style={{ backgroundColor: '#9910FA', color: 'white' }}
+                                    title="Signaal corrigeren"
+                                  >
+                                    <Pencil className="w-2.5 h-2.5" />
+                                  </button>
+                                )}
+                              </span>
                             )}
                             {evaluation && evaluation.techniques.length > 0 && evaluation.techniques.map((tech, i) => {
                               const badge = getQualityBadge(tech.quality);
                               return (
-                                <Badge key={i} variant="outline" className={`text-[10px] px-2 py-0.5 ${badge.color}`}>
-                                  {tech.quality === 'gemist' ? '✗' : '✓'} {tech.naam || tech.id}
-                                </Badge>
+                                <span key={i} className="relative inline-flex">
+                                  <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${badge.color}`}>
+                                    {tech.quality === 'gemist' ? '✗' : '✓'} {tech.naam || tech.id}
+                                  </Badge>
+                                  {useAdminLayout && (
+                                    <button
+                                      onClick={() => {
+                                        const qualities = ['goed', 'matig', 'gemist'];
+                                        const current = tech.quality;
+                                        const next = qualities[(qualities.indexOf(current) + 1) % qualities.length];
+                                        submitCorrection('technique', 'quality', `${tech.id}:${current}`, `${tech.id}:${next}`, `Turn ${turn.idx}: ${tech.naam || tech.id} ${current} → ${next}`);
+                                      }}
+                                      className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover/badges:opacity-100 transition-opacity"
+                                      style={{ backgroundColor: '#9910FA', color: 'white' }}
+                                      title="Kwaliteit corrigeren"
+                                    >
+                                      <Pencil className="w-2.5 h-2.5" />
+                                    </button>
+                                  )}
+                                </span>
                               );
                             })}
                           </div>
