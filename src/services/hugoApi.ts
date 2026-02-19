@@ -136,20 +136,25 @@ class HugoApiService {
     return data;
   }
 
-  async sendMessage(content: string, isExpert = false): Promise<SendMessageResponse> {
+  async sendMessage(content: string, isExpert = false, systemContext?: string): Promise<SendMessageResponse> {
     if (!this.currentSessionId) {
       throw new Error("No active session. Call startSession first.");
+    }
+
+    const body: Record<string, unknown> = {
+      sessionId: this.currentSessionId,
+      message: content,
+      debug: true,
+      expertMode: isExpert,
+    };
+    if (systemContext) {
+      body.systemContext = systemContext;
     }
 
     const response = await fetch(`${API_BASE}/v2/session/message`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId: this.currentSessionId,
-        message: content,
-        debug: true,
-        expertMode: isExpert,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {

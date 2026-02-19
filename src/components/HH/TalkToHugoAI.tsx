@@ -101,6 +101,8 @@ interface Message {
   debugInfo?: MessageDebugInfo;
   feedback?: "up" | "down" | null;
   attachments?: MessageAttachment[];
+  isTranscriptReplay?: boolean;
+  transcriptRole?: string;
 }
 
 type ChatMode = "chat" | "audio" | "video";
@@ -217,19 +219,41 @@ export function TalkToHugoAI({
         const ctx = JSON.parse(practiceRaw);
         if (ctx.fromAnalysis) {
           const techniqueLabel = ctx.techniqueNames || ctx.techniqueIds?.join(', ') || ctx.practiceLabel;
-          let practiceMessage = `Ik wil graag oefenen met de techniek${ctx.techniqueIds?.length > 1 ? 'en' : ''} ${techniqueLabel}.`;
-          if (ctx.conversationSnippet) {
-            practiceMessage += `\n\nDit is het fragment uit mijn gesprek${ctx.analysisTitle ? ` "${ctx.analysisTitle}"` : ''} waar ik beter had kunnen reageren:\n\n${ctx.conversationSnippet}\n\nKun je me helpen dit moment opnieuw te oefenen? Speel de klant en laat me een betere reactie geven.`;
-          } else {
-            practiceMessage += `\n\nDit kwam naar boven bij de analyse van mijn gesprek${ctx.analysisTitle ? ` "${ctx.analysisTitle}"` : ''}. Kun je me helpen dit te oefenen? Speel de klant en laat me oefenen.`;
+          const turns: Array<{ speaker: 'seller' | 'customer'; text: string }> = ctx.transcriptTurns || [];
+
+          const historyMessages: Message[] = [];
+
+          if (turns.length > 0) {
+            historyMessages.push({
+              id: `practice-header-${Date.now()}`,
+              sender: "ai",
+              text: `Hier is het gesprek${ctx.analysisTitle ? ` "${ctx.analysisTitle}"` : ''} tot het oefenmoment. Ik speel de klant verder — geef jij een betere reactie.`,
+              timestamp: new Date(),
+            });
+            turns.forEach((turn, i) => {
+              historyMessages.push({
+                id: `transcript-${Date.now()}-${i}`,
+                sender: turn.speaker === 'customer' ? 'ai' : 'hugo',
+                text: turn.text,
+                timestamp: new Date(),
+                isTranscriptReplay: true,
+                transcriptRole: turn.speaker === 'customer' ? 'Klant' : 'Jij',
+              });
+            });
           }
 
-          setMessages([{
-            id: `practice-user-${Date.now()}`,
-            sender: "hugo",
-            text: practiceMessage,
-            timestamp: new Date(),
-          }]);
+          const fullTranscriptText = turns.map(t =>
+            `${t.speaker === 'customer' ? 'Klant' : 'Verkoper'}: ${t.text}`
+          ).join('\n');
+
+          const systemContext = `Dit is een verkoopgesprek${ctx.analysisTitle ? ` genaamd "${ctx.analysisTitle}"` : ''}. De gebruiker wil oefenen met: ${techniqueLabel}.\n\nHieronder staat het volledige gesprek tot nu toe. Speel de klant realistisch verder op basis van dit gesprek. Reageer als de klant — in dezelfde toon, stijl en context.\n\n${fullTranscriptText}`;
+
+          const lastSpeaker = turns.length > 0 ? turns[turns.length - 1].speaker : 'seller';
+          const userMessage = lastSpeaker === 'seller'
+            ? 'Dit was mijn laatste reactie in het gesprek. Speel de klant en reageer hierop.'
+            : 'De klant zei dit als laatste. Ik wil nu een betere reactie geven. Wacht op mijn reactie en speel dan de klant verder.';
+
+          setMessages(historyMessages);
           setHasActiveSession(true);
           setIsLoading(true);
 
@@ -242,25 +266,25 @@ export function TalkToHugoAI({
                 isExpert: false,
                 modality: "chat",
               });
-              const response = await hugoApi.sendMessage(practiceMessage);
+              const response = await hugoApi.sendMessage(userMessage, false, systemContext);
               setMessages(prev => [...prev, {
                 id: `practice-ai-${Date.now()}`,
                 sender: "ai",
-                text: response.response || "Laten we dit moment opnieuw oefenen! Ik speel de klant. Ga je gang.",
+                text: response.response || "Ik ben klaar om verder te spelen als de klant. Geef jouw reactie!",
                 timestamp: new Date(),
               }]);
             } catch (err) {
               setMessages(prev => [...prev, {
                 id: `practice-ai-${Date.now()}`,
                 sender: "ai",
-                text: `Laten we "${ctx.practiceLabel}" opnieuw oefenen. Ik speel de klant — geef maar een betere reactie op het moment uit je gesprek.`,
+                text: `Ik speel de klant uit "${ctx.analysisTitle || ctx.practiceLabel}". Geef maar een betere reactie — ik reageer als de klant.`,
                 timestamp: new Date(),
               }]);
             } finally {
               setIsLoading(false);
             }
           })();
-          console.log("[Hugo] Practice context loaded from analysis:", ctx.practiceLabel);
+          console.log("[Hugo] Practice context loaded from analysis:", ctx.practiceLabel, "turns:", turns.length);
           return;
         }
       } catch (e) {
@@ -1176,11 +1200,26 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         {messages.map((message) => (
           <div key={message.id} className={`group flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
             <div className={`flex flex-col ${message.sender === "hugo" ? "items-end" : "items-start"}`} style={{ maxWidth: '75%' }}>
+              {message.isTranscriptReplay && message.transcriptRole && (
+                <span className="text-[11px] font-medium mb-0.5 px-1" style={{ color: message.transcriptRole === 'Klant' ? '#4F7396' : '#3C9A6E' }}>
+                  {message.transcriptRole}
+                </span>
+              )}
               <div className={`p-3 rounded-2xl ${
-                message.sender === "hugo"
-                  ? "bg-hh-ink text-white rounded-br-md"
-                  : "bg-hh-ui-50 text-hh-text rounded-bl-md"
-              }`}>
+                message.isTranscriptReplay
+                  ? message.sender === "hugo"
+                    ? "text-white rounded-br-md"
+                    : "text-hh-text rounded-bl-md"
+                  : message.sender === "hugo"
+                    ? "bg-hh-ink text-white rounded-br-md"
+                    : "bg-hh-ui-50 text-hh-text rounded-bl-md"
+              }`} style={message.isTranscriptReplay
+                ? {
+                    opacity: 0.85,
+                    backgroundColor: message.sender === 'hugo' ? '#4F7396' : '#E8EDF2',
+                  }
+                : undefined
+              }>
                 {message.attachments && message.attachments.length > 0 && (
                   <div className={`flex flex-wrap gap-2 ${message.text ? "mb-2" : ""}`}>
                     {message.attachments.map((att) => (
@@ -1219,7 +1258,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                 {message.text && <p className="text-[14px] leading-[22px] whitespace-pre-wrap">{message.text}</p>}
               </div>
               
-              {message.sender === "ai" && (
+              {message.sender === "ai" && !message.isTranscriptReplay && (
                 <div className="flex items-center gap-0.5 mt-1.5">
                   <button
                     onClick={() => handleCopyMessage(message.id, message.text)}

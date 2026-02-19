@@ -508,14 +508,13 @@ export function AnalysisResults({
 
   const navigateToHugoForPractice = (techniqueIds: string[], label: string, momentTurnIdx?: number) => {
     if (navigate) {
-      let conversationSnippet = '';
+      let transcriptTurns: Array<{ speaker: 'seller' | 'customer'; text: string }> = [];
       if (result?.transcript && momentTurnIdx !== undefined) {
-        const startIdx = Math.max(0, momentTurnIdx - 3);
-        const endIdx = Math.min(result.transcript.length - 1, momentTurnIdx + 2);
-        const relevantTurns = result.transcript.slice(startIdx, endIdx + 1);
-        conversationSnippet = relevantTurns.map(t =>
-          `${t.speaker === 'customer' ? 'Klant' : 'Verkoper'}: ${t.text}`
-        ).join('\n');
+        const endIdx = Math.min(result.transcript.length - 1, momentTurnIdx + 1);
+        transcriptTurns = result.transcript.slice(0, endIdx + 1).map(t => ({
+          speaker: t.speaker,
+          text: t.text,
+        }));
       }
 
       const techniqueNames = techniqueIds.map(id => {
@@ -529,7 +528,7 @@ export function AnalysisResults({
         techniqueNames,
         practiceLabel: label,
         fromAnalysis: true,
-        conversationSnippet,
+        transcriptTurns,
         analysisTitle: result?.conversation?.title || '',
       };
       sessionStorage.setItem('hugoPracticeContext', JSON.stringify(practiceContext));

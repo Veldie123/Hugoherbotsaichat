@@ -728,7 +728,7 @@ app.post("/api/v2/message", async (req, res) => {
 // Maps frontend field names and includes full debug info with customerDynamics
 app.post("/api/v2/session/message", async (req, res) => {
   try {
-    const { sessionId, message, debug: enableDebug = false, expertMode = false } = req.body;
+    const { sessionId, message, debug: enableDebug = false, expertMode = false, systemContext } = req.body;
     
     if (!sessionId) {
       return res.status(400).json({ error: "sessionId is required" });
@@ -748,6 +748,13 @@ app.post("/api/v2/session/message", async (req, res) => {
     
     if (!session) {
       return res.status(404).json({ error: "Session not found. Please start a new session." });
+    }
+    
+    if (systemContext) {
+      session.conversationHistory.push({
+        role: "system",
+        content: systemContext
+      });
     }
     
     // Add user message to history
