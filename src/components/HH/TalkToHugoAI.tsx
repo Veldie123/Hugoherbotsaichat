@@ -33,7 +33,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Send,
-  BookOpen,
   MessageSquare,
   Phone,
   Video,
@@ -48,6 +47,7 @@ import {
   Award,
   RotateCcw,
   AlertCircle,
+  Lightbulb,
   Menu,
   Copy,
   Check,
@@ -1216,12 +1216,13 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                       onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
                       className={`p-1.5 rounded-md transition-colors ${
                         desktopSidebarOpen
-                          ? "text-[#4F7396] bg-[#4F7396]/10"
-                          : "text-slate-400 hover:text-[#4F7396] hover:bg-slate-100"
+                          ? "bg-[#3C9A6E]/10"
+                          : "hover:bg-[#3C9A6E]/10"
                       }`}
+                      style={{ color: '#3C9A6E' }}
                       title="E.P.I.C. technieken bekijken"
                     >
-                      <BookOpen className="w-3.5 h-3.5" />
+                      <Lightbulb className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -1663,7 +1664,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                   className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 -ml-1 rounded-full border border-hh-border bg-white hover:bg-hh-ui-50 transition-colors"
                   aria-label="E.P.I.C. Tips"
                 >
-                  <BookOpen className="w-3.5 h-3.5 text-[#4F7396]" />
+                  <Lightbulb className="w-3.5 h-3.5" style={{ color: '#3C9A6E' }} />
                   <span className="text-[12px] font-medium text-hh-text">E.P.I.C.</span>
                 </button>
               )}
