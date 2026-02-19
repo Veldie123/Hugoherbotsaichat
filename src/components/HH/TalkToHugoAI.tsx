@@ -30,7 +30,6 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { StopRoleplayDialog } from "./StopRoleplayDialog";
 import { TechniqueDetailsDialog } from "./TechniqueDetailsDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Send,
   MessageSquare,
@@ -161,7 +160,6 @@ export function TalkToHugoAI({
   const [isMuted, setIsMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
-  const [filePopoverOpen, setFilePopoverOpen] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -988,7 +986,6 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
       fileInputRef.current.accept = acceptTypes;
       fileInputRef.current.click();
     }
-    setFilePopoverOpen(false);
   };
 
   const processFiles = (files: FileList | File[]) => {
@@ -1269,7 +1266,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
-                  {!isAdmin && !assistanceConfig.blindPlay && (
+                  {!assistanceConfig.blindPlay && (
                     <button
                       onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
                       className={`p-1.5 rounded-md transition-colors ${
@@ -1347,64 +1344,16 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         )}
 
         <div className="p-4 flex gap-2 items-end">
-          <Popover open={filePopoverOpen} onOpenChange={setFilePopoverOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={isStreaming}
-                className="flex-shrink-0 rounded-full w-9 h-9 border-hh-border hover:bg-hh-ui-50 text-[#4F7396]"
-                title="Bestand toevoegen"
-              >
-                <Paperclip className="w-4 h-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" side="top" className="w-56 p-1.5" sideOffset={8}>
-              <div className="flex flex-col">
-                <button
-                  onClick={() => handleFileSelect("audio/*")}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-hh-ui-50 transition-colors text-left"
-                >
-                  <FileAudio className="w-4 h-4 text-[#4F7396]" />
-                  <div>
-                    <p className="text-[13px] font-medium text-hh-text">Audio-opname</p>
-                    <p className="text-[11px] text-hh-muted">Gesprek laten analyseren</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleFileSelect("image/*")}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-hh-ui-50 transition-colors text-left"
-                >
-                  <Image className="w-4 h-4 text-[#4F7396]" />
-                  <div>
-                    <p className="text-[13px] font-medium text-hh-text">Afbeelding</p>
-                    <p className="text-[11px] text-hh-muted">Screenshot of foto</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleFileSelect(".pdf,.doc,.docx,.txt,.pptx,.ppt,.xls,.xlsx")}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-hh-ui-50 transition-colors text-left"
-                >
-                  <FileText className="w-4 h-4 text-[#4F7396]" />
-                  <div>
-                    <p className="text-[13px] font-medium text-hh-text">Document</p>
-                    <p className="text-[11px] text-hh-muted">Script, presentatie, PDF</p>
-                  </div>
-                </button>
-                <div className="border-t border-hh-border my-1" />
-                <button
-                  onClick={() => handleFileSelect("*")}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-hh-ui-50 transition-colors text-left"
-                >
-                  <Paperclip className="w-4 h-4 text-[#4F7396]" />
-                  <div>
-                    <p className="text-[13px] font-medium text-hh-text">Ander bestand</p>
-                    <p className="text-[11px] text-hh-muted">Elk bestandstype</p>
-                  </div>
-                </button>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={isStreaming}
+            className="flex-shrink-0 rounded-full w-9 h-9 border-hh-border hover:bg-hh-ui-50 text-[#4F7396]"
+            title="Bestand toevoegen"
+            onClick={() => handleFileSelect("*")}
+          >
+            <Paperclip className="w-4 h-4" />
+          </Button>
           <Input
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
