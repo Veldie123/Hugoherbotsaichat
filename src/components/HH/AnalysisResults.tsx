@@ -1156,7 +1156,7 @@ ${msg}`;
                                   <div className="flex justify-end">
                                     <div style={{ maxWidth: '75%' }}>
                                       <p className="text-[11px] font-medium text-hh-text mb-1 px-1 text-right">Jij</p>
-                                      <div className={`px-3 py-2 rounded-2xl rounded-br-md text-[13px] leading-[18px] text-white ${adminColors ? 'bg-purple-600' : 'bg-hh-ink'}`}>
+                                      <div className={`px-3 py-2 rounded-2xl rounded-br-md text-[13px] leading-[18px] text-white ${adminColors ? 'bg-purple-600' : ''}`} style={!adminColors ? { backgroundColor: '#4F7396' } : undefined}>
                                         {moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText}
                                       </div>
                                     </div>
