@@ -32,8 +32,6 @@ import {
   ChevronDown,
   Check,
   X,
-  Power,
-  PowerOff,
   Menu,
   ChevronLeft,
   Info,
@@ -41,14 +39,12 @@ import {
   Pencil,
   Target,
   MessageSquare,
-  StopCircle,
   AlertCircle,
   Phone,
   Video,
   Mic,
   MicOff,
   Volume2,
-  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAllTechnieken } from "../../data/technieken-service";
@@ -135,7 +131,7 @@ export function AdminChatExpertMode({
   sessionTitle,
   navigate,
 }: AdminChatExpertModeProps) {
-  const [isRecording, setIsRecording] = useState(false);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [selectedTechnique, setSelectedTechnique] = useState<string>(""); // Display name
@@ -145,6 +141,7 @@ export function AdminChatExpertMode({
   const [expandedDebugSections, setExpandedDebugSections] = useState<Record<string, string[]>>({}); // Track expanded sections per message
   const [currentPhase, setCurrentPhase] = useState(1);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
   const [expandedPhases, setExpandedPhases] = useState<number[]>([1]); // Phase 1 open by default
   const [expandedParents, setExpandedParents] = useState<string[]>([]); // Track expanded parent techniques
   const [expandedHoudingen, setExpandedHoudingen] = useState<string[]>([]); // Track expanded klant houdingen
@@ -581,7 +578,7 @@ export function AdminChatExpertMode({
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isLoading || !hasActiveSession) return;
+    if (!inputText.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -599,11 +596,30 @@ export function AdminChatExpertMode({
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageText = inputText;
     setInputText("");
     setIsLoading(true);
 
+    if (!hasActiveSession) {
+      try {
+        await hugoApi.startSession({
+          techniqueId: selectedTechniqueNumber || "general",
+          mode: "COACH_CHAT",
+          isExpert: true,
+          modality: chatMode,
+        });
+        setHasActiveSession(true);
+        console.log("[Admin] Auto-started expert session");
+      } catch (error) {
+        console.error("[Admin] Failed to auto-start session:", error);
+        setIsLoading(false);
+        toast.error("Kon geen sessie starten. Probeer opnieuw.");
+        return;
+      }
+    }
+
     try {
-      const response = await hugoApi.sendMessage(inputText, true);
+      const response = await hugoApi.sendMessage(messageText, true);
       
       const signalMap: Record<string, "positief" | "neutraal" | "negatief"> = {
         positief: "positief",
@@ -674,7 +690,6 @@ export function AdminChatExpertMode({
   };
 
   const confirmStopRoleplay = () => {
-    setIsRecording(false);
     setMessages([]);
     setInputText("");
     setSelectedTechnique("");
@@ -705,125 +720,106 @@ export function AdminChatExpertMode({
 
   return (
     <AdminLayout currentPage="admin-chat-expert" navigate={navigate}>
-      <div className="flex h-[calc(100vh-4rem)]">
-        {/* Left Sidebar - EPIC Techniques (HIDDEN in Expert mode) */}
-        {difficultyLevel !== "onbewuste_kunde" && (
-          <div className="w-[280px] max-w-[50vw] flex-shrink-0 overflow-y-auto h-full">
-            <EPICSidebar
-              fasesAccordionOpen={fasesAccordionOpen}
-              setFasesAccordionOpen={setFasesAccordionOpen}
-              houdingenAccordionOpen={houdingenAccordionOpen}
-              setHoudingenAccordionOpen={setHoudingenAccordionOpen}
-              expandedPhases={expandedPhases}
-              togglePhase={togglePhase}
-              setCurrentPhase={setCurrentPhase}
-              expandedParents={expandedParents}
-              toggleParentTechnique={toggleParentTechnique}
-              expandedHoudingen={expandedHoudingen}
-              toggleHouding={toggleHouding}
-              selectedTechnique={selectedTechnique}
-              setSelectedTechnique={setSelectedTechnique}
-              activeHouding={activeHouding}
-              recommendedTechnique={recommendedTechnique}
-              openTechniqueDetails={openTechniqueDetails}
-              startTechniqueChat={startTechniqueChat}
-              techniquesByPhase={techniquesByPhase}
-              phaseNames={phaseNames}
-              getFaseBadgeColor={getFaseBadgeColor}
-              getTopLevelTechniques={getTopLevelTechniques}
-              hasChildren={hasChildren}
-              getChildTechniques={getChildTechniques}
-              klantHoudingen={klantHoudingenArray}
-              difficultyLevel={difficultyLevel}
-            />
-          </div>
-        )}
-
-        {/* Right Panel - Chat */}
-        <div className="flex-1 flex flex-col bg-white">
-          {/* Chat Header */}
-          <div className="p-4 border-b border-hh-border">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h2 className="text-[18px] leading-[24px] font-bold text-hh-text">
-                  {sessionTitle}
-                </h2>
-                <div className="flex items-center gap-2">
-                  <p className="text-[12px] text-hh-muted">Training AI Model</p>
-                  <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-100 text-purple-700 rounded-full">
-                    Lvl {difficultyLevel === "onbewuste_onkunde" ? "1" : 
-                         difficultyLevel === "bewuste_onkunde" ? "2" : 
-                         difficultyLevel === "bewuste_kunde" ? "3" : "4"}
-                  </span>
-                </div>
-              </div>
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-hh-border bg-white flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-colors ${
+                desktopSidebarOpen ? "border-[#3C9A6E] bg-[#3C9A6E]/10" : "border-hh-border hover:bg-hh-ui-50"
+              }`}
+              aria-label="E.P.I.C. Sidebar toggle"
+            >
+              <Lightbulb className="w-3.5 h-3.5" style={{ color: '#3C9A6E' }} />
+              <span className="text-[12px] font-medium text-hh-text">E.P.I.C.</span>
+            </button>
+            <div>
+              <h2 className="text-[16px] leading-[20px] font-bold text-hh-text">
+                {sessionTitle}
+              </h2>
               <div className="flex items-center gap-2">
-                <Button
-                  variant={isRecording ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={() => setIsRecording(!isRecording)}
-                  className={`gap-2 ${!isRecording ? "border-emerald-500 text-emerald-600 hover:bg-emerald-50" : ""}`}
-                >
-                  {isRecording ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
-                  {isRecording ? "Stop Opname" : "Start Opname"}
-                </Button>
-                {messages.length > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleStopRoleplay}
-                    className="gap-2"
-                  >
-                    <StopCircle className="w-4 h-4" />
-                    Stop Rollenspel
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMessages([])}
-                >
-                  Opnieuw
-                </Button>
-              </div>
-            </div>
-
-            {/* Mode Selector - Niveau is now auto-adaptive (hidden) */}
-            <div className="flex items-center justify-end">
-              {/* Mode Toggle - Chat/Bellen/Video (same as User View) */}
-              <div className="flex items-center gap-3">
-                {selectedTechnique && (
-                  <div className="flex items-center gap-1.5 text-[13px] text-hh-muted">
-                    <Clock className="w-4 h-4" />
-                    <span className="font-mono">{formatTime(sessionTimer)}</span>
-                  </div>
-                )}
-                <div className="flex items-center bg-hh-ui-50 rounded-lg p-1">
-                  <button
-                    onClick={() => setChatMode("chat")}
-                    className={`p-2 rounded-md transition-all ${chatMode === "chat" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
-                    title="Chat"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setChatMode("audio")}
-                    className={`p-2 rounded-md transition-all ${chatMode === "audio" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
-                    title="Bellen"
-                  >
-                    <Phone className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setChatMode("video")}
-                    className={`p-2 rounded-md transition-all ${chatMode === "video" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
-                    title="Video"
-                  >
-                    <Video className="w-4 h-4" />
-                  </button>
-                </div>
+                <p className="text-[12px] text-hh-muted">Training AI Model</p>
+                <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-100 text-purple-700 rounded-full">
+                  Lvl {difficultyLevel === "onbewuste_onkunde" ? "1" : 
+                       difficultyLevel === "bewuste_onkunde" ? "2" : 
+                       difficultyLevel === "bewuste_kunde" ? "3" : "4"}
+                </span>
               </div>
             </div>
           </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-hh-ui-50 rounded-full p-0.5">
+              <button
+                onClick={() => setChatMode("chat")}
+                className={`p-2 rounded-full transition-all ${chatMode === "chat" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                title="Chat"
+              >
+                <MessageSquare className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+              <button
+                onClick={() => setChatMode("audio")}
+                className={`p-2 rounded-full transition-all ${chatMode === "audio" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                title="Bellen"
+              >
+                <Phone className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+              <button
+                onClick={() => setChatMode("video")}
+                className={`p-2 rounded-full transition-all ${chatMode === "video" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                title="Video"
+              >
+                <Video className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+            </div>
+            {messages.length > 0 && (
+              <button
+                onClick={confirmStopRoleplay}
+                className="h-8 px-3 rounded-md border border-hh-border bg-white hover:bg-hh-ui-50 transition-colors flex items-center gap-1.5"
+                title="Opnieuw starten"
+              >
+                <X className="w-3.5 h-3.5 text-hh-muted" />
+                <span className="text-[12px] text-hh-text">Opnieuw</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Body: EPIC sidebar + Chat */}
+        <div className="flex flex-1 overflow-hidden">
+          {desktopSidebarOpen && (
+            <div className="w-1/3 flex-shrink-0 h-full overflow-y-auto bg-white" style={{ borderRight: '1px solid #e2e8f0' }}>
+              <EPICSidebar
+                fasesAccordionOpen={fasesAccordionOpen}
+                setFasesAccordionOpen={setFasesAccordionOpen}
+                houdingenAccordionOpen={houdingenAccordionOpen}
+                setHoudingenAccordionOpen={setHoudingenAccordionOpen}
+                expandedPhases={expandedPhases}
+                togglePhase={togglePhase}
+                setCurrentPhase={setCurrentPhase}
+                expandedParents={expandedParents}
+                toggleParentTechnique={toggleParentTechnique}
+                expandedHoudingen={expandedHoudingen}
+                toggleHouding={toggleHouding}
+                selectedTechnique={selectedTechnique}
+                setSelectedTechnique={setSelectedTechnique}
+                activeHouding={activeHouding}
+                recommendedTechnique={recommendedTechnique}
+                openTechniqueDetails={openTechniqueDetails}
+                startTechniqueChat={startTechniqueChat}
+                techniquesByPhase={techniquesByPhase}
+                phaseNames={phaseNames}
+                getFaseBadgeColor={getFaseBadgeColor}
+                getTopLevelTechniques={getTopLevelTechniques}
+                hasChildren={hasChildren}
+                getChildTechniques={getChildTechniques}
+                klantHoudingen={klantHoudingenArray}
+                difficultyLevel={difficultyLevel}
+              />
+            </div>
+          )}
+
+        <div className={`${desktopSidebarOpen ? 'flex-1' : 'w-full'} flex flex-col bg-white overflow-hidden`}>
 
           {/* Level transition notification banner */}
           {levelTransitionMessage && (
@@ -977,11 +973,10 @@ export function AdminChatExpertMode({
           {chatMode === "chat" && (
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <Lightbulb className="w-12 h-12 text-hh-muted mx-auto mb-4" />
-                  <p className="text-hh-muted text-[14px]">
-                    Begin een gesprek met de AI klant
+              <div className="flex justify-start">
+                <div className="p-3 rounded-2xl bg-purple-50 text-slate-800 rounded-bl-md border border-purple-100" style={{ maxWidth: '75%' }}>
+                  <p className="text-[14px] leading-[22px]">
+                    Welkom bij de Admin Training. Je kunt direct beginnen met chatten — ik speel de klant. Selecteer optioneel een techniek via het E.P.I.C. menu.
                   </p>
                 </div>
               </div>
@@ -1030,6 +1025,21 @@ export function AdminChatExpertMode({
                           ) : (
                             <ChevronRight className="w-3 h-3" />
                           )}
+                        </button>
+                      )}
+                      {/* Lightbulb toggle for EPIC sidebar */}
+                      {message.sender === "ai" && (
+                        <button
+                          onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+                          className={`p-1.5 rounded-md transition-colors ${
+                            desktopSidebarOpen
+                              ? "bg-[#3C9A6E]/10"
+                              : "hover:bg-[#3C9A6E]/10"
+                          }`}
+                          style={{ color: '#3C9A6E' }}
+                          title="E.P.I.C. technieken bekijken"
+                        >
+                          <Lightbulb className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
@@ -1685,103 +1695,23 @@ export function AdminChatExpertMode({
           {/* Input - only show in chat mode */}
           {chatMode === "chat" && (
           <div className="p-4 border-t border-hh-border">
-            {/* Expert Mode: Technique Selector ABOVE input - CUSTOM STYLED */}
-            {difficultyLevel === "onbewuste_kunde" && (
-              <div className="mb-3">
-                <label className="text-[12px] font-medium text-hh-text mb-2 block">
-                  Selecteer techniek die je gaat toepassen:
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedTechnique}
-                    onChange={(e) => setSelectedTechnique(e.target.value)}
-                    className="w-full px-4 py-3 text-[13px] border-2 border-slate-200 rounded-lg bg-white text-hh-text focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 appearance-none cursor-pointer hover:border-slate-300 transition-colors font-medium shadow-sm"
-                  >
-                    <option value="" className="text-hh-muted">-- Kies een techniek uit de lijst --</option>
-                    {[0, 1, 2, 3, 4].map(phase => {
-                      const phaseTechniques = (techniquesByPhase[phase] || [])
-                        .filter((t: any) => !t.is_fase)
-                        .sort((a: any, b: any) => {
-                          const aNum = a.nummer.split('.').map((n: string) => parseInt(n) || 0);
-                          const bNum = b.nummer.split('.').map((n: string) => parseInt(n) || 0);
-                          for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
-                            if ((aNum[i] || 0) !== (bNum[i] || 0)) {
-                              return (aNum[i] || 0) - (bNum[i] || 0);
-                            }
-                          }
-                          return 0;
-                        });
-                      
-                      if (phaseTechniques.length === 0) return null;
-                      
-                      return (
-                        <optgroup key={phase} label={`── ${phaseNames[phase]} ──`}>
-                          {phaseTechniques.map((t: any) => (
-                            <option key={t.nummer} value={t.nummer} className="py-2 font-normal">
-                              {t.nummer} • {t.naam}
-                            </option>
-                          ))}
-                        </optgroup>
-                      );
-                    })}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-hh-muted pointer-events-none" />
-                </div>
-                {selectedTechnique && (
-                  <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200">
-                    <p className="text-[11px] text-emerald-700 flex items-center gap-1 font-medium">
-                      <Check className="w-3 h-3" />
-                      Je gaat techniek {selectedTechnique} toepassen
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Non-expert modes: Reminder to select from sidebar */}
-            {difficultyLevel !== "onbewuste_kunde" && !hasActiveSession && (
-              <div className="mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <p className="text-[12px] text-amber-700 flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4" />
-                  Selecteer eerst een techniek uit de sidebar door op het{" "}
-                  <MessageSquare className="w-3.5 h-3.5 inline" /> icoon te klikken
-                </p>
-              </div>
-            )}
-
-            {/* Selected technique indicator for non-expert modes */}
-            {difficultyLevel !== "onbewuste_kunde" && hasActiveSession && (
-              <div className="mb-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                <p className="text-[12px] text-emerald-700 flex items-center justify-between">
-                  <span>Geselecteerde techniek: {selectedTechnique} ({selectedTechniqueNumber})</span>
-                  <button
-                    onClick={confirmStopRoleplay}
-                    className="text-[11px] text-hh-muted hover:text-hh-text underline"
-                  >
-                    Stop sessie
-                  </button>
-                </p>
-              </div>
-            )}
-            
             <div className="flex gap-2 items-center">
               <Input
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && hasActiveSession && !isLoading && handleSendMessage()}
-                placeholder={
-                  hasActiveSession 
-                    ? (isLoading ? "Hugo denkt na..." : "Type je antwoord als verkoper...")
-                    : "Selecteer eerst een techniek..."
-                }
+                onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
+                placeholder={isLoading ? "Hugo denkt na..." : "Typ je bericht..."}
                 className="flex-1 min-w-0 text-slate-800 bg-white"
-                disabled={!hasActiveSession || isLoading}
+                disabled={isLoading}
               />
               <Button 
                 onClick={handleSendMessage} 
                 size="icon"
-                className="flex-shrink-0 bg-[#4F7396] hover:bg-[#4F7396]/90 text-white"
-                disabled={!hasActiveSession || !inputText.trim() || isLoading}
+                className="flex-shrink-0 text-white"
+                style={{ backgroundColor: '#9910FA' }}
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#7B0DD4')}
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#9910FA')}
+                disabled={!inputText.trim() || isLoading}
                 title="Verzend"
               >
                 {isLoading ? (
@@ -1793,6 +1723,7 @@ export function AdminChatExpertMode({
             </div>
           </div>
           )}
+        </div>
         </div>
       </div>
 
