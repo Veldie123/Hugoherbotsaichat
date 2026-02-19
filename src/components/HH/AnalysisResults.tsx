@@ -1135,22 +1135,22 @@ ${msg}`;
 
                             {(moment.sellerText || moment.customerText) && (
                               <div className="rounded-xl bg-gray-50 p-4 space-y-3">
-                                {moment.sellerText && (
+                                {moment.customerText && (
                                   <div className="flex justify-start">
                                     <div className="max-w-[85%]">
-                                      <p className="text-[11px] font-medium text-hh-text mb-1 px-1">Jij</p>
+                                      <p className="text-[11px] font-medium text-hh-muted mb-1 px-1">Klant</p>
                                       <div className={`px-3 py-2 rounded-2xl rounded-bl-md text-[13px] leading-[18px] ${adminColors ? 'bg-purple-50 text-hh-text' : 'bg-hh-ui-50 text-hh-text'}`}>
-                                        {moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText}
+                                        {moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText}
                                       </div>
                                     </div>
                                   </div>
                                 )}
-                                {moment.customerText && (
+                                {moment.sellerText && (
                                   <div className="flex justify-end">
                                     <div className="max-w-[85%]">
-                                      <p className="text-[11px] font-medium text-hh-muted mb-1 px-1 text-right">Klant</p>
+                                      <p className="text-[11px] font-medium text-hh-text mb-1 px-1 text-right">Jij</p>
                                       <div className={`px-3 py-2 rounded-2xl rounded-br-md text-[13px] leading-[18px] text-white ${adminColors ? 'bg-purple-600' : 'bg-hh-ink'}`}>
-                                        {moment.customerText.length > 200 ? moment.customerText.substring(0, 200) + '...' : moment.customerText}
+                                        {moment.sellerText.length > 200 ? moment.sellerText.substring(0, 200) + '...' : moment.sellerText}
                                       </div>
                                     </div>
                                   </div>

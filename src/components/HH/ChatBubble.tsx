@@ -38,12 +38,14 @@ export function ChatBubble({
 
   const replayBorder = isReplayMessage ? 'ring-2 ring-emerald-400/40' : '';
 
+  const isSeller = speaker === 'seller';
+
   return (
-    <div className={`flex ${isCustomer ? 'justify-end' : 'justify-start'} group/bubble`}>
-      <div className={`flex flex-col ${isCustomer ? 'items-end' : 'items-start'} ${maxWidth}`}>
+    <div className={`flex ${isSeller ? 'justify-end' : 'justify-start'} group/bubble`}>
+      <div className={`flex flex-col ${isSeller ? 'items-end' : 'items-start'} ${maxWidth}`}>
         <div className={`flex items-center gap-2 mb-1 px-3`}>
-          <span className={`${labelSize} font-medium ${isCustomer ? 'text-hh-muted' : 'text-hh-text'}`}>
-            {isReplayMessage && !isCustomer ? 'Jij (replay)' : displayLabel}
+          <span className={`${labelSize} font-medium ${isSeller ? 'text-hh-text' : 'text-hh-muted'}`}>
+            {isReplayMessage && isSeller ? 'Jij (replay)' : displayLabel}
           </span>
           {timestamp && (
             <span className={`${labelSize} text-hh-muted`}>
@@ -53,7 +55,7 @@ export function ChatBubble({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {!isCustomer && onReplay && (
+          {isSeller && onReplay && (
             <button
               onClick={(e) => { e.stopPropagation(); onReplay(); }}
               className="opacity-0 group-hover/bubble:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-hh-ui-100 text-hh-muted hover:text-hh-primary flex-shrink-0"
@@ -64,7 +66,7 @@ export function ChatBubble({
           )}
           <div
             className={`${padding} rounded-2xl ${
-              isCustomer
+              isSeller
                 ? adminColors ? "bg-purple-600 text-white rounded-br-md" : "bg-hh-ink text-white rounded-br-md"
                 : adminColors ? "bg-purple-50 text-hh-text rounded-bl-md" : "bg-hh-ui-50 text-hh-text rounded-bl-md"
             } ${opacityClass} ${replayBorder}`}
