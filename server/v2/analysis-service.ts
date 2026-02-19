@@ -1527,7 +1527,7 @@ function convertChatHistoryToTurns(
     if (msg.role === 'system') continue;
     if (!msg.content || msg.content.trim().length === 0) continue;
 
-    const speaker: 'seller' | 'customer' = msg.role === 'user' ? 'seller' : 'customer';
+    const speaker: 'seller' | 'customer' = (msg.role === 'user' || msg.role === 'seller') ? 'seller' : 'customer';
     const startMs = idx * 5000;
     const endMs = startMs + 4500;
 
@@ -1578,6 +1578,7 @@ export async function runChatAnalysis(
   }
 
   try {
+    console.log(`[ChatAnalysis] Raw chatHistory length: ${chatHistory.length}, roles: ${[...new Set(chatHistory.map(m => m.role))].join(', ')}`);
     const turns = convertChatHistoryToTurns(chatHistory, sessionCreatedAt);
 
     if (turns.length === 0) {
@@ -1586,6 +1587,7 @@ export async function runChatAnalysis(
 
     const sellerTurns = turns.filter(t => t.speaker === 'seller');
     if (sellerTurns.length === 0) {
+      console.warn(`[ChatAnalysis] No seller turns found. Turn speakers: ${turns.map(t => t.speaker).join(', ')}`);
       throw new Error('Geen verkoper berichten gevonden in de chat sessie.');
     }
 

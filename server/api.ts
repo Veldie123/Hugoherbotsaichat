@@ -3159,6 +3159,14 @@ app.post("/api/v2/analysis/chat-session", express.json(), async (req: Request, r
       return res.json({ conversationId: sessionId, status: existingStatus.status, message: 'Analyse is al bezig' });
     }
 
+    if (existingStatus && existingStatus.status === 'failed') {
+      try {
+        await pool.query('DELETE FROM conversation_analyses WHERE id = $1', [sessionId]);
+      } catch (e: any) {
+        console.warn('[API] Failed to clear old failed analysis:', e.message);
+      }
+    }
+
     const { data: session, error } = await supabase
       .from('v2_sessions')
       .select('*')

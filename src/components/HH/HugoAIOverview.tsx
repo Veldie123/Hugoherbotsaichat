@@ -302,6 +302,10 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         if (navigate) navigate('analysis-results');
         return;
       }
+      if (statusData.status === 'failed') {
+        handleAnalyzeSession(session);
+        return;
+      }
       if (statusData.status === 'processing' || statusData.status === 'analyzing' || statusData.status === 'evaluating' || statusData.status === 'generating_report') {
         setAnalyzingSessionIds(prev => new Set(prev).add(sessionId));
         const pollInterval = setInterval(async () => {
