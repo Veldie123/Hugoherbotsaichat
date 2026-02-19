@@ -221,6 +221,12 @@ export function AppLayout({
                           if (onSelectHistoryItem) {
                             onSelectHistoryItem(histItem.id, item.historyType);
                           } else {
+                            if (item.historyType === 'chat') {
+                              sessionStorage.setItem('analysisId', histItem.id);
+                              sessionStorage.setItem('analysisFromHugo', 'true');
+                            } else {
+                              sessionStorage.removeItem('analysisFromHugo');
+                            }
                             navigate?.('analysis-results', { conversationId: histItem.id });
                           }
                         }}
@@ -319,6 +325,12 @@ export function AppLayout({
                             if (onSelectHistoryItem) {
                               onSelectHistoryItem(histItem.id, item.historyType);
                             } else {
+                              if (item.historyType === 'chat') {
+                                sessionStorage.setItem('analysisId', histItem.id);
+                                sessionStorage.setItem('analysisFromHugo', 'true');
+                              } else {
+                                sessionStorage.removeItem('analysisFromHugo');
+                              }
                               navigate?.('analysis-results', { conversationId: histItem.id });
                             }
                             setMobileMenuOpen(false);

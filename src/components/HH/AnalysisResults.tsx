@@ -834,12 +834,13 @@ ${msg}`;
 
   const useAdminLayout = !!navigationData?.fromAdmin;
   const adminColors = useAdminLayout;
+  const fromHugo = !useAdminLayout && sessionStorage.getItem('analysisFromHugo') === 'true';
 
   const wrapLayout = (children: React.ReactNode) => {
     if (useAdminLayout) {
       return <AdminLayout currentPage="admin-uploads" navigate={navigate as (page: string) => void}>{children}</AdminLayout>;
     }
-    return <AppLayout currentPage="analysis" navigate={navigate} isAdmin={isAdmin}>{children}</AppLayout>;
+    return <AppLayout currentPage={fromHugo ? "talk-to-hugo" : "analysis"} navigate={navigate} isAdmin={isAdmin}>{children}</AppLayout>;
   };
 
   if (loading || processingStep) {
@@ -864,8 +865,11 @@ ${msg}`;
         <div className="text-center space-y-4">
           <AlertCircle className="w-8 h-8 text-hh-destructive mx-auto" />
           <p className="text-hh-text">{error || 'Geen resultaten gevonden'}</p>
-          <Button variant="outline" onClick={() => navigate?.("upload-analysis")}>
-            Terug naar uploads
+          <Button variant="outline" onClick={() => {
+            sessionStorage.removeItem('analysisFromHugo');
+            navigate?.(fromHugo ? "hugo-overview" : "upload-analysis");
+          }}>
+            {fromHugo ? 'Terug naar Talk to Hugo' : 'Terug naar uploads'}
           </Button>
         </div>
       </div>
@@ -926,10 +930,13 @@ ${msg}`;
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate?.(navigationData?.fromAdmin ? "admin-uploads" : "analysis")}
+              onClick={() => {
+                sessionStorage.removeItem('analysisFromHugo');
+                navigate?.(navigationData?.fromAdmin ? "admin-uploads" : fromHugo ? "hugo-overview" : "analysis");
+              }}
               className="gap-1 -ml-2"
             >
-              ← Terug naar analyses
+              {fromHugo ? '← Terug naar Talk to Hugo' : '← Terug naar analyses'}
             </Button>
           </div>
           <div className="flex items-start justify-between gap-4">

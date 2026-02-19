@@ -41,7 +41,6 @@ import {
 import { getFaseNaam } from "../../data/technieken-service";
 import { hideItem, getHiddenIds } from "../../utils/hiddenItems";
 import { getCodeBadgeColors } from "../../utils/phaseColors";
-import { TranscriptDialog, TranscriptSession } from "./TranscriptDialog";
 
 interface HugoAIOverviewProps {
   navigate?: (page: string) => void;
@@ -124,8 +123,6 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [transcriptSession, setTranscriptSession] = useState<TranscriptSession | null>(null);
-  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
   
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -158,6 +155,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
           return next;
         });
         sessionStorage.setItem('analysisId', sessionId);
+        sessionStorage.setItem('analysisFromHugo', 'true');
         if (navigate) navigate('analysis-results');
         return;
       }
@@ -175,6 +173,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               return next;
             });
             sessionStorage.setItem('analysisId', sessionId);
+            sessionStorage.setItem('analysisFromHugo', 'true');
             if (navigate) navigate('analysis-results');
           } else if (statusData.status === 'failed') {
             clearInterval(pollInterval);
@@ -261,21 +260,43 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
     fetchSessions();
   }, [demoSessions]);
 
-  const openTranscript = (session: Session) => {
-    const transcriptData: TranscriptSession = {
-      id: session.id,
-      techniqueNumber: session.nummer,
-      techniqueName: session.naam,
-      type: getTypeLabel(session.type),
-      date: session.date,
-      time: session.time,
-      duration: session.duration,
-      score: session.score,
-      quality: session.quality,
-      transcript: session.transcript,
-    };
-    setTranscriptSession(transcriptData);
-    setTranscriptDialogOpen(true);
+  const openSessionAnalysis = async (session: Session) => {
+    const sessionId = String(session.id);
+    try {
+      const statusRes = await fetch(`/api/v2/analysis/status/${sessionId}`);
+      const statusData = await statusRes.json();
+      if (statusData.status === 'completed') {
+        sessionStorage.setItem('analysisId', sessionId);
+        sessionStorage.setItem('analysisFromHugo', 'true');
+        if (navigate) navigate('analysis-results');
+        return;
+      }
+      if (statusData.status === 'processing') {
+        setAnalyzingSessionIds(prev => new Set(prev).add(sessionId));
+        const pollInterval = setInterval(async () => {
+          try {
+            const res = await fetch(`/api/v2/analysis/status/${sessionId}`);
+            const data = await res.json();
+            if (data.status === 'completed') {
+              clearInterval(pollInterval);
+              setAnalyzingSessionIds(prev => { const n = new Set(prev); n.delete(sessionId); return n; });
+              sessionStorage.setItem('analysisId', sessionId);
+              sessionStorage.setItem('analysisFromHugo', 'true');
+              if (navigate) navigate('analysis-results');
+            } else if (data.status === 'failed') {
+              clearInterval(pollInterval);
+              setAnalyzingSessionIds(prev => { const n = new Set(prev); n.delete(sessionId); return n; });
+              alert(`Analyse mislukt: ${data.error || 'Onbekende fout'}`);
+            }
+          } catch {
+            clearInterval(pollInterval);
+            setAnalyzingSessionIds(prev => { const n = new Set(prev); n.delete(sessionId); return n; });
+          }
+        }, 3000);
+        return;
+      }
+    } catch {}
+    handleAnalyzeSession(session);
   };
 
   useEffect(() => {
@@ -285,11 +306,11 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         sessionStorage.removeItem("openSessionId");
         const match = sessions.find(s => String(s.id) === openId);
         if (match) {
-          openTranscript(match);
+          openSessionAnalysis(match);
         } else {
           const idx = parseInt(openId, 10) - 1;
           if (idx >= 0 && idx < sessions.length) {
-            openTranscript(sessions[idx]);
+            openSessionAnalysis(sessions[idx]);
           }
         }
       }
@@ -619,7 +640,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                     <tr
                       key={session.id}
                       className="border-b border-hh-border last:border-0 hover:bg-hh-ui-50/50 transition-colors cursor-pointer"
-                      onClick={() => openTranscript(session)}
+                      onClick={() => openSessionAnalysis(session)}
                     >
                       {/* Technique Number Badge - emerald circles */}
                       <td className="py-3 px-4">
@@ -687,7 +708,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openTranscript(session)}>
+                            <DropdownMenuItem onClick={() => openSessionAnalysis(session)}>
                               <Eye className="w-4 h-4 mr-2" />
                               Bekijk details
                             </DropdownMenuItem>
@@ -717,7 +738,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
               <Card
                 key={session.id}
                 className="p-5 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => openTranscript(session)}
+                onClick={() => openSessionAnalysis(session)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -738,7 +759,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e: Event) => { e.stopPropagation(); openTranscript(session); }}>
+                      <DropdownMenuItem onClick={(e: Event) => { e.stopPropagation(); openSessionAnalysis(session); }}>
                         <Eye className="w-4 h-4 mr-2" />
                         Bekijk details
                       </DropdownMenuItem>
@@ -795,13 +816,6 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         )}
       </div>
 
-      {/* Shared Transcript Dialog */}
-      <TranscriptDialog
-        open={transcriptDialogOpen}
-        onOpenChange={setTranscriptDialogOpen}
-        session={transcriptSession}
-        isAdmin={false}
-      />
     </Layout>
   );
 }

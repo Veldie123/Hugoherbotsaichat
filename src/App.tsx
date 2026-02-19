@@ -27,6 +27,7 @@ type Page = "landing" | "pricing" | "about" | "login" | "signup" | "authcallback
 
 const DEV_PREVIEW_PAGES: Record<string, Page> = {
   'admin-chat-expert': 'admin-chat-expert',
+  'admin-talk-to-hugo': 'talk-to-hugo',
   'admin-sessions': 'admin-sessions',
   'admin-uploads': 'admin-uploads',
   'admin-config-review': 'admin-config-review',

@@ -1211,7 +1211,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
-                  {!assistanceConfig.blindPlay && (
+                  {!isAdmin && !assistanceConfig.blindPlay && (
                     <button
                       onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
                       className={`p-1.5 rounded-md transition-colors ${
@@ -1379,9 +1379,9 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             onClick={handleSendMessage}
             disabled={(!inputText.trim() && attachedFiles.length === 0) || isLoading || isStreaming}
             className="gap-2 px-3 sm:px-4 text-white"
-            style={{ backgroundColor: '#3C9A6E' }}
-            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
-            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
+            style={{ backgroundColor: isAdmin ? '#9910FA' : '#3C9A6E' }}
+            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = isAdmin ? '#7a0dd4' : '#2D7F57')}
+            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = isAdmin ? '#9910FA' : '#3C9A6E')}
           >
             {isLoading || isStreaming ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />
@@ -1647,18 +1647,18 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         {/* Unified header row — one continuous border-bottom */}
         <div className="flex items-stretch border-b border-hh-border flex-shrink-0">
-          {!assistanceConfig.blindPlay && desktopSidebarOpen && (
+          {!isAdmin && !assistanceConfig.blindPlay && desktopSidebarOpen && (
             <div className="hidden lg:flex items-center px-4 w-1/3 flex-shrink-0 bg-white" style={{ borderRight: '1px solid #e2e8f0' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b', letterSpacing: '0.5px', margin: 0 }}>
                 E.P.I.C. TECHNIQUE
               </h3>
             </div>
           )}
-          <div className={`${assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 bg-white`}>
+          <div className={`${isAdmin || assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 bg-white`}>
             {/* Left: Help sidebar toggle + Title */}
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-              {/* Mobile: EPIC Tips button */}
-              {!assistanceConfig.blindPlay && (
+              {/* Mobile: EPIC Tips button - hidden for admin */}
+              {!isAdmin && !assistanceConfig.blindPlay && (
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
                   className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 -ml-1 rounded-full border border-hh-border bg-white hover:bg-hh-ui-50 transition-colors"
@@ -1718,7 +1718,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
 
         {/* Body: EPIC sidebar content + Chat content side by side */}
         <div className="flex flex-1 overflow-hidden">
-          {!assistanceConfig.blindPlay && desktopSidebarOpen && (
+          {!isAdmin && !assistanceConfig.blindPlay && desktopSidebarOpen && (
             <div className="hidden lg:block w-1/3 flex-shrink-0 h-full overflow-y-auto bg-white" style={{ borderRight: '1px solid #e2e8f0' }}>
               <EPICSidebar
                 fasesAccordionOpen={fasesAccordionOpen}
@@ -1752,7 +1752,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             </div>
           )}
 
-          <div className={`${assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex flex-col bg-white overflow-hidden`}>
+          <div className={`${isAdmin || assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex flex-col bg-white overflow-hidden`}>
             {/* Level transition notification banner */}
             {levelTransitionMessage && (
               <div className="px-6 py-3 bg-gradient-to-r from-[#4F7396]/10 to-[#4F7396]/5 border-b border-[#4F7396]/20">
@@ -1789,8 +1789,8 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         isAdmin={false}
       />
 
-      {/* Mobile Sidebar Sheet */}
-      <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+      {/* Mobile Sidebar Sheet - hidden for admin */}
+      {!isAdmin && <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent side="left" className="w-[85%] sm:w-80 p-0 overflow-y-auto">
           <SheetHeader className="px-4 py-3 border-b border-hh-border">
             <SheetTitle className="text-left text-[16px]">E.P.I.C. TECHNIQUE</SheetTitle>
@@ -1830,7 +1830,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             isUserView={true}
           />
         </SheetContent>
-      </Sheet>
+      </Sheet>}
     </AppLayout>
   );
 }
