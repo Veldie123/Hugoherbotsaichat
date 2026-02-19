@@ -1694,18 +1694,18 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         {/* Unified header row — one continuous border-bottom */}
         <div className="flex items-stretch border-b border-hh-border flex-shrink-0">
-          {!isAdmin && !assistanceConfig.blindPlay && desktopSidebarOpen && (
+          {!assistanceConfig.blindPlay && desktopSidebarOpen && (
             <div className="hidden lg:flex items-center px-4 w-1/3 flex-shrink-0 bg-white" style={{ borderRight: '1px solid #e2e8f0' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b', letterSpacing: '0.5px', margin: 0 }}>
                 E.P.I.C. TECHNIQUE
               </h3>
             </div>
           )}
-          <div className={`${isAdmin || assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 bg-white`}>
+          <div className={`${assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 bg-white`}>
             {/* Left: Help sidebar toggle + Title */}
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-              {/* Mobile: EPIC Tips button - hidden for admin */}
-              {!isAdmin && !assistanceConfig.blindPlay && (
+              {/* Mobile: EPIC Tips button */}
+              {!assistanceConfig.blindPlay && (
                 <>
                   <button
                     onClick={() => setMobileSidebarOpen(true)}
@@ -1779,7 +1779,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
 
         {/* Body: EPIC sidebar content + Chat content side by side */}
         <div className="flex flex-1 overflow-hidden">
-          {!isAdmin && !assistanceConfig.blindPlay && desktopSidebarOpen && (
+          {!assistanceConfig.blindPlay && desktopSidebarOpen && (
             <div className="hidden lg:block w-1/3 flex-shrink-0 h-full overflow-y-auto bg-white" style={{ borderRight: '1px solid #e2e8f0' }}>
               <EPICSidebar
                 fasesAccordionOpen={fasesAccordionOpen}
@@ -1813,7 +1813,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             </div>
           )}
 
-          <div className={`${isAdmin || assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex flex-col bg-white overflow-hidden`}>
+          <div className={`${assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex flex-col bg-white overflow-hidden`}>
             {/* Level transition notification banner */}
             {levelTransitionMessage && (
               <div className="px-6 py-3 bg-gradient-to-r from-[#4F7396]/10 to-[#4F7396]/5 border-b border-[#4F7396]/20">
