@@ -1511,3 +1511,149 @@ export async function getAnalysisResults(conversationId: string): Promise<FullAn
   }
   return undefined;
 }
+
+/**
+ * Convert AI chat session conversation_history (CoachMessage[]) to TranscriptTurn[] format
+ * In roleplay: user = seller, assistant = customer (AI coach plays the customer role)
+ */
+function convertChatHistoryToTurns(
+  conversationHistory: Array<{ role: string; content: string }>,
+  sessionCreatedAt?: string
+): TranscriptTurn[] {
+  const turns: TranscriptTurn[] = [];
+  let idx = 0;
+
+  for (const msg of conversationHistory) {
+    if (msg.role === 'system') continue;
+    if (!msg.content || msg.content.trim().length === 0) continue;
+
+    const speaker: 'seller' | 'customer' = msg.role === 'user' ? 'seller' : 'customer';
+    const startMs = idx * 5000;
+    const endMs = startMs + 4500;
+
+    turns.push({
+      idx,
+      startMs,
+      endMs,
+      speaker,
+      text: msg.content,
+    });
+    idx++;
+  }
+
+  return turns;
+}
+
+/**
+ * Run full analysis on an AI chat session (skip transcription, use existing chat history)
+ */
+export async function runChatAnalysis(
+  conversationId: string,
+  chatHistory: Array<{ role: string; content: string }>,
+  userId: string,
+  title: string,
+  techniqueId?: string,
+  sessionCreatedAt?: string
+): Promise<void> {
+  const job: ConversationAnalysis = {
+    id: conversationId,
+    userId,
+    title,
+    type: 'live',
+    status: 'analyzing',
+    consentConfirmed: true,
+    createdAt: new Date().toISOString(),
+  };
+  analysisJobs.set(conversationId, job);
+
+  try {
+    await pool.query(
+      `INSERT INTO conversation_analyses (id, user_id, title, status, created_at)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (id) DO UPDATE SET status = $4`,
+      [conversationId, userId, title, 'analyzing', new Date().toISOString()]
+    );
+  } catch (err: any) {
+    console.warn('[ChatAnalysis] DB initial insert failed:', err.message);
+  }
+
+  try {
+    const turns = convertChatHistoryToTurns(chatHistory, sessionCreatedAt);
+
+    if (turns.length === 0) {
+      throw new Error('Geen berichten gevonden in de chat sessie.');
+    }
+
+    const sellerTurns = turns.filter(t => t.speaker === 'seller');
+    if (sellerTurns.length === 0) {
+      throw new Error('Geen verkoper berichten gevonden in de chat sessie.');
+    }
+
+    console.log(`[ChatAnalysis] Processing ${turns.length} turns (${sellerTurns.length} seller) for session ${conversationId}`);
+
+    job.status = 'evaluating';
+    analysisJobs.set(conversationId, { ...job });
+    await persistStatusToDb(conversationId, 'evaluating');
+
+    const evaluations = await evaluateSellerTurns(turns);
+    const signals = await detectCustomerSignals(turns, evaluations);
+
+    const phaseCoverage = calculatePhaseCoverage(evaluations, turns);
+    const missedOpps = await detectMissedOpportunities(evaluations, signals, turns);
+
+    job.status = 'generating_report';
+    analysisJobs.set(conversationId, { ...job });
+    await persistStatusToDb(conversationId, 'generating_report');
+    const insights = await generateCoachReport(turns, evaluations, signals, phaseCoverage, missedOpps);
+
+    const { coachDebrief, moments } = await generateCoachArtifacts(turns, evaluations, signals, phaseCoverage, missedOpps, insights);
+    insights.coachDebrief = coachDebrief;
+    insights.moments = moments;
+
+    try {
+      const detailedMetrics = await computeDetailedMetrics(turns, evaluations, signals, phaseCoverage);
+      insights.detailedMetrics = detailedMetrics;
+    } catch (err: any) {
+      console.warn('[ChatAnalysis] Detailed metrics computation failed (non-fatal):', err.message);
+    }
+
+    job.status = 'completed';
+    job.completedAt = new Date().toISOString();
+    analysisJobs.set(conversationId, { ...job });
+
+    const fullResult: FullAnalysisResult = {
+      conversation: { ...job },
+      transcript: turns,
+      evaluations,
+      signals,
+      insights,
+    };
+
+    analysisResults.set(conversationId, fullResult);
+
+    try {
+      await pool.query(
+        `UPDATE conversation_analyses SET status = $1, completed_at = $2, result = $3 WHERE id = $4`,
+        ['completed', new Date().toISOString(), JSON.stringify(fullResult), conversationId]
+      );
+    } catch (err: any) {
+      console.warn('[ChatAnalysis] DB completed update failed:', err.message);
+    }
+
+    console.log(`[ChatAnalysis] Completed analysis for session ${conversationId}`);
+  } catch (err: any) {
+    console.error(`[ChatAnalysis] Failed for session ${conversationId}:`, err.message);
+    job.status = 'failed';
+    job.error = err.message || 'Onbekende fout';
+    analysisJobs.set(conversationId, { ...job });
+
+    try {
+      await pool.query(
+        `UPDATE conversation_analyses SET status = $1, error = $2 WHERE id = $3`,
+        ['failed', err.message || 'Onbekende fout', conversationId]
+      );
+    } catch (dbErr: any) {
+      console.warn('[ChatAnalysis] DB error update failed:', dbErr.message);
+    }
+  }
+}

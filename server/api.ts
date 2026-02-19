@@ -108,6 +108,7 @@ import { buildRichResponse } from "./v2/rich-response-builder";
 import {
   uploadAndStore,
   runFullAnalysis,
+  runChatAnalysis,
   getAnalysisStatus,
   getAnalysisResults,
   type ConversationAnalysis,
@@ -3137,6 +3138,62 @@ app.get("/api/v2/analysis/results/:conversationId", async (req: Request, res: Re
   } catch (err: any) {
     console.error("[Analysis] Results error:", err);
     res.status(500).json({ error: err.message || 'Resultaten ophalen mislukt' });
+  }
+});
+
+app.post("/api/v2/analysis/chat-session", express.json(), async (req: Request, res: Response) => {
+  try {
+    const { sessionId, userId } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId is vereist' });
+    }
+
+    const existingResults = await getAnalysisResults(sessionId);
+    if (existingResults) {
+      return res.json({ conversationId: sessionId, status: 'completed', message: 'Analyse al beschikbaar' });
+    }
+
+    const existingStatus = await getAnalysisStatus(sessionId);
+    if (existingStatus && ['analyzing', 'evaluating', 'generating_report'].includes(existingStatus.status)) {
+      return res.json({ conversationId: sessionId, status: existingStatus.status, message: 'Analyse is al bezig' });
+    }
+
+    const { data: session, error } = await supabase
+      .from('v2_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (error || !session) {
+      return res.status(404).json({ error: 'Sessie niet gevonden' });
+    }
+
+    const chatHistory = session.conversation_history || [];
+    if (chatHistory.length === 0) {
+      return res.status(400).json({ error: 'Geen berichten in de sessie' });
+    }
+
+    const effectiveUserId = userId || session.user_id || 'anonymous';
+    const techniqueName = getTechnique(session.technique_id)?.naam || session.technique_id || 'Algemeen';
+    const title = techniqueName;
+
+    res.json({ conversationId: sessionId, status: 'analyzing', message: 'Analyse gestart' });
+
+    runChatAnalysis(
+      sessionId,
+      chatHistory,
+      effectiveUserId,
+      title,
+      session.technique_id,
+      session.created_at
+    ).catch(err => {
+      console.error('[API] Chat analysis background error:', err.message);
+    });
+
+  } catch (err: any) {
+    console.error("[API] Chat session analysis error:", err);
+    res.status(500).json({ error: err.message || 'Analyse starten mislukt' });
   }
 });
 

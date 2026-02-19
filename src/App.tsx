@@ -134,6 +134,14 @@ export default function App() {
       setNavigationData(data);
       return;
     }
+
+    if (page === "admin-analysis-results" || page === "admin-analysis-detail") {
+      setCurrentPage("analysis-results" as Page);
+      setIsAdmin(true);
+      setNavigationData({ ...data, fromAdmin: true });
+      window.scrollTo(0, 0);
+      return;
+    }
     
     setCurrentPage(page as Page);
     setNavigationData(data);

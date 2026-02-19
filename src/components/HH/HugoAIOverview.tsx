@@ -36,6 +36,7 @@ import {
   ArrowDown,
   ArrowUpDown,
   Trash2,
+  BarChart3,
 } from "lucide-react";
 import { getFaseNaam } from "../../data/technieken-service";
 import { hideItem, getHiddenIds } from "../../utils/hiddenItems";
@@ -134,6 +135,73 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
   const handleDeleteSession = (id: string) => {
     hideItem('user', 'chat', id);
     setHiddenIds(new Set(getHiddenIds('user', 'chat')));
+  };
+
+  const [analyzingSessionIds, setAnalyzingSessionIds] = useState<Set<string>>(new Set());
+
+  const handleAnalyzeSession = async (session: Session) => {
+    const sessionId = String(session.id);
+    setAnalyzingSessionIds(prev => new Set(prev).add(sessionId));
+
+    try {
+      const response = await fetch('/api/v2/analysis/chat-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      });
+      const data = await response.json();
+
+      if (data.status === 'completed') {
+        setAnalyzingSessionIds(prev => {
+          const next = new Set(prev);
+          next.delete(sessionId);
+          return next;
+        });
+        sessionStorage.setItem('analysisId', sessionId);
+        if (navigate) navigate('analysis-results');
+        return;
+      }
+
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/v2/analysis/status/${sessionId}`);
+          const statusData = await statusRes.json();
+
+          if (statusData.status === 'completed') {
+            clearInterval(pollInterval);
+            setAnalyzingSessionIds(prev => {
+              const next = new Set(prev);
+              next.delete(sessionId);
+              return next;
+            });
+            sessionStorage.setItem('analysisId', sessionId);
+            if (navigate) navigate('analysis-results');
+          } else if (statusData.status === 'failed') {
+            clearInterval(pollInterval);
+            setAnalyzingSessionIds(prev => {
+              const next = new Set(prev);
+              next.delete(sessionId);
+              return next;
+            });
+            alert(`Analyse mislukt: ${statusData.error || 'Onbekende fout'}`);
+          }
+        } catch {
+          clearInterval(pollInterval);
+          setAnalyzingSessionIds(prev => {
+            const next = new Set(prev);
+            next.delete(sessionId);
+            return next;
+          });
+        }
+      }, 3000);
+    } catch (err: any) {
+      setAnalyzingSessionIds(prev => {
+        const next = new Set(prev);
+        next.delete(sessionId);
+        return next;
+      });
+      alert(`Fout bij starten analyse: ${err.message}`);
+    }
   };
   
   const demoSessions: Session[] = useMemo(() => {
@@ -623,6 +691,13 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                               <Eye className="w-4 h-4 mr-2" />
                               Bekijk details
                             </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleAnalyzeSession(session)}
+                              disabled={analyzingSessionIds.has(String(session.id))}
+                            >
+                              <BarChart3 className="w-4 h-4 mr-2" />
+                              {analyzingSessionIds.has(String(session.id)) ? 'Bezig met analyseren...' : 'Analyseer Sessie'}
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDeleteSession(session.id)} className="text-red-600 focus:text-red-600">
                               <Trash2 className="w-4 h-4 mr-2" />
                               Verwijderen
@@ -666,6 +741,13 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
                       <DropdownMenuItem onClick={(e: Event) => { e.stopPropagation(); openTranscript(session); }}>
                         <Eye className="w-4 h-4 mr-2" />
                         Bekijk details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={(e: Event) => { e.stopPropagation(); handleAnalyzeSession(session); }}
+                        disabled={analyzingSessionIds.has(String(session.id))}
+                      >
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        {analyzingSessionIds.has(String(session.id)) ? 'Bezig met analyseren...' : 'Analyseer Sessie'}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleDeleteSession(session.id)} className="text-red-600 focus:text-red-600">
                         <Trash2 className="w-4 h-4 mr-2" />

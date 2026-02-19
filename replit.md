@@ -50,7 +50,8 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
     - **AI Model:** All analysis uses gpt-5.1.
     - **Phase Tracking:** `determineCurrentPhase()` helper analyzes detected techniques to determine conversation phase.
     - **Local PostgreSQL Persistence:** Analysis results persist to `conversation_analyses` table in local Replit PostgreSQL.
-    - **API Endpoints:** `POST /api/v2/analysis/upload`, `GET /api/v2/analysis/status/:id`, `GET /api/v2/analysis/results/:id`, `GET /api/v2/analysis/list?userId=`.
+    - **API Endpoints:** `POST /api/v2/analysis/upload`, `POST /api/v2/analysis/chat-session`, `GET /api/v2/analysis/status/:id`, `GET /api/v2/analysis/results/:id`, `GET /api/v2/analysis/list?userId=`.
+    - **Chat Analysis Pipeline:** AI chat sessions (from Supabase v2_sessions) can be analyzed with the same evaluation pipeline as uploaded transcripts via `runChatAnalysis()`. Converts CoachMessage[] (user→seller, assistant→customer) to TranscriptTurn[] format, skipping transcription. Available via "Analyseer Sessie" in session dropdown menus (both admin and user views).
     - **Transcript Replay:** Users can hover over any seller bubble in the Transcript tab to see a replay icon, initiating an inline replay with Hugo roleplaying the customer.
 - **Multi-modal Integration (Audio/Video):**
     - **Audio Mode:** Uses LiveKit Cloud for WebRTC, Deepgram Nova 3 for STT (Dutch), and ElevenLabs for TTS.

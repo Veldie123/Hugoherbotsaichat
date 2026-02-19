@@ -118,6 +118,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
   const [techniqueValidation, setTechniqueValidation] = useState<Record<string, boolean | null>>({});
   const [showFeedbackInput, setShowFeedbackInput] = useState<Record<string, boolean>>({});
   const [feedbackText, setFeedbackText] = useState<Record<string, string>>({});
+  const [analyzingSessionIds, setAnalyzingSessionIds] = useState<Set<string>>(new Set());
   
   // Convert Session to TranscriptSession for the TranscriptDialog component
   const transcriptSession: TranscriptSession | null = useMemo(() => {
@@ -168,6 +169,69 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
   const handleDeleteSession = (id: string) => {
     hideItem('admin', 'chat', id);
     setHiddenIds(new Set(getHiddenIds('admin', 'chat')));
+  };
+
+  const handleAnalyzeSession = async (session: Session) => {
+    const sessionId = session.id;
+    setAnalyzingSessionIds(prev => new Set(prev).add(sessionId));
+
+    try {
+      const response = await fetch('/api/v2/analysis/chat-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      });
+      const data = await response.json();
+
+      if (data.status === 'completed') {
+        setAnalyzingSessionIds(prev => {
+          const next = new Set(prev);
+          next.delete(sessionId);
+          return next;
+        });
+        if (navigate) navigate('admin-analysis-results', { conversationId: sessionId, fromAdmin: true });
+        return;
+      }
+
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/v2/analysis/status/${sessionId}`);
+          const statusData = await statusRes.json();
+
+          if (statusData.status === 'completed') {
+            clearInterval(pollInterval);
+            setAnalyzingSessionIds(prev => {
+              const next = new Set(prev);
+              next.delete(sessionId);
+              return next;
+            });
+            if (navigate) navigate('admin-analysis-results', { conversationId: sessionId, fromAdmin: true });
+          } else if (statusData.status === 'failed') {
+            clearInterval(pollInterval);
+            setAnalyzingSessionIds(prev => {
+              const next = new Set(prev);
+              next.delete(sessionId);
+              return next;
+            });
+            alert(`Analyse mislukt: ${statusData.error || 'Onbekende fout'}`);
+          }
+        } catch {
+          clearInterval(pollInterval);
+          setAnalyzingSessionIds(prev => {
+            const next = new Set(prev);
+            next.delete(sessionId);
+            return next;
+          });
+        }
+      }, 3000);
+    } catch (err: any) {
+      setAnalyzingSessionIds(prev => {
+        const next = new Set(prev);
+        next.delete(sessionId);
+        return next;
+      });
+      alert(`Fout bij starten analyse: ${err.message}`);
+    }
   };
   
   useEffect(() => {
@@ -865,6 +929,13 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                             <Eye className="w-4 h-4 mr-2" />
                             Bekijk Details
                           </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleAnalyzeSession(session)}
+                            disabled={analyzingSessionIds.has(session.id)}
+                          >
+                            <BarChart3 className="w-4 h-4 mr-2" />
+                            {analyzingSessionIds.has(session.id) ? 'Bezig met analyseren...' : 'Analyseer Sessie'}
+                          </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
                             Download
@@ -976,6 +1047,13 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                         <DropdownMenuItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); viewTranscript(session); }}>
                           <Eye className="w-4 h-4 mr-2" />
                           Bekijk Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleAnalyzeSession(session); }}
+                          disabled={analyzingSessionIds.has(session.id)}
+                        >
+                          <BarChart3 className="w-4 h-4 mr-2" />
+                          {analyzingSessionIds.has(session.id) ? 'Bezig met analyseren...' : 'Analyseer Sessie'}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                           <Download className="w-4 h-4 mr-2" />
