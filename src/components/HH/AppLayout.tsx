@@ -220,11 +220,8 @@ export function AppLayout({
                           e.stopPropagation();
                           if (onSelectHistoryItem) {
                             onSelectHistoryItem(histItem.id, item.historyType);
-                          } else if (item.historyType === 'analysis') {
-                            navigate?.('analysis-results', { conversationId: histItem.id });
                           } else {
-                            sessionStorage.setItem("openSessionId", histItem.id);
-                            navigate?.('talk-to-hugo', { sessionId: histItem.id });
+                            navigate?.('analysis-results', { conversationId: histItem.id });
                           }
                         }}
                         className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-left hover:bg-hh-ui-50 transition-colors group cursor-pointer"
@@ -321,11 +318,8 @@ export function AppLayout({
                             e.stopPropagation();
                             if (onSelectHistoryItem) {
                               onSelectHistoryItem(histItem.id, item.historyType);
-                            } else if (item.historyType === 'analysis') {
-                              navigate?.('analysis-results', { conversationId: histItem.id });
                             } else {
-                              sessionStorage.setItem("openSessionId", histItem.id);
-                              navigate?.('talk-to-hugo', { sessionId: histItem.id });
+                              navigate?.('analysis-results', { conversationId: histItem.id });
                             }
                             setMobileMenuOpen(false);
                           }}

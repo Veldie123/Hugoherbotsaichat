@@ -984,31 +984,66 @@ ${msg}`;
 
         {activeTab === 'coach' && (<div className="max-w-[860px]">
 
-          {/* SECTION 1: Score overview — 2-column layout */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-12">
-            <div className="rounded-2xl p-4 sm:p-5" style={{ backgroundColor: '#FAFBFC', border: '2px solid #F1F5F9' }}>
-              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-hh-muted mb-3">Algemeen</p>
-              <div className="flex items-start gap-3 sm:gap-4">
-                <div className="relative flex-shrink-0" style={{ width: '72px', height: '72px' }}>
-                  <svg width="72" height="72" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="42" fill="none" stroke="#E5E7EB" strokeWidth="7" />
-                    <circle
-                      cx="50" cy="50" r="42"
-                      fill="none"
-                      stroke={adminColors ? '#9910FA' : '#3C9A6E'}
-                      strokeWidth="7"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 42}`}
-                      strokeDashoffset={`${2 * Math.PI * 42 * (1 - overallScore / 100)}`}
-                      style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.8s ease' }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-[18px] sm:text-[22px] font-bold text-hh-text leading-none">{overallScore}</span>
-                    <span className="text-[10px] text-hh-muted mt-0.5">%</span>
-                  </div>
+          {/* SECTION 1: Full-width score header — score ring + phase scores */}
+          <div className="rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8" style={{ backgroundColor: '#FAFBFC', border: '2px solid #F1F5F9' }}>
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
+              <div className="relative flex-shrink-0" style={{ width: '80px', height: '80px' }}>
+                <svg width="80" height="80" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#E5E7EB" strokeWidth="7" />
+                  <circle
+                    cx="50" cy="50" r="42"
+                    fill="none"
+                    stroke={adminColors ? '#9910FA' : '#3C9A6E'}
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 42}`}
+                    strokeDashoffset={`${2 * Math.PI * 42 * (1 - overallScore / 100)}`}
+                    style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.8s ease' }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-[22px] font-bold text-hh-text leading-none">{overallScore}</span>
+                  <span className="text-[10px] text-hh-muted mt-0.5">%</span>
                 </div>
-                <div className="flex-1 min-w-0">
+              </div>
+              <div className="flex-1 w-full min-w-0">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-2">
+                  {phaseScores.map((ps) => (
+                    <div key={ps.phase}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] text-hh-text font-medium">{ps.sublabel}</span>
+                        <span className={`text-[11px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${ps.score}%`,
+                            backgroundColor: ps.score >= 60 ? (adminColors ? '#9910FA' : '#3C9A6E') : ps.score >= 30 ? '#F59E0B' : '#EF4444'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: 2x2 Cards — Algemeen, Big Win, Quick Fix, Scharnierpunt */}
+          {(() => {
+            const moments = insights.moments || [];
+            const momentConfig: Record<string, { icon: any; color: string; bg: string; iconBg: string; label: string }> = {
+              'big_win': { icon: Trophy, color: '#047857', bg: '#ECFDF5', iconBg: '#D1FAE5', label: 'Big Win' },
+              'quick_fix': { icon: Wrench, color: '#B45309', bg: '#FFFBEB', iconBg: '#FEF3C7', label: 'Quick Fix' },
+              'turning_point': { icon: RotateCcw, color: '#BE123C', bg: '#FFF1F2', iconBg: '#FFE4E6', label: 'Scharnierpunt' },
+            };
+
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8 sm:mb-12">
+                {/* Algemeen card */}
+                <div className="rounded-2xl p-4 sm:p-5" style={{ backgroundColor: '#FAFBFC', border: '2px solid #F1F5F9' }}>
+                  <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-hh-muted mb-3">Algemeen</p>
                   <div className="relative group">
                     {useAdminLayout && editingDebrief ? (
                       <div className="space-y-2">
@@ -1056,44 +1091,8 @@ ${msg}`;
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="rounded-2xl p-4 sm:p-5" style={{ backgroundColor: '#FAFBFC', border: '2px solid #F1F5F9' }}>
-              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-hh-muted mb-3">Fasescores</p>
-              <div className="space-y-3">
-                {phaseScores.map((ps) => (
-                  <div key={ps.phase}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] sm:text-[12px] text-hh-text font-medium">{ps.sublabel}</span>
-                      <span className={`text-[11px] sm:text-[12px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{
-                          width: `${ps.score}%`,
-                          backgroundColor: ps.score >= 60 ? (adminColors ? '#9910FA' : '#3C9A6E') : ps.score >= 30 ? '#F59E0B' : '#EF4444'
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* SECTION 2: Moment Cards — 2-column grid */}
-          {(() => {
-            const moments = insights.moments || [];
-            const momentConfig: Record<string, { icon: any; color: string; bg: string; iconBg: string; label: string }> = {
-              'big_win': { icon: Trophy, color: '#047857', bg: '#ECFDF5', iconBg: '#D1FAE5', label: 'Big Win' },
-              'quick_fix': { icon: Wrench, color: '#B45309', bg: '#FFFBEB', iconBg: '#FEF3C7', label: 'Quick Fix' },
-              'turning_point': { icon: RotateCcw, color: '#BE123C', bg: '#FFF1F2', iconBg: '#FFE4E6', label: 'Scharnierpunt' },
-            };
-
-            return moments.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8 sm:mb-12">
+                {/* Moment cards */}
                 {moments.slice(0, 3).map((moment, idx) => {
                   const config = momentConfig[moment.type] || momentConfig['quick_fix'];
                   const MomentIcon = config.icon;
@@ -1245,11 +1244,6 @@ ${msg}`;
                     </div>
                   );
                 })}
-              </div>
-            ) : (
-              <div className="py-12 text-center mb-12">
-                <Sparkles className="w-6 h-6 text-hh-muted mx-auto mb-2" />
-                <p className="text-[14px] text-hh-muted">Coach momenten worden gegenereerd bij nieuwe analyses.</p>
               </div>
             );
           })()}
