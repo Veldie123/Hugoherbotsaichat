@@ -1378,7 +1378,8 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <Button
             onClick={handleSendMessage}
             disabled={(!inputText.trim() && attachedFiles.length === 0) || isLoading || isStreaming}
-            className="gap-2 px-3 sm:px-4 text-white"
+            variant="ghost"
+            className="gap-2 px-3 sm:px-4 text-white rounded-md hover:text-white"
             style={{ backgroundColor: isAdmin ? '#9910FA' : '#3C9A6E' }}
             onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = isAdmin ? '#7a0dd4' : '#2D7F57')}
             onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = isAdmin ? '#9910FA' : '#3C9A6E')}
