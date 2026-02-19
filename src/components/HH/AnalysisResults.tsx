@@ -180,7 +180,7 @@ interface DetailedMetrics {
     phase2Recognition: { total: number; recognized: number; percent: number };
     phase3Treatment: { total: number; treated: number; style: string; percent: number };
     phase4Afritten: { total: number; treated: number; percent: number };
-    matches: Array<{ turnIdx: number; houding: string; phase: number; recognized: boolean; treated: boolean }>;
+    matches: Array<{ turnIdx: number; houding: string; phase: number; recognized: boolean; treated: boolean; recommendedTechniques?: string[]; actualTechniques?: string[] }>;
     overallScore: number;
   };
   balance: {
@@ -243,6 +243,7 @@ export function AnalysisResults({
   const [result, setResult] = useState<FullAnalysisResult | null>(null);
   const [expandedMoment, setExpandedMoment] = useState<string | null>(null);
   const [expandedMetricCategory, setExpandedMetricCategory] = useState<string | null>(null);
+  const [expandedDetailDrilldown, setExpandedDetailDrilldown] = useState<string | null>(null);
   const conversationStorageKey = `viewedCoachMoments_${navigationData?.conversationId || sessionStorage.getItem('analysisId') || 'default'}`;
   const [viewedMoments, setViewedMoments] = useState<Set<string>>(() => {
     try {
@@ -1221,6 +1222,8 @@ export function AnalysisResults({
                     sub: dm.houdingen.phase2Recognition.total > 0
                       ? `${dm.houdingen.phase2Recognition.percent}% van klantsignalen opgepikt`
                       : 'Geen klantsignalen gedetecteerd in ontdekkingsfase',
+                    matches: dm.houdingen.matches.filter(m => m.phase === 2),
+                    kind: 'recognition' as const,
                   },
                   {
                     label: 'Behandeling (Fase 3)',
@@ -1231,6 +1234,8 @@ export function AnalysisResults({
                     sub: dm.houdingen.phase3Treatment.style !== 'geen'
                       ? `Stijl: ${dm.houdingen.phase3Treatment.style === 'empathisch' ? 'Empathisch (goed)' : dm.houdingen.phase3Treatment.style === 'technisch' ? 'Technisch (verbeterpunt)' : 'Gemengd'}`
                       : '',
+                    matches: dm.houdingen.matches.filter(m => m.phase === 3),
+                    kind: 'treatment' as const,
                   },
                   {
                     label: 'Afritten (Fase 4)',
@@ -1241,6 +1246,8 @@ export function AnalysisResults({
                     sub: dm.houdingen.phase4Afritten.total > 0
                       ? `Vragen, twijfels, bezwaren, uitstel`
                       : 'Geen weerstand gedetecteerd in beslissingsfase',
+                    matches: dm.houdingen.matches.filter(m => m.phase === 4),
+                    kind: 'treatment' as const,
                   },
                 ],
               },
@@ -1360,40 +1367,140 @@ export function AnalysisResults({
                         </button>
 
                         {isExpanded && (
-                          <div className="mt-2 rounded-2xl bg-white border border-gray-200 p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-sm">
-                            {cat.details.map((detail, dIdx) => (
-                              <div key={dIdx} className="flex items-start gap-2 sm:gap-3 py-2" style={dIdx < cat.details.length - 1 ? { borderBottom: '1px solid #F1F5F9' } : {}}>
-                                <div className="flex-shrink-0 mt-0.5">
-                                  {detail.score >= 70 ? (
-                                    <CheckCircle className="w-4 h-4" style={{ color: '#22C55E' }} />
-                                  ) : detail.score >= 30 ? (
-                                    <Circle className="w-4 h-4" style={{ color: '#F59E0B' }} />
-                                  ) : (
-                                    <XCircle className="w-4 h-4" style={{ color: '#EF4444' }} />
+                          <div className="mt-2 rounded-2xl bg-white border border-gray-200 p-3 sm:p-4 space-y-0 shadow-sm">
+                            {cat.details.map((detail: any, dIdx: number) => {
+                              const hasMatches = detail.matches && detail.matches.length > 0;
+                              const drilldownKey = `${cat.key}-${dIdx}`;
+                              const isDrilldownOpen = expandedDetailDrilldown === drilldownKey;
+
+                              return (
+                                <div key={dIdx} style={dIdx < cat.details.length - 1 ? { borderBottom: '1px solid #F1F5F9' } : {}}>
+                                  <div
+                                    className={`flex items-start gap-2 sm:gap-3 py-2.5 ${hasMatches ? 'cursor-pointer hover:bg-gray-50 -mx-3 px-3 sm:-mx-4 sm:px-4 rounded-lg transition-colors' : ''}`}
+                                    onClick={hasMatches ? () => setExpandedDetailDrilldown(isDrilldownOpen ? null : drilldownKey) : undefined}
+                                  >
+                                    <div className="flex-shrink-0 mt-0.5">
+                                      {detail.score >= 70 ? (
+                                        <CheckCircle className="w-4 h-4" style={{ color: '#22C55E' }} />
+                                      ) : detail.score >= 30 ? (
+                                        <Circle className="w-4 h-4" style={{ color: '#F59E0B' }} />
+                                      ) : (
+                                        <XCircle className="w-4 h-4" style={{ color: '#EF4444' }} />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                                        <span className="text-[12px] sm:text-[13px] font-medium text-hh-text">{detail.label}</span>
+                                        <span className="text-[11px] sm:text-[12px] font-semibold flex-shrink-0" style={{
+                                          color: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444'
+                                        }}>{detail.value}</span>
+                                      </div>
+                                      {detail.sub && (
+                                        <p className="text-[10px] sm:text-[11px] text-hh-muted leading-[14px] sm:leading-[16px]">{detail.sub}</p>
+                                      )}
+                                      <div className="mt-1.5 h-1 rounded-full bg-gray-100 overflow-hidden">
+                                        <div
+                                          className="h-full rounded-full transition-all duration-500"
+                                          style={{
+                                            width: `${detail.score}%`,
+                                            backgroundColor: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444'
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    {hasMatches && (
+                                      <div className="flex-shrink-0 mt-0.5">
+                                        <ChevronRight className={`w-3.5 h-3.5 text-hh-muted transition-transform ${isDrilldownOpen ? 'rotate-90' : ''}`} />
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {isDrilldownOpen && hasMatches && (
+                                    <div className="ml-6 mb-3 mt-1 space-y-2">
+                                      {detail.matches.map((match: any, mIdx: number) => {
+                                        const turn = result?.transcript?.find((t: any) => t.idx === match.turnIdx);
+                                        const isRecognized = match.recognized;
+                                        const isTreated = match.treated;
+                                        const statusOk = detail.kind === 'recognition' ? isRecognized : isTreated;
+
+                                        return (
+                                          <div
+                                            key={mIdx}
+                                            className="rounded-xl border p-3"
+                                            style={{
+                                              backgroundColor: statusOk ? '#F0FDF4' : '#FEF2F2',
+                                              borderColor: statusOk ? '#BBF7D0' : '#FECACA',
+                                            }}
+                                          >
+                                            <div className="flex items-start gap-2">
+                                              <div className="flex-shrink-0 mt-0.5">
+                                                {statusOk ? (
+                                                  <CheckCircle className="w-3.5 h-3.5" style={{ color: '#22C55E' }} />
+                                                ) : (
+                                                  <XCircle className="w-3.5 h-3.5" style={{ color: '#EF4444' }} />
+                                                )}
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                  <span className="text-[11px] font-semibold" style={{ color: statusOk ? '#166534' : '#991B1B' }}>
+                                                    {statusOk
+                                                      ? (detail.kind === 'recognition' ? 'Herkend' : 'Behandeld')
+                                                      : (detail.kind === 'recognition' ? 'Gemist' : 'Niet behandeld')
+                                                    }
+                                                  </span>
+                                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{
+                                                    backgroundColor: '#F1F5F9',
+                                                    color: '#64748B',
+                                                  }}>
+                                                    {match.houding}
+                                                  </span>
+                                                  {turn && (
+                                                    <span className="text-[10px] text-hh-muted">
+                                                      Beurt {match.turnIdx + 1} · {formatTime(turn.startMs)}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                {turn && (
+                                                  <p className="text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px] text-hh-text/80 line-clamp-2">
+                                                    "{turn.text.substring(0, 150)}{turn.text.length > 150 ? '…' : ''}"
+                                                  </p>
+                                                )}
+                                                {!statusOk && match.recommendedTechniques && match.recommendedTechniques.length > 0 && (
+                                                  <div className="mt-1.5 flex flex-wrap gap-1">
+                                                    <span className="text-[10px] text-hh-muted">Aanbevolen:</span>
+                                                    {match.recommendedTechniques.map((tech: string, tIdx: number) => (
+                                                      <span key={tIdx} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{
+                                                        backgroundColor: '#DBEAFE',
+                                                        color: '#1E40AF',
+                                                      }}>
+                                                        {tech}
+                                                      </span>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                                {statusOk && match.actualTechniques && match.actualTechniques.length > 0 && (
+                                                  <div className="mt-1.5 flex flex-wrap gap-1">
+                                                    <span className="text-[10px] text-hh-muted">Toegepast:</span>
+                                                    {match.actualTechniques.map((tech: string, tIdx: number) => (
+                                                      <span key={tIdx} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{
+                                                        backgroundColor: '#DCFCE7',
+                                                        color: '#166534',
+                                                      }}>
+                                                        {tech}
+                                                      </span>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
                                   )}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="mb-0.5">
-                                    <span className="text-[12px] sm:text-[13px] font-medium text-hh-text">{detail.label}</span>
-                                    <span className="text-[11px] sm:text-[12px] font-semibold sm:float-right block sm:inline mt-0.5 sm:mt-0" style={{
-                                      color: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444'
-                                    }}>{detail.value}</span>
-                                  </div>
-                                  {detail.sub && (
-                                    <p className="text-[10px] sm:text-[11px] text-hh-muted leading-[14px] sm:leading-[16px]">{detail.sub}</p>
-                                  )}
-                                  <div className="mt-1.5 h-1 rounded-full bg-gray-100 overflow-hidden">
-                                    <div
-                                      className="h-full rounded-full transition-all duration-500"
-                                      style={{
-                                        width: `${detail.score}%`,
-                                        backgroundColor: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444'
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>
