@@ -37,6 +37,7 @@ interface EPICSidebarProps {
   }>;
   difficultyLevel: string;
   isUserView?: boolean;
+  isAdminView?: boolean;
   completedTechniques?: string[];
   currentUnlockedPhase?: number;
   hideHeader?: boolean;
@@ -81,10 +82,13 @@ export function EPICSidebar({
   klantHoudingen,
   difficultyLevel,
   isUserView = false,
+  isAdminView = false,
   completedTechniques = ["0.1", "0.2", "0.3", "0.4", "0.5", "1.1", "1.2"],
   currentUnlockedPhase = 2,
   hideHeader = false,
 }: EPICSidebarProps) {
+  const ACCENT = isAdminView ? '#9910FA' : '#10B981';
+  const ACCENT_BG = isAdminView ? 'rgba(153, 16, 250, 0.1)' : undefined;
   
   const isTechniqueLocked = (techniqueNumber: string) => {
     if (!isUserView) return false;
@@ -141,7 +145,8 @@ export function EPICSidebar({
               const subTechniques = getTopLevelTechniques(phase);
               const phaseProgress = getPhaseProgress(phase);
               const isPhaseLocked = phase > currentUnlockedPhase;
-              const circleColor = PHASE_CIRCLE_COLORS[phase] || '#64748B';
+              const baseCircleColor = PHASE_CIRCLE_COLORS[phase] || '#64748B';
+              const circleColor = isAdminView ? '#9910FA' : baseCircleColor;
 
               if (subTechniques.length === 0) return null;
 
@@ -454,10 +459,10 @@ export function EPICSidebar({
                 numberStyle = { color: '#4F7396' };
                 labelStyle = { color: '#475569' };
               } else if (isCurrent) {
-                barBgStyle = { backgroundColor: '#10B981' };
-                barFillStyle = { backgroundColor: '#10B981' };
+                barBgStyle = { backgroundColor: ACCENT };
+                barFillStyle = { backgroundColor: ACCENT };
                 barWidth = "100%";
-                numberStyle = { color: '#10B981' };
+                numberStyle = { color: ACCENT };
                 labelStyle = { color: '#475569' };
               } else if (hasProgress && !isLocked) {
                 barBgStyle = { backgroundColor: '#e2e8f0' };
@@ -546,14 +551,22 @@ export function EPICSidebar({
                         )}
                         <div
                           className={cn(
-                            "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold",
-                            isPhaseCompleted ? "bg-emerald-500 text-white" :
-                            phase === 0 ? "bg-slate-500 text-white" :
-                            phase === 1 ? "bg-emerald-500 text-white" :
-                            phase === 2 ? "bg-blue-500 text-white" :
-                            phase === 3 ? "bg-amber-500 text-white" :
-                            "bg-purple-500 text-white"
+                            "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white",
+                            !isAdminView && (isPhaseCompleted ? "bg-emerald-500" :
+                            phase === 0 ? "bg-slate-500" :
+                            phase === 1 ? "bg-emerald-500" :
+                            phase === 2 ? "bg-blue-500" :
+                            phase === 3 ? "bg-amber-500" :
+                            "bg-purple-500")
                           )}
+                          style={isAdminView ? {
+                            backgroundColor: isPhaseCompleted ? '#9910FA' :
+                              phase === 0 ? '#64748B' :
+                              phase === 1 ? '#9910FA' :
+                              phase === 2 ? '#7C3AED' :
+                              phase === 3 ? '#A855F7' :
+                              '#C084FC'
+                          } : undefined}
                         >
                           {isPhaseCompleted ? <Check className="w-3 h-3" /> : phase}
                         </div>
@@ -562,8 +575,9 @@ export function EPICSidebar({
                         </span>
                       </div>
                       <Badge className={
-                        isPhaseCompleted ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                        getFaseBadgeColor(phase)
+                        isPhaseCompleted
+                          ? (isAdminView ? "bg-purple-100 text-purple-700 border-purple-200" : "bg-emerald-100 text-emerald-700 border-emerald-200")
+                          : getFaseBadgeColor(phase)
                       }>
                         {phaseProgress.completed}/{phaseProgress.total}
                       </Badge>

@@ -246,7 +246,7 @@ export function TalkToHugoAI({
             `${t.speaker === 'customer' ? 'Klant' : 'Verkoper'}: ${t.text}`
           ).join('\n');
 
-          const systemContext = `Dit is een verkoopgesprek${ctx.analysisTitle ? ` genaamd "${ctx.analysisTitle}"` : ''}. De gebruiker wil oefenen met: ${techniqueLabel}.\n\nHieronder staat het volledige gesprek tot nu toe. Speel de klant realistisch verder op basis van dit gesprek. Reageer als de klant — in dezelfde toon, stijl en context.\n\n${fullTranscriptText}`;
+          const systemContext = `BELANGRIJK: Je bent nu in ROLEPLAY MODUS. Je speelt de KLANT in dit verkoopgesprek. Je mag GEEN context-gathering vragen stellen over de verkoper (zoals "wat verkoop jij?", "aan welk type klanten?", etc.). Je bent de klant en je BLIJFT in karakter als de klant.\n\nDit is een verkoopgesprek${ctx.analysisTitle ? ` genaamd "${ctx.analysisTitle}"` : ''}. De gebruiker wil oefenen met: ${techniqueLabel}.\n\nHieronder staat het volledige transcript. Jij bent de klant (Klant). Speel de klant realistisch verder — in dezelfde toon, stijl, bezwaren en context als in het transcript. Sla GEEN coachingmodus in. Stel GEEN vragen over de verkoper. Reageer ALLEEN als de klant.\n\n${fullTranscriptText}`;
 
           const lastSpeaker = turns.length > 0 ? turns[turns.length - 1].speaker : 'seller';
           const userMessage = lastSpeaker === 'seller'

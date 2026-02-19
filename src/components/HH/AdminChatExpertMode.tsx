@@ -76,6 +76,8 @@ interface Message {
   technique?: string;
   debugInfo?: DebugInfo;
   feedback?: "up" | "down" | null;
+  isTranscriptReplay?: boolean;
+  transcriptRole?: string;
 }
 
 interface DebugInfo {
@@ -214,6 +216,92 @@ export function AdminChatExpertMode({
       }
     };
     loadUserLevel();
+  }, []);
+
+  // Practice context from analysis (when "Oefen met Hugo" is clicked in admin view)
+  useEffect(() => {
+    let cancelled = false;
+    const practiceRaw = sessionStorage.getItem('hugoPracticeContext');
+    if (practiceRaw) {
+      sessionStorage.removeItem('hugoPracticeContext');
+      try {
+        const ctx = JSON.parse(practiceRaw);
+        if (ctx.fromAnalysis) {
+          const techniqueLabel = ctx.techniqueNames || ctx.techniqueIds?.join(', ') || ctx.practiceLabel;
+          const turns: Array<{ speaker: 'seller' | 'customer'; text: string }> = ctx.transcriptTurns || [];
+
+          const historyMessages: Message[] = [];
+          if (turns.length > 0) {
+            historyMessages.push({
+              id: `practice-header-${Date.now()}`,
+              sender: "ai",
+              text: `Hier is het gesprek${ctx.analysisTitle ? ` "${ctx.analysisTitle}"` : ''} tot het oefenmoment. Ik speel de klant verder — geef jij een betere reactie.`,
+              timestamp: new Date(),
+            });
+            turns.forEach((turn: { speaker: string; text: string }, i: number) => {
+              historyMessages.push({
+                id: `transcript-${Date.now()}-${i}`,
+                sender: turn.speaker === 'customer' ? 'ai' : 'hugo',
+                text: turn.text,
+                timestamp: new Date(),
+                isTranscriptReplay: true,
+                transcriptRole: turn.speaker === 'customer' ? 'Klant' : 'Jij',
+              });
+            });
+          }
+
+          const fullTranscriptText = turns.map((t: { speaker: string; text: string }) =>
+            `${t.speaker === 'customer' ? 'Klant' : 'Verkoper'}: ${t.text}`
+          ).join('\n');
+
+          const systemContext = `BELANGRIJK: Je bent nu in ROLEPLAY MODUS. Je speelt de KLANT in dit verkoopgesprek. Je mag GEEN context-gathering vragen stellen over de verkoper (zoals "wat verkoop jij?", "aan welk type klanten?", etc.). Je bent de klant en je BLIJFT in karakter als de klant.\n\nDit is een verkoopgesprek${ctx.analysisTitle ? ` genaamd "${ctx.analysisTitle}"` : ''}. De gebruiker wil oefenen met: ${techniqueLabel}.\n\nHieronder staat het volledige transcript. Jij bent de klant (Klant). Speel de klant realistisch verder — in dezelfde toon, stijl, bezwaren en context als in het transcript. Sla GEEN coachingmodus in. Stel GEEN vragen over de verkoper. Reageer ALLEEN als de klant.\n\n${fullTranscriptText}`;
+
+          const lastSpeaker = turns.length > 0 ? turns[turns.length - 1].speaker : 'seller';
+          const userMessage = lastSpeaker === 'seller'
+            ? 'Dit was mijn laatste reactie in het gesprek. Speel de klant en reageer hierop.'
+            : 'De klant zei dit als laatste. Ik wil nu een betere reactie geven. Wacht op mijn reactie en speel dan de klant verder.';
+
+          setMessages(historyMessages);
+          setHasActiveSession(true);
+          setIsLoading(true);
+
+          (async () => {
+            try {
+              const techniqueId = ctx.techniqueIds?.[0] || 'general';
+              await hugoApi.startSession({
+                techniqueId,
+                mode: "COACH_CHAT",
+                isExpert: true,
+                modality: "chat",
+              });
+              if (cancelled) return;
+              const response = await hugoApi.sendMessage(userMessage, true, systemContext);
+              if (cancelled) return;
+              setMessages(prev => [...prev, {
+                id: `practice-ai-${Date.now()}`,
+                sender: "ai",
+                text: response.response || "Ik ben klaar om verder te spelen als de klant. Geef jouw reactie!",
+                timestamp: new Date(),
+              }]);
+            } catch (err) {
+              if (cancelled) return;
+              setMessages(prev => [...prev, {
+                id: `practice-ai-${Date.now()}`,
+                sender: "ai",
+                text: `Ik speel de klant uit "${ctx.analysisTitle || ctx.practiceLabel}". Geef maar een betere reactie — ik reageer als de klant.`,
+                timestamp: new Date(),
+              }]);
+            } finally {
+              if (!cancelled) setIsLoading(false);
+            }
+          })();
+          console.log("[Admin] Practice context loaded from analysis:", ctx.practiceLabel, "turns:", turns.length);
+        }
+      } catch (err) {
+        console.error("[Admin] Failed to parse practice context:", err);
+      }
+    }
+    return () => { cancelled = true; };
   }, []);
 
   // Session timer effect
@@ -848,6 +936,7 @@ export function AdminChatExpertMode({
                 klantHoudingen={klantHoudingenArray}
                 difficultyLevel={difficultyLevel}
                 isUserView={true}
+                isAdminView={true}
                 hideHeader={true}
               />
             </div>
@@ -1021,19 +1110,35 @@ export function AdminChatExpertMode({
                 {/* Message Bubble - Modern rounded design */}
                 <div className={`flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
                   <div className="flex flex-col gap-1 max-w-[80%]">
+                    {message.isTranscriptReplay && message.transcriptRole && (
+                      <span className="text-[11px] font-medium mb-0.5 px-1" style={{ color: message.transcriptRole === 'Klant' ? '#9910FA' : '#4F7396' }}>
+                        {message.transcriptRole}
+                      </span>
+                    )}
                     {/* Main bubble */}
                     <div
                       className={`p-3 rounded-2xl ${
-                        message.sender === "hugo"
-                          ? "bg-purple-700 text-white rounded-br-md"
-                          : "bg-purple-50 text-slate-800 rounded-bl-md border border-purple-100"
+                        message.isTranscriptReplay
+                          ? message.sender === "hugo"
+                            ? "text-white rounded-br-md"
+                            : "text-slate-800 rounded-bl-md"
+                          : message.sender === "hugo"
+                            ? "bg-purple-700 text-white rounded-br-md"
+                            : "bg-purple-50 text-slate-800 rounded-bl-md border border-purple-100"
                       }`}
+                      style={message.isTranscriptReplay
+                        ? {
+                            opacity: 0.85,
+                            backgroundColor: message.sender === 'hugo' ? '#4F7396' : '#E8EDF2',
+                          }
+                        : undefined
+                      }
                     >
-                      <p className="text-[14px] leading-[20px]">{message.text}</p>
+                      <p className="text-[14px] leading-[20px] whitespace-pre-wrap">{message.text}</p>
                     </div>
                     
                     {/* Action buttons below AI bubble — matching user view */}
-                    {message.sender === "ai" && (
+                    {message.sender === "ai" && !message.isTranscriptReplay && (
                       <div className="flex items-center gap-0.5 mt-1.5">
                         <button
                           onClick={() => handleCopyMessage(message.id, message.text)}

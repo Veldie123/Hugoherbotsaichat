@@ -532,7 +532,7 @@ export function AnalysisResults({
         analysisTitle: result?.conversation?.title || '',
       };
       sessionStorage.setItem('hugoPracticeContext', JSON.stringify(practiceContext));
-      navigate('talk-to-hugo', practiceContext);
+      navigate(useAdminLayout ? 'admin-chat-expert' : 'talk-to-hugo', practiceContext);
     }
   };
 
