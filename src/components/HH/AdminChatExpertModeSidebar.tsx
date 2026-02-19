@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronDown, Info, MessageSquare, Check, Lock, Play } from "lucide-react";
+import { ChevronRight, ChevronDown, Info, Check, Lock, Play } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { cn } from "../ui/utils";
 import technieken_index from "../../data/technieken_index";
@@ -227,8 +227,6 @@ export function EPICSidebar({
                                 if (isLocked) return;
                                 if (isParent) {
                                   toggleParentTechnique(technique.nummer);
-                                } else {
-                                  setSelectedTechnique(technique.naam);
                                 }
                               }}
                               onInfo={() => openTechniqueDetails(technique.nummer)}
@@ -254,8 +252,6 @@ export function EPICSidebar({
                                           if (isChildLocked) return;
                                           if (childHasGrandchildren) {
                                             toggleParentTechnique(child.nummer);
-                                          } else {
-                                            setSelectedTechnique(child.naam);
                                           }
                                         }}
                                         onInfo={() => openTechniqueDetails(child.nummer)}
@@ -275,11 +271,7 @@ export function EPICSidebar({
                                                 isLocked={isGrandchildLocked}
                                                 isParent={false}
                                                 isExpandedParent={false}
-                                                onSelect={() => {
-                                                  if (!isGrandchildLocked) {
-                                                    setSelectedTechnique(grandchild.naam);
-                                                  }
-                                                }}
+                                                onSelect={() => {}}
                                                 onInfo={() => openTechniqueDetails(grandchild.nummer)}
                                               />
                                             );
@@ -393,9 +385,7 @@ export function EPICSidebar({
                                   isLocked={isLocked}
                                   isParent={false}
                                   isExpandedParent={false}
-                                  onSelect={() => {
-                                    if (!isLocked) setSelectedTechnique(technique.naam);
-                                  }}
+                                  onSelect={() => {}}
                                   onInfo={() => openTechniqueDetails(technique.nummer)}
                                 />
                               );
@@ -589,28 +579,23 @@ export function EPICSidebar({
                           return (
                             <div key={technique.nummer} id={`technique-${technique.id}`}>
                               <div
-                                role="button"
-                                tabIndex={0}
+                                role={isParent ? "button" : undefined}
+                                tabIndex={isParent ? 0 : undefined}
                                 onClick={(e) => {
                                   e.preventDefault();
                                   if (isParent) {
                                     toggleParentTechnique(technique.nummer);
-                                  } else {
-                                    setSelectedTechnique(technique.naam);
                                   }
                                 }}
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
+                                  if (isParent && (e.key === 'Enter' || e.key === ' ')) {
                                     e.preventDefault();
-                                    if (isParent) {
-                                      toggleParentTechnique(technique.nummer);
-                                    } else {
-                                      setSelectedTechnique(technique.naam);
-                                    }
+                                    toggleParentTechnique(technique.nummer);
                                   }
                                 }}
                                 className={cn(
-                                  "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all cursor-pointer",
+                                  "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
+                                  isParent ? "cursor-pointer" : "cursor-default",
                                   selectedTechnique === technique.naam
                                     ? "bg-purple-50 text-purple-800 border border-purple-300"
                                     : isRecommended
@@ -631,18 +616,6 @@ export function EPICSidebar({
                                     )}
                                   </div>
                                   <div className="flex items-center gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        startTechniqueChat(technique.nummer, technique.naam);
-                                      }}
-                                      className="p-1 rounded transition-colors flex-shrink-0 hover:bg-purple-100"
-                                      title="Start chat over deze techniek"
-                                    >
-                                      <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
-                                    </button>
                                     {difficultyLevel !== "gemiddeld" && (
                                       <button
                                         type="button"
@@ -671,28 +644,23 @@ export function EPICSidebar({
                                     return (
                                       <div key={child.nummer} id={`technique-${child.id}`}>
                                         <div
-                                          role="button"
-                                          tabIndex={0}
+                                          role={childHasGrandchildren ? "button" : undefined}
+                                          tabIndex={childHasGrandchildren ? 0 : undefined}
                                           onClick={(e) => {
                                             e.preventDefault();
                                             if (childHasGrandchildren) {
                                               toggleParentTechnique(child.nummer);
-                                            } else {
-                                              setSelectedTechnique(child.naam);
                                             }
                                           }}
                                           onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
+                                            if (childHasGrandchildren && (e.key === 'Enter' || e.key === ' ')) {
                                               e.preventDefault();
-                                              if (childHasGrandchildren) {
-                                                toggleParentTechnique(child.nummer);
-                                              } else {
-                                                setSelectedTechnique(child.naam);
-                                              }
+                                              toggleParentTechnique(child.nummer);
                                             }
                                           }}
                                           className={cn(
-                                            "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all cursor-pointer",
+                                            "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
+                                            childHasGrandchildren ? "cursor-pointer" : "cursor-default",
                                             selectedTechnique === child.naam
                                               ? "bg-purple-50 text-purple-800 border border-purple-300"
                                               : isChildRecommended
@@ -713,18 +681,6 @@ export function EPICSidebar({
                                               )}
                                             </div>
                                             <div className="flex items-center gap-1">
-                                              <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  e.preventDefault();
-                                                  startTechniqueChat(child.nummer, child.naam);
-                                                }}
-                                                className="p-1 rounded transition-colors flex-shrink-0 hover:bg-purple-100"
-                                                title="Start chat over deze techniek"
-                                              >
-                                                <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
-                                              </button>
                                               {difficultyLevel !== "gemiddeld" && (
                                                 <button
                                                   type="button"
@@ -752,20 +708,8 @@ export function EPICSidebar({
                                                 <div
                                                   key={grandchild.nummer}
                                                   id={`technique-${grandchild.id}`}
-                                                  role="button"
-                                                  tabIndex={0}
-                                                  onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setSelectedTechnique(grandchild.naam);
-                                                  }}
-                                                  onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' || e.key === ' ') {
-                                                      e.preventDefault();
-                                                      setSelectedTechnique(grandchild.naam);
-                                                    }
-                                                  }}
                                                   className={cn(
-                                                    "w-full text-left px-3 py-1.5 rounded-lg text-[11px] leading-[15px] transition-all cursor-pointer",
+                                                    "w-full text-left px-3 py-1.5 rounded-lg text-[11px] leading-[15px] transition-all cursor-default",
                                                     selectedTechnique === grandchild.naam
                                                       ? "bg-purple-50 text-purple-800 border border-purple-300"
                                                       : isGrandchildRecommended
@@ -779,18 +723,6 @@ export function EPICSidebar({
                                                     </span>
                                                     <span className="flex-1">{grandchild.naam}</span>
                                                     <div className="flex items-center gap-0.5">
-                                                      <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          e.preventDefault();
-                                                          startTechniqueChat(grandchild.nummer, grandchild.naam);
-                                                        }}
-                                                        className="p-0.5 rounded transition-colors hover:bg-purple-100"
-                                                        title="Start chat"
-                                                      >
-                                                        <MessageSquare className="w-3 h-3 text-purple-600" />
-                                                      </button>
                                                       <button
                                                         type="button"
                                                         onClick={(e) => {
@@ -914,15 +846,10 @@ export function EPICSidebar({
                               const isRecommended = recommendedTechnique === techniqueId;
 
                               return (
-                                <button
+                                <div
                                   key={techniqueId}
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    setSelectedTechnique(technique.naam);
-                                  }}
                                   className={cn(
-                                    "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all",
+                                    "w-full text-left px-3 py-2 rounded-lg text-[12px] leading-[16px] transition-all cursor-default",
                                     selectedTechnique === technique.naam
                                       ? "bg-purple-50 text-purple-800 border border-purple-300"
                                       : isRecommended
@@ -938,18 +865,6 @@ export function EPICSidebar({
                                       <span className="flex-1">{technique.naam}</span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          startTechniqueChat(technique.nummer, technique.naam);
-                                        }}
-                                        className="p-1 rounded transition-colors flex-shrink-0 hover:bg-purple-100"
-                                        title="Start chat over deze techniek"
-                                      >
-                                        <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
-                                      </button>
                                       {difficultyLevel !== "gemiddeld" && (
                                         <button
                                           type="button"
@@ -966,7 +881,7 @@ export function EPICSidebar({
                                       )}
                                     </div>
                                   </div>
-                                </button>
+                                </div>
                               );
                             })} 
                           </div>
@@ -1007,28 +922,31 @@ function UserTechniqueRow({
 }) {
   return (
     <div
-      role="button"
-      tabIndex={0}
+      role={isParent ? "button" : undefined}
+      tabIndex={isParent ? 0 : undefined}
       onClick={(e) => {
         e.preventDefault();
-        onSelect();
+        if (isParent) onSelect();
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (isParent && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
           onSelect();
         }
       }}
       className="flex items-center gap-2 py-1.5 px-2 rounded transition-colors"
       style={{
-        cursor: isLocked ? 'not-allowed' : 'pointer',
+        cursor: isLocked ? 'not-allowed' : isParent ? 'pointer' : 'default',
         opacity: isLocked ? 0.45 : 1,
         backgroundColor: isSelected ? STEEL_BLUE_BG : 'transparent',
         borderLeft: isSelected ? `3px solid ${STEEL_BLUE}` : '3px solid transparent',
       }}
     >
       {isSelected ? (
-        <Play className="w-3 h-3 flex-shrink-0" style={{ color: STEEL_BLUE, fill: STEEL_BLUE }} />
+        <div className="flex-shrink-0 relative">
+          <span className="absolute -left-0.5 -top-0.5 w-4 h-4 rounded-full animate-ping" style={{ backgroundColor: STEEL_BLUE, opacity: 0.2 }} />
+          <Play className="w-3 h-3 relative" style={{ color: STEEL_BLUE, fill: STEEL_BLUE }} />
+        </div>
       ) : (
         <span
           className="flex-shrink-0"
