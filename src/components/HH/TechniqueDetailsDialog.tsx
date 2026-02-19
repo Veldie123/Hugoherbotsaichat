@@ -8,7 +8,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Badge } from "../ui/badge";
-import { Target, X, Info, Clock, Lightbulb, Pencil } from "lucide-react";
+import { Target, X, Info, Clock, Lightbulb, Pencil, Play } from "lucide-react";
 import { getCodeBadgeColors } from "../../utils/phaseColors";
 
 interface TechniqueDetailsDialogProps {
@@ -33,6 +33,7 @@ interface TechniqueDetailsDialogProps {
   onSave?: (updatedTechnique: any) => void;
   isEditable?: boolean;
   isAdmin?: boolean;
+  onStartPractice?: (techniqueNumber: string, techniqueName: string) => void;
 }
 
 export function TechniqueDetailsDialog({
@@ -42,6 +43,7 @@ export function TechniqueDetailsDialog({
   onSave,
   isEditable = false,
   isAdmin = false,
+  onStartPractice,
 }: TechniqueDetailsDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<any>(null);
@@ -313,6 +315,19 @@ export function TechniqueDetailsDialog({
               </>
             ) : (
               <>
+                {onStartPractice && technique && (
+                  <Button
+                    className="px-6 gap-2 text-white"
+                    style={{ backgroundColor: isAdmin ? '#9910FA' : '#3C9A6E' }}
+                    onClick={() => {
+                      onStartPractice(technique.nummer, technique.naam);
+                      onOpenChange(false);
+                    }}
+                  >
+                    <Play className="w-4 h-4" />
+                    Oefen deze techniek
+                  </Button>
+                )}
                 {isEditable && (
                   <Button
                     className={`${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-hh-ink hover:bg-hh-ink/90'} px-6 gap-2`}

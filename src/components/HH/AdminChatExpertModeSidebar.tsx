@@ -922,23 +922,33 @@ function UserTechniqueRow({
 }) {
   return (
     <div
-      role={isParent ? "button" : undefined}
-      tabIndex={isParent ? 0 : undefined}
+      role="button"
+      tabIndex={0}
       onClick={(e) => {
         e.preventDefault();
-        if (isParent) onSelect();
-      }}
-      onKeyDown={(e) => {
-        if (isParent && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
+        if (isLocked) return;
+        if (isParent) {
           onSelect();
+        } else {
+          onInfo();
         }
       }}
-      className="flex items-center gap-2 py-1.5 px-2 rounded transition-colors"
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          if (isLocked) return;
+          if (isParent) {
+            onSelect();
+          } else {
+            onInfo();
+          }
+        }
+      }}
+      className="flex items-center gap-2 py-1.5 px-2 rounded transition-colors hover:bg-slate-50"
       style={{
-        cursor: isLocked ? 'not-allowed' : isParent ? 'pointer' : 'default',
+        cursor: isLocked ? 'not-allowed' : 'pointer',
         opacity: isLocked ? 0.45 : 1,
-        backgroundColor: isSelected ? STEEL_BLUE_BG : 'transparent',
+        backgroundColor: isSelected ? STEEL_BLUE_BG : undefined,
         borderLeft: isSelected ? `3px solid ${STEEL_BLUE}` : '3px solid transparent',
       }}
     >

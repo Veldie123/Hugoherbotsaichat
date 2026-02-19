@@ -31,7 +31,7 @@ export function ChatBubble({
   const displayLabel = label ?? defaultLabel;
   
   const opacityClass = variant === 'faded' ? 'opacity-60' : '';
-  const maxWidth = compact ? 'max-w-[85%]' : 'max-w-[70%] sm:max-w-[60%]';
+  const maxWidthValue = '75%';
   const padding = compact ? 'px-3 py-2' : 'p-3';
   const textSize = compact ? 'text-[13px] leading-[18px]' : 'text-[14px] leading-[22px]';
   const labelSize = compact ? 'text-[11px]' : 'text-[12px]';
@@ -42,7 +42,7 @@ export function ChatBubble({
 
   return (
     <div className={`flex ${isSeller ? 'justify-end' : 'justify-start'} group/bubble`}>
-      <div className={`flex flex-col ${isSeller ? 'items-end' : 'items-start'} ${maxWidth}`}>
+      <div className={`flex flex-col ${isSeller ? 'items-end' : 'items-start'}`} style={{ maxWidth: maxWidthValue }}>
         <div className={`flex items-center gap-2 mb-1 px-3`}>
           <span className={`${labelSize} font-medium ${isSeller ? 'text-hh-text' : 'text-hh-muted'}`}>
             {isReplayMessage && isSeller ? 'Jij (replay)' : displayLabel}

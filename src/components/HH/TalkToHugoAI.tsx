@@ -1120,7 +1120,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((message) => (
           <div key={message.id} className={`group flex ${message.sender === "hugo" ? "justify-end" : "justify-start"}`}>
-            <div className={`flex flex-col ${message.sender === "hugo" ? "items-end" : "items-start"} max-w-[85%] sm:max-w-[75%] lg:max-w-[65%]`}>
+            <div className={`flex flex-col ${message.sender === "hugo" ? "items-end" : "items-start"}`} style={{ maxWidth: '75%' }}>
               <div className={`p-3 rounded-2xl ${
                 message.sender === "hugo"
                   ? "bg-hh-ink text-white rounded-br-md"
@@ -1232,7 +1232,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         ))}
         {isStreaming && streamingText && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] p-3 rounded-2xl bg-hh-ui-50 text-hh-text rounded-bl-md">
+            <div className="p-3 rounded-2xl bg-hh-ui-50 text-hh-text rounded-bl-md" style={{ maxWidth: '75%' }}>
               <p className="text-[14px] leading-[22px] whitespace-pre-wrap">{streamingText}<span className="animate-pulse">▌</span></p>
             </div>
           </div>
@@ -1787,6 +1787,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
         technique={selectedTechniqueDetails}
         isEditable={false}
         isAdmin={false}
+        onStartPractice={startTechniqueChat}
       />
 
       {/* Mobile Sidebar Sheet - hidden for admin */}
