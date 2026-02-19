@@ -465,9 +465,10 @@ export async function evaluateSellerTurns(turns: TranscriptTurn[]): Promise<Turn
         }));
 
         if (techniques.length === 0 && result.detected && result.moveId) {
+          const ssotTech = getTechnique(result.moveId);
           techniques.push({
             id: result.moveId,
-            naam: result.moveLabel || '',
+            naam: ssotTech ? ssotTech.naam : (result.moveLabel || ''),
             quality: result.quality || 'goed',
             score: result.score ?? 5,
             stappen_gevolgd: [],
@@ -487,13 +488,17 @@ export async function evaluateSellerTurns(turns: TranscriptTurn[]): Promise<Turn
 
         return {
           turnIdx: pair.sellerTurn.idx,
-          techniques: (fallback.techniques || []).map(t => ({
-            id: t.id || fallback.moveId || '',
-            naam: t.naam || fallback.moveLabel || '',
-            quality: t.quality || 'goed',
-            score: t.score ?? fallback.score ?? 5,
-            stappen_gevolgd: [],
-          })),
+          techniques: (fallback.techniques || []).map(t => {
+            const techId = t.id || fallback.moveId || '';
+            const ssotTech = techId ? getTechnique(techId) : null;
+            return {
+              id: techId,
+              naam: ssotTech ? ssotTech.naam : (t.naam || fallback.moveLabel || ''),
+              quality: t.quality || 'goed',
+              score: t.score ?? fallback.score ?? 5,
+              stappen_gevolgd: [],
+            };
+          }),
           overallQuality: fallback.quality || 'goed',
           rationale: fallback.feedback || '',
         } as TurnEvaluation;
@@ -527,7 +532,7 @@ async function classifyCustomerHouding(text: string, phase: number): Promise<Cus
     { signal: 'ontwijkend', patterns: ['moeilijk te zeggen', 'dat varieert', 'dat is een goede vraag', 'maakt niet uit', 'geen idee', 'weet ik niet zo'] },
   ];
 
-  if (phase >= 2) {
+  if (phase >= 4) {
     quickPatterns.push(
       { signal: 'twijfel', patterns: ['ik weet niet', 'ik twijfel', 'niet zeker', 'ik moet erover nadenken', 'lastig'] },
       { signal: 'bezwaar', patterns: ['te duur', 'te veel', 'dat kan niet', 'niet akkoord', 'dat geloof ik niet', 'nee want'] },
@@ -561,7 +566,7 @@ Kies exact één houding op basis van de INHOUD en TOON van wat de klant zegt:
 - vaag: klant geeft geen duidelijk standpunt, blijft oppervlakkig, zegt ja maar zonder overtuiging
 - ontwijkend: klant wijkt bewust af van de vraag, geeft geen inhoudelijk antwoord
 - vraag: klant stelt een vraag
-${phase >= 2 ? '- twijfel: klant is onzeker over beslissing\n- bezwaar: klant brengt tegenargument tegen het aanbod\n- uitstel: klant wil beslissing uitstellen' : ''}
+${phase >= 4 ? '- twijfel: klant is onzeker over beslissing\n- bezwaar: klant brengt tegenargument tegen het aanbod\n- uitstel: klant wil beslissing uitstellen' : ''}
 
 BELANGRIJK: Als de klant uitgebreid vertelt over hun situatie, ervaringen of behoeften, is dit NIET ontwijkend of neutraal. Beoordeel de emotionele lading en inhoud.
 

@@ -560,12 +560,15 @@ export async function evaluateConceptually(
     }
     
     const quality = (parsed.overall_quality || parsed.quality) as 'perfect' | 'goed' | 'bijna' | 'gemist';
-    const techniques: DetectedTechnique[] = (parsed.techniques || []).map((t: any) => ({
-      id: t.id,
-      naam: t.naam,
-      quality: t.quality || 'goed',
-      score: rubric[t.quality || 'goed']?.score ?? 5
-    }));
+    const techniques: DetectedTechnique[] = (parsed.techniques || []).map((t: any) => {
+      const ssotTech = t.id ? getTechnique(t.id) : null;
+      return {
+        id: t.id,
+        naam: ssotTech ? ssotTech.naam : (t.naam || t.id || ''),
+        quality: t.quality || 'goed',
+        score: rubric[t.quality || 'goed']?.score ?? 5
+      };
+    });
     
     // Calculate base score
     let totalScore = techniques.length > 0 
@@ -649,10 +652,9 @@ export function evaluateFirstTurn(
     { id: '2.4', patterns: ['is dat belangrijk voor u', 'dus dat wilt u zeker', 'als ik het goed begrijp'] }
   ];
   
-  // Build patterns with labels from SSOT
   const explorePatterns = explorePatternDefs.map(def => {
     const tech = getTechnique(def.id);
-    const label = tech ? `${tech.naam} (${def.id})` : def.id;
+    const label = tech ? tech.naam : def.id;
     return { id: def.id, label, patterns: def.patterns };
   });
   
