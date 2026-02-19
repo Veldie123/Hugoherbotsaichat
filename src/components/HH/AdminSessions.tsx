@@ -171,6 +171,15 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
     setHiddenIds(new Set(getHiddenIds('admin', 'chat')));
   };
 
+  const safeJsonParse = async (response: Response): Promise<any> => {
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(text.startsWith('<!') ? 'Server niet bereikbaar, probeer opnieuw' : text.slice(0, 200));
+    }
+    return response.json();
+  };
+
   const handleAnalyzeSession = async (session: Session) => {
     const sessionId = session.id;
     setAnalyzingSessionIds(prev => new Set(prev).add(sessionId));
@@ -181,7 +190,17 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId }),
       });
-      const data = await response.json();
+      const data = await safeJsonParse(response);
+
+      if (data.error) {
+        setAnalyzingSessionIds(prev => {
+          const next = new Set(prev);
+          next.delete(sessionId);
+          return next;
+        });
+        alert(`Analyse niet mogelijk: ${data.error}`);
+        return;
+      }
 
       if (data.status === 'completed') {
         setAnalyzingSessionIds(prev => {
@@ -189,14 +208,15 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
           next.delete(sessionId);
           return next;
         });
-        if (navigate) navigate('admin-analysis-results', { conversationId: sessionId, fromAdmin: true });
+        sessionStorage.setItem('analysisId', sessionId);
+        if (navigate) navigate('admin-analysis-results');
         return;
       }
 
       const pollInterval = setInterval(async () => {
         try {
           const statusRes = await fetch(`/api/v2/analysis/status/${sessionId}`);
-          const statusData = await statusRes.json();
+          const statusData = await safeJsonParse(statusRes);
 
           if (statusData.status === 'completed') {
             clearInterval(pollInterval);
@@ -205,7 +225,8 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
               next.delete(sessionId);
               return next;
             });
-            if (navigate) navigate('admin-analysis-results', { conversationId: sessionId, fromAdmin: true });
+            sessionStorage.setItem('analysisId', sessionId);
+            if (navigate) navigate('admin-analysis-results');
           } else if (statusData.status === 'failed') {
             clearInterval(pollInterval);
             setAnalyzingSessionIds(prev => {

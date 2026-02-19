@@ -136,8 +136,23 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
 
   const [analyzingSessionIds, setAnalyzingSessionIds] = useState<Set<string>>(new Set());
 
+  const safeJsonParse = async (response: Response): Promise<any> => {
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(text.startsWith('<!') ? 'Server niet bereikbaar, probeer opnieuw' : text.slice(0, 200));
+    }
+    return response.json();
+  };
+
   const handleAnalyzeSession = async (session: Session) => {
     const sessionId = String(session.id);
+
+    if (/^\d+$/.test(sessionId)) {
+      alert('Dit is een demo-sessie en kan niet worden geanalyseerd.');
+      return;
+    }
+
     setAnalyzingSessionIds(prev => new Set(prev).add(sessionId));
 
     try {
@@ -146,7 +161,7 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId }),
       });
-      const data = await response.json();
+      const data = await safeJsonParse(response);
 
       if (data.status === 'completed') {
         setAnalyzingSessionIds(prev => {
@@ -160,10 +175,20 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
         return;
       }
 
+      if (data.error) {
+        setAnalyzingSessionIds(prev => {
+          const next = new Set(prev);
+          next.delete(sessionId);
+          return next;
+        });
+        alert(`Analyse niet mogelijk: ${data.error}`);
+        return;
+      }
+
       const pollInterval = setInterval(async () => {
         try {
           const statusRes = await fetch(`/api/v2/analysis/status/${sessionId}`);
-          const statusData = await statusRes.json();
+          const statusData = await safeJsonParse(statusRes);
 
           if (statusData.status === 'completed') {
             clearInterval(pollInterval);
@@ -262,21 +287,27 @@ export function HugoAIOverview({ navigate, isAdmin }: HugoAIOverviewProps) {
 
   const openSessionAnalysis = async (session: Session) => {
     const sessionId = String(session.id);
+
+    if (/^\d+$/.test(sessionId)) {
+      alert('Dit is een demo-sessie. Start een echte sessie via "Talk to Hugo" om analyses te bekijken.');
+      return;
+    }
+
     try {
       const statusRes = await fetch(`/api/v2/analysis/status/${sessionId}`);
-      const statusData = await statusRes.json();
+      const statusData = await safeJsonParse(statusRes);
       if (statusData.status === 'completed') {
         sessionStorage.setItem('analysisId', sessionId);
         sessionStorage.setItem('analysisFromHugo', 'true');
         if (navigate) navigate('analysis-results');
         return;
       }
-      if (statusData.status === 'processing') {
+      if (statusData.status === 'processing' || statusData.status === 'analyzing' || statusData.status === 'evaluating' || statusData.status === 'generating_report') {
         setAnalyzingSessionIds(prev => new Set(prev).add(sessionId));
         const pollInterval = setInterval(async () => {
           try {
             const res = await fetch(`/api/v2/analysis/status/${sessionId}`);
-            const data = await res.json();
+            const data = await safeJsonParse(res);
             if (data.status === 'completed') {
               clearInterval(pollInterval);
               setAnalyzingSessionIds(prev => { const n = new Set(prev); n.delete(sessionId); return n; });

@@ -221,6 +221,10 @@ export function AppLayout({
                           if (onSelectHistoryItem) {
                             onSelectHistoryItem(histItem.id, item.historyType);
                           } else {
+                            if (/^\d+$/.test(histItem.id)) {
+                              navigate?.(item.overviewPage || 'hugo-overview');
+                              return;
+                            }
                             if (item.historyType === 'chat') {
                               sessionStorage.setItem('analysisId', histItem.id);
                               sessionStorage.setItem('analysisFromHugo', 'true');
@@ -325,6 +329,10 @@ export function AppLayout({
                             if (onSelectHistoryItem) {
                               onSelectHistoryItem(histItem.id, item.historyType);
                             } else {
+                              if (/^\d+$/.test(histItem.id)) {
+                                navigate?.(item.overviewPage || 'hugo-overview');
+                                return;
+                              }
                               if (item.historyType === 'chat') {
                                 sessionStorage.setItem('analysisId', histItem.id);
                                 sessionStorage.setItem('analysisFromHugo', 'true');
