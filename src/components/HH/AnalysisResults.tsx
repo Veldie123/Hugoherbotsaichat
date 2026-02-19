@@ -992,7 +992,7 @@ ${msg}`;
         {activeTab === 'coach' && (<div className="max-w-[860px]">
 
           {/* SECTION 1: Full-width score header — score ring + phase scores */}
-          <div className="rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8" style={{ backgroundColor: '#FAFBFC', border: '2px solid #F1F5F9' }}>
+          <div className="p-4 sm:p-5 mb-6 sm:mb-8">
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
               <div className="relative flex-shrink-0" style={{ width: '80px', height: '80px' }}>
                 <svg width="80" height="80" viewBox="0 0 100 100">
