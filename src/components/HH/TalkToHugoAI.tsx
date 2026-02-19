@@ -33,7 +33,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Send,
-  ChevronDown,
   BookOpen,
   MessageSquare,
   Phone,
@@ -1670,7 +1669,6 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
               )}
               <span className="text-[13px] text-hh-muted font-medium whitespace-nowrap flex items-center gap-1">
                 HugoGPT <span className="text-[11px] text-hh-muted/60 font-normal">v1.0</span>
-                <ChevronDown className="w-3 h-3 text-hh-muted/50" />
               </span>
             </div>
             
@@ -1794,7 +1792,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent side="left" className="w-[85%] sm:w-80 p-0 overflow-y-auto">
           <SheetHeader className="px-4 py-3 border-b border-hh-border">
-            <SheetTitle className="text-left text-[16px]">Epic Sales Flow</SheetTitle>
+            <SheetTitle className="text-left text-[16px]">E.P.I.C. TECHNIQUE</SheetTitle>
           </SheetHeader>
           <EPICSidebar
             fasesAccordionOpen={fasesAccordionOpen}

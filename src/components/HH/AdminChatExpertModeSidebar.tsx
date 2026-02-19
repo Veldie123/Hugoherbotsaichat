@@ -434,7 +434,6 @@ export function EPICSidebar({
 
         <div className="pb-4 border-b border-hh-border">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[18px] font-bold text-hh-text">Epic Sales Flow</h3>
             <span className="text-[13px] text-hh-muted">{totalCompleted}/{totalTechniques} onderwerpen • {progressPercent}%</span>
           </div>
           

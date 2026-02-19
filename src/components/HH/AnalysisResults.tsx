@@ -984,82 +984,89 @@ ${msg}`;
 
         {activeTab === 'coach' && (<div className="max-w-[860px]">
 
-          {/* SECTION 1: Score — Apple Health "big number" style */}
-          <div className="flex items-start sm:items-center gap-4 sm:gap-8 mb-8 sm:mb-12">
-            <div className="relative flex-shrink-0">
-              <svg className="w-[72px] h-[72px] sm:w-[100px] sm:h-[100px]" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="42" fill="none" stroke="#E5E7EB" strokeWidth="7" />
-                <circle
-                  cx="50" cy="50" r="42"
-                  fill="none"
-                  stroke={adminColors ? '#9910FA' : '#3C9A6E'}
-                  strokeWidth="7"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 42}`}
-                  strokeDashoffset={`${2 * Math.PI * 42 * (1 - overallScore / 100)}`}
-                  style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.8s ease' }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[22px] sm:text-[28px] font-bold text-hh-text leading-none">{overallScore}</span>
-                <span className="text-[10px] sm:text-[11px] text-hh-muted mt-0.5">%</span>
+          {/* SECTION 1: Score overview — 2-column layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-12">
+            <div className="rounded-2xl p-4 sm:p-5" style={{ backgroundColor: '#FAFBFC', border: '2px solid #F1F5F9' }}>
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-hh-muted mb-3">Algemeen</p>
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="relative flex-shrink-0" style={{ width: '72px', height: '72px' }}>
+                  <svg width="72" height="72" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="#E5E7EB" strokeWidth="7" />
+                    <circle
+                      cx="50" cy="50" r="42"
+                      fill="none"
+                      stroke={adminColors ? '#9910FA' : '#3C9A6E'}
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 42}`}
+                      strokeDashoffset={`${2 * Math.PI * 42 * (1 - overallScore / 100)}`}
+                      style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-[18px] sm:text-[22px] font-bold text-hh-text leading-none">{overallScore}</span>
+                    <span className="text-[10px] text-hh-muted mt-0.5">%</span>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="relative group">
+                    {useAdminLayout && editingDebrief ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={editedOneliner}
+                          onChange={(e) => setEditedOneliner(e.target.value)}
+                          className="w-full px-3 py-2 text-[13px] leading-[18px] border rounded-lg focus:outline-none focus:ring-2 resize-none"
+                          style={{ borderColor: '#9910FA40', outlineColor: '#9910FA' }}
+                          rows={3}
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" className="gap-1.5 text-[12px] text-white" style={{ backgroundColor: '#9910FA' }} disabled={submittingCorrection}
+                            onClick={() => {
+                              submitCorrection('coach_debrief', 'oneliner', insights.coachDebrief?.oneliner || '', editedOneliner, 'Coach oneliner correctie');
+                              if (editedEpicMomentum !== (insights.coachDebrief?.epicMomentum || '')) {
+                                submitCorrection('coach_debrief', 'epicMomentum', insights.coachDebrief?.epicMomentum || '', editedEpicMomentum, 'EPIC momentum correctie');
+                              }
+                            }}
+                          >
+                            <Save className="w-3.5 h-3.5" /> Indienen
+                          </Button>
+                          <Button variant="outline" size="sm" className="text-[12px]" onClick={() => setEditingDebrief(false)}>Annuleren</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-hh-text font-medium" style={{ overflowWrap: 'break-word' }}>
+                          {insights.coachDebrief?.oneliner || `Laten we je gesprek samen doornemen.`}
+                        </p>
+                        {useAdminLayout && (
+                          <button
+                            onClick={() => {
+                              setEditedOneliner(insights.coachDebrief?.oneliner || '');
+                              setEditedEpicMomentum(insights.coachDebrief?.epicMomentum || '');
+                              setEditingDebrief(true);
+                            }}
+                            className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg"
+                            style={{ backgroundColor: '#9910FA15', color: '#9910FA' }}
+                            title="Correctie indienen"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="relative group">
-                {useAdminLayout && editingDebrief ? (
-                  <div className="space-y-2">
-                    <textarea
-                      value={editedOneliner}
-                      onChange={(e) => setEditedOneliner(e.target.value)}
-                      className="w-full px-3 py-2 text-[15px] leading-[22px] border rounded-lg focus:outline-none focus:ring-2 resize-none"
-                      style={{ borderColor: '#9910FA40', outlineColor: '#9910FA' }}
-                      rows={2}
-                    />
-                    <div className="flex gap-2">
-                      <Button size="sm" className="gap-1.5 text-[12px] text-white" style={{ backgroundColor: '#9910FA' }} disabled={submittingCorrection}
-                        onClick={() => {
-                          submitCorrection('coach_debrief', 'oneliner', insights.coachDebrief?.oneliner || '', editedOneliner, 'Coach oneliner correctie');
-                          if (editedEpicMomentum !== (insights.coachDebrief?.epicMomentum || '')) {
-                            submitCorrection('coach_debrief', 'epicMomentum', insights.coachDebrief?.epicMomentum || '', editedEpicMomentum, 'EPIC momentum correctie');
-                          }
-                        }}
-                      >
-                        <Save className="w-3.5 h-3.5" /> Indienen voor review
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-[12px]" onClick={() => setEditingDebrief(false)}>Annuleren</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-[17px] sm:text-[18px] leading-[26px] text-hh-text font-semibold" style={{ overflowWrap: 'break-word' }}>
-                      {insights.coachDebrief?.oneliner || `Laten we je gesprek samen doornemen.`}
-                    </p>
-                    {useAdminLayout && (
-                      <button
-                        onClick={() => {
-                          setEditedOneliner(insights.coachDebrief?.oneliner || '');
-                          setEditedEpicMomentum(insights.coachDebrief?.epicMomentum || '');
-                          setEditingDebrief(true);
-                        }}
-                        className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg"
-                        style={{ backgroundColor: '#9910FA15', color: '#9910FA' }}
-                        title="Correctie indienen"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3 mt-4">
+            <div className="rounded-2xl p-4 sm:p-5" style={{ backgroundColor: '#FAFBFC', border: '2px solid #F1F5F9' }}>
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-hh-muted mb-3">Fasescores</p>
+              <div className="space-y-3">
                 {phaseScores.map((ps) => (
-                  <div key={ps.phase} className="flex-1">
+                  <div key={ps.phase}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] sm:text-[11px] text-hh-muted font-medium">{ps.sublabel}</span>
-                      <span className={`text-[10px] sm:text-[11px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
+                      <span className="text-[11px] sm:text-[12px] text-hh-text font-medium">{ps.sublabel}</span>
+                      <span className={`text-[11px] sm:text-[12px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
                       <div
@@ -1076,7 +1083,7 @@ ${msg}`;
             </div>
           </div>
 
-          {/* SECTION 2: Three Moment Cards — horizontal 3-column grid */}
+          {/* SECTION 2: Moment Cards — 2-column grid */}
           {(() => {
             const moments = insights.moments || [];
             const momentConfig: Record<string, { icon: any; color: string; bg: string; iconBg: string; label: string }> = {
@@ -1086,7 +1093,7 @@ ${msg}`;
             };
 
             return moments.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8 sm:mb-12">
                 {moments.slice(0, 3).map((moment, idx) => {
                   const config = momentConfig[moment.type] || momentConfig['quick_fix'];
                   const MomentIcon = config.icon;
@@ -1444,7 +1451,7 @@ ${msg}`;
             ];
 
             return (
-              <div id="detailed-metrics" className="space-y-4 mb-12">
+              <div id="detailed-metrics" className="space-y-4 mb-8 sm:mb-12">
                 <h3 className="text-[16px] font-semibold text-hh-text">Gedetailleerde analyse</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {categories.map((cat) => {
@@ -1524,9 +1531,9 @@ ${msg}`;
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-0.5 gap-0.5">
+                                  <div className="mb-0.5">
                                     <span className="text-[12px] sm:text-[13px] font-medium text-hh-text">{detail.label}</span>
-                                    <span className="text-[11px] sm:text-[12px] font-semibold flex-shrink-0" style={{
+                                    <span className="text-[11px] sm:text-[12px] font-semibold sm:float-right block sm:inline mt-0.5 sm:mt-0" style={{
                                       color: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444'
                                     }}>{detail.value}</span>
                                   </div>
