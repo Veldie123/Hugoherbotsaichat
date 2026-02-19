@@ -985,9 +985,9 @@ ${msg}`;
         {activeTab === 'coach' && (<div className="max-w-[860px]">
 
           {/* SECTION 1: Score — Apple Health "big number" style */}
-          <div className="flex items-center gap-8 mb-12">
+          <div className="flex items-start sm:items-center gap-4 sm:gap-8 mb-8 sm:mb-12">
             <div className="relative flex-shrink-0">
-              <svg width="100" height="100" viewBox="0 0 100 100">
+              <svg className="w-[72px] h-[72px] sm:w-[100px] sm:h-[100px]" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="42" fill="none" stroke="#E5E7EB" strokeWidth="7" />
                 <circle
                   cx="50" cy="50" r="42"
@@ -1001,8 +1001,8 @@ ${msg}`;
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[28px] font-bold text-hh-text leading-none">{overallScore}</span>
-                <span className="text-[11px] text-hh-muted mt-0.5">%</span>
+                <span className="text-[22px] sm:text-[28px] font-bold text-hh-text leading-none">{overallScore}</span>
+                <span className="text-[10px] sm:text-[11px] text-hh-muted mt-0.5">%</span>
               </div>
             </div>
 
@@ -1054,12 +1054,12 @@ ${msg}`;
                 )}
               </div>
 
-              <div className="flex gap-3 mt-4">
+              <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3 mt-4">
                 {phaseScores.map((ps) => (
                   <div key={ps.phase} className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] text-hh-muted font-medium">{ps.sublabel}</span>
-                      <span className={`text-[11px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
+                      <span className="text-[10px] sm:text-[11px] text-hh-muted font-medium">{ps.sublabel}</span>
+                      <span className={`text-[10px] sm:text-[11px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
                       <div
@@ -1086,7 +1086,7 @@ ${msg}`;
             };
 
             return moments.length > 0 ? (
-              <div className="grid grid-cols-3 gap-4 mb-12">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-12">
                 {moments.slice(0, 3).map((moment, idx) => {
                   const config = momentConfig[moment.type] || momentConfig['quick_fix'];
                   const MomentIcon = config.icon;
@@ -1096,7 +1096,7 @@ ${msg}`;
                     <div key={moment.id} className="flex flex-col">
                       <button
                         onClick={() => { setExpandedMoment(isExpanded ? null : moment.id); markMomentViewed(moment.id); }}
-                        className="text-left rounded-2xl p-5 transition-all group cursor-pointer flex-1"
+                        className="text-left rounded-2xl p-4 sm:p-5 transition-all group cursor-pointer flex-1"
                         style={{
                           backgroundColor: config.bg,
                           border: isExpanded ? `2px solid ${config.color}40` : '2px solid transparent',
@@ -1455,7 +1455,7 @@ ${msg}`;
                       <div key={cat.key} className="flex flex-col">
                         <button
                           onClick={() => setExpandedMetricCategory(isExpanded ? null : cat.key)}
-                          className="text-left rounded-2xl p-5 transition-all group cursor-pointer"
+                          className="text-left rounded-2xl p-3 sm:p-5 transition-all group cursor-pointer"
                           style={{
                             backgroundColor: '#FAFBFC',
                             border: isExpanded ? `2px solid ${cat.color}30` : '2px solid #F1F5F9',
@@ -1464,18 +1464,18 @@ ${msg}`;
                           onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
                         >
                           <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${cat.color}15` }}>
-                                <CatIcon className="w-5 h-5" style={{ color: cat.color }} strokeWidth={1.75} />
+                            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${cat.color}15` }}>
+                                <CatIcon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: cat.color }} strokeWidth={1.75} />
                               </div>
-                              <div>
-                                <p className="text-[14px] font-semibold text-hh-text">{cat.label}</p>
-                                <p className="text-[11px] text-hh-muted">{cat.sublabel}</p>
+                              <div className="min-w-0">
+                                <p className="text-[13px] sm:text-[14px] font-semibold text-hh-text truncate">{cat.label}</p>
+                                <p className="text-[10px] sm:text-[11px] text-hh-muted truncate">{cat.sublabel}</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <div className="relative w-12 h-12">
-                                <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                              <div className="relative w-10 h-10 sm:w-12 sm:h-12">
+                                <svg className="w-10 h-10 sm:w-12 sm:h-12 -rotate-90" viewBox="0 0 36 36">
                                   <path
                                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                     fill="none"
@@ -1491,7 +1491,7 @@ ${msg}`;
                                     strokeLinecap="round"
                                   />
                                 </svg>
-                                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-hh-text">
+                                <span className="absolute inset-0 flex items-center justify-center text-[10px] sm:text-[11px] font-bold text-hh-text">
                                   {cat.score}%
                                 </span>
                               </div>
@@ -1511,9 +1511,9 @@ ${msg}`;
                         </button>
 
                         {isExpanded && (
-                          <div className="mt-2 rounded-2xl bg-white border border-gray-200 p-4 space-y-3 shadow-sm">
+                          <div className="mt-2 rounded-2xl bg-white border border-gray-200 p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-sm">
                             {cat.details.map((detail, dIdx) => (
-                              <div key={dIdx} className="flex items-start gap-3 py-2" style={dIdx < cat.details.length - 1 ? { borderBottom: '1px solid #F1F5F9' } : {}}>
+                              <div key={dIdx} className="flex items-start gap-2 sm:gap-3 py-2" style={dIdx < cat.details.length - 1 ? { borderBottom: '1px solid #F1F5F9' } : {}}>
                                 <div className="flex-shrink-0 mt-0.5">
                                   {detail.score >= 70 ? (
                                     <CheckCircle className="w-4 h-4" style={{ color: '#22C55E' }} />
@@ -1524,14 +1524,14 @@ ${msg}`;
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between mb-0.5">
-                                    <span className="text-[13px] font-medium text-hh-text">{detail.label}</span>
-                                    <span className="text-[12px] font-semibold" style={{
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-0.5 gap-0.5">
+                                    <span className="text-[12px] sm:text-[13px] font-medium text-hh-text">{detail.label}</span>
+                                    <span className="text-[11px] sm:text-[12px] font-semibold flex-shrink-0" style={{
                                       color: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444'
                                     }}>{detail.value}</span>
                                   </div>
                                   {detail.sub && (
-                                    <p className="text-[11px] text-hh-muted leading-[16px]">{detail.sub}</p>
+                                    <p className="text-[10px] sm:text-[11px] text-hh-muted leading-[14px] sm:leading-[16px]">{detail.sub}</p>
                                   )}
                                   <div className="mt-1.5 h-1 rounded-full bg-gray-100 overflow-hidden">
                                     <div
