@@ -3531,15 +3531,45 @@ app.patch("/api/v2/admin/corrections/:id", async (req: Request, res: Response) =
   try {
     const { id } = req.params;
     const { status, reviewedBy } = req.body;
-    if (!['approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ error: 'Status must be approved or rejected' });
+    if (!['approved', 'rejected', 'pending'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be approved, rejected or pending' });
     }
+    const reviewedAt = status === 'pending' ? null : new Date().toISOString();
+    const reviewer = status === 'pending' ? null : (reviewedBy || 'admin');
     const { rows } = await pool.query(
-      `UPDATE admin_corrections SET status = $1, reviewed_by = $2, reviewed_at = NOW() WHERE id = $3 RETURNING *`,
-      [status, reviewedBy || 'admin', id]
+      `UPDATE admin_corrections SET status = $1, reviewed_by = $2, reviewed_at = $3 WHERE id = $4 RETURNING *`,
+      [status, reviewer, reviewedAt, id]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Correction not found' });
-    res.json({ correction: rows[0] });
+
+    const correction = rows[0];
+    let ragGenerated = false;
+    if (status === 'approved') {
+      try {
+        const ragContent = `[EXPERT CORRECTIE] Bij analyse van een verkoopgesprek werd "${correction.original_value}" gedetecteerd als ${correction.type}/${correction.field}. De expert corrigeerde dit naar "${correction.new_value}". Context: ${correction.context || 'Geen extra context'}. Dit is een belangrijk leermoment voor toekomstige analyses.`;
+        const ragTitle = `Expert correctie: ${correction.type} ${correction.field} (${new Date().toISOString().split('T')[0]})`;
+        await pool.query(
+          `INSERT INTO rag_documents (doc_type, title, content, source_id, word_count, needs_review, review_status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            'expert_correction',
+            ragTitle,
+            ragContent,
+            `admin_correction_${correction.id}`,
+            ragContent.split(/\s+/).length,
+            false,
+            'approved'
+          ]
+        );
+        ragGenerated = true;
+        console.log(`[Admin] RAG fragment generated for approved correction #${correction.id}`);
+      } catch (ragErr) {
+        console.error('[Admin] Failed to generate RAG fragment:', ragErr);
+        ragGenerated = false;
+      }
+    }
+
+    res.json({ correction, ragGenerated });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -26,6 +26,10 @@ import {
   MoreVertical,
   Check,
   X,
+  ThumbsUp,
+  ThumbsDown,
+  Loader2,
+  Database,
 } from "lucide-react";
 import { getCodeBadgeColors } from "../../utils/phaseColors";
 import { toast } from "sonner";
@@ -38,69 +42,75 @@ interface ConfigConflict {
   id: string;
   techniqueNumber: string;
   techniqueName: string;
-  type: "Missing Detector" | "Pattern Mismatch" | "Phase Error" | "Scoring Error";
+  type: string;
   severity: "HIGH" | "MEDIUM" | "LOW";
   description: string;
   status: "pending" | "approved" | "rejected";
   detectedAt: string;
+  context?: string;
+  originalValue?: string;
+  newValue?: string;
 }
 
 export function AdminConfigReview({ navigate }: AdminConfigReviewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [conflicts, setConflicts] = useState<ConfigConflict[]>([
-    {
-      id: "1",
-      techniqueNumber: "2.1",
-      techniqueName: "Feitgerichte vragen",
-      type: "Missing Detector",
-      severity: "HIGH",
-      description: "No detector configuration found for techniek 2.1",
-      status: "pending",
-      detectedAt: "2u geleden",
-    },
-    {
-      id: "2",
-      techniqueNumber: "3.2",
-      techniqueName: "Oplossing",
-      type: "Pattern Mismatch",
-      severity: "MEDIUM",
-      description: "Current patterns are too broad and trigger false positives",
-      status: "pending",
-      detectedAt: "5u geleden",
-    },
-    {
-      id: "3",
-      techniqueNumber: "4.1",
-      techniqueName: "Proefafsluiting",
-      type: "Phase Error",
-      severity: "HIGH",
-      description: "AI attempted to transition to phase 5 which doesn't exist",
-      status: "pending",
-      detectedAt: "1d geleden",
-    },
-    {
-      id: "4",
-      techniqueNumber: "4.1",
-      techniqueName: "Antwoord op de bezwaren",
-      type: "Scoring Error",
-      severity: "MEDIUM",
-      description: "Scoring weights don't sum to 100%",
-      status: "approved",
-      detectedAt: "2d geleden",
-    },
-    {
-      id: "5",
-      techniqueNumber: "1.2",
-      techniqueName: "Gentleman's agreement",
-      type: "Pattern Mismatch",
-      severity: "LOW",
-      description: "Pattern too specific, missing common variations",
-      status: "rejected",
-      detectedAt: "3d geleden",
-    },
-  ]);
+  const [conflicts, setConflicts] = useState<ConfigConflict[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCorrections();
+  }, []);
+
+  const fetchCorrections = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/v2/admin/corrections');
+      if (response.ok) {
+        const data = await response.json();
+        const mapped = (data.corrections || []).map((c: any) => {
+          const typeMap: Record<string, string> = {
+            'signal': 'Signaal Correctie',
+            'technique': 'Techniek Correctie',
+            'coach_debrief': 'Debrief Correctie',
+            'moment': 'Moment Correctie',
+          };
+          const severity = c.type === 'signal' ? 'HIGH' : c.type === 'technique' ? 'MEDIUM' : 'LOW';
+          const techNum = c.field?.match(/\d+\.\d+/)?.[0] || c.type?.charAt(0)?.toUpperCase() || '—';
+          const timeAgo = getTimeAgo(new Date(c.created_at));
+          return {
+            id: String(c.id),
+            techniqueNumber: techNum,
+            techniqueName: c.field || c.type,
+            type: typeMap[c.type] || c.type,
+            severity,
+            description: c.context || `${c.original_value} → ${c.new_value}`,
+            status: c.status,
+            detectedAt: timeAgo,
+            context: c.context,
+            originalValue: c.original_value,
+            newValue: c.new_value,
+          };
+        });
+        setConflicts(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to fetch corrections:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTimeAgo = (date: Date) => {
+    const diff = Date.now() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m geleden`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}u geleden`;
+    const days = Math.floor(hours / 24);
+    return `${days}d geleden`;
+  };
 
   const filteredConflicts = conflicts.filter((conflict) => {
     const matchesSearch =
@@ -116,34 +126,61 @@ export function AdminConfigReview({ navigate }: AdminConfigReviewProps) {
   const approvedCount = conflicts.filter((c) => c.status === "approved").length;
   const rejectedCount = conflicts.filter((c) => c.status === "rejected").length;
 
-  const handleApprove = (id: string) => {
-    const conflict = conflicts.find((c) => c.id === id);
-    setConflicts((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: "approved" as const } : c))
-    );
-    toast.success(`Conflict goedgekeurd`, {
-      description: `${conflict?.techniqueNumber} - ${conflict?.techniqueName} is goedgekeurd`,
-    });
+  const handleApprove = async (id: string) => {
+    try {
+      const response = await fetch(`/api/v2/admin/corrections/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'approved', reviewedBy: 'superadmin' }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setConflicts((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, status: "approved" as const } : c))
+        );
+        toast.success(`Correctie goedgekeurd`, {
+          description: data.ragGenerated ? 'RAG fragment aangemaakt voor toekomstige analyses' : 'Correctie opgeslagen',
+        });
+      }
+    } catch (err) {
+      toast.error('Fout bij goedkeuren');
+    }
   };
 
-  const handleReject = (id: string) => {
-    const conflict = conflicts.find((c) => c.id === id);
-    setConflicts((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: "rejected" as const } : c))
-    );
-    toast.error(`Conflict afgewezen`, {
-      description: `${conflict?.techniqueNumber} - ${conflict?.techniqueName} is afgewezen`,
-    });
+  const handleReject = async (id: string) => {
+    try {
+      const response = await fetch(`/api/v2/admin/corrections/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'rejected', reviewedBy: 'superadmin' }),
+      });
+      if (response.ok) {
+        setConflicts((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, status: "rejected" as const } : c))
+        );
+        toast.error(`Correctie afgewezen`);
+      }
+    } catch (err) {
+      toast.error('Fout bij afwijzen');
+    }
   };
 
-  const handleResetStatus = (id: string) => {
-    const conflict = conflicts.find((c) => c.id === id);
-    setConflicts((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: "pending" as const } : c))
-    );
-    toast.info(`Status gereset`, {
-      description: `${conflict?.techniqueNumber} - ${conflict?.techniqueName} is terug naar pending`,
-    });
+  const handleResetStatus = async (id: string) => {
+    try {
+      const response = await fetch(`/api/v2/admin/corrections/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'pending', reviewedBy: null }),
+      });
+      if (response.ok) {
+        setConflicts((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, status: "pending" as const } : c))
+        );
+        toast.info(`Status gereset`);
+      }
+    } catch (err) {
+      toast.error('Fout bij resetten');
+    }
   };
 
   const getSeverityBadge = (severity: string) => {
@@ -212,7 +249,7 @@ export function AdminConfigReview({ navigate }: AdminConfigReviewProps) {
             Config Review
           </h1>
           <p className="text-[16px] leading-[24px] text-hh-muted">
-            Review en goedkeur AI configuratie conflicten
+            Review en goedkeur AI correcties en configuratie conflicten
           </p>
         </div>
 
@@ -317,6 +354,19 @@ export function AdminConfigReview({ navigate }: AdminConfigReviewProps) {
                 </tr>
               </thead>
               <tbody>
+                {loading && (
+                  <tr><td colSpan={7} className="p-8 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-600 mb-2" />
+                    <p className="text-[13px] text-hh-muted">Correcties laden...</p>
+                  </td></tr>
+                )}
+                {!loading && filteredConflicts.length === 0 && (
+                  <tr><td colSpan={7} className="p-8 text-center">
+                    <Database className="w-8 h-8 mx-auto text-hh-muted/50 mb-2" />
+                    <p className="text-[14px] font-medium text-hh-text mb-1">Geen correcties gevonden</p>
+                    <p className="text-[13px] text-hh-muted">Correcties verschijnen hier wanneer een admin feedback geeft op AI-aanduidingen in het transcript.</p>
+                  </td></tr>
+                )}
                 {filteredConflicts.map((conflict) => {
                   const badgeColors = getCodeBadgeColors(conflict.techniqueNumber);
                   return (

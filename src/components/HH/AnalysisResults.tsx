@@ -272,6 +272,9 @@ export function AnalysisResults({
   const [editedMomentWhy, setEditedMomentWhy] = useState('');
   const [editedMomentAlt, setEditedMomentAlt] = useState('');
   const [submittingCorrection, setSubmittingCorrection] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState<string | null>(null);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackConfirmed, setFeedbackConfirmed] = useState<Set<string>>(new Set());
 
   const [resolvedConversationId, setResolvedConversationId] = useState<string | null>(
     navigationData?.conversationId || sessionStorage.getItem('analysisId') || null
@@ -1122,6 +1125,8 @@ export function AnalysisResults({
                     sub: dm.structure.phaseFlow.transitions.length > 0
                       ? `${dm.structure.phaseFlow.transitions.length} fase-overgangen`
                       : 'Geen overgangen gedetecteerd',
+                    matches: dm.structure.phaseFlow.transitions.map(t => ({ turnIdx: t.turnIdx, type: `Fase ${t.fromPhase} → ${t.toPhase}`, recognized: true, treated: true })),
+                    kind: 'recognition' as const,
                   },
                   {
                     label: 'Explore-dekking',
@@ -1176,6 +1181,8 @@ export function AnalysisResults({
                     sub: dm.impact.baatenFound.length > 0
                       ? `${dm.impact.baatenFound.filter(b => b.type === 'voordeel_only').length} voordelen zonder baat`
                       : 'Geen baten of voordelen gedetecteerd',
+                    matches: dm.impact.baatenFound.map(b => ({ turnIdx: b.turnIdx, type: b.type === 'explicit_baat' ? 'Baat' : 'Voordeel', recognized: b.quality === 'goed' || b.quality === 'volledig', treated: true })),
+                    kind: 'recognition' as const,
                   },
                   {
                     label: 'O.V.B. kwaliteit',
@@ -1186,6 +1193,8 @@ export function AnalysisResults({
                     sub: dm.impact.ovbChecks.length > 0
                       ? dm.impact.ovbChecks[0]?.explanation || ''
                       : 'Oplossing → Voordeel → Baat niet toegepast',
+                    matches: dm.impact.ovbChecks.map(o => ({ turnIdx: o.turnIdx, type: `O:${o.hasOplossing ? '✓' : '✗'} V:${o.hasVoordeel ? '✓' : '✗'} B:${o.hasBaat ? '✓' : '✗'}`, recognized: o.quality === 'volledig', treated: o.quality !== 'geen' })),
+                    kind: 'treatment' as const,
                   },
                   {
                     label: 'Pijnpunten',
@@ -1286,6 +1295,14 @@ export function AnalysisResults({
                     sub: dm.balance.questionRatio.phase2Ratio >= 0.5
                       ? 'Goede vraaghouding in ontdekking'
                       : 'Meer vragen stellen in ontdekkingsfase',
+                    matches: (() => {
+                      const phase2Turns = result?.transcript?.filter((t: any) => {
+                        const phase = determinePhaseForTurn(t.idx);
+                        return phase === 2 && t.speaker === 'seller' && t.text.includes('?');
+                      }) || [];
+                      return phase2Turns.slice(0, 5).map((t: any) => ({ turnIdx: t.idx, type: 'Vraag', recognized: true, treated: true }));
+                    })(),
+                    kind: 'recognition' as const,
                   },
                   {
                     label: 'Klant-taal oppakken',
@@ -1391,8 +1408,9 @@ export function AnalysisResults({
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between gap-2 mb-0.5">
                                         <span className="text-[12px] sm:text-[13px] font-medium text-hh-text">{detail.label}</span>
-                                        <span className="text-[11px] sm:text-[12px] font-semibold flex-shrink-0" style={{
-                                          color: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444'
+                                        <span className="text-[11px] sm:text-[12px] font-semibold text-right min-w-0 truncate" style={{
+                                          color: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444',
+                                          maxWidth: '55%',
                                         }}>{detail.value}</span>
                                       </div>
                                       {detail.sub && (
@@ -1416,83 +1434,90 @@ export function AnalysisResults({
                                   </div>
 
                                   {isDrilldownOpen && hasMatches && (
-                                    <div className="ml-6 mb-3 mt-1 space-y-2">
+                                    <div className="ml-2 sm:ml-4 mb-3 mt-2 space-y-4">
                                       {detail.matches.map((match: any, mIdx: number) => {
-                                        const turn = result?.transcript?.find((t: any) => t.idx === match.turnIdx);
+                                        const matchTurn = result?.transcript?.find((t: any) => t.idx === match.turnIdx);
                                         const isRecognized = match.recognized;
                                         const isTreated = match.treated;
                                         const statusOk = detail.kind === 'recognition' ? isRecognized : isTreated;
 
+                                        const contextTurns = result?.transcript
+                                          ?.filter((t: any) => t.idx >= match.turnIdx - 2 && t.idx <= match.turnIdx + 1)
+                                          ?.sort((a: any, b: any) => a.idx - b.idx) || [];
+
                                         return (
-                                          <div
-                                            key={mIdx}
-                                            className="rounded-xl border p-3"
-                                            style={{
-                                              backgroundColor: statusOk ? '#F0FDF4' : '#FEF2F2',
-                                              borderColor: statusOk ? '#BBF7D0' : '#FECACA',
-                                            }}
-                                          >
-                                            <div className="flex items-start gap-2">
-                                              <div className="flex-shrink-0 mt-0.5">
-                                                {statusOk ? (
-                                                  <CheckCircle className="w-3.5 h-3.5" style={{ color: '#22C55E' }} />
-                                                ) : (
-                                                  <XCircle className="w-3.5 h-3.5" style={{ color: '#EF4444' }} />
-                                                )}
-                                              </div>
-                                              <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                  <span className="text-[11px] font-semibold" style={{ color: statusOk ? '#166534' : '#991B1B' }}>
-                                                    {statusOk
-                                                      ? (detail.kind === 'recognition' ? 'Herkend' : 'Behandeld')
-                                                      : (detail.kind === 'recognition' ? 'Gemist' : 'Niet behandeld')
-                                                    }
-                                                  </span>
-                                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{
-                                                    backgroundColor: '#F1F5F9',
-                                                    color: '#64748B',
-                                                  }}>
-                                                    {match.houding}
-                                                  </span>
-                                                  {turn && (
-                                                    <span className="text-[10px] text-hh-muted">
-                                                      Beurt {match.turnIdx + 1} · {formatTime(turn.startMs)}
-                                                    </span>
-                                                  )}
-                                                </div>
-                                                {turn && (
-                                                  <p className="text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px] text-hh-text/80 line-clamp-2">
-                                                    "{turn.text.substring(0, 150)}{turn.text.length > 150 ? '…' : ''}"
-                                                  </p>
-                                                )}
-                                                {!statusOk && match.recommendedTechniques && match.recommendedTechniques.length > 0 && (
-                                                  <div className="mt-1.5 flex flex-wrap gap-1">
-                                                    <span className="text-[10px] text-hh-muted">Aanbevolen:</span>
-                                                    {match.recommendedTechniques.map((tech: string, tIdx: number) => (
-                                                      <span key={tIdx} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{
-                                                        backgroundColor: '#DBEAFE',
-                                                        color: '#1E40AF',
-                                                      }}>
-                                                        {tech}
-                                                      </span>
-                                                    ))}
-                                                  </div>
-                                                )}
-                                                {statusOk && match.actualTechniques && match.actualTechniques.length > 0 && (
-                                                  <div className="mt-1.5 flex flex-wrap gap-1">
-                                                    <span className="text-[10px] text-hh-muted">Toegepast:</span>
-                                                    {match.actualTechniques.map((tech: string, tIdx: number) => (
-                                                      <span key={tIdx} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{
-                                                        backgroundColor: '#DCFCE7',
-                                                        color: '#166534',
-                                                      }}>
-                                                        {tech}
-                                                      </span>
-                                                    ))}
-                                                  </div>
-                                                )}
-                                              </div>
+                                          <div key={mIdx} className="rounded-xl border overflow-hidden" style={{ borderColor: statusOk ? '#BBF7D0' : '#FECACA' }}>
+                                            <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: statusOk ? '#F0FDF4' : '#FEF2F2' }}>
+                                              {statusOk ? (
+                                                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22C55E' }} />
+                                              ) : (
+                                                <XCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#EF4444' }} />
+                                              )}
+                                              <span className="text-[11px] font-semibold" style={{ color: statusOk ? '#166534' : '#991B1B' }}>
+                                                {statusOk
+                                                  ? (detail.kind === 'recognition' ? 'Herkend' : 'Behandeld')
+                                                  : (detail.kind === 'recognition' ? 'Gemist' : 'Niet behandeld')
+                                                }
+                                              </span>
+                                              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#F1F5F9', color: '#64748B' }}>
+                                                {match.houding || match.type || ''}
+                                              </span>
+                                              {matchTurn && (
+                                                <span className="text-[10px] text-hh-muted">
+                                                  Beurt {match.turnIdx + 1} · {formatTime(matchTurn.startMs)}
+                                                </span>
+                                              )}
                                             </div>
+
+                                            <div className="px-3 py-2 space-y-2" style={{ backgroundColor: '#FAFBFC' }}>
+                                              {contextTurns.map((ct: any) => {
+                                                const isHighlighted = ct.idx === match.turnIdx;
+                                                const isSeller = ct.speaker === 'seller';
+                                                return (
+                                                  <div key={ct.idx} className={`flex ${isSeller ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className="max-w-[85%]">
+                                                      <div className={`flex items-center gap-1.5 mb-0.5 ${isSeller ? 'justify-end' : ''}`}>
+                                                        <span className="text-[10px] font-medium" style={{ color: '#94A3B8' }}>
+                                                          {isSeller ? 'Jij' : 'Klant'}
+                                                        </span>
+                                                        <span className="text-[9px]" style={{ color: '#CBD5E1' }}>
+                                                          {formatTime(ct.startMs)}
+                                                        </span>
+                                                      </div>
+                                                      <div
+                                                        className="px-3 py-2 text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px]"
+                                                        style={{
+                                                          borderRadius: isSeller ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
+                                                          backgroundColor: isHighlighted
+                                                            ? (statusOk ? '#DCFCE7' : '#FEE2E2')
+                                                            : (isSeller ? (adminColors ? '#F3E8FF' : '#F1F5F9') : '#FFFFFF'),
+                                                          border: isHighlighted
+                                                            ? `1.5px solid ${statusOk ? '#86EFAC' : '#FCA5A5'}`
+                                                            : '1px solid #E2E8F0',
+                                                          color: '#1E293B',
+                                                        }}
+                                                      >
+                                                        {ct.text.length > 250 ? ct.text.substring(0, 250) + '…' : ct.text}
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+
+                                            {((!statusOk && match.recommendedTechniques?.length > 0) || (statusOk && match.actualTechniques?.length > 0)) && (
+                                              <div className="px-3 py-2 flex flex-wrap gap-1 items-center" style={{ backgroundColor: '#F8FAFC', borderTop: '1px solid #F1F5F9' }}>
+                                                <span className="text-[10px] text-hh-muted">{statusOk ? 'Toegepast:' : 'Aanbevolen:'}</span>
+                                                {(statusOk ? match.actualTechniques : match.recommendedTechniques)?.map((tech: string, tIdx: number) => (
+                                                  <span key={tIdx} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{
+                                                    backgroundColor: statusOk ? '#DCFCE7' : '#DBEAFE',
+                                                    color: statusOk ? '#166534' : '#1E40AF',
+                                                  }}>
+                                                    {tech}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            )}
                                           </div>
                                         );
                                       })}
@@ -1563,54 +1588,160 @@ export function AnalysisResults({
                           adminColors={adminColors}
                           variant="default"
                         >
-                          <div className="flex flex-wrap items-center gap-1.5 group/badges">
-                            {turn.speaker === 'customer' && signal && signal.houding !== 'neutraal' && (
-                              <span className="relative inline-flex">
-                                <Badge className={`${getSignalLabel(signal.houding).color} text-[10px] px-2 py-0.5`}>
-                                  {getSignalLabel(signal.houding).label}
-                                </Badge>
-                                {useAdminLayout && (
+                          <div className="space-y-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {turn.speaker === 'customer' && signal && signal.houding !== 'neutraal' && (() => {
+                                const badgeKey = `signal-${turn.idx}`;
+                                const isConfirmed = feedbackConfirmed.has(badgeKey);
+                                const isFeedbackPanelOpen = feedbackOpen === badgeKey;
+                                return (
+                                  <span className="relative inline-flex items-center group/badge">
+                                    <Badge className={`${getSignalLabel(signal.houding).color} text-[10px] px-2 py-0.5`}>
+                                      {getSignalLabel(signal.houding).label}
+                                    </Badge>
+                                    {useAdminLayout && !isConfirmed && (
+                                      <span className="inline-flex items-center gap-0.5 ml-1 opacity-0 group-hover/badge:opacity-100 transition-opacity">
+                                        <button
+                                          onClick={() => {
+                                            submitCorrection('signal', 'houding_confirmed', signal.houding, signal.houding, `Turn ${turn.idx}: ${signal.houding} bevestigd`);
+                                            setFeedbackConfirmed(prev => { const next = new Set(prev); next.add(badgeKey); return next; });
+                                          }}
+                                          className="w-5 h-5 rounded flex items-center justify-center transition-colors"
+                                          style={{ color: '#94A3B8' }}
+                                          onMouseEnter={(e) => { e.currentTarget.style.color = '#22C55E'; e.currentTarget.style.backgroundColor = '#F0FDF4'; }}
+                                          onMouseLeave={(e) => { e.currentTarget.style.color = '#94A3B8'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                          title="Klopt"
+                                        >
+                                          <ThumbsUp className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                          onClick={() => { setFeedbackOpen(isFeedbackPanelOpen ? null : badgeKey); setFeedbackText(''); }}
+                                          className="w-5 h-5 rounded flex items-center justify-center transition-colors"
+                                          style={{ color: isFeedbackPanelOpen ? '#EF4444' : '#94A3B8' }}
+                                          onMouseEnter={(e) => { if (!isFeedbackPanelOpen) { e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.backgroundColor = '#FEF2F2'; } }}
+                                          onMouseLeave={(e) => { if (!isFeedbackPanelOpen) { e.currentTarget.style.color = '#94A3B8'; e.currentTarget.style.backgroundColor = 'transparent'; } }}
+                                          title="Klopt niet"
+                                        >
+                                          <ThumbsDown className="w-3 h-3" />
+                                        </button>
+                                      </span>
+                                    )}
+                                    {isConfirmed && (
+                                      <CheckCircle className="w-3 h-3 ml-1" style={{ color: '#22C55E' }} />
+                                    )}
+                                  </span>
+                                );
+                              })()}
+                              {evaluation && evaluation.techniques.length > 0 && evaluation.techniques.map((tech, i) => {
+                                const badge = getQualityBadge(tech.quality);
+                                const badgeKey = `tech-${turn.idx}-${tech.id}`;
+                                const isConfirmed = feedbackConfirmed.has(badgeKey);
+                                const isFeedbackPanelOpen = feedbackOpen === badgeKey;
+                                return (
+                                  <span key={i} className="relative inline-flex items-center group/badge">
+                                    <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${badge.color}`}>
+                                      {tech.quality === 'gemist' ? '✗' : '✓'} {tech.naam || tech.id}
+                                    </Badge>
+                                    {useAdminLayout && !isConfirmed && (
+                                      <span className="inline-flex items-center gap-0.5 ml-1 opacity-0 group-hover/badge:opacity-100 transition-opacity">
+                                        <button
+                                          onClick={() => {
+                                            submitCorrection('technique', 'quality_confirmed', `${tech.id}:${tech.quality}`, `${tech.id}:${tech.quality}`, `Turn ${turn.idx}: ${tech.naam || tech.id} bevestigd`);
+                                            setFeedbackConfirmed(prev => { const next = new Set(prev); next.add(badgeKey); return next; });
+                                          }}
+                                          className="w-5 h-5 rounded flex items-center justify-center transition-colors"
+                                          style={{ color: '#94A3B8' }}
+                                          onMouseEnter={(e) => { e.currentTarget.style.color = '#22C55E'; e.currentTarget.style.backgroundColor = '#F0FDF4'; }}
+                                          onMouseLeave={(e) => { e.currentTarget.style.color = '#94A3B8'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                          title="Klopt"
+                                        >
+                                          <ThumbsUp className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                          onClick={() => { setFeedbackOpen(isFeedbackPanelOpen ? null : badgeKey); setFeedbackText(''); }}
+                                          className="w-5 h-5 rounded flex items-center justify-center transition-colors"
+                                          style={{ color: isFeedbackPanelOpen ? '#EF4444' : '#94A3B8' }}
+                                          onMouseEnter={(e) => { if (!isFeedbackPanelOpen) { e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.backgroundColor = '#FEF2F2'; } }}
+                                          onMouseLeave={(e) => { if (!isFeedbackPanelOpen) { e.currentTarget.style.color = '#94A3B8'; e.currentTarget.style.backgroundColor = 'transparent'; } }}
+                                          title="Klopt niet"
+                                        >
+                                          <ThumbsDown className="w-3 h-3" />
+                                        </button>
+                                      </span>
+                                    )}
+                                    {isConfirmed && (
+                                      <CheckCircle className="w-3 h-3 ml-1" style={{ color: '#22C55E' }} />
+                                    )}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                            {useAdminLayout && feedbackOpen && (feedbackOpen === `signal-${turn.idx}` || feedbackOpen?.startsWith(`tech-${turn.idx}-`)) && (
+                              <div className="rounded-lg border p-2.5 mt-1" style={{ backgroundColor: '#FEFCE8', borderColor: '#FDE68A' }}>
+                                <p className="text-[10px] font-medium mb-1.5" style={{ color: '#92400E' }}>Wat zou het moeten zijn?</p>
+                                <div className="flex gap-1.5 items-start">
+                                  <input
+                                    type="text"
+                                    value={feedbackText}
+                                    onChange={(e) => setFeedbackText(e.target.value)}
+                                    placeholder="Typ correctie of selecteer techniek..."
+                                    className="flex-1 text-[11px] px-2 py-1.5 rounded border bg-white min-w-0"
+                                    style={{ borderColor: '#E5E7EB' }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' && feedbackText.trim()) {
+                                        const isSignal = feedbackOpen.startsWith('signal-');
+                                        const turnIdx = parseInt(feedbackOpen.split('-')[1]);
+                                        if (isSignal) {
+                                          const sig = signals.find(s => s.turnIdx === turnIdx);
+                                          submitCorrection('signal', 'houding', sig?.houding || '', feedbackText.trim(), `Turn ${turnIdx}: ${sig?.houding || ''} → ${feedbackText.trim()}`);
+                                        } else {
+                                          const techId = feedbackOpen.split('-').slice(2).join('-');
+                                          const ev = evaluations.find(e => e.turnIdx === turnIdx);
+                                          const tech = ev?.techniques.find(t => t.id === techId);
+                                          submitCorrection('technique', 'quality', `${techId}:${tech?.quality || ''}`, feedbackText.trim(), `Turn ${turnIdx}: ${tech?.naam || techId} → ${feedbackText.trim()}`);
+                                        }
+                                        setFeedbackConfirmed(prev => { const next = new Set(prev); next.add(feedbackOpen); return next; });
+                                        setFeedbackOpen(null);
+                                        setFeedbackText('');
+                                      }
+                                    }}
+                                    autoFocus
+                                  />
                                   <button
                                     onClick={() => {
-                                      const options = ['interesse', 'twijfel', 'ontwijkend', 'bezwaar', 'koopsignaal', 'commitment', 'neutraal'];
-                                      const current = signal.houding;
-                                      const next = options[(options.indexOf(current) + 1) % options.length];
-                                      submitCorrection('signal', 'houding', current, next, `Turn ${turn.idx}: signaal ${current} → ${next}`);
+                                      if (!feedbackText.trim()) return;
+                                      const isSignal = feedbackOpen.startsWith('signal-');
+                                      const turnIdx = parseInt(feedbackOpen.split('-')[1]);
+                                      if (isSignal) {
+                                        const sig = signals.find(s => s.turnIdx === turnIdx);
+                                        submitCorrection('signal', 'houding', sig?.houding || '', feedbackText.trim(), `Turn ${turnIdx}: ${sig?.houding || ''} → ${feedbackText.trim()}`);
+                                      } else {
+                                        const techId = feedbackOpen.split('-').slice(2).join('-');
+                                        const ev = evaluations.find(e => e.turnIdx === turnIdx);
+                                        const tech = ev?.techniques.find(t => t.id === techId);
+                                        submitCorrection('technique', 'quality', `${techId}:${tech?.quality || ''}`, feedbackText.trim(), `Turn ${turnIdx}: ${tech?.naam || techId} → ${feedbackText.trim()}`);
+                                      }
+                                      setFeedbackConfirmed(prev => { const next = new Set(prev); next.add(feedbackOpen); return next; });
+                                      setFeedbackOpen(null);
+                                      setFeedbackText('');
                                     }}
-                                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover/badges:opacity-100 transition-opacity"
+                                    className="flex-shrink-0 w-7 h-7 rounded flex items-center justify-center"
                                     style={{ backgroundColor: '#9910FA', color: 'white' }}
-                                    title="Signaal corrigeren"
+                                    title="Correctie indienen"
                                   >
-                                    <Pencil className="w-2.5 h-2.5" />
+                                    <CheckCircle className="w-3.5 h-3.5" />
                                   </button>
-                                )}
-                              </span>
+                                  <button
+                                    onClick={() => { setFeedbackOpen(null); setFeedbackText(''); }}
+                                    className="flex-shrink-0 w-7 h-7 rounded flex items-center justify-center"
+                                    style={{ backgroundColor: '#F1F5F9', color: '#64748B' }}
+                                    title="Annuleren"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
                             )}
-                            {evaluation && evaluation.techniques.length > 0 && evaluation.techniques.map((tech, i) => {
-                              const badge = getQualityBadge(tech.quality);
-                              return (
-                                <span key={i} className="relative inline-flex">
-                                  <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${badge.color}`}>
-                                    {tech.quality === 'gemist' ? '✗' : '✓'} {tech.naam || tech.id}
-                                  </Badge>
-                                  {useAdminLayout && (
-                                    <button
-                                      onClick={() => {
-                                        const qualities = ['goed', 'matig', 'gemist'];
-                                        const current = tech.quality;
-                                        const next = qualities[(qualities.indexOf(current) + 1) % qualities.length];
-                                        submitCorrection('technique', 'quality', `${tech.id}:${current}`, `${tech.id}:${next}`, `Turn ${turn.idx}: ${tech.naam || tech.id} ${current} → ${next}`);
-                                      }}
-                                      className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover/badges:opacity-100 transition-opacity"
-                                      style={{ backgroundColor: '#9910FA', color: 'white' }}
-                                      title="Kwaliteit corrigeren"
-                                    >
-                                      <Pencil className="w-2.5 h-2.5" />
-                                    </button>
-                                  )}
-                                </span>
-                              );
-                            })}
                           </div>
                         </ChatBubble>
                       </div>
