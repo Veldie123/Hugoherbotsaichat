@@ -434,6 +434,14 @@ export function AnalysisResults({
     };
   }, [resolvedConversationId]);
 
+  useEffect(() => {
+    if (result && (navigationData as any)?.scrollToDetail) {
+      setTimeout(() => {
+        document.getElementById('detailed-metrics')?.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }, 200);
+    }
+  }, [result, (navigationData as any)?.scrollToDetail]);
+
   const getScoreColor = (score: number) => {
     if (score >= 70) return "text-hh-success";
     if (score >= 50) return "text-hh-warn";
@@ -1436,7 +1444,7 @@ ${msg}`;
             ];
 
             return (
-              <div className="space-y-4 mb-12">
+              <div id="detailed-metrics" className="space-y-4 mb-12">
                 <h3 className="text-[16px] font-semibold text-hh-text">Gedetailleerde analyse</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {categories.map((cat) => {

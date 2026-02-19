@@ -37,6 +37,7 @@ const DEV_PREVIEW_PAGES: Record<string, Page> = {
   'analysis': 'analysis',
   'analysis-results': 'analysis-results',
   'admin-analysis-results': 'analysis-results',
+  'admin-analysis-detail': 'analysis-results',
   'upload-analysis': 'upload-analysis',
   'landing': 'landing',
   'login': 'login',
@@ -117,9 +118,10 @@ export default function App() {
     if (devPreviewPage === 'analysis-results') {
       const params = new URLSearchParams(window.location.search);
       const cid = params.get('id');
-      const fromAdmin = rawDevPath === 'admin-analysis-results';
-      if (cid) return { conversationId: cid, fromAdmin };
-      return { autoLoadFirst: true, fromAdmin };
+      const fromAdmin = rawDevPath === 'admin-analysis-results' || rawDevPath === 'admin-analysis-detail';
+      const scrollToDetail = rawDevPath === 'admin-analysis-detail';
+      if (cid) return { conversationId: cid, fromAdmin, scrollToDetail };
+      return { autoLoadFirst: true, fromAdmin, scrollToDetail };
     }
     return undefined;
   });
