@@ -33,6 +33,12 @@ import {
   Pencil,
   Save,
   AlertTriangle,
+  Layers,
+  Zap,
+  Users,
+  Scale,
+  CheckCircle,
+  Circle,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -136,6 +142,58 @@ interface CoachDebrief {
   messages: CoachDebriefMessage[];
 }
 
+interface DetailedMetrics {
+  structure: {
+    phaseFlow: {
+      transitions: Array<{ turnIdx: number; fromPhase: number; toPhase: number; speaker: string }>;
+      idealFlowScore: number;
+      description: string;
+    };
+    exploreCoverage: {
+      themesFound: string[];
+      themesMissing: string[];
+      coveragePercent: number;
+    };
+    openingSequence: {
+      stepsFound: string[];
+      stepsMissing: string[];
+      completionPercent: number;
+      correctOrder: boolean;
+    };
+    epicSteps: {
+      explore: boolean;
+      probe: boolean;
+      impact: boolean;
+      commit: boolean;
+      completionPercent: number;
+    };
+    overallScore: number;
+  };
+  impact: {
+    baatenFound: Array<{ turnIdx: number; text: string; type: string; quality: string }>;
+    pijnpuntenFound: number;
+    pijnpuntenUsed: number;
+    ovbChecks: Array<{ turnIdx: number; hasOplossing: boolean; hasVoordeel: boolean; hasBaat: boolean; quality: string; explanation: string }>;
+    ovbQualityScore: number;
+    commitBeforePhase3: boolean;
+    overallScore: number;
+  };
+  houdingen: {
+    phase2Recognition: { total: number; recognized: number; percent: number };
+    phase3Treatment: { total: number; treated: number; style: string; percent: number };
+    phase4Afritten: { total: number; treated: number; percent: number };
+    matches: Array<{ turnIdx: number; houding: string; phase: number; recognized: boolean; treated: boolean }>;
+    overallScore: number;
+  };
+  balance: {
+    talkRatio: { sellerPercent: number; customerPercent: number; verdict: string };
+    perspective: { wijIkCount: number; uJijCount: number; ratio: number; verdict: string };
+    questionRatio: { questions: number; statements: number; ratio: number; phase2Ratio: number };
+    clientLanguage: { termsPickedUp: number; examples: string[] };
+    overallScore: number;
+  };
+}
+
 interface AnalysisInsights {
   phaseCoverage: PhaseCoverage;
   missedOpportunities: MissedOpportunity[];
@@ -146,6 +204,7 @@ interface AnalysisInsights {
   overallScore: number;
   coachDebrief?: CoachDebrief;
   moments?: CoachMoment[];
+  detailedMetrics?: DetailedMetrics;
 }
 
 interface FullAnalysisResult {
@@ -185,6 +244,7 @@ export function AnalysisResults({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FullAnalysisResult | null>(null);
   const [expandedMoment, setExpandedMoment] = useState<string | null>(null);
+  const [expandedMetricCategory, setExpandedMetricCategory] = useState<string | null>(null);
   const conversationStorageKey = `viewedCoachMoments_${navigationData?.conversationId || sessionStorage.getItem('analysisId') || 'default'}`;
   const [viewedMoments, setViewedMoments] = useState<Set<string>>(() => {
     try {
@@ -1179,7 +1239,315 @@ ${msg}`;
             );
           })()}
 
-          {/* SECTION 3: Single primary action */}
+          {/* SECTION 3: iPhone Health-style Detailed Metrics */}
+          {(() => {
+            const dm = insights.detailedMetrics;
+            if (!dm) return null;
+
+            const accentColor = adminColors ? '#9910FA' : '#3C9A6E';
+            const accentColorLight = adminColors ? '#9910FA15' : '#3C9A6E15';
+            const accentColorBg = adminColors ? '#9910FA08' : '#3C9A6E08';
+
+            const categories = [
+              {
+                key: 'structure',
+                icon: Layers,
+                label: 'Structuur',
+                sublabel: 'Fasestructuur & EPIC-flow',
+                score: dm.structure.overallScore,
+                color: '#3B82F6',
+                details: [
+                  {
+                    label: 'Faseverloop',
+                    value: dm.structure.phaseFlow.description,
+                    score: dm.structure.phaseFlow.idealFlowScore,
+                    sub: dm.structure.phaseFlow.transitions.length > 0
+                      ? `${dm.structure.phaseFlow.transitions.length} fase-overgangen`
+                      : 'Geen overgangen gedetecteerd',
+                  },
+                  {
+                    label: 'Explore-dekking',
+                    value: `${dm.structure.exploreCoverage.themesFound.length}/8 thema's`,
+                    score: dm.structure.exploreCoverage.coveragePercent,
+                    sub: dm.structure.exploreCoverage.themesMissing.length > 0
+                      ? `Missend: ${dm.structure.exploreCoverage.themesMissing.join(', ')}`
+                      : 'Alle thema\'s aangeraakt',
+                  },
+                  {
+                    label: 'Opening',
+                    value: `${dm.structure.openingSequence.stepsFound.length}/4 stappen`,
+                    score: dm.structure.openingSequence.completionPercent,
+                    sub: dm.structure.openingSequence.correctOrder
+                      ? 'Correcte volgorde'
+                      : (dm.structure.openingSequence.stepsMissing.length > 0
+                        ? `Missend: ${dm.structure.openingSequence.stepsMissing.join(', ')}`
+                        : 'Volgorde afwijkend'),
+                  },
+                  {
+                    label: 'E.P.I.C. stappen',
+                    value: `${[dm.structure.epicSteps.explore, dm.structure.epicSteps.probe, dm.structure.epicSteps.impact, dm.structure.epicSteps.commit].filter(Boolean).length}/4`,
+                    score: dm.structure.epicSteps.completionPercent,
+                    sub: [
+                      dm.structure.epicSteps.explore ? null : 'Explore',
+                      dm.structure.epicSteps.probe ? null : 'Probe',
+                      dm.structure.epicSteps.impact ? null : 'Impact',
+                      dm.structure.epicSteps.commit ? null : 'Commit',
+                    ].filter(Boolean).length > 0
+                      ? `Missend: ${[
+                          dm.structure.epicSteps.explore ? null : 'Explore',
+                          dm.structure.epicSteps.probe ? null : 'Probe',
+                          dm.structure.epicSteps.impact ? null : 'Impact',
+                          dm.structure.epicSteps.commit ? null : 'Commit',
+                        ].filter(Boolean).join(', ')}`
+                      : 'Volledig doorlopen',
+                  },
+                ],
+              },
+              {
+                key: 'impact',
+                icon: Zap,
+                label: 'Impact',
+                sublabel: 'Baten, pijnpunten & O.V.B.',
+                score: dm.impact.overallScore,
+                color: '#F59E0B',
+                details: [
+                  {
+                    label: 'Baten gevonden',
+                    value: `${dm.impact.baatenFound.filter(b => b.type === 'explicit_baat').length} expliciete baten`,
+                    score: Math.min(100, dm.impact.baatenFound.filter(b => b.type === 'explicit_baat').length * 30),
+                    sub: dm.impact.baatenFound.length > 0
+                      ? `${dm.impact.baatenFound.filter(b => b.type === 'voordeel_only').length} voordelen zonder baat`
+                      : 'Geen baten of voordelen gedetecteerd',
+                  },
+                  {
+                    label: 'O.V.B. kwaliteit',
+                    value: dm.impact.ovbChecks.length > 0
+                      ? `${dm.impact.ovbChecks.filter(o => o.quality === 'volledig').length}/${dm.impact.ovbChecks.length} volledig`
+                      : 'Geen O.V.B. gedetecteerd',
+                    score: dm.impact.ovbQualityScore,
+                    sub: dm.impact.ovbChecks.length > 0
+                      ? dm.impact.ovbChecks[0]?.explanation || ''
+                      : 'Oplossing → Voordeel → Baat niet toegepast',
+                  },
+                  {
+                    label: 'Pijnpunten',
+                    value: `${dm.impact.pijnpuntenFound} gevonden, ${dm.impact.pijnpuntenUsed} gebruikt`,
+                    score: dm.impact.pijnpuntenFound > 0 ? (dm.impact.pijnpuntenUsed > 0 ? 100 : 40) : 0,
+                    sub: dm.impact.pijnpuntenUsed > 0
+                      ? 'Vertaald naar oplossing'
+                      : (dm.impact.pijnpuntenFound > 0 ? 'Niet vertaald naar oplossing' : 'Geen pijnpunten benoemd'),
+                  },
+                  {
+                    label: 'Commitment vóór fase 3',
+                    value: dm.impact.commitBeforePhase3 ? 'Ja' : 'Nee',
+                    score: dm.impact.commitBeforePhase3 ? 100 : 0,
+                    sub: dm.impact.commitBeforePhase3
+                      ? 'Klant bevestigde begrip voordat aanbeveling kwam'
+                      : 'Geen commitment gevraagd vóór aanbeveling',
+                  },
+                ],
+              },
+              {
+                key: 'houdingen',
+                icon: Users,
+                label: 'Klanthoudingen',
+                sublabel: 'Herkenning & behandeling',
+                score: dm.houdingen.overallScore,
+                color: '#EF4444',
+                details: [
+                  {
+                    label: 'Herkenning (Fase 2)',
+                    value: dm.houdingen.phase2Recognition.total > 0
+                      ? `${dm.houdingen.phase2Recognition.recognized}/${dm.houdingen.phase2Recognition.total} herkend`
+                      : 'Geen signalen in fase 2',
+                    score: dm.houdingen.phase2Recognition.percent,
+                    sub: dm.houdingen.phase2Recognition.total > 0
+                      ? `${dm.houdingen.phase2Recognition.percent}% van klantsignalen opgepikt`
+                      : 'Geen klantsignalen gedetecteerd in ontdekkingsfase',
+                  },
+                  {
+                    label: 'Behandeling (Fase 3)',
+                    value: dm.houdingen.phase3Treatment.total > 0
+                      ? `${dm.houdingen.phase3Treatment.treated}/${dm.houdingen.phase3Treatment.total} behandeld`
+                      : 'Geen bezwaren in fase 3',
+                    score: dm.houdingen.phase3Treatment.percent,
+                    sub: dm.houdingen.phase3Treatment.style !== 'geen'
+                      ? `Stijl: ${dm.houdingen.phase3Treatment.style === 'empathisch' ? 'Empathisch (goed)' : dm.houdingen.phase3Treatment.style === 'technisch' ? 'Technisch (verbeterpunt)' : 'Gemengd'}`
+                      : '',
+                  },
+                  {
+                    label: 'Afritten (Fase 4)',
+                    value: dm.houdingen.phase4Afritten.total > 0
+                      ? `${dm.houdingen.phase4Afritten.treated}/${dm.houdingen.phase4Afritten.total} behandeld`
+                      : 'Geen afritten in fase 4',
+                    score: dm.houdingen.phase4Afritten.percent,
+                    sub: dm.houdingen.phase4Afritten.total > 0
+                      ? `Vragen, twijfels, bezwaren, uitstel`
+                      : 'Geen weerstand gedetecteerd in beslissingsfase',
+                  },
+                ],
+              },
+              {
+                key: 'balance',
+                icon: Scale,
+                label: 'Gespreksbalans',
+                sublabel: 'Spreektijd, perspectief & vragen',
+                score: dm.balance.overallScore,
+                color: '#8B5CF6',
+                details: [
+                  {
+                    label: 'Spreektijd',
+                    value: `Verkoper ${dm.balance.talkRatio.sellerPercent}% — Klant ${dm.balance.talkRatio.customerPercent}%`,
+                    score: dm.balance.talkRatio.verdict === 'goed' ? 100 : Math.max(0, 100 - Math.abs(dm.balance.talkRatio.sellerPercent - 50) * 2),
+                    sub: dm.balance.talkRatio.verdict === 'te_veel_verkoper'
+                      ? 'Verkoper is te veel aan het woord'
+                      : dm.balance.talkRatio.verdict === 'te_weinig_verkoper'
+                      ? 'Verkoper neemt te weinig initiatief'
+                      : 'Goed evenwicht',
+                  },
+                  {
+                    label: '"Wij/ik" vs "U/jij"',
+                    value: `${dm.balance.perspective.uJijCount}x klant vs ${dm.balance.perspective.wijIkCount}x zelf`,
+                    score: dm.balance.perspective.verdict === 'klantgericht' ? 100 : dm.balance.perspective.verdict === 'gemengd' ? 60 : 30,
+                    sub: dm.balance.perspective.verdict === 'klantgericht'
+                      ? 'Spreekt vanuit klantperspectief'
+                      : dm.balance.perspective.verdict === 'zelfgericht'
+                      ? 'Te veel "wij doen dit, wij bieden dat"'
+                      : 'Gemengd perspectief',
+                  },
+                  {
+                    label: 'Vraag-ratio (Fase 2)',
+                    value: `${Math.round(dm.balance.questionRatio.phase2Ratio * 100)}% vragen`,
+                    score: Math.min(100, Math.round(dm.balance.questionRatio.phase2Ratio * 150)),
+                    sub: dm.balance.questionRatio.phase2Ratio >= 0.5
+                      ? 'Goede vraaghouding in ontdekking'
+                      : 'Meer vragen stellen in ontdekkingsfase',
+                  },
+                  {
+                    label: 'Klant-taal oppakken',
+                    value: `${dm.balance.clientLanguage.termsPickedUp} termen`,
+                    score: Math.min(100, dm.balance.clientLanguage.termsPickedUp * 20),
+                    sub: dm.balance.clientLanguage.examples.length > 0
+                      ? `Bijv: ${dm.balance.clientLanguage.examples.slice(0, 3).join(', ')}`
+                      : 'Geen klanttermen hergebruikt',
+                  },
+                ],
+              },
+            ];
+
+            return (
+              <div className="space-y-4 mb-12">
+                <h3 className="text-[16px] font-semibold text-hh-text">Gedetailleerde analyse</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {categories.map((cat) => {
+                    const CatIcon = cat.icon;
+                    const isExpanded = expandedMetricCategory === cat.key;
+
+                    return (
+                      <div key={cat.key} className="flex flex-col">
+                        <button
+                          onClick={() => setExpandedMetricCategory(isExpanded ? null : cat.key)}
+                          className="text-left rounded-2xl p-5 transition-all group cursor-pointer"
+                          style={{
+                            backgroundColor: '#FAFBFC',
+                            border: isExpanded ? `2px solid ${cat.color}30` : '2px solid #F1F5F9',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${cat.color}15` }}>
+                                <CatIcon className="w-5 h-5" style={{ color: cat.color }} strokeWidth={1.75} />
+                              </div>
+                              <div>
+                                <p className="text-[14px] font-semibold text-hh-text">{cat.label}</p>
+                                <p className="text-[11px] text-hh-muted">{cat.sublabel}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-12 h-12">
+                                <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                                  <path
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke="#F1F5F9"
+                                    strokeWidth="3"
+                                  />
+                                  <path
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke={cat.score >= 60 ? cat.color : cat.score >= 30 ? '#F59E0B' : '#EF4444'}
+                                    strokeWidth="3"
+                                    strokeDasharray={`${cat.score}, 100`}
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-hh-text">
+                                  {cat.score}%
+                                </span>
+                              </div>
+                              <ChevronRight className={`w-4 h-4 text-hh-muted transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                            </div>
+                          </div>
+
+                          <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{
+                                width: `${cat.score}%`,
+                                backgroundColor: cat.score >= 60 ? cat.color : cat.score >= 30 ? '#F59E0B' : '#EF4444'
+                              }}
+                            />
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="mt-2 rounded-2xl bg-white border border-gray-200 p-4 space-y-3 shadow-sm">
+                            {cat.details.map((detail, dIdx) => (
+                              <div key={dIdx} className="flex items-start gap-3 py-2" style={dIdx < cat.details.length - 1 ? { borderBottom: '1px solid #F1F5F9' } : {}}>
+                                <div className="flex-shrink-0 mt-0.5">
+                                  {detail.score >= 70 ? (
+                                    <CheckCircle className="w-4 h-4" style={{ color: '#22C55E' }} />
+                                  ) : detail.score >= 30 ? (
+                                    <Circle className="w-4 h-4" style={{ color: '#F59E0B' }} />
+                                  ) : (
+                                    <XCircle className="w-4 h-4" style={{ color: '#EF4444' }} />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between mb-0.5">
+                                    <span className="text-[13px] font-medium text-hh-text">{detail.label}</span>
+                                    <span className="text-[12px] font-semibold" style={{
+                                      color: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444'
+                                    }}>{detail.value}</span>
+                                  </div>
+                                  {detail.sub && (
+                                    <p className="text-[11px] text-hh-muted leading-[16px]">{detail.sub}</p>
+                                  )}
+                                  <div className="mt-1.5 h-1 rounded-full bg-gray-100 overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full transition-all duration-500"
+                                      style={{
+                                        width: `${detail.score}%`,
+                                        backgroundColor: detail.score >= 70 ? '#22C55E' : detail.score >= 30 ? '#F59E0B' : '#EF4444'
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* SECTION 4: Single primary action */}
           <div className="text-center">
             <button
               className="inline-flex items-center justify-center gap-2 text-[14px] h-11 px-6 text-white rounded-xl font-medium transition-all shadow-sm"

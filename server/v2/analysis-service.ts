@@ -7,6 +7,7 @@ import { pool } from '../db';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { computeDetailedMetrics, DetailedMetrics } from './detailed-metrics';
 
 const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -129,6 +130,7 @@ export interface AnalysisInsights {
   overallScore: number;
   coachDebrief?: CoachDebrief;
   moments?: CoachMoment[];
+  detailedMetrics?: DetailedMetrics;
 }
 
 export interface FullAnalysisResult {
@@ -1413,6 +1415,13 @@ export async function runFullAnalysis(
     const { coachDebrief, moments } = await generateCoachArtifacts(turns, evaluations, signals, phaseCoverage, missedOpps, insights);
     insights.coachDebrief = coachDebrief;
     insights.moments = moments;
+
+    try {
+      const detailedMetrics = await computeDetailedMetrics(turns, evaluations, signals, phaseCoverage);
+      insights.detailedMetrics = detailedMetrics;
+    } catch (err: any) {
+      console.warn('[Analysis] Detailed metrics computation failed (non-fatal):', err.message);
+    }
 
     job.status = 'completed';
     job.completedAt = new Date().toISOString();
