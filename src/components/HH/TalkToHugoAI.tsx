@@ -212,6 +212,64 @@ export function TalkToHugoAI({
 
   // Hugo starts conversation proactively based on cross-platform activity
   useEffect(() => {
+    const practiceRaw = sessionStorage.getItem('hugoPracticeContext');
+    if (practiceRaw) {
+      sessionStorage.removeItem('hugoPracticeContext');
+      try {
+        const ctx = JSON.parse(practiceRaw);
+        if (ctx.fromAnalysis) {
+          const techniqueLabel = ctx.techniqueNames || ctx.techniqueIds?.join(', ') || ctx.practiceLabel;
+          let practiceMessage = `Ik wil graag oefenen met de techniek${ctx.techniqueIds?.length > 1 ? 'en' : ''} ${techniqueLabel}.`;
+          if (ctx.conversationSnippet) {
+            practiceMessage += `\n\nDit is het fragment uit mijn gesprek${ctx.analysisTitle ? ` "${ctx.analysisTitle}"` : ''} waar ik beter had kunnen reageren:\n\n${ctx.conversationSnippet}\n\nKun je me helpen dit moment opnieuw te oefenen? Speel de klant en laat me een betere reactie geven.`;
+          } else {
+            practiceMessage += `\n\nDit kwam naar boven bij de analyse van mijn gesprek${ctx.analysisTitle ? ` "${ctx.analysisTitle}"` : ''}. Kun je me helpen dit te oefenen? Speel de klant en laat me oefenen.`;
+          }
+
+          setMessages([{
+            id: `practice-user-${Date.now()}`,
+            sender: "hugo",
+            text: practiceMessage,
+            timestamp: new Date(),
+          }]);
+          setHasActiveSession(true);
+          setIsLoading(true);
+
+          (async () => {
+            try {
+              const techniqueId = ctx.techniqueIds?.[0] || 'general';
+              await hugoApi.startSession({
+                techniqueId,
+                mode: "COACH_CHAT",
+                isExpert: false,
+                modality: "chat",
+              });
+              const response = await hugoApi.sendMessage(practiceMessage);
+              setMessages(prev => [...prev, {
+                id: `practice-ai-${Date.now()}`,
+                sender: "ai",
+                text: response.response || "Laten we dit moment opnieuw oefenen! Ik speel de klant. Ga je gang.",
+                timestamp: new Date(),
+              }]);
+            } catch (err) {
+              setMessages(prev => [...prev, {
+                id: `practice-ai-${Date.now()}`,
+                sender: "ai",
+                text: `Laten we "${ctx.practiceLabel}" opnieuw oefenen. Ik speel de klant — geef maar een betere reactie op het moment uit je gesprek.`,
+                timestamp: new Date(),
+              }]);
+            } finally {
+              setIsLoading(false);
+            }
+          })();
+          console.log("[Hugo] Practice context loaded from analysis:", ctx.practiceLabel);
+          return;
+        }
+      } catch (e) {
+        console.error("[Hugo] Failed to parse practice context:", e);
+      }
+    }
+
     const loadPersonalizedWelcome = async () => {
       const { message, summary } = await lastActivityService.getPersonalizedWelcome(user?.id || null);
       setMessages([{
@@ -1380,9 +1438,9 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
             disabled={(!inputText.trim() && attachedFiles.length === 0) || isLoading || isStreaming}
             variant="ghost"
             className="gap-2 px-3 sm:px-4 text-white rounded-md hover:text-white"
-            style={{ backgroundColor: isAdmin ? '#9910FA' : '#3C9A6E' }}
-            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = isAdmin ? '#7a0dd4' : '#2D7F57')}
-            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = isAdmin ? '#9910FA' : '#3C9A6E')}
+            style={{ backgroundColor: '#3C9A6E' }}
+            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#2D7F57')}
+            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#3C9A6E')}
           >
             {isLoading || isStreaming ? (
               <Loader2 className="w-4 h-4 text-white animate-spin" />

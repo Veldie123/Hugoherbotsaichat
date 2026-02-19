@@ -506,13 +506,31 @@ export function AnalysisResults({
     return 1;
   };
 
-  const navigateToHugoForPractice = (techniqueIds: string[], label: string) => {
+  const navigateToHugoForPractice = (techniqueIds: string[], label: string, momentTurnIdx?: number) => {
     if (navigate) {
+      let conversationSnippet = '';
+      if (result?.transcript && momentTurnIdx !== undefined) {
+        const startIdx = Math.max(0, momentTurnIdx - 3);
+        const endIdx = Math.min(result.transcript.length - 1, momentTurnIdx + 2);
+        const relevantTurns = result.transcript.slice(startIdx, endIdx + 1);
+        conversationSnippet = relevantTurns.map(t =>
+          `${t.speaker === 'customer' ? 'Klant' : 'Verkoper'}: ${t.text}`
+        ).join('\n');
+      }
+
+      const techniqueNames = techniqueIds.map(id => {
+        const t = getTechniekByNummer(id);
+        return t ? `${id} ${t.naam}` : id;
+      }).join(', ');
+
       const practiceContext = {
         mode: 'practice',
         techniqueIds,
+        techniqueNames,
         practiceLabel: label,
         fromAnalysis: true,
+        conversationSnippet,
+        analysisTitle: result?.conversation?.title || '',
       };
       sessionStorage.setItem('hugoPracticeContext', JSON.stringify(practiceContext));
       navigate('talk-to-hugo', practiceContext);
@@ -1042,7 +1060,7 @@ export function AnalysisResults({
                                   style={{ backgroundColor: adminColors ? '#9910FA' : '#3C9A6E' }}
                                   onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#7C3AED' : '#2D7F57')}
                                   onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#9910FA' : '#3C9A6E')}
-                                  onClick={() => navigateToHugoForPractice(moment.recommendedTechniques || [], moment.label)}
+                                  onClick={() => navigateToHugoForPractice(moment.recommendedTechniques || [], moment.label, moment.turnIndex)}
                                 >
                                   <ArrowRight className="w-4 h-4" /> Oefen met Hugo
                                 </button>
