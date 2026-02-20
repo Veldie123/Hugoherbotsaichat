@@ -390,6 +390,33 @@ export function AnalysisResults({
           pollInterval = null;
         }
 
+        if (response.status === 404 && sessionStorage.getItem('analysisFromHugo') === 'true') {
+          setProcessingStep('Analyse starten...');
+          try {
+            const triggerRes = await fetch('/api/v2/analysis/chat-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sessionId: resolvedConversationId }),
+            });
+            const triggerData = await triggerRes.json();
+            if (triggerData.error) {
+              setError(triggerData.error);
+              setProcessingStep(null);
+              setLoading(false);
+              return;
+            }
+            if (!pollInterval) {
+              pollInterval = setInterval(fetchResults, 3000);
+            }
+            return;
+          } catch {
+            setError('Kon analyse niet starten');
+            setProcessingStep(null);
+            setLoading(false);
+            return;
+          }
+        }
+
         if (!response.ok) {
           setError(data.error || 'Resultaten ophalen mislukt');
           setLoading(false);
@@ -399,6 +426,7 @@ export function AnalysisResults({
         setResult(data);
         setProcessingStep(null);
         setLoading(false);
+        sessionStorage.removeItem('analysisFromHugo');
       } catch (err) {
         if (pollInterval) clearInterval(pollInterval);
         setError('Kon resultaten niet ophalen');

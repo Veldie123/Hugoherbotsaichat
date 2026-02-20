@@ -424,10 +424,15 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
     }
   };
 
+  const viewSessionAnalysis = (session: Session) => {
+    sessionStorage.setItem('analysisId', session.id);
+    sessionStorage.setItem('analysisFromHugo', 'true');
+    if (navigate) navigate('admin-analysis-results');
+  };
+
   const viewTranscript = (session: Session) => {
     setSelectedSession(session);
     setTranscriptDialogOpen(true);
-    // Reset debug states when opening new transcript
     setExpandedDebug(null);
     setTechniqueValidation({});
     setShowFeedbackInput({});
@@ -737,7 +742,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
               <Card
                 key={session.id}
                 className="p-4 rounded-[12px] shadow-hh-sm border-hh-border cursor-pointer hover:shadow-hh-md transition-shadow"
-                onClick={() => viewTranscript(session)}
+                onClick={() => viewSessionAnalysis(session)}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -862,7 +867,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                 {filteredSessions.map((session, index) => (
                   <tr
                     key={session.id}
-                    onClick={() => viewTranscript(session)}
+                    onClick={() => viewSessionAnalysis(session)}
                     onMouseEnter={() => setHoveredRow(session.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                     className={`border-b border-hh-border last:border-0 hover:bg-hh-ui-50 transition-colors cursor-pointer ${
@@ -946,16 +951,9 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => viewTranscript(session)}>
+                          <DropdownMenuItem onClick={() => viewSessionAnalysis(session)}>
                             <Eye className="w-4 h-4 mr-2" />
-                            Bekijk Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleAnalyzeSession(session)}
-                            disabled={analyzingSessionIds.has(session.id)}
-                          >
-                            <BarChart3 className="w-4 h-4 mr-2" />
-                            {analyzingSessionIds.has(session.id) ? 'Bezig met analyseren...' : 'Analyseer Sessie'}
+                            Bekijk Analyse
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="w-4 h-4 mr-2" />
@@ -1003,7 +1001,7 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                 <Card
                   key={session.id}
                   className="p-5 rounded-[16px] shadow-hh-sm border-hh-border hover:shadow-hh-md transition-shadow cursor-pointer"
-                  onClick={() => viewTranscript(session)}
+                  onClick={() => viewSessionAnalysis(session)}
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
@@ -1065,16 +1063,9 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); viewTranscript(session); }}>
+                        <DropdownMenuItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); viewSessionAnalysis(session); }}>
                           <Eye className="w-4 h-4 mr-2" />
-                          Bekijk Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleAnalyzeSession(session); }}
-                          disabled={analyzingSessionIds.has(session.id)}
-                        >
-                          <BarChart3 className="w-4 h-4 mr-2" />
-                          {analyzingSessionIds.has(session.id) ? 'Bezig met analyseren...' : 'Analyseer Sessie'}
+                          Bekijk Analyse
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                           <Download className="w-4 h-4 mr-2" />
