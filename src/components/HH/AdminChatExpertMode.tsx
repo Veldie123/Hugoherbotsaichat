@@ -339,6 +339,16 @@ export function AdminChatExpertMode({
         console.error("[Admin] Failed to parse practice context:", err);
       }
     }
+
+    if (!practiceRaw) {
+      setMessages([{
+        id: `welcome-${Date.now()}`,
+        sender: "ai",
+        text: "Welkom bij de Admin Training. Je kunt direct beginnen met chatten — ik speel de klant. Selecteer optioneel een techniek via het E.P.I.C. menu.",
+        timestamp: new Date(),
+      }]);
+    }
+
     return () => { cancelled = true; };
   }, []);
 
@@ -1297,16 +1307,6 @@ export function AdminChatExpertMode({
           {/* Chat Mode - Messages */}
           {chatMode === "chat" && (
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.length === 0 && (
-              <div className="flex justify-start">
-                <div className="p-3 rounded-2xl bg-purple-50 text-slate-800 rounded-bl-md border border-purple-100" style={{ maxWidth: '75%' }}>
-                  <p className="text-[14px] leading-[22px]">
-                    Welkom bij de Admin Training. Je kunt direct beginnen met chatten — ik speel de klant. Selecteer optioneel een techniek via het E.P.I.C. menu.
-                  </p>
-                </div>
-              </div>
-            )}
-
             {messages.map((message) => (
               <div key={message.id} className="space-y-2">
                 {/* Message Bubble - Modern rounded design */}
