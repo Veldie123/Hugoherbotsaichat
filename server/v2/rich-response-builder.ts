@@ -1,8 +1,9 @@
 import { contentAssetLibrary, type ContentAsset } from './content-assets';
 import { type IntentResult } from './intent-detector';
+import { getSlidesForTechnique, buildEpicSlideRichContent } from './epic-slides-service';
 
 export interface RichContentItem {
-  type: 'card' | 'video' | 'slide' | 'webinar' | 'action' | 'roleplay';
+  type: 'card' | 'video' | 'slide' | 'webinar' | 'action' | 'roleplay' | 'epic_slide';
   data: Record<string, unknown>;
 }
 
@@ -91,6 +92,7 @@ export async function buildRichResponse(
     techniqueName?: string;
     phase?: string;
     userId?: string;
+    gatheredContext?: Record<string, string>;
   }
 ): Promise<RichChatResponse> {
   if (!contentAssetLibrary.isLoaded()) {
@@ -170,6 +172,19 @@ export async function buildRichResponse(
         });
         break;
       }
+    }
+  }
+
+  if (techniqueId && richContent.length < MAX_RICH_ITEMS) {
+    try {
+      const epicSlides = getSlidesForTechnique(techniqueId);
+      if (epicSlides.length > 0) {
+        const ctx = sessionContext.gatheredContext || {};
+        const slideItem = buildEpicSlideRichContent(epicSlides[0], ctx);
+        richContent.push(slideItem as unknown as RichContentItem);
+      }
+    } catch (err: any) {
+      console.warn('[RichResponse] Failed to load EPIC slides:', err.message);
     }
   }
 

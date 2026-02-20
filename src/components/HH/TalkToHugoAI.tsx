@@ -63,6 +63,8 @@ import {
 import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
+import { EpicSlideCard } from "./EpicSlideCard";
+import type { EpicSlideContent } from "@/types/crossPlatform";
 import { hugoApi, type AssistanceConfig } from "../../services/hugoApi";
 import { lastActivityService } from "../../services/lastActivityService";
 import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from "@heygen/streaming-avatar";
@@ -103,6 +105,7 @@ interface Message {
   attachments?: MessageAttachment[];
   isTranscriptReplay?: boolean;
   transcriptRole?: string;
+  richContent?: import("@/types/crossPlatform").RichContent[];
 }
 
 type ChatMode = "chat" | "audio" | "video";
@@ -842,6 +845,7 @@ export function TalkToHugoAI({
           sender: "ai",
           text: response.response,
           timestamp: new Date(),
+          richContent: response.richContent,
         };
         setMessages(prev => [...prev, aiMessage]);
         
@@ -1257,6 +1261,17 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                 )}
                 {message.text && <p className="text-[14px] leading-[22px] whitespace-pre-wrap">{message.text}</p>}
               </div>
+
+              {message.richContent && message.richContent.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {message.richContent
+                    .filter(rc => rc.type === 'epic_slide')
+                    .map((rc, idx) => (
+                      <EpicSlideCard key={idx} slide={rc.data as unknown as EpicSlideContent} />
+                    ))
+                  }
+                </div>
+              )}
               
               {message.sender === "ai" && !message.isTranscriptReplay && (
                 <div className="flex items-center gap-0.5 mt-1.5">

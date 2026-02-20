@@ -271,7 +271,8 @@ async function loadSessionFromDb(sessionId: string): Promise<Session | null> {
         isComplete: row.phase >= 2,
         currentQuestionKey: null,
         lensPhase: false,
-        lensQuestionsAsked: []
+        lensQuestionsAsked: [],
+        deepDiveRounds: {}
       },
       isExpert: row.expert_mode === 1,
       createdAt: new Date(row.created_at),
@@ -887,6 +888,23 @@ app.post("/api/v2/session/message", async (req, res) => {
     // Save updated session
     await saveSessionToDb(session);
     
+    // Build rich content for COACH_CHAT mode
+    let richContent: any[] = [];
+    if (session.mode === 'COACH_CHAT' || session.mode === 'ROLEPLAY') {
+      try {
+        const { buildEpicSlideRichContent } = await import('./v2/epic-slides-service');
+        const slides = buildEpicSlideRichContent(
+          session.techniqueId,
+          session.contextState.gathered
+        );
+        if (slides.length > 0) {
+          richContent = slides;
+        }
+      } catch (err: any) {
+        console.log('[API] Rich content generation skipped:', err.message);
+      }
+    }
+    
     // Build response matching frontend expectations (SendMessageResponse interface)
     const currentPhase = parseInt(session.techniqueId?.split('.')[0]) || 1;
     const response: any = {
@@ -927,7 +945,8 @@ app.post("/api/v2/session/message", async (req, res) => {
           validationLabel: validatorInfo.validationLabel
         } : null
       },
-      promptsUsed: promptsUsed || { systemPrompt: "Geen prompt beschikbaar", userPrompt: "" }
+      promptsUsed: promptsUsed || { systemPrompt: "Geen prompt beschikbaar", userPrompt: "" },
+      richContent: richContent.length > 0 ? richContent : undefined
     };
     
     res.json(response);
@@ -4142,6 +4161,51 @@ async function startServer() {
       console.log(`[API] Running without Vite middleware (standalone API mode)`);
     }
   }
+
+  // ============================================================================
+  // WEBSITE ANALYSIS & EPIC SLIDES ENDPOINTS
+  // ============================================================================
+
+  app.post("/api/v2/company/analyze", async (req: Request, res: Response) => {
+    try {
+      const { website, bedrijfsnaam } = req.body;
+      
+      if (!website && !bedrijfsnaam) {
+        return res.status(400).json({ error: "website or bedrijfsnaam required" });
+      }
+      
+      const { analyzeCompanyWebsite } = await import("./v2/website-analyzer");
+      const profile = await analyzeCompanyWebsite(website || bedrijfsnaam, bedrijfsnaam);
+      
+      res.json({ success: true, profile });
+    } catch (error: any) {
+      console.error("[API] Company analyze error:", error.message);
+      res.status(500).json({ error: "Website analysis failed" });
+    }
+  });
+
+  app.get("/api/v2/slides/:techniqueId", async (req: Request, res: Response) => {
+    try {
+      const techniqueId = req.params.techniqueId as string;
+      const { getSlidesForTechnique } = await import("./v2/epic-slides-service");
+      const slides = getSlidesForTechnique(techniqueId);
+      res.json({ slides });
+    } catch (error: any) {
+      console.error("[API] Slides error:", error.message);
+      res.status(500).json({ error: "Failed to load slides" });
+    }
+  });
+
+  app.get("/api/v2/slides", async (_req: Request, res: Response) => {
+    try {
+      const { getAllSlides } = await import("./v2/epic-slides-service");
+      const slides = getAllSlides();
+      res.json({ slides });
+    } catch (error: any) {
+      console.error("[API] Slides error:", error.message);
+      res.status(500).json({ error: "Failed to load slides" });
+    }
+  });
 
   // Always listen on port 5000 for external access
   const COMBINED_PORT = 5000;

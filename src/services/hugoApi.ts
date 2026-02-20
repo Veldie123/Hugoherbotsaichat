@@ -69,6 +69,7 @@ export interface SendMessageResponse {
     verkoopkanaal?: string;
   };
   levelTransition?: LevelTransition;
+  richContent?: import("@/types/crossPlatform").RichContent[];
   debug?: {
     phase?: string;
     signal?: string;

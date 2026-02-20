@@ -41,9 +41,23 @@ import { validateAndRepair, buildValidatorDebugInfo, type ValidatorDebugInfo } f
 
 /**
  * Base slots - universal context to gather for every technique
+ * Phase 1: BASIS (who, what, how)
+ * Phase 2: BEDRIJF (company details)
+ * Phase 3: KOOPREDENEN (why they buy - LSD deep-dive to baten/pijnpunten)
+ * Phase 4: VERLIESREDENEN (why they don't buy - bezwaren/twijfels/uitstel)
  */
-export const BASE_SLOTS = ['sector', 'product', 'verkoopkanaal', 'klant_type', 'ervaring'] as const;
+export const BASE_SLOTS = [
+  'sector', 'product', 'verkoopkanaal', 'klant_type', 'ervaring',
+  'bedrijfsnaam', 'dealgrootte', 'salescycle',
+  'koopredenen', 'verliesredenen'
+] as const;
 export type BaseSlotId = typeof BASE_SLOTS[number];
+
+export const SLOT_PHASES = {
+  basis: ['sector', 'product', 'verkoopkanaal', 'klant_type', 'ervaring'] as const,
+  bedrijf: ['bedrijfsnaam', 'dealgrootte', 'salescycle'] as const,
+  reverse_engineering: ['koopredenen', 'verliesredenen'] as const,
+};
 
 /**
  * Slot themes - defines what each slot is about for AI question generation
@@ -73,6 +87,31 @@ export const SLOT_THEMES: Record<BaseSlotId, { theme: string; intent: string; in
     theme: 'Hoeveel ervaring heeft de verkoper?',
     intent: 'Pas het niveau van coaching aan op de ervaring',
     info_needed: ['jaren ervaring', 'huidige rol', 'achtergrond']
+  },
+  bedrijfsnaam: {
+    theme: 'Voor welk bedrijf werkt de verkoper? (naam en eventueel website)',
+    intent: 'Begrijp het bedrijf om coaching te personaliseren met bedrijfsspecifieke context',
+    info_needed: ['bedrijfsnaam', 'website URL', 'korte omschrijving']
+  },
+  dealgrootte: {
+    theme: 'Wat is de gemiddelde dealgrootte / ticketsize?',
+    intent: 'Pas coaching aan op de dealomvang — een €500 verkoop vraagt een ander gesprek dan €500.000',
+    info_needed: ['gemiddelde orderwaarde', 'range klein-groot', 'eenmalig of recurring']
+  },
+  salescycle: {
+    theme: 'Hoe lang duurt het typische verkoopproces?',
+    intent: 'Begrijp de salescycle voor relevante strategieën',
+    info_needed: ['one-call-close', 'weken', 'maanden', 'enterprise cycle']
+  },
+  koopredenen: {
+    theme: 'Waarom kochten de laatste 10 klanten? Wat waren de échte baten of pijnpunten?',
+    intent: 'Reverse engineering: ontdek de echte koopredenen (baten die klanten wilden verwerven, pijnpunten die ze wilden vermijden) — niet de features',
+    info_needed: ['concrete baten', 'pijnpunten die ze wilden oplossen', 'emotionele drijfveren', 'zakelijke impact']
+  },
+  verliesredenen: {
+    theme: 'Van de veelbelovende prospects die NIET kochten — wat waren de redenen?',
+    intent: 'Begrijp de typische blokkades: bezwaren, twijfels, uitstel, prijs, timing, DMU-dynamiek',
+    info_needed: ['concrete bezwaren', 'twijfels', 'pogingen tot uitstel', 'prijsbezwaren', 'DMU blokkades']
   }
 };
 
@@ -89,6 +128,7 @@ export const MINIMUM_REQUIREMENTS = {
  */
 export const AI_DIALOGUE_CONFIG = {
   max_clarifications_per_slot: 2,
+  max_deep_dive_rounds: 3,
   fallback_after_max: "Geen probleem, laten we verder gaan. We kunnen hier later op terugkomen.",
   interpret_prompt: `Je bent een context-interpretatie module. Analyseer het antwoord van de verkoper op de vraag over "{{theme}}".
 
@@ -100,11 +140,34 @@ Bepaal:
 3. UNUSABLE: Off-topic, onbruikbaar, of te kort
 
 Reageer in JSON: {"decision": "accept|clarify|unusable", "extracted_value": "...", "reason": "..."}`,
+  deep_dive_interpret_prompt: `Je bent een context-interpretatie module voor REVERSE ENGINEERING.
+De verkoper beantwoordt een vraag over "{{theme}}".
+
+ANTWOORD: "{{answer}}"
+
+DOEL: We zoeken de ECHTE baten of pijnpunten, niet features of oppervlakkige voordelen.
+
+Bepaal:
+1. DEEP_ENOUGH: Antwoord bevat echte baten (financieel, operationeel, strategisch, emotioneel) of echte pijnpunten die klanten wilden vermijden. Concreet en kwantificeerbaar.
+2. NEEDS_DEEPER: Antwoord beschrijft features, oppervlakkige voordelen, of algemene termen. We moeten doorvragen: "Maar wat BETEKENDE dat concreet voor die klant? Wat kostte het ze? Wat leverden ze in?"
+3. UNUSABLE: Off-topic of onbruikbaar.
+
+Reageer in JSON: {"decision": "deep_enough|needs_deeper|unusable", "extracted_value": "...", "depth_level": "feature|voordeel|baat|pijnpunt", "suggested_followup": "..."}`,
   prompt_templates: {
     transition_situation: "Je hebt zojuist informatie over {{previous_slot}} verzameld. Nu ga je vragen naar {{current_slot}}.",
     transition_task: "Stel een natuurlijke overgangsvraag die bouwt op wat je al weet en vraagt naar {{theme}}.",
     clarify_situation: "De verkoper gaf een vaag antwoord over {{slot}}: '{{answer}}'",
-    clarify_task: "Vraag vriendelijk om verduidelijking, geef een voorbeeld van wat je zoekt."
+    clarify_task: "Vraag vriendelijk om verduidelijking, geef een voorbeeld van wat je zoekt.",
+    deep_dive_koopredenen: `De verkoper gaf een antwoord over koopredenen, maar het is nog op {{depth_level}}-niveau: "{{answer}}"
+Je wilt doorvragen tot we bij ECHTE baten of pijnpunten zitten.
+Antwoord als Hugo — warm, Socratisch, met LSD-techniek.
+Vat samen wat ze zeiden, en vraag: "Maar wat betekende dat concreet voor die klant? Wat kostte het ze dat ze het nog niet hadden?"
+OF: "Oké, dat is het voordeel. Maar welk PROBLEEM loste dat op? Wat was het GEVOLG als ze dat niet hadden?"`,
+    deep_dive_verliesredenen: `De verkoper gaf een antwoord over verliesredenen, maar het is nog op {{depth_level}}-niveau: "{{answer}}"
+Je wilt doorvragen tot we echte bezwaren, twijfels, of uitstelredenen begrijpen.
+Antwoord als Hugo — warm, Socratisch.
+Vat samen wat ze zeiden, en vraag: "Was dat het ECHTE bezwaar, of zat er iets anders achter?"
+OF: "Wat maakte dat ze uiteindelijk niet over de streep kwamen? Was het de prijs, het vertrouwen, of iets anders?"`
   }
 };
 
@@ -145,6 +208,8 @@ export interface ContextState {
   currentQuestionKey: string | null;
   lensPhase: boolean;
   lensQuestionsAsked: string[];
+  deepDiveRounds: Record<string, number>;
+  companyProfile?: string;
 }
 
 /**
@@ -607,7 +672,8 @@ export function createContextState(
     isComplete: false,
     currentQuestionKey: null,
     lensPhase: false,
-    lensQuestionsAsked: []
+    lensQuestionsAsked: [],
+    deepDiveRounds: {}
   };
 }
 
@@ -1005,6 +1071,110 @@ export async function interpretAnswer(
     console.error('[context_engine] Error in interpretAnswer:', error);
     return { decision: 'accept', extractedValue: answer };
   }
+}
+
+/**
+ * Deep-dive interpretation result for reverse engineering slots
+ */
+export interface DeepDiveResult {
+  decision: 'deep_enough' | 'needs_deeper' | 'unusable';
+  extractedValue?: string;
+  depthLevel?: 'feature' | 'voordeel' | 'baat' | 'pijnpunt';
+  suggestedFollowup?: string;
+}
+
+/**
+ * Check if a slot requires deep-dive LSD questioning (koopredenen, verliesredenen)
+ */
+export function isDeepDiveSlot(slotId: string): boolean {
+  return slotId === 'koopredenen' || slotId === 'verliesredenen';
+}
+
+/**
+ * AI Layer 1b: Deep-dive interpretation for reverse engineering slots
+ * Checks if answer is at feature/voordeel level and needs deeper probing to baten/pijnpunten
+ */
+export async function interpretDeepDiveAnswer(
+  slot: string,
+  answer: string
+): Promise<DeepDiveResult> {
+  const theme = getThemeForSlot(slot);
+  
+  const prompt = AI_DIALOGUE_CONFIG.deep_dive_interpret_prompt
+    .replace(/\{\{theme\}\}/g, theme.theme)
+    .replace(/\{\{answer\}\}/g, answer);
+  
+  const openai = getOpenAI();
+  
+  try {
+    console.log(`[context_engine] interpretDeepDiveAnswer for slot: ${slot}`);
+    
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      max_completion_tokens: 500,
+      response_format: { type: 'json_object' }
+    });
+    
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      return { decision: 'deep_enough', extractedValue: answer };
+    }
+    
+    const parsed = JSON.parse(content);
+    
+    const decision = parsed.decision as 'deep_enough' | 'needs_deeper' | 'unusable';
+    if (!['deep_enough', 'needs_deeper', 'unusable'].includes(decision)) {
+      return { decision: 'deep_enough', extractedValue: answer };
+    }
+    
+    return {
+      decision,
+      extractedValue: parsed.extracted_value || answer,
+      depthLevel: parsed.depth_level,
+      suggestedFollowup: parsed.suggested_followup
+    };
+    
+  } catch (error) {
+    console.error('[context_engine] Error in interpretDeepDiveAnswer:', error);
+    return { decision: 'deep_enough', extractedValue: answer };
+  }
+}
+
+/**
+ * Generate a deep-dive follow-up question for koopredenen or verliesredenen
+ * Uses LSD technique to probe from features/voordelen down to baten/pijnpunten
+ */
+export async function generateDeepDiveQuestion(
+  slotId: string,
+  currentAnswer: string,
+  depthLevel: string,
+  gatheredContext: Record<string, string>,
+  conversationHistory?: ConversationMessage[]
+): Promise<HugoResponseResult> {
+  const templateKey = slotId === 'koopredenen' 
+    ? 'deep_dive_koopredenen' 
+    : 'deep_dive_verliesredenen';
+  
+  const template = AI_DIALOGUE_CONFIG.prompt_templates[templateKey as keyof typeof AI_DIALOGUE_CONFIG.prompt_templates];
+  
+  const situation = (template || '')
+    .replace(/\{\{depth_level\}\}/g, depthLevel)
+    .replace(/\{\{answer\}\}/g, currentAnswer);
+  
+  const task = `Stel een natuurlijke doorvraag die de verkoper helpt dieper na te denken.
+Wat je al weet:
+${formatGatheredContext(gatheredContext)}
+
+BELANGRIJK: 
+- Vat eerst kort samen wat ze zeiden (LSD - Samenvatten)
+- Vraag dan door naar de ECHTE baten of pijnpunten (LSD - Doorvragen)
+- Gebruik concrete voorbeelden uit hun sector als je die kent
+- Maximaal 2-3 zinnen`;
+
+  return generateHugoResponse(situation, task, { conversationHistory });
 }
 
 export interface ConversationMessage {

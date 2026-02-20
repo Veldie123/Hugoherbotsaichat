@@ -78,8 +78,8 @@ export interface RagSource {
 }
 
 export interface RichContent {
-  type: 'card' | 'video' | 'slide' | 'webinar' | 'action' | 'roleplay';
-  data: CardContent | VideoEmbed | SlideContent | WebinarLink | ActionButton | RoleplayProposal;
+  type: 'card' | 'video' | 'slide' | 'webinar' | 'action' | 'roleplay' | 'epic_slide';
+  data: CardContent | VideoEmbed | SlideContent | WebinarLink | ActionButton | RoleplayProposal | EpicSlideContent;
 }
 
 export interface CardContent {
@@ -107,6 +107,17 @@ export interface SlideContent {
   techniqueId?: string;
   slideIndex?: number;
   totalSlides?: number;
+}
+
+export interface EpicSlideContent {
+  id: string;
+  titel: string;
+  kernboodschap: string;
+  bulletpoints: string[];
+  phase: string;
+  techniqueId: string;
+  visual_type: 'diagram' | 'lijst' | 'matrix' | 'quote';
+  personalized_context?: Record<string, string>;
 }
 
 export interface WebinarLink {
