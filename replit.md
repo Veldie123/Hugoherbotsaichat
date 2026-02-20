@@ -45,7 +45,10 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
 - **4-Level Competence Model:** Integrated for difficulty selection in coaching.
 - **Analysis System (Phase 1-4 Scoring):**
     - **Phase Coverage:** Comprehensive Phase 1-4 scoring: Phase 1 Opening (15%), Phase 2 EPIC Discovery (40%), Phase 3 Recommendation (25%), Phase 4 Decision (20%).
-    - **RAG-Enhanced Evaluation:** Seller turns are batch-processed with semantic RAG search for improved technique recognition.
+    - **RAG-Enhanced Evaluation:** Seller turns are batch-processed with semantic RAG search for improved technique recognition. Coach report and debrief prompts are enriched with RAG grounding from Supabase corpus.
+    - **SSOT Context Builder:** `server/v2/ssot-context-builder.ts` loads ALL config files (technieken_index, klant_houdingen, customer_dynamics, detectors, persona_templates, video_mapping, coach_overlay_v3_1, rag_heuristics) and injects relevant context into evaluation prompts for Hugo Herbots methodology grounding.
+    - **Minimum Turn Threshold:** Chats with < 4 seller turns return a simplified "Oefen verder" view instead of full analysis, with friendly CTA to continue practicing.
+    - **Video Recommendations:** Coaching moments (Big Win, Quick Fix, Scharnierpunt) include training video recommendations from `config/video_mapping.json`, matched by recommended technique IDs.
     - **Phase-Aware Signals:** Customer signal detection is constrained to contextually appropriate phases.
     - **AI Model:** All analysis uses gpt-5.1.
     - **Phase Tracking:** `determineCurrentPhase()` helper analyzes detected techniques to determine conversation phase.

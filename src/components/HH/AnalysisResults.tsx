@@ -767,6 +767,41 @@ export function AnalysisResults({
   }
 
   const { conversation, transcript, evaluations, signals, insights } = result;
+
+  if ((result as any).insufficientTurns) {
+    const accentColor = adminColors ? '#9910FA' : '#3C9A6E';
+    const accentBg = adminColors ? 'rgba(153,16,250,0.15)' : 'rgba(60,154,110,0.15)';
+    const accentBgLight = adminColors ? 'rgba(153,16,250,0.08)' : 'rgba(60,154,110,0.08)';
+    const accentBorder = adminColors ? 'rgba(153,16,250,0.2)' : 'rgba(60,154,110,0.2)';
+    return wrapLayout(
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-center space-y-6 max-w-md">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: accentBg }}>
+            <MessageSquare className="w-8 h-8" style={{ color: accentColor }} />
+          </div>
+          <h2 className="text-xl font-bold text-hh-text">Oefen verder!</h2>
+          <p className="text-hh-muted text-sm leading-relaxed">
+            {insights.summaryMarkdown}
+          </p>
+          <div className="rounded-xl p-4" style={{ backgroundColor: accentBgLight, border: `1px solid ${accentBorder}` }}>
+            <p className="text-sm font-medium text-hh-text mb-2">Tip:</p>
+            <p className="text-sm text-hh-muted">{insights.microExperiments?.[0] || 'Probeer een volledig gesprek te voeren met Hugo.'}</p>
+          </div>
+          <Button
+            onClick={() => {
+              sessionStorage.removeItem('analysisFromHugo');
+              navigate?.(fromHugo ? 'talk-to-hugo' : 'upload-analysis');
+            }}
+            className="text-white"
+            style={{ backgroundColor: accentColor }}
+          >
+            {fromHugo ? 'Verder oefenen met Hugo' : 'Terug naar uploads'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const { phaseCoverage, missedOpportunities, strengths: rawStrengths, improvements: rawImprovements, microExperiments, overallScore } = insights;
 
   const strengths = rawStrengths.length > 0 ? rawStrengths : evaluations
@@ -1076,6 +1111,25 @@ export function AnalysisResults({
                                   >
                                     {getTechniekByNummer(t)?.naam || t}
                                   </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {(moment as any).videoRecommendations?.length > 0 && (
+                              <div className="space-y-2">
+                                <p className="text-[11px] font-medium" style={{ color: adminColors ? '#9910FA' : '#4F7396' }}>
+                                  Aanbevolen trainingsmateriaal:
+                                </p>
+                                {(moment as any).videoRecommendations.map((video: any, vi: number) => (
+                                  <div key={vi} className="flex items-center gap-3 p-2.5 rounded-lg border" style={{ borderColor: adminColors ? '#9910FA15' : '#4F739615', backgroundColor: adminColors ? '#9910FA05' : '#4F739605' }}>
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: adminColors ? '#9910FA15' : '#3C9A6E15' }}>
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={adminColors ? '#9910FA' : '#3C9A6E'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-[12px] font-medium text-hh-text truncate">{video.title}</p>
+                                      <p className="text-[10px] text-hh-muted">{video.techniqueName}{video.durationSeconds ? ` · ${Math.round(video.durationSeconds / 60)} min` : ''}</p>
+                                    </div>
+                                  </div>
                                 ))}
                               </div>
                             )}

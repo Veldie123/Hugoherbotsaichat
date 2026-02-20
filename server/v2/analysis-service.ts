@@ -8,6 +8,10 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { computeDetailedMetrics, DetailedMetrics } from './detailed-metrics';
+import { buildSSOTContextForEvaluation, findRelevantVideos, VideoRecommendation, buildVideoRecommendationsForMoments } from './ssot-context-builder';
+import { searchRag } from './rag-service';
+
+const MIN_SELLER_TURNS_FOR_ANALYSIS = 4;
 
 const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -101,6 +105,7 @@ export interface CoachMoment {
   whyItMatters: string;
   betterAlternative: string;
   recommendedTechniques: string[];
+  videoRecommendations?: VideoRecommendation[];
   replay: {
     startTurnIndex: number;
     contextTurns: number;
@@ -139,6 +144,7 @@ export interface FullAnalysisResult {
   evaluations: TurnEvaluation[];
   signals: CustomerSignalResult[];
   insights: AnalysisInsights;
+  insufficientTurns?: boolean;
 }
 
 interface WhisperSegment {
@@ -1002,7 +1008,9 @@ export async function generateCoachReport(
   evaluations: TurnEvaluation[],
   signals: CustomerSignalResult[],
   phaseCoverage: PhaseCoverage,
-  missedOpps: MissedOpportunity[]
+  missedOpps: MissedOpportunity[],
+  ssotContext: string = '',
+  ragContext: string = ''
 ): Promise<AnalysisInsights> {
   const turnSummaries = turns.map(t => `[${t.speaker}] "${t.text.substring(0, 120)}"`).join('\n');
   const evalSummaries = evaluations.map(e => {
@@ -1065,6 +1073,10 @@ FASE COVERAGE:
 
 GEMISTE KANSEN:
 ${missedSummaries || 'Geen'}
+${ssotContext ? `\n--- HUGO HERBOTS METHODIEK CONTEXT ---\n${ssotContext}` : ''}
+${ragContext ? `\n${ragContext}` : ''}
+
+Gebruik bovenstaande methodiek-context om je feedback te gronden in de Hugo Herbots EPIC-methode. Verwijs naar specifieke technieken uit het framework, niet generieke verkooptips.
 
 Schrijf het coachrapport.`
         }
@@ -1119,7 +1131,9 @@ export async function generateCoachArtifacts(
   signals: CustomerSignalResult[],
   phaseCoverage: PhaseCoverage,
   missedOpps: MissedOpportunity[],
-  insights: AnalysisInsights
+  insights: AnalysisInsights,
+  ssotContext: string = '',
+  ragContext: string = ''
 ): Promise<{ coachDebrief: CoachDebrief; moments: CoachMoment[] }> {
   const formatTimestamp = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -1225,8 +1239,10 @@ GEMISTE KANSEN:
 ${missedSummaries || 'Geen'}
 
 FASE SCORES: Opening ${phaseCoverage.phase1.score}% | EPIC ${phaseCoverage.phase2.overall.score}% (E:${phaseCoverage.phase2.explore.score}% P:${phaseCoverage.phase2.probe.score}% I:${phaseCoverage.phase2.impact.score}% C:${phaseCoverage.phase2.commit.score}%) | Aanbeveling ${phaseCoverage.phase3.score}% | Beslissing ${phaseCoverage.phase4.score}% | Overall: ${phaseCoverage.overall}%
+${ssotContext ? `\n--- HUGO HERBOTS METHODIEK CONTEXT ---\n${ssotContext}` : ''}
+${ragContext ? `\n${ragContext}` : ''}
 
-Genereer de coach debrief + 3 moments.`
+Gebruik de methodiek-context om je coaching te gronden in het Hugo Herbots framework. Verwijs naar specifieke EPIC-technieken. Genereer de coach debrief + 3 moments.`
         }
       ],
       max_completion_tokens: 2000,
@@ -1258,6 +1274,7 @@ Genereer de coach debrief + 3 moments.`
           whyItMatters: m.whyItMatters || '',
           betterAlternative: m.betterAlternative || '',
           recommendedTechniques: m.recommendedTechniques || [],
+          videoRecommendations: findRelevantVideos(m.recommendedTechniques || [], 2),
           replay: {
             startTurnIndex: Math.max(0, turnIdx - 2),
             contextTurns: 4,
@@ -1412,12 +1429,32 @@ export async function runFullAnalysis(
     const phaseCoverage = calculatePhaseCoverage(evaluations, turns);
     const missedOpps = await detectMissedOpportunities(evaluations, signals, turns);
 
+    const allDetectedTechIds = evaluations.flatMap(e => e.techniques.map(t => t.id));
+    const uniqueTechIds = [...new Set(allDetectedTechIds)];
+    const ssotContext = buildSSOTContextForEvaluation(uniqueTechIds);
+
+    let ragContext = '';
+    try {
+      const techNames = uniqueTechIds.slice(0, 3).map(id => {
+        const t = getTechnique(id);
+        return t ? t.naam : id;
+      }).join(', ');
+      const ragQuery = `verkooptechnieken feedback: ${techNames}`;
+      const ragResult = await searchRag(ragQuery, { limit: 3, threshold: 0.25 });
+      if (ragResult.documents.length > 0) {
+        ragContext = '\nRAG GROUNDING (cursusmateriaal & eerdere correcties):\n' +
+          ragResult.documents.map(d => `- [${d.docType}] ${d.title}: ${d.content.substring(0, 200)}`).join('\n');
+      }
+    } catch (ragErr: any) {
+      console.warn('[Analysis] RAG search failed (non-fatal):', ragErr.message);
+    }
+
     job.status = 'generating_report';
     analysisJobs.set(conversationId, { ...job });
     await persistStatusToDb(conversationId, 'generating_report');
-    const insights = await generateCoachReport(turns, evaluations, signals, phaseCoverage, missedOpps);
+    const insights = await generateCoachReport(turns, evaluations, signals, phaseCoverage, missedOpps, ssotContext, ragContext);
 
-    const { coachDebrief, moments } = await generateCoachArtifacts(turns, evaluations, signals, phaseCoverage, missedOpps, insights);
+    const { coachDebrief, moments } = await generateCoachArtifacts(turns, evaluations, signals, phaseCoverage, missedOpps, insights, ssotContext, ragContext);
     insights.coachDebrief = coachDebrief;
     insights.moments = moments;
 
@@ -1598,6 +1635,57 @@ export async function runChatAnalysis(
 
     console.log(`[ChatAnalysis] Processing ${turns.length} turns (${sellerTurns.length} seller) for session ${conversationId}`);
 
+    if (sellerTurns.length < MIN_SELLER_TURNS_FOR_ANALYSIS) {
+      console.log(`[ChatAnalysis] Only ${sellerTurns.length} seller turns (< ${MIN_SELLER_TURNS_FOR_ANALYSIS}), returning simplified result`);
+      
+      job.status = 'completed';
+      job.completedAt = new Date().toISOString();
+      analysisJobs.set(conversationId, { ...job });
+
+      const emptyPhaseScore: PhaseScore = { score: 0, techniquesFound: [], totalPossible: 0 };
+      const simplifiedInsights: AnalysisInsights = {
+        phaseCoverage: {
+          phase1: { ...emptyPhaseScore },
+          phase2: {
+            overall: { ...emptyPhaseScore },
+            explore: { score: 0, themes: [], missing: [] },
+            probe: { score: 0, found: false, examples: [] },
+            impact: { score: 0, found: false, examples: [] },
+            commit: { score: 0, found: false, examples: [] },
+          },
+          phase3: { ...emptyPhaseScore },
+          phase4: { ...emptyPhaseScore },
+          overall: 0,
+        },
+        missedOpportunities: [],
+        summaryMarkdown: `Dit gesprek bevat slechts ${sellerTurns.length} verkoper-beurten. Voor een volledige analyse heb je minstens ${MIN_SELLER_TURNS_FOR_ANALYSIS} beurten nodig. Oefen verder met Hugo om meer feedback te krijgen!`,
+        strengths: [],
+        improvements: [],
+        microExperiments: ['Oefen een volledig verkoopgesprek met Hugo — begin bij de opening en werk door naar een commitment.'],
+        overallScore: 0,
+      };
+
+      const fullResult: FullAnalysisResult = {
+        conversation: { ...job },
+        transcript: turns,
+        evaluations: [],
+        signals: [],
+        insights: simplifiedInsights,
+        insufficientTurns: true,
+      };
+
+      analysisResults.set(conversationId, fullResult);
+      try {
+        await pool.query(
+          `UPDATE conversation_analyses SET status = $1, completed_at = $2, result = $3 WHERE id = $4`,
+          ['completed', new Date().toISOString(), JSON.stringify(fullResult), conversationId]
+        );
+      } catch (err: any) {
+        console.warn('[ChatAnalysis] DB simplified update failed:', err.message);
+      }
+      return;
+    }
+
     job.status = 'evaluating';
     analysisJobs.set(conversationId, { ...job });
     await persistStatusToDb(conversationId, 'evaluating');
@@ -1608,12 +1696,34 @@ export async function runChatAnalysis(
     const phaseCoverage = calculatePhaseCoverage(evaluations, turns);
     const missedOpps = await detectMissedOpportunities(evaluations, signals, turns);
 
+    const allDetectedTechIds = evaluations.flatMap(e => e.techniques.map(t => t.id));
+    const uniqueTechIds = [...new Set(allDetectedTechIds)];
+    const ssotContext = buildSSOTContextForEvaluation(uniqueTechIds);
+    console.log(`[ChatAnalysis] SSOT context built for ${uniqueTechIds.length} techniques`);
+
+    let ragContext = '';
+    try {
+      const techNames = uniqueTechIds.slice(0, 3).map(id => {
+        const t = getTechnique(id);
+        return t ? t.naam : id;
+      }).join(', ');
+      const ragQuery = `verkooptechnieken feedback: ${techNames}`;
+      const ragResult = await searchRag(ragQuery, { limit: 3, threshold: 0.25 });
+      if (ragResult.documents.length > 0) {
+        ragContext = '\nRAG GROUNDING (cursusmateriaal & eerdere correcties):\n' +
+          ragResult.documents.map(d => `- [${d.docType}] ${d.title}: ${d.content.substring(0, 200)}`).join('\n');
+        console.log(`[ChatAnalysis] RAG returned ${ragResult.documents.length} docs in ${ragResult.searchTimeMs}ms`);
+      }
+    } catch (ragErr: any) {
+      console.warn('[ChatAnalysis] RAG search failed (non-fatal):', ragErr.message);
+    }
+
     job.status = 'generating_report';
     analysisJobs.set(conversationId, { ...job });
     await persistStatusToDb(conversationId, 'generating_report');
-    const insights = await generateCoachReport(turns, evaluations, signals, phaseCoverage, missedOpps);
+    const insights = await generateCoachReport(turns, evaluations, signals, phaseCoverage, missedOpps, ssotContext, ragContext);
 
-    const { coachDebrief, moments } = await generateCoachArtifacts(turns, evaluations, signals, phaseCoverage, missedOpps, insights);
+    const { coachDebrief, moments } = await generateCoachArtifacts(turns, evaluations, signals, phaseCoverage, missedOpps, insights, ssotContext, ragContext);
     insights.coachDebrief = coachDebrief;
     insights.moments = moments;
 
