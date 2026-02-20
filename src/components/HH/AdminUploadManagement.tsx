@@ -343,12 +343,12 @@ export function AdminUploadManagement({ navigate }: AdminUploadManagementProps) 
             <h1 className="text-[24px] sm:text-[32px] leading-[30px] sm:leading-[40px] text-hh-text">
               Gespreksanalyse
             </h1>
-            <Button variant="outline" className="gap-2 hidden sm:flex">
-              <Download className="w-4 h-4" />
-              Export Data
+            <Button className="gap-2 hidden sm:flex" style={{ backgroundColor: '#9910FA', color: '#fff' }} onClick={() => navigate?.("upload-analysis")}>
+              <UploadIcon className="w-4 h-4" />
+              Analyseer gesprek
             </Button>
-            <Button variant="outline" size="icon" className="sm:hidden">
-              <Download className="w-4 h-4" />
+            <Button size="icon" className="sm:hidden" style={{ backgroundColor: '#9910FA', color: '#fff' }} onClick={() => navigate?.("upload-analysis")}>
+              <UploadIcon className="w-4 h-4" />
             </Button>
           </div>
           <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-hh-muted mt-1">

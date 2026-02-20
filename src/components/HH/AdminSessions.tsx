@@ -536,33 +536,25 @@ export function AdminSessions({ navigate }: AdminSessionsProps) {
               Talk to Hugo <sup className="text-[14px] sm:text-[18px]">AI</sup>
             </h1>
             <div className="hidden sm:flex items-center gap-2">
-              <Button variant="outline" className="gap-2" size="sm">
-                <Download className="w-4 h-4" />
-                Export Data
-              </Button>
               <Button variant="outline" className="gap-2" size="sm" onClick={() => navigate?.("admin-config-review")}>
                 <Settings className="w-4 h-4" />
                 Config Review
               </Button>
-              <Button className="gap-2 bg-red-600 hover:bg-red-700" size="sm" onClick={() => navigate?.("admin-chat-expert")}>
+              <Button className="gap-2" size="sm" onClick={() => navigate?.("admin-chat-expert")} style={{ backgroundColor: '#9910FA', color: '#fff' }}>
                 <Sparkles className="w-4 h-4" />
-                Expert Mode
+                Talk to myself AI
               </Button>
             </div>
           </div>
           {/* Mobile: buttons row below title */}
           <div className="flex sm:hidden items-center gap-2 mt-2">
-            <Button variant="outline" size="sm" className="gap-1.5 text-[12px] flex-1">
-              <Download className="w-3.5 h-3.5" />
-              Export
-            </Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-[12px] flex-1" onClick={() => navigate?.("admin-config-review")}>
               <Settings className="w-3.5 h-3.5" />
               Config
             </Button>
-            <Button className="gap-1.5 text-[12px] bg-red-600 hover:bg-red-700 flex-1" size="sm" onClick={() => navigate?.("admin-chat-expert")}>
+            <Button className="gap-1.5 text-[12px] flex-1" size="sm" onClick={() => navigate?.("admin-chat-expert")} style={{ backgroundColor: '#9910FA', color: '#fff' }}>
               <Sparkles className="w-3.5 h-3.5" />
-              Expert
+              Talk to myself AI
             </Button>
           </div>
           <p className="text-[13px] sm:text-[16px] leading-[18px] sm:leading-[24px] text-hh-muted mt-1.5">
