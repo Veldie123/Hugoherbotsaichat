@@ -49,6 +49,11 @@ import {
   ThumbsUp,
   ThumbsDown,
   RotateCcw,
+  Paperclip,
+  FileAudio,
+  FileText,
+  File,
+  Image,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAllTechnieken } from "../../data/technieken-service";
@@ -78,6 +83,31 @@ interface Message {
   feedback?: "up" | "down" | null;
   isTranscriptReplay?: boolean;
   transcriptRole?: string;
+  attachments?: MessageAttachment[];
+  correctionData?: CorrectionData;
+}
+
+interface MessageAttachment {
+  name: string;
+  type: string;
+  size: number;
+  url?: string;
+}
+
+interface FileAttachment {
+  id: string;
+  file: globalThis.File;
+  name: string;
+  type: string;
+  size: number;
+  preview?: string;
+}
+
+interface CorrectionData {
+  selectedTechnique?: string;
+  selectedTechniqueName?: string;
+  correctionText?: string;
+  timestamp: Date;
 }
 
 interface DebugInfo {
@@ -185,6 +215,14 @@ export function AdminChatExpertMode({
   const [isMuted, setIsMuted] = useState(false); // Audio/video mute state
   const [sessionTimer, setSessionTimer] = useState(0); // Session timer
   const [isLoading, setIsLoading] = useState(false); // Loading state for API calls
+  const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [correctionMessageId, setCorrectionMessageId] = useState<string | null>(null);
+  const [correctionText, setCorrectionText] = useState("");
+  const [correctionTechnique, setCorrectionTechnique] = useState<string>("");
+  const [correctionTechniqueName, setCorrectionTechniqueName] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
   
   // LiveKit Audio State
   const [liveKitRoom, setLiveKitRoom] = useState<Room | null>(null);
@@ -791,11 +829,187 @@ export function AdminChatExpertMode({
   };
 
   const handleMessageFeedback = (messageId: string, type: "up" | "down") => {
+    if (type === "down") {
+      const currentMsg = messages.find(m => m.id === messageId);
+      if (currentMsg?.feedback === "down") {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, feedback: null } : m));
+        setCorrectionMessageId(null);
+        setCorrectionText("");
+        setCorrectionTechnique("");
+        setCorrectionTechniqueName("");
+      } else {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, feedback: "down" } : m));
+        setCorrectionMessageId(messageId);
+        setCorrectionText("");
+        setCorrectionTechnique("");
+        setCorrectionTechniqueName("");
+      }
+    } else {
+      setMessages(prev => prev.map(m => 
+        m.id === messageId 
+          ? { ...m, feedback: m.feedback === type ? null : type }
+          : m
+      ));
+      if (correctionMessageId === messageId) {
+        setCorrectionMessageId(null);
+      }
+    }
+  };
+
+  const handleSubmitCorrection = async (messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+    
+    const correctionData: CorrectionData = {
+      selectedTechnique: correctionTechnique || undefined,
+      selectedTechniqueName: correctionTechniqueName || undefined,
+      correctionText: correctionText || undefined,
+      timestamp: new Date(),
+    };
+
     setMessages(prev => prev.map(m => 
-      m.id === messageId 
-        ? { ...m, feedback: m.feedback === type ? null : type }
-        : m
+      m.id === messageId ? { ...m, correctionData } : m
     ));
+
+    try {
+      const response = await fetch('/api/v2/admin/corrections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'chat_feedback',
+          field: correctionTechnique ? 'technique_correction' : 'general_feedback',
+          originalValue: message.text.slice(0, 200),
+          newValue: correctionTechnique 
+            ? `${correctionTechnique}: ${correctionTechniqueName}${correctionText ? ` — ${correctionText}` : ''}`
+            : correctionText || 'Incorrect response',
+          context: JSON.stringify({ messageId, sessionId: null }),
+          submittedBy: 'admin',
+        }),
+      });
+      if (response.ok) {
+        toast.success("Correctie opgeslagen voor review");
+      } else {
+        toast.error("Fout bij opslaan correctie");
+      }
+    } catch (err) {
+      console.error("[Admin] Failed to save correction:", err);
+      toast.error("Fout bij opslaan correctie");
+    }
+
+    setCorrectionMessageId(null);
+    setCorrectionText("");
+    setCorrectionTechnique("");
+    setCorrectionTechniqueName("");
+  };
+
+  const handleCancelCorrection = () => {
+    setCorrectionMessageId(null);
+    setCorrectionText("");
+    setCorrectionTechnique("");
+    setCorrectionTechniqueName("");
+  };
+
+  const handleFileSelect = (acceptTypes: string) => {
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = acceptTypes;
+      fileInputRef.current.click();
+    }
+  };
+
+  const processFiles = (files: FileList | globalThis.File[]) => {
+    const newAttachments: FileAttachment[] = Array.from(files).map((file) => {
+      const attachment: FileAttachment = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        file,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      };
+      if (file.type.startsWith("image/")) {
+        attachment.preview = URL.createObjectURL(file);
+      }
+      return attachment;
+    });
+    setAttachedFiles((prev) => [...prev, ...newAttachments]);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processFiles(e.target.files);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAttachedFile = (id: string) => {
+    setAttachedFiles((prev) => {
+      const file = prev.find((f) => f.id === id);
+      if (file?.preview) URL.revokeObjectURL(file.preview);
+      return prev.filter((f) => f.id !== id);
+    });
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleDictation = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert("Je browser ondersteunt spraakherkenning niet. Gebruik Chrome of Edge.");
+      return;
+    }
+
+    if (isRecording && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'nl-NL';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    const existingText = inputText;
+    let finalTranscript = '';
+
+    recognition.onresult = (event: any) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+        } else {
+          interim = transcript;
+        }
+      }
+      const prefix = existingText ? existingText.trimEnd() + ' ' : '';
+      const spoken = (finalTranscript + interim).trim();
+      setInputText(prefix + spoken);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("[Dictation] Error:", event.error);
+      if (event.error !== 'no-speech') {
+        setIsRecording(false);
+        recognitionRef.current = null;
+      }
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
   };
 
   const handleStopRoleplay = () => {
@@ -1125,86 +1339,140 @@ export function AdminChatExpertMode({
                       <p className="text-[14px] leading-[20px] whitespace-pre-wrap">{message.text}</p>
                     </div>
                     
-                    {/* Action buttons below AI bubble — matching user view */}
+                    {/* Action buttons below AI bubble — admin purple colors */}
                     {message.sender === "ai" && !message.isTranscriptReplay && (
-                      <div className="flex items-center gap-0.5 mt-1.5">
-                        <button
-                          onClick={() => handleCopyMessage(message.id, message.text)}
-                          className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                          title="Kopieer"
-                        >
-                          {copiedMessageId === message.id ? (
-                            <Check className="w-3.5 h-3.5 text-green-500" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleMessageFeedback(message.id, "up")}
-                          className={`p-1.5 rounded-md transition-colors ${
-                            message.feedback === "up"
-                              ? "text-green-600 bg-green-50"
-                              : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                          }`}
-                          title="Goed antwoord"
-                        >
-                          <ThumbsUp className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleMessageFeedback(message.id, "down")}
-                          className={`p-1.5 rounded-md transition-colors ${
-                            message.feedback === "down"
-                              ? "text-red-500 bg-red-50"
-                              : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                          }`}
-                          title="Slecht antwoord"
-                        >
-                          <ThumbsDown className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            const lastUserMsg = [...messages].reverse().find(m => m.sender === "hugo");
-                            if (lastUserMsg) {
-                              setInputText(lastUserMsg.text);
-                            }
-                          }}
-                          className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                          title="Opnieuw proberen"
-                        >
-                          <RotateCcw className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-                          className={`p-1.5 rounded-md transition-colors ${
-                            desktopSidebarOpen
-                              ? "bg-[#3C9A6E]/10"
-                              : "hover:bg-[#3C9A6E]/10"
-                          }`}
-                          style={{ color: '#3C9A6E' }}
-                          title="E.P.I.C. technieken bekijken"
-                        >
-                          <Lightbulb className="w-3.5 h-3.5" />
-                        </button>
-                        {message.debugInfo && (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-0.5 mt-1.5">
                           <button
-                            onClick={() =>
-                              setExpandedDebug(expandedDebug === message.id ? null : message.id)
-                            }
-                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-colors ml-1 ${
-                              expandedDebug === message.id
-                                ? "bg-purple-100 text-purple-700"
-                                : "bg-slate-100 text-slate-500 hover:bg-purple-50 hover:text-purple-600"
-                            }`}
-                            title="Toggle debug info"
+                            onClick={() => handleCopyMessage(message.id, message.text)}
+                            className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                            title="Kopieer"
                           >
-                            <Info className="w-3.5 h-3.5" />
-                            <span>Debug</span>
-                            {expandedDebug === message.id ? (
-                              <ChevronDown className="w-3 h-3" />
+                            {copiedMessageId === message.id ? (
+                              <Check className="w-3.5 h-3.5" style={{ color: '#9910FA' }} />
                             ) : (
-                              <ChevronRight className="w-3 h-3" />
+                              <Copy className="w-3.5 h-3.5" />
                             )}
                           </button>
+                          <button
+                            onClick={() => handleMessageFeedback(message.id, "up")}
+                            className="p-1.5 rounded-md transition-colors"
+                            style={message.feedback === "up" ? { color: '#9910FA', backgroundColor: 'rgba(153,16,250,0.08)' } : undefined}
+                            title="Goed antwoord"
+                          >
+                            <ThumbsUp className={`w-3.5 h-3.5 ${message.feedback !== "up" ? "text-slate-400 hover:text-slate-600" : ""}`} />
+                          </button>
+                          <button
+                            onClick={() => handleMessageFeedback(message.id, "down")}
+                            className="p-1.5 rounded-md transition-colors"
+                            style={message.feedback === "down" ? { color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)' } : undefined}
+                            title="Correctie toevoegen"
+                          >
+                            <ThumbsDown className={`w-3.5 h-3.5 ${message.feedback !== "down" ? "text-slate-400 hover:text-slate-600" : ""}`} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              const lastUserMsg = [...messages].reverse().find(m => m.sender === "hugo");
+                              if (lastUserMsg) {
+                                setInputText(lastUserMsg.text);
+                              }
+                            }}
+                            className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                            title="Opnieuw proberen"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+                            className="p-1.5 rounded-md transition-colors"
+                            style={{
+                              color: '#9910FA',
+                              backgroundColor: desktopSidebarOpen ? 'rgba(153,16,250,0.1)' : undefined,
+                            }}
+                            title="E.P.I.C. technieken bekijken"
+                          >
+                            <Lightbulb className="w-3.5 h-3.5" />
+                          </button>
+                          {message.debugInfo && (
+                            <button
+                              onClick={() =>
+                                setExpandedDebug(expandedDebug === message.id ? null : message.id)
+                              }
+                              className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-colors ml-1 ${
+                                expandedDebug === message.id
+                                  ? "bg-purple-100 text-purple-700"
+                                  : "bg-slate-100 text-slate-500 hover:bg-purple-50 hover:text-purple-600"
+                              }`}
+                              title="Toggle debug info"
+                            >
+                              <Info className="w-3.5 h-3.5" />
+                              <span>Debug</span>
+                              {expandedDebug === message.id ? (
+                                <ChevronDown className="w-3 h-3" />
+                              ) : (
+                                <ChevronRight className="w-3 h-3" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Correction panel — shown when admin clicks thumbs down */}
+                        {correctionMessageId === message.id && (
+                          <div className="mt-2 p-3 rounded-lg border transition-all" style={{ borderColor: 'rgba(153,16,250,0.3)', backgroundColor: 'rgba(153,16,250,0.04)' }}>
+                            <p className="text-[12px] font-medium text-slate-500 mb-2">Correctie toevoegen</p>
+                            {correctionTechnique && (
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <span className="text-[11px] text-slate-400">Techniek:</span>
+                                <span className="text-[12px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(153,16,250,0.1)', color: '#9910FA' }}>
+                                  {correctionTechnique} {correctionTechniqueName}
+                                </span>
+                                <button onClick={() => { setCorrectionTechnique(""); setCorrectionTechniqueName(""); }} className="text-slate-400 hover:text-slate-600">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                            {!correctionTechnique && (
+                              <p className="text-[11px] text-slate-400 mb-2 italic">
+                                Selecteer optioneel de juiste techniek via het lampje (E.P.I.C. sidebar)
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={correctionText}
+                                onChange={(e) => setCorrectionText(e.target.value)}
+                                placeholder="Wat klopt er niet? (optioneel)"
+                                className="flex-1 text-[13px] px-3 py-1.5 rounded-md border border-slate-200 focus:outline-none focus:border-purple-300 bg-white"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSubmitCorrection(message.id);
+                                  if (e.key === 'Escape') handleCancelCorrection();
+                                }}
+                              />
+                              <button
+                                onClick={() => handleSubmitCorrection(message.id)}
+                                className="p-1.5 rounded-md transition-colors hover:bg-purple-100"
+                                style={{ color: '#9910FA' }}
+                                title="Correctie bevestigen"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={handleCancelCorrection}
+                                className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                                title="Annuleren"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Show saved correction badge */}
+                        {message.correctionData && !correctionMessageId && (
+                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-purple-600">
+                            <Check className="w-3 h-3" />
+                            <span>Correctie opgeslagen{message.correctionData.selectedTechniqueName ? `: ${message.correctionData.selectedTechniqueName}` : ''}</span>
+                          </div>
                         )}
                       </div>
                     )}
@@ -1860,7 +2128,41 @@ export function AdminChatExpertMode({
           {/* Input - only show in chat mode */}
           {chatMode === "chat" && (
           <div className="p-4 border-t border-hh-border">
+            {/* Attached files preview */}
+            {attachedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {attachedFiles.map((file) => (
+                  <div key={file.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-[12px]">
+                    {file.preview ? (
+                      <img src={file.preview} alt={file.name} className="w-6 h-6 rounded object-cover" />
+                    ) : (
+                      <File className="w-3.5 h-3.5 text-slate-400" />
+                    )}
+                    <span className="text-slate-600 max-w-[120px] truncate">{file.name}</span>
+                    <span className="text-slate-400">{formatFileSize(file.size)}</span>
+                    <button onClick={() => removeAttachedFile(file.id)} className="text-slate-400 hover:text-red-500 ml-0.5">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="flex gap-2 items-center">
+              {/* Paperclip - file upload */}
+              <button
+                onClick={() => handleFileSelect("*/*")}
+                className="p-2 rounded-md text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors flex-shrink-0"
+                title="Bestand bijvoegen"
+              >
+                <Paperclip className="w-4 h-4" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                multiple
+                onChange={handleFileInputChange}
+              />
               <Input
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
@@ -1869,10 +2171,22 @@ export function AdminChatExpertMode({
                 className="flex-1 min-w-0 text-slate-800 bg-white"
                 disabled={isLoading}
               />
+              {/* Microphone - dictation */}
+              <button
+                onClick={handleDictation}
+                className="p-2 rounded-md transition-colors flex-shrink-0"
+                style={{
+                  color: isRecording ? '#ef4444' : '#94a3b8',
+                  backgroundColor: isRecording ? 'rgba(239,68,68,0.1)' : undefined,
+                }}
+                title={isRecording ? "Opname stoppen" : "Dicteren"}
+              >
+                {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+              {/* Send button with "Verzend" text */}
               <Button 
                 onClick={handleSendMessage} 
-                size="icon"
-                className="flex-shrink-0 text-white"
+                className="flex-shrink-0 text-white gap-1.5 px-4"
                 style={{ backgroundColor: '#9910FA' }}
                 onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#7B0DD4')}
                 onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#9910FA')}
@@ -1882,7 +2196,10 @@ export function AdminChatExpertMode({
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span className="text-[13px]">Verzend</span>
+                  </>
                 )}
               </Button>
             </div>
