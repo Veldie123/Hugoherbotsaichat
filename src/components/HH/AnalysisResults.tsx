@@ -1471,11 +1471,22 @@ export function AnalysisResults({
                       ? 'Klant bevestigde begrip voordat aanbeveling kwam'
                       : 'Geen commitment gevraagd vóór aanbeveling',
                     kind: 'checklist' as const,
-                    checklistItems: [
-                      { label: 'Samenvatting gegeven', found: dm.impact.commitmentDetail?.summaryGiven ?? false },
-                      { label: 'Bevestiging gevraagd', found: dm.impact.commitmentDetail?.confirmationAsked ?? false },
-                      { label: 'Vóór fase 3 (aanbeveling)', found: dm.impact.commitBeforePhase3 },
-                    ],
+                    checklistItems: dm.impact.commitmentDetail
+                      ? [
+                          { label: 'Samenvatting gegeven', found: dm.impact.commitmentDetail.summaryGiven },
+                          { label: 'Bevestiging gevraagd', found: dm.impact.commitmentDetail.confirmationAsked },
+                          { label: 'Vóór fase 3 (aanbeveling)', found: dm.impact.commitBeforePhase3 },
+                        ]
+                      : (dm.impact.commitBeforePhase3
+                          ? [
+                              { label: 'Commitment gedetecteerd', found: true },
+                              { label: 'Vóór fase 3 (aanbeveling)', found: true },
+                            ]
+                          : [
+                              { label: 'Commitment gedetecteerd', found: false },
+                              { label: 'Vóór fase 3 (aanbeveling)', found: false },
+                            ]
+                        ),
                   },
                 ],
               },
