@@ -88,7 +88,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
   useEffect(() => {
     const fetchAnalyses = async () => {
       try {
-        const res = await fetch('/api/v2/analysis/list');
+        const res = await fetch('/api/v2/analysis/list?source=upload');
         if (!res.ok) throw new Error('Analyses ophalen mislukt');
         const data = await res.json();
         
@@ -133,7 +133,7 @@ export function Analysis({ navigate, isAdmin }: AnalysisProps) {
     let timeoutId: ReturnType<typeof setTimeout>;
     const poll = async () => {
       try {
-        const res = await fetch('/api/v2/analysis/list');
+        const res = await fetch('/api/v2/analysis/list?source=upload');
         if (res.ok) {
           const data = await res.json();
           const mapped: ConversationRecord[] = (data.analyses || []).map((a: any) => ({

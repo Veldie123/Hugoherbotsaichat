@@ -95,7 +95,7 @@ export function AppLayout({
     if (analysisHistoryProp) return;
     const fetchHistory = async () => {
       try {
-        const res = await fetch('/api/v2/analysis/list');
+        const res = await fetch('/api/v2/analysis/list?source=upload');
         if (!res.ok) return;
         const data = await res.json();
         const items: HistoryItem[] = (data.analyses || []).slice(0, 5).map((a: any) => ({

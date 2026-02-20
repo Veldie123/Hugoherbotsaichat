@@ -3234,13 +3234,25 @@ app.post("/api/v2/analysis/chat-session", express.json(), async (req: Request, r
 app.get("/api/v2/analysis/list", async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId as string;
+    const source = req.query.source as string;
 
     let queryText = 'SELECT id, user_id, title, status, error, created_at, completed_at, result FROM conversation_analyses';
+    const conditions: string[] = [];
     const params: any[] = [];
 
     if (userId) {
-      queryText += ' WHERE user_id = $1';
       params.push(userId);
+      conditions.push(`user_id = $${params.length}`);
+    }
+
+    if (source === 'upload') {
+      conditions.push("id NOT LIKE 'session-%'");
+    } else if (source === 'chat') {
+      conditions.push("id LIKE 'session-%'");
+    }
+
+    if (conditions.length > 0) {
+      queryText += ' WHERE ' + conditions.join(' AND ');
     }
 
     queryText += ' ORDER BY created_at DESC';

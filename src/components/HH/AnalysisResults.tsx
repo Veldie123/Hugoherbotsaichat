@@ -447,7 +447,7 @@ export function AnalysisResults({
     }
     const loadFirst = async () => {
       try {
-        const res = await fetch('/api/v2/analysis/list');
+        const res = await fetch('/api/v2/analysis/list?source=upload');
         if (!res.ok) { setError('Kon analyses niet ophalen'); setLoading(false); return; }
         const data = await res.json();
         const analyses = data.analyses || [];
