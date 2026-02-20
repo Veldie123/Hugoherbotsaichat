@@ -1341,6 +1341,11 @@ export function AnalysisResults({
                     sub: dm.structure.exploreCoverage.themesMissing.length > 0
                       ? `Missend: ${dm.structure.exploreCoverage.themesMissing.join(', ')}`
                       : 'Alle thema\'s aangeraakt',
+                    kind: 'checklist' as const,
+                    checklistItems: [
+                      ...dm.structure.exploreCoverage.themesFound.map((t: string) => ({ label: t, found: true })),
+                      ...dm.structure.exploreCoverage.themesMissing.map((t: string) => ({ label: t, found: false })),
+                    ],
                   },
                   {
                     label: 'Opening',
@@ -1351,6 +1356,11 @@ export function AnalysisResults({
                       : (dm.structure.openingSequence.stepsMissing.length > 0
                         ? `Missend: ${dm.structure.openingSequence.stepsMissing.join(', ')}`
                         : 'Volgorde afwijkend'),
+                    kind: 'checklist' as const,
+                    checklistItems: [
+                      ...dm.structure.openingSequence.stepsFound.map((s: string) => ({ label: s, found: true })),
+                      ...dm.structure.openingSequence.stepsMissing.map((s: string) => ({ label: s, found: false })),
+                    ],
                   },
                   {
                     label: 'E.P.I.C. stappen',
@@ -1369,6 +1379,13 @@ export function AnalysisResults({
                           dm.structure.epicSteps.commit ? null : 'Commit',
                         ].filter(Boolean).join(', ')}`
                       : 'Volledig doorlopen',
+                    kind: 'checklist' as const,
+                    checklistItems: [
+                      { label: 'Explore', found: dm.structure.epicSteps.explore },
+                      { label: 'Probe', found: dm.structure.epicSteps.probe },
+                      { label: 'Impact', found: dm.structure.epicSteps.impact },
+                      { label: 'Commit', found: dm.structure.epicSteps.commit },
+                    ],
                   },
                 ],
               },
@@ -1593,14 +1610,16 @@ export function AnalysisResults({
                           <div className="mt-2 rounded-2xl bg-white border border-gray-200 p-3 sm:p-4 space-y-0 shadow-sm">
                             {cat.details.map((detail: any, dIdx: number) => {
                               const hasMatches = detail.matches && detail.matches.length > 0;
+                              const hasChecklist = detail.kind === 'checklist' && detail.checklistItems && detail.checklistItems.length > 0;
+                              const isClickable = hasMatches || hasChecklist;
                               const drilldownKey = `${cat.key}-${dIdx}`;
                               const isDrilldownOpen = expandedDetailDrilldown === drilldownKey;
 
                               return (
                                 <div key={dIdx} style={dIdx < cat.details.length - 1 ? { borderBottom: '1px solid #F1F5F9' } : {}}>
                                   <div
-                                    className={`flex items-start gap-2 sm:gap-3 py-2.5 ${hasMatches ? 'cursor-pointer hover:bg-gray-50 -mx-3 px-3 sm:-mx-4 sm:px-4 rounded-lg transition-colors' : ''}`}
-                                    onClick={hasMatches ? () => setExpandedDetailDrilldown(isDrilldownOpen ? null : drilldownKey) : undefined}
+                                    className={`flex items-start gap-2 sm:gap-3 py-2.5 ${isClickable ? 'cursor-pointer hover:bg-gray-50 -mx-3 px-3 sm:-mx-4 sm:px-4 rounded-lg transition-colors' : ''}`}
+                                    onClick={isClickable ? () => setExpandedDetailDrilldown(isDrilldownOpen ? null : drilldownKey) : undefined}
                                   >
                                     <div className="flex-shrink-0 mt-0.5">
                                       {detail.score >= 70 ? (
@@ -1632,12 +1651,36 @@ export function AnalysisResults({
                                         />
                                       </div>
                                     </div>
-                                    {hasMatches && (
+                                    {isClickable && (
                                       <div className="flex-shrink-0 mt-0.5">
                                         <ChevronRight className={`w-3.5 h-3.5 text-hh-muted transition-transform ${isDrilldownOpen ? 'rotate-90' : ''}`} />
                                       </div>
                                     )}
                                   </div>
+
+                                  {isDrilldownOpen && hasChecklist && (
+                                    <div className="ml-2 sm:ml-4 mb-3 mt-2">
+                                      <div className="rounded-xl border overflow-hidden" style={{ borderColor: '#E2E8F0' }}>
+                                        <div className="divide-y" style={{ borderColor: '#F1F5F9' }}>
+                                          {detail.checklistItems.map((item: any, cIdx: number) => (
+                                            <div key={cIdx} className="flex items-center gap-2.5 px-3 py-2" style={{ backgroundColor: item.found ? '#F0FDF4' : '#FEF2F2' }}>
+                                              {item.found ? (
+                                                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22C55E' }} />
+                                              ) : (
+                                                <XCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#EF4444' }} />
+                                              )}
+                                              <span className="text-[12px] font-medium" style={{ color: item.found ? '#166534' : '#991B1B' }}>
+                                                {item.label}
+                                              </span>
+                                              <span className="ml-auto text-[10px] font-medium" style={{ color: item.found ? '#22C55E' : '#EF4444' }}>
+                                                {item.found ? 'Aanwezig' : 'Ontbreekt'}
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
 
                                   {isDrilldownOpen && hasMatches && (
                                     <div className="ml-2 sm:ml-4 mb-3 mt-2 space-y-4">
