@@ -846,18 +846,6 @@ export function AdminChatExpertMode({
           )}
           <div className={`${!desktopSidebarOpen ? 'w-full' : 'flex-1'} flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 bg-white`}>
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-              <button
-                onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 -ml-1 rounded-full border transition-colors"
-                style={{
-                  borderColor: desktopSidebarOpen ? '#3C9A6E' : undefined,
-                  backgroundColor: desktopSidebarOpen ? 'rgba(60,154,110,0.08)' : undefined,
-                }}
-                aria-label="E.P.I.C. Sidebar toggle"
-              >
-                <Lightbulb className="w-3.5 h-3.5" style={{ color: '#3C9A6E' }} />
-                <span className="text-[12px] font-medium text-hh-text">E.P.I.C.</span>
-              </button>
               <span className="text-[13px] text-hh-muted font-medium whitespace-nowrap flex items-center gap-1">
                 {sessionTitle}
                 <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-100 text-purple-700 rounded-full ml-1">
