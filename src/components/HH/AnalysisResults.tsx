@@ -1519,8 +1519,20 @@ export function AnalysisResults({
                     sub: dm.houdingen.phase3Treatment.style !== 'geen'
                       ? `Stijl: ${dm.houdingen.phase3Treatment.style === 'empathisch' ? 'Empathisch (goed)' : dm.houdingen.phase3Treatment.style === 'technisch' ? 'Technisch (verbeterpunt)' : 'Gemengd'}`
                       : '',
-                    matches: dm.houdingen.matches.filter(m => m.phase === 3),
-                    kind: 'treatment' as const,
+                    ...(dm.houdingen.matches.filter(m => m.phase === 3).length > 0
+                      ? {
+                          matches: dm.houdingen.matches.filter(m => m.phase === 3),
+                          kind: 'treatment' as const,
+                        }
+                      : {
+                          kind: 'checklist' as const,
+                          checklistItems: [
+                            { label: 'Bezwaren gedetecteerd', found: false },
+                            { label: 'Empathisch behandeld', found: false },
+                            { label: 'Oplossing geboden', found: false },
+                          ],
+                        }
+                    ),
                   },
                   {
                     label: 'Afritten (Fase 4)',
@@ -1531,8 +1543,21 @@ export function AnalysisResults({
                     sub: dm.houdingen.phase4Afritten.total > 0
                       ? `Vragen, twijfels, bezwaren, uitstel`
                       : 'Geen weerstand gedetecteerd in beslissingsfase',
-                    matches: dm.houdingen.matches.filter(m => m.phase === 4),
-                    kind: 'treatment' as const,
+                    ...(dm.houdingen.matches.filter(m => m.phase === 4).length > 0
+                      ? {
+                          matches: dm.houdingen.matches.filter(m => m.phase === 4),
+                          kind: 'treatment' as const,
+                        }
+                      : {
+                          kind: 'checklist' as const,
+                          checklistItems: [
+                            { label: 'Vragen behandeld', found: false },
+                            { label: 'Twijfels weggenomen', found: false },
+                            { label: 'Bezwaren overwonnen', found: false },
+                            { label: 'Uitstel voorkomen', found: false },
+                          ],
+                        }
+                    ),
                   },
                 ],
               },
