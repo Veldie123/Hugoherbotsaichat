@@ -7,3 +7,15 @@ attached_assets/
 .env.local
 .env.production
 *.log
+
+*.zip
+*.tar.gz
+project_part_*
+project.zip
+
+*.map
+.cache/
+.vite/
+.turbo/
+coverage/
+*.tsbuildinfo

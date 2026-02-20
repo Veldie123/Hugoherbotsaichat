@@ -359,7 +359,7 @@ export function AdminLayout({ children, currentPage, navigate }: AdminLayoutProp
           })}
         </nav>
 
-        <div className="p-3 border-t border-hh-border flex-shrink-0">
+        <div className="p-3 flex-shrink-0">
           <button
             onClick={() => navigate?.("analysis")}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-hh-border text-hh-muted hover:bg-hh-ui-50 hover:text-hh-text transition-colors text-[14px]"

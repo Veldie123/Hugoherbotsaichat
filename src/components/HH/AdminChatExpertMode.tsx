@@ -74,6 +74,15 @@ import { hugoApi, type AssistanceConfig } from "../../services/hugoApi";
 import { Loader2 } from "lucide-react";
 import { LiveAvatarComponent } from "./LiveAvatarComponent";
 
+interface AnalysisCard {
+  id: string;
+  title: string;
+  userName: string;
+  status: string;
+  score?: number;
+  createdAt: string;
+}
+
 interface Message {
   id: string;
   sender: "hugo" | "ai";
@@ -86,6 +95,7 @@ interface Message {
   transcriptRole?: string;
   attachments?: MessageAttachment[];
   correctionData?: CorrectionData;
+  analysisCards?: AnalysisCard[];
 }
 
 interface MessageAttachment {
@@ -743,6 +753,75 @@ export function AdminChatExpertMode({
     return (techniquesByPhase[phase] || []).filter((t: any) => t.parent === parentNumber);
   };
 
+  const detectAdminNavigationIntent = (text: string): string | null => {
+    const lower = text.toLowerCase().trim();
+    const analysisPatterns = [
+      /gespreksanalys/i, /analyse.*bekijk/i, /bekijk.*analyse/i,
+      /feedback.*gesprek/i, /gesprek.*feedback/i, /recente.*analys/i,
+      /analys.*recent/i, /feedback.*geven/i, /analyseer/i,
+    ];
+    for (const p of analysisPatterns) {
+      if (p.test(lower)) return "analysis";
+    }
+    const sessionPatterns = [
+      /chat.*sessie/i, /sessie.*bekijk/i, /ai.*chat.*bekijk/i,
+      /gebruiker.*chat/i, /rollenspel.*bekijk/i,
+    ];
+    for (const p of sessionPatterns) {
+      if (p.test(lower)) return "sessions";
+    }
+    return null;
+  };
+
+  const handleNavigationIntent = async (intent: string, userText: string): Promise<boolean> => {
+    if (intent === "analysis") {
+      try {
+        const res = await fetch('/api/v2/analysis/list');
+        if (!res.ok) return false;
+        const analyses = await res.json();
+        const recent = analyses.slice(0, 5);
+        if (recent.length === 0) {
+          const aiMsg: Message = {
+            id: `nav-${Date.now()}`,
+            sender: "ai",
+            text: "Er zijn nog geen gespreksanalyses beschikbaar. Upload eerst een gesprek via **Gespreksanalyse** in het menu.",
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, aiMsg]);
+          return true;
+        }
+
+        const cards: AnalysisCard[] = recent.map((a: any) => ({
+          id: a.id,
+          title: a.title || 'Onbekend gesprek',
+          userName: a.userName || 'Onbekend',
+          status: a.status,
+          score: a.result?.overallScore || a.result?.overall_score || undefined,
+          createdAt: a.created_at,
+        }));
+
+        const mostInteresting = recent.find((a: any) => a.status === 'completed' && a.result) || recent[0];
+        const introText = mostInteresting?.status === 'completed'
+          ? `Hier zijn je recente gespreksanalyses. De meest interessante is **"${mostInteresting.title}"**${mostInteresting.result?.overallScore ? ` met een score van ${mostInteresting.result.overallScore}%` : ''}. Klik op een analyse om de details te bekijken.`
+          : `Hier zijn je recente gespreksanalyses. Klik op een analyse om de details te bekijken.`;
+
+        const aiMsg: Message = {
+          id: `nav-${Date.now()}`,
+          sender: "ai",
+          text: introText,
+          timestamp: new Date(),
+          analysisCards: cards,
+        };
+        setMessages(prev => [...prev, aiMsg]);
+        return true;
+      } catch (e) {
+        console.error("[Admin] Navigation intent failed:", e);
+        return false;
+      }
+    }
+    return false;
+  };
+
   const handleSendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
 
@@ -765,6 +844,18 @@ export function AdminChatExpertMode({
     const messageText = inputText;
     setInputText("");
     setIsLoading(true);
+
+    const navIntent = detectAdminNavigationIntent(messageText);
+    if (navIntent && !hasActiveSession) {
+      const handled = await handleNavigationIntent(navIntent, messageText);
+      if (handled) {
+        setIsLoading(false);
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+        return;
+      }
+    }
 
     if (!hasActiveSession) {
       try {
@@ -1355,6 +1446,57 @@ export function AdminChatExpertMode({
                       }
                     >
                       <div className="text-[14px] leading-[20px]">{renderSimpleMarkdown(message.text)}</div>
+                      {message.analysisCards && message.analysisCards.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {message.analysisCards.map((card) => (
+                            <button
+                              key={card.id}
+                              onClick={() => {
+                                sessionStorage.setItem('analysisFromHugo', 'true');
+                                navigate?.(`analysis-results-${card.id}`);
+                              }}
+                              className="w-full text-left p-3 rounded-lg border transition-all hover:shadow-sm"
+                              style={{
+                                borderColor: 'rgba(153,16,250,0.2)',
+                                backgroundColor: 'rgba(153,16,250,0.03)',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'rgba(153,16,250,0.4)';
+                                e.currentTarget.style.backgroundColor = 'rgba(153,16,250,0.06)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'rgba(153,16,250,0.2)';
+                                e.currentTarget.style.backgroundColor = 'rgba(153,16,250,0.03)';
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-[13px] text-slate-800">{card.title}</span>
+                                {card.score !== undefined && (
+                                  <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full" style={{
+                                    backgroundColor: card.score >= 60 ? 'rgba(60,154,110,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: card.score >= 60 ? '#3C9A6E' : '#ef4444',
+                                  }}>
+                                    {card.score}%
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[11px] text-slate-400">{card.userName}</span>
+                                <span className="text-[11px] text-slate-300">|</span>
+                                <span className="text-[11px] text-slate-400">
+                                  {new Date(card.createdAt).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' })}
+                                </span>
+                                <span className="text-[11px] text-slate-300">|</span>
+                                <span className="text-[11px]" style={{
+                                  color: card.status === 'completed' ? '#3C9A6E' : card.status === 'failed' ? '#ef4444' : '#f59e0b',
+                                }}>
+                                  {card.status === 'completed' ? 'Klaar' : card.status === 'failed' ? 'Mislukt' : 'Bezig...'}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     
                     {/* Action buttons below AI bubble — admin purple colors */}
@@ -1372,6 +1514,8 @@ export function AdminChatExpertMode({
                               <Copy className="w-3.5 h-3.5" />
                             )}
                           </button>
+                          {!message.id.startsWith('welcome-') && (
+                          <>
                           <button
                             onClick={() => handleMessageFeedback(message.id, "up")}
                             className="p-1.5 rounded-md transition-colors"
@@ -1388,6 +1532,8 @@ export function AdminChatExpertMode({
                           >
                             <ThumbsDown className={`w-3.5 h-3.5 ${message.feedback !== "down" ? "text-slate-400 hover:text-slate-600" : ""}`} />
                           </button>
+                          </>
+                          )}
                           <button
                             onClick={() => {
                               const lastUserMsg = [...messages].reverse().find(m => m.sender === "hugo");
@@ -1400,6 +1546,7 @@ export function AdminChatExpertMode({
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                           </button>
+                          {!message.id.startsWith('welcome-') && (
                           <button
                             onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
                             className="p-1.5 rounded-md transition-colors"
@@ -1411,6 +1558,7 @@ export function AdminChatExpertMode({
                           >
                             <Lightbulb className="w-3.5 h-3.5" />
                           </button>
+                          )}
                           {message.debugInfo && (
                             <button
                               onClick={() =>

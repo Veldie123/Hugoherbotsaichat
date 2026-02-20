@@ -136,6 +136,14 @@ export default function App() {
       return;
     }
 
+    if (page.startsWith("analysis-results-")) {
+      const conversationId = page.replace("analysis-results-", "");
+      setCurrentPage("analysis-results" as Page);
+      setNavigationData({ ...data, conversationId, fromAdmin: isAdmin });
+      window.scrollTo(0, 0);
+      return;
+    }
+
     if (page === "admin-analysis-results" || page === "admin-analysis-detail") {
       setCurrentPage("analysis-results" as Page);
       setIsAdmin(true);
