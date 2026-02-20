@@ -495,46 +495,40 @@ export interface CoachResponse {
 // ============================================================================
 
 /**
- * Generate a coaching response from Hugo
+ * Build the enhanced system prompt and messages for a coach response.
+ * Shared between streaming and non-streaming paths.
+ * Loads RAG + video in parallel for speed.
  */
-export async function generateCoachResponse(
+async function prepareCoachPrompt(
   userMessage: string,
   conversationHistory: CoachMessage[],
   context: CoachContext = {}
-): Promise<CoachResponse> {
-  const client = getOpenAIClient();
-  
-  if (!client) {
-    return {
-      message: TECHNICAL_FALLBACKS.client_unavailable,
-    };
-  }
-
+): Promise<{ messages: CoachMessage[]; enhancedSystemPrompt: string; ragResult: any; ragQuery: string }> {
   let ragQuery = userMessage;
   if (context.techniqueName) {
     ragQuery = `${context.techniqueName}: ${userMessage}`;
   }
 
-  const ragResult = await searchRag(ragQuery, {
-    limit: 4,
-    threshold: 0.3,
-  });
+  const [ragResult, videoContextStr] = await Promise.all([
+    searchRag(ragQuery, { limit: 4, threshold: 0.3 }),
+    (async () => {
+      if (context.techniqueId) {
+        const videos = getVideosForTechnique(context.techniqueId);
+        if (videos.length > 0) {
+          return videos.map(v => `- "${v.title}": ${v.beschrijving}`).join("\n");
+        }
+      }
+      return INLINE_DEFAULTS.no_videos_available;
+    })(),
+  ]);
 
   let ragContextStr = "";
   if (ragResult.documents.length > 0) {
     ragContextStr = ragResult.documents
-      .map((doc, i) => `[${i + 1}] ${doc.title || INLINE_DEFAULTS.document_title_fallback}:\n${doc.content}`)
+      .map((doc: any, i: number) => `[${i + 1}] ${doc.title || INLINE_DEFAULTS.document_title_fallback}:\n${doc.content}`)
       .join("\n\n");
   } else {
     ragContextStr = INLINE_DEFAULTS.no_context_found;
-  }
-
-  let videoContextStr = INLINE_DEFAULTS.no_videos_available;
-  if (context.techniqueId) {
-    const videos = getVideosForTechnique(context.techniqueId);
-    if (videos.length > 0) {
-      videoContextStr = videos.map(v => `- "${v.title}": ${v.beschrijving}`).join("\n");
-    }
   }
 
   const systemPrompt = buildSystemPrompt(ragContextStr, videoContextStr);
@@ -557,11 +551,39 @@ export async function generateCoachResponse(
     enhancedSystemPrompt += `\nNaam coachee: ${context.userName}`;
   }
 
+  enhancedSystemPrompt += `\n\n**BELANGRIJK — gedragsregels:**
+- Als de gebruiker een letter antwoordt (A, B, C, D) of een nummer (1, 2, 3), koppel dit aan de opties uit jouw VORIGE bericht. Reageer direct op die keuze zonder opnieuw te vragen wat ze bedoelen.
+- Houd antwoorden kort en concreet. Maximaal 3-4 zinnen tenzij uitleg echt nodig is. Geen lange opsommingen.
+- Als de gebruiker zegt dat ze een gesprek willen "analyseren" of "uploaden", verwijs ze dan direct naar de Gespreksanalyse functie in het menu links. Zeg iets als: "Upload je gesprek via **Gespreksanalyse** in het menu — ik analyseer het dan voor je." Stel GEEN vervolgvragen over wat ze willen analyseren.`;
+
   const messages: CoachMessage[] = [
     { role: "system", content: enhancedSystemPrompt },
     ...conversationHistory,
     { role: "user", content: userMessage },
   ];
+
+  return { messages, enhancedSystemPrompt, ragResult, ragQuery };
+}
+
+/**
+ * Generate a coaching response from Hugo (non-streaming, with validation)
+ */
+export async function generateCoachResponse(
+  userMessage: string,
+  conversationHistory: CoachMessage[],
+  context: CoachContext = {}
+): Promise<CoachResponse> {
+  const client = getOpenAIClient();
+  
+  if (!client) {
+    return {
+      message: TECHNICAL_FALLBACKS.client_unavailable,
+    };
+  }
+
+  const { messages, enhancedSystemPrompt, ragResult, ragQuery } = await prepareCoachPrompt(
+    userMessage, conversationHistory, context
+  );
 
   try {
     const response = await client.chat.completions.create({
@@ -570,7 +592,7 @@ export async function generateCoachResponse(
         role: m.role as "system" | "user" | "assistant",
         content: m.content,
       })),
-      max_completion_tokens: 4000,
+      max_completion_tokens: 2000,
     });
 
     const assistantMessage = response.choices[0]?.message?.content;
@@ -614,6 +636,61 @@ export async function generateCoachResponse(
     return {
       message: TECHNICAL_FALLBACKS.error_generic,
     };
+  }
+}
+
+/**
+ * Generate a STREAMING coaching response from Hugo.
+ * Yields tokens as they arrive from OpenAI. Much faster time-to-first-token.
+ */
+export async function generateCoachResponseStream(
+  userMessage: string,
+  conversationHistory: CoachMessage[],
+  context: CoachContext = {},
+  onToken: (token: string) => void,
+  onDone: (fullText: string, debug?: any) => void,
+  onError: (error: Error) => void
+): Promise<void> {
+  const client = getOpenAIClient();
+  
+  if (!client) {
+    onToken(TECHNICAL_FALLBACKS.client_unavailable);
+    onDone(TECHNICAL_FALLBACKS.client_unavailable);
+    return;
+  }
+
+  const { messages, enhancedSystemPrompt, ragResult, ragQuery } = await prepareCoachPrompt(
+    userMessage, conversationHistory, context
+  );
+
+  try {
+    const stream = await client.chat.completions.create({
+      model: "gpt-5.1",
+      messages: messages.map(m => ({
+        role: m.role as "system" | "user" | "assistant",
+        content: m.content,
+      })),
+      max_completion_tokens: 2000,
+      stream: true,
+    });
+
+    let fullText = "";
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content;
+      if (delta) {
+        fullText += delta;
+        onToken(delta);
+      }
+    }
+
+    onDone(fullText || TECHNICAL_FALLBACKS.error_generic, {
+      ragQuery,
+      documentsFound: ragResult.documents.length,
+      searchTimeMs: ragResult.searchTimeMs,
+    });
+  } catch (error: any) {
+    console.error("[COACH] Streaming error:", error);
+    onError(error);
   }
 }
 

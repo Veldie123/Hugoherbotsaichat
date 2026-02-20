@@ -33,7 +33,8 @@ import { nanoid } from "nanoid";
 
 // FULL ENGINE IMPORTS - Replacing simplified versions
 import { 
-  generateCoachResponse, 
+  generateCoachResponse,
+  generateCoachResponseStream,
   generateCoachOpening,
   type CoachContext,
   type CoachMessage,
@@ -1491,7 +1492,11 @@ app.get("/api/session/:sessionId/turns", async (req, res) => {
 app.post("/api/session/:sessionId/message/stream", async (req, res) => {
   try {
     const { content, isExpert = false } = req.body;
-    const session = sessions.get(req.params.sessionId);
+    let session = sessions.get(req.params.sessionId);
+    if (!session) {
+      session = await loadSessionFromDb(req.params.sessionId) ?? undefined;
+      if (session) sessions.set(session.id, session);
+    }
     
     if (!session) {
       return res.status(404).json({ error: "Session not found" });
@@ -1501,18 +1506,16 @@ app.post("/api/session/:sessionId/message/stream", async (req, res) => {
       return res.status(400).json({ error: "content is required" });
     }
     
-    // Set headers for SSE
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
     
-    // Add user message to history
     session.conversationHistory.push({
       role: "user",
       content
     });
     
-    // Generate response (non-streaming for now, but chunked for SSE)
     const coachContext: CoachContext = {
       userId: session.userId,
       techniqueId: session.techniqueId,
@@ -1524,46 +1527,44 @@ app.post("/api/session/:sessionId/message/stream", async (req, res) => {
       sessionContext: session.contextState.gathered
     };
     
-    const coachResult = await generateCoachResponse(
+    await generateCoachResponseStream(
       content,
       session.conversationHistory,
-      coachContext
+      coachContext,
+      (token) => {
+        res.write(`data: ${JSON.stringify({ token })}\n\n`);
+      },
+      async (fullText, debug) => {
+        session!.conversationHistory.push({
+          role: "assistant",
+          content: fullText
+        });
+        await saveSessionToDb(session!);
+        
+        res.write(`data: ${JSON.stringify({ 
+          done: true,
+          phase: session!.mode,
+          debug: isExpert ? {
+            ragDocsFound: debug?.documentsFound || 0,
+          } : undefined
+        })}\n\n`);
+        res.end();
+      },
+      (error) => {
+        console.error("[API] Streaming error:", error.message);
+        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+        res.end();
+      }
     );
     
-    const responseText = coachResult.message;
-    
-    // Add to history
-    session.conversationHistory.push({
-      role: "assistant",
-      content: responseText
-    });
-    
-    // Stream response in chunks (simulate streaming)
-    const words = responseText.split(" ");
-    for (let i = 0; i < words.length; i++) {
-      const chunk = words[i] + (i < words.length - 1 ? " " : "");
-      res.write(`data: ${JSON.stringify({ token: chunk })}\n\n`);
-      
-      // Small delay to simulate streaming
-      await new Promise(r => setTimeout(r, 30));
-    }
-    
-    // Send final event with debug info
-    res.write(`data: ${JSON.stringify({ 
-      done: true,
-      phase: session.mode,
-      debug: isExpert ? {
-        ragDocsFound: coachResult.debug?.documentsFound || 0,
-        wasRepaired: coachResult.debug?.wasRepaired || false
-      } : undefined
-    })}\n\n`);
-    
-    res.end();
-    
   } catch (error: any) {
-    console.error("[API] Streaming error:", error.message);
-    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
-    res.end();
+    console.error("[API] Streaming setup error:", error.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+      res.end();
+    }
   }
 });
 
