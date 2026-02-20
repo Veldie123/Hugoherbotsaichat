@@ -37,10 +37,12 @@ import {
   Scale,
   CheckCircle,
   Circle,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { getTechniekByNummer } from "../../data/technieken-service";
+import { getTechniekByNummer, getAllTechnieken, getTechniekenByFase } from "../../data/technieken-service";
 
 interface AnalysisResultsProps {
   navigate?: (page: string, data?: any) => void;
@@ -275,6 +277,13 @@ export function AnalysisResults({
   const [feedbackOpen, setFeedbackOpen] = useState<string | null>(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackConfirmed, setFeedbackConfirmed] = useState<Set<string>>(new Set());
+  const [copiedTurnIdx, setCopiedTurnIdx] = useState<number | null>(null);
+  const [goldenSaved, setGoldenSaved] = useState<Set<number>>(new Set());
+  const [correctionPanelTurn, setCorrectionPanelTurn] = useState<number | null>(null);
+  const [correctionType, setCorrectionType] = useState<'technique' | 'houding'>('technique');
+  const [correctionValue, setCorrectionValue] = useState('');
+  const [correctionNote, setCorrectionNote] = useState('');
+  const [correctionSubmitting, setCorrectionSubmitting] = useState(false);
 
   const [resolvedConversationId, setResolvedConversationId] = useState<string | null>(
     navigationData?.conversationId || sessionStorage.getItem('analysisId') || null
@@ -317,6 +326,104 @@ export function AnalysisResults({
       setEditingMomentId(null);
     }
   };
+
+  const handleCopyTurn = async (turnIdx: number, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedTurnIdx(turnIdx);
+      setTimeout(() => setCopiedTurnIdx(null), 2000);
+    } catch {
+      toast?.('Kopiëren mislukt');
+    }
+  };
+
+  const handleGoldenStandard = async (turn: TranscriptTurn) => {
+    if (!conversationId || !result) return;
+    const evaluation = result.evaluations.find(e => e.turnIdx === turn.idx);
+    const signal = result.signals.find(s => s.turnIdx === turn.idx);
+    try {
+      const techniqueIds = evaluation?.techniques.map(t => t.id) || [];
+      const res = await fetch('/api/v2/session/save-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: conversationId,
+          techniqueId: techniqueIds[0] || 'unknown',
+          message: turn.text,
+          context: { evaluations: evaluation?.techniques, signal: signal?.houding, turnText: turn.text, speaker: turn.speaker },
+          matchStatus: 'match',
+          signal: signal?.houding || 'neutraal',
+        }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      setGoldenSaved(prev => { const next = new Set(prev); next.add(turn.idx); return next; });
+      toast?.('Opgeslagen als Golden Standard', { description: 'Dit voorbeeld wordt gebruikt om de AI te verbeteren' });
+    } catch {
+      toast?.('Opslaan mislukt');
+    }
+  };
+
+  const handleCorrectionSubmit = async (turn: TranscriptTurn) => {
+    if (!correctionValue || !conversationId || !result) return;
+    setCorrectionSubmitting(true);
+    try {
+      const evaluation = result.evaluations.find(e => e.turnIdx === turn.idx);
+      const signal = result.signals.find(s => s.turnIdx === turn.idx);
+      const originalValue = correctionType === 'technique'
+        ? evaluation?.techniques.map(t => `${t.id}:${t.quality}`).join(', ') || 'geen'
+        : signal?.houding || 'neutraal';
+
+      await fetch('/api/v2/admin/corrections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysisId: conversationId,
+          type: correctionType,
+          field: correctionType === 'technique' ? 'detected_technique' : 'houding',
+          originalValue,
+          newValue: correctionValue,
+          context: `Turn ${turn.idx}: "${turn.text.substring(0, 80)}..."${correctionNote ? ` — ${correctionNote}` : ''}`,
+          submittedBy: 'admin',
+        }),
+      });
+
+      await fetch('/api/v2/session/save-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: conversationId,
+          techniqueId: correctionType === 'technique' ? correctionValue : (evaluation?.techniques[0]?.id || 'unknown'),
+          message: turn.text,
+          context: { correctedBy: 'admin', correctionType, correctionNote, originalSignal: signal?.houding },
+          matchStatus: 'mismatch',
+          signal: correctionType === 'houding' ? correctionValue : (signal?.houding || 'neutraal'),
+          detectedTechnique: evaluation?.techniques[0]?.id || undefined,
+        }),
+      });
+
+      toast?.('Correctie ingediend', { description: 'Verschijnt in Config Review' });
+      setCorrectionPanelTurn(null);
+      setCorrectionValue('');
+      setCorrectionNote('');
+      setCorrectionType('technique');
+    } catch {
+      toast?.('Correctie indienen mislukt');
+    } finally {
+      setCorrectionSubmitting(false);
+    }
+  };
+
+  const KLANT_HOUDINGEN = [
+    { id: 'positief', naam: 'Positief antwoord' },
+    { id: 'negatief', naam: 'Negatief antwoord' },
+    { id: 'vaag', naam: 'Schijninstemming' },
+    { id: 'ontwijkend', naam: 'Te algemeen antwoord' },
+    { id: 'vraag', naam: 'Vraag' },
+    { id: 'twijfel', naam: 'Twijfel' },
+    { id: 'bezwaar', naam: 'Bezwaar' },
+    { id: 'uitstel', naam: 'Uitstel' },
+    { id: 'angst', naam: 'Angst / Bezorgdheid' },
+  ];
 
   useEffect(() => {
     if (navigationData?.conversationId && navigationData.conversationId !== resolvedConversationId) {
@@ -1837,6 +1944,162 @@ export function AnalysisResults({
                                     title="Annuleren"
                                   >
                                     <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            {useAdminLayout && (
+                              <div className="flex items-center gap-0.5 mt-1">
+                                <button
+                                  onClick={() => handleCopyTurn(turn.idx, turn.text)}
+                                  className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                                  title="Kopieer"
+                                >
+                                  {copiedTurnIdx === turn.idx ? (
+                                    <Check className="w-3.5 h-3.5" style={{ color: '#22C55E' }} />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleGoldenStandard(turn)}
+                                  className={`p-1.5 rounded-md transition-colors ${
+                                    goldenSaved.has(turn.idx)
+                                      ? 'text-green-600 bg-green-50'
+                                      : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                  title="Markeer als correct — Golden Standard"
+                                  disabled={goldenSaved.has(turn.idx)}
+                                >
+                                  <ThumbsUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setCorrectionPanelTurn(correctionPanelTurn === turn.idx ? null : turn.idx);
+                                    setCorrectionValue('');
+                                    setCorrectionNote('');
+                                    setCorrectionType('technique');
+                                  }}
+                                  className={`p-1.5 rounded-md transition-colors ${
+                                    correctionPanelTurn === turn.idx
+                                      ? 'text-red-500 bg-red-50'
+                                      : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                  title="AI tag is fout — Corrigeer"
+                                >
+                                  <ThumbsDown className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const lastCustomer = [...(result?.transcript || [])].reverse().find(t => t.speaker === 'customer' && t.idx < turn.idx);
+                                    if (lastCustomer) {
+                                      navigator.clipboard.writeText(`Klant: ${lastCustomer.text}\nVerkoper: ${turn.text}`);
+                                      toast?.('Context gekopieerd');
+                                    }
+                                  }}
+                                  className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                                  title="Kopieer met context"
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const techIds = evaluation?.techniques.map(t => t.id) || [];
+                                    if (techIds.length > 0) {
+                                      const tech = getTechniekByNummer(techIds[0]);
+                                      if (tech) toast?.(`${tech.naam}`, { description: tech.doel || tech.wat || '' });
+                                    }
+                                  }}
+                                  className="p-1.5 rounded-md transition-colors hover:bg-purple-50"
+                                  style={{ color: '#9910FA' }}
+                                  title="Bekijk EPIC techniek"
+                                >
+                                  <Lightbulb className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                            {useAdminLayout && correctionPanelTurn === turn.idx && (
+                              <div className="rounded-xl border p-3 mt-2" style={{ backgroundColor: '#FAF5FF', borderColor: '#E9D5FF' }}>
+                                <p className="text-[11px] font-semibold mb-2" style={{ color: '#7C3AED' }}>
+                                  Welk type wil je corrigeren?
+                                </p>
+                                <div className="flex gap-2 mb-3">
+                                  <button
+                                    onClick={() => setCorrectionType('technique')}
+                                    className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition-colors"
+                                    style={{
+                                      backgroundColor: correctionType === 'technique' ? '#9910FA' : '#F1F5F9',
+                                      color: correctionType === 'technique' ? 'white' : '#64748B',
+                                    }}
+                                  >
+                                    Techniek
+                                  </button>
+                                  <button
+                                    onClick={() => setCorrectionType('houding')}
+                                    className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition-colors"
+                                    style={{
+                                      backgroundColor: correctionType === 'houding' ? '#9910FA' : '#F1F5F9',
+                                      color: correctionType === 'houding' ? 'white' : '#64748B',
+                                    }}
+                                  >
+                                    Houding
+                                  </button>
+                                </div>
+                                <div className="mb-2">
+                                  <select
+                                    value={correctionValue}
+                                    onChange={(e) => setCorrectionValue(e.target.value)}
+                                    className="w-full text-[12px] px-2.5 py-2 rounded-lg border bg-white"
+                                    style={{ borderColor: '#E9D5FF' }}
+                                  >
+                                    <option value="">
+                                      {correctionType === 'technique' ? 'Selecteer juiste techniek...' : 'Selecteer juiste houding...'}
+                                    </option>
+                                    {correctionType === 'technique' ? (
+                                      <>
+                                        {['Engagement', 'Probing', 'Influencing', 'Closing'].map((faseName, faseIdx) => {
+                                          const faseNum = faseIdx + 1;
+                                          const techs = getAllTechnieken().filter(t => t.fase === `${faseNum}` && !t.is_fase);
+                                          if (techs.length === 0) return null;
+                                          return (
+                                            <optgroup key={faseName} label={`Fase ${faseNum}: ${faseName}`}>
+                                              {techs.map(t => (
+                                                <option key={t.nummer} value={t.nummer}>{t.nummer} — {t.naam}</option>
+                                              ))}
+                                            </optgroup>
+                                          );
+                                        })}
+                                      </>
+                                    ) : (
+                                      KLANT_HOUDINGEN.map(h => (
+                                        <option key={h.id} value={h.id}>{h.naam}</option>
+                                      ))
+                                    )}
+                                  </select>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={correctionNote}
+                                  onChange={(e) => setCorrectionNote(e.target.value)}
+                                  placeholder="Optionele toelichting..."
+                                  className="w-full text-[11px] px-2.5 py-1.5 rounded-lg border bg-white mb-2"
+                                  style={{ borderColor: '#E9D5FF' }}
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleCorrectionSubmit(turn)}
+                                    disabled={!correctionValue || correctionSubmitting}
+                                    className="text-[11px] px-3 py-1.5 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+                                    style={{ backgroundColor: '#9910FA' }}
+                                  >
+                                    {correctionSubmitting ? 'Bezig...' : 'Indienen'}
+                                  </button>
+                                  <button
+                                    onClick={() => { setCorrectionPanelTurn(null); setCorrectionValue(''); setCorrectionNote(''); }}
+                                    className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition-colors"
+                                    style={{ backgroundColor: '#F1F5F9', color: '#64748B' }}
+                                  >
+                                    Annuleren
                                   </button>
                                 </div>
                               </div>
