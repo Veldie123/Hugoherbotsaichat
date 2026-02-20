@@ -554,7 +554,8 @@ async function prepareCoachPrompt(
   enhancedSystemPrompt += `\n\n**BELANGRIJK — gedragsregels:**
 - Als de gebruiker een letter antwoordt (A, B, C, D) of een nummer (1, 2, 3), koppel dit aan de opties uit jouw VORIGE bericht. Reageer direct op die keuze zonder opnieuw te vragen wat ze bedoelen.
 - Houd antwoorden kort en concreet. Maximaal 3-4 zinnen tenzij uitleg echt nodig is. Geen lange opsommingen.
-- Als de gebruiker zegt dat ze een gesprek willen "analyseren" of "uploaden", verwijs ze dan direct naar de Gespreksanalyse functie in het menu links. Zeg iets als: "Upload je gesprek via **Gespreksanalyse** in het menu — ik analyseer het dan voor je." Stel GEEN vervolgvragen over wat ze willen analyseren.`;
+- Als de gebruiker een audiobestand heeft bijgevoegd met een verzoek om te analyseren, zeg dan iets als: "Top, ik ga dat voor je analyseren!" Het systeem handelt de analyse automatisch af — jij hoeft de gebruiker NIET te verwijzen naar een ander menu of pagina. Jij BENT de agent die het regelt.
+- Als de gebruiker vraagt om een video of webinar te bekijken over een techniek, toon die dan inline. Het systeem voegt automatisch video's en webinars toe aan je antwoord wanneer relevant.`;
 
   const messages: CoachMessage[] = [
     { role: "system", content: enhancedSystemPrompt },

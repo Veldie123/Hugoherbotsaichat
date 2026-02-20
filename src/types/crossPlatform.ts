@@ -77,9 +77,31 @@ export interface RagSource {
   metadata?: Record<string, unknown>;
 }
 
+export interface AnalysisResultEmbed {
+  conversationId: string;
+  title: string;
+  overallScore: number;
+  status: 'transcribing' | 'analyzing' | 'evaluating' | 'generating_report' | 'completed' | 'failed';
+  phaseCoverage?: {
+    phase1: { score: number };
+    phase2: { overall: { score: number } };
+    phase3: { score: number };
+    phase4: { score: number };
+  };
+  moments?: Array<{
+    type: 'big_win' | 'quick_fix' | 'turning_point';
+    label: string;
+    whyItMatters: string;
+    betterAlternative: string;
+  }>;
+  strengths?: Array<{ text: string }>;
+  improvements?: Array<{ text: string }>;
+  coachOneliner?: string;
+}
+
 export interface RichContent {
-  type: 'card' | 'video' | 'slide' | 'webinar' | 'action' | 'roleplay' | 'epic_slide';
-  data: CardContent | VideoEmbed | SlideContent | WebinarLink | ActionButton | RoleplayProposal | EpicSlideContent;
+  type: 'card' | 'video' | 'slide' | 'webinar' | 'action' | 'roleplay' | 'epic_slide' | 'analysis_result' | 'analysis_progress';
+  data: CardContent | VideoEmbed | SlideContent | WebinarLink | ActionButton | RoleplayProposal | EpicSlideContent | AnalysisResultEmbed;
 }
 
 export interface CardContent {

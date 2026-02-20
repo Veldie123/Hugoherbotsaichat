@@ -65,7 +65,10 @@ import technieken_index from "../../data/technieken_index";
 import { KLANT_HOUDINGEN } from "../../data/klant_houdingen";
 import { EPICSidebar } from "./AdminChatExpertModeSidebar";
 import { EpicSlideCard } from "./EpicSlideCard";
-import type { EpicSlideContent } from "@/types/crossPlatform";
+import { InlineVideoPlayer } from "./InlineVideoPlayer";
+import { InlineWebinarCard } from "./InlineWebinarCard";
+import { InlineAnalysisCard } from "./InlineAnalysisCard";
+import type { EpicSlideContent, VideoEmbed, WebinarLink, AnalysisResultEmbed, RichContent } from "@/types/crossPlatform";
 import { hugoApi, type AssistanceConfig } from "../../services/hugoApi";
 import { lastActivityService } from "../../services/lastActivityService";
 import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from "@heygen/streaming-avatar";
@@ -791,6 +794,135 @@ export function TalkToHugoAI({
     });
   };
 
+  const handleInlineAnalysis = async (audioFiles: FileAttachment[]) => {
+    const file = audioFiles[0];
+    const title = file.name.replace(/\.[^/.]+$/, '');
+    const analysisMessageId = `analysis-${Date.now()}`;
+
+    setMessages(prev => [...prev, {
+      id: analysisMessageId,
+      sender: "ai",
+      text: `Top, ik ga **${file.name}** voor je analyseren. Even geduld — ik transcribeer, analyseer en maak een rapport. Dit duurt meestal 1-2 minuten.`,
+      timestamp: new Date(),
+      richContent: [{
+        type: 'analysis_progress' as const,
+        data: { conversationId: 'pending', title, overallScore: 0, status: 'transcribing' as const } as AnalysisResultEmbed,
+      }],
+    }]);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file.file);
+      formData.append('title', title);
+      formData.append('userId', user?.id || 'anonymous');
+
+      const response = await fetch('/api/v2/analysis/inline', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload mislukt');
+      }
+
+      const { conversationId } = await response.json();
+      console.log('[Hugo] Inline analysis started:', conversationId);
+
+      setMessages(prev => prev.map(m => {
+        if (m.id !== analysisMessageId) return m;
+        return {
+          ...m,
+          richContent: m.richContent?.map(rc => ({
+            ...rc,
+            data: { ...(rc.data as AnalysisResultEmbed), conversationId },
+          })),
+        };
+      }));
+
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/v2/analysis/status/${conversationId}`);
+          const statusData = await statusRes.json();
+
+          if (statusData.status === 'completed') {
+            clearInterval(pollInterval);
+            const resultsRes = await fetch(`/api/v2/analysis/results/${conversationId}`);
+            const results = await resultsRes.json();
+
+            const analysisEmbed: AnalysisResultEmbed = {
+              conversationId,
+              title,
+              overallScore: results.insights?.overallScore || 0,
+              status: 'completed',
+              phaseCoverage: results.insights?.phaseCoverage ? {
+                phase1: { score: results.insights.phaseCoverage.phase1?.score || 0 },
+                phase2: { overall: { score: results.insights.phaseCoverage.phase2?.overall?.score || 0 } },
+                phase3: { score: results.insights.phaseCoverage.phase3?.score || 0 },
+                phase4: { score: results.insights.phaseCoverage.phase4?.score || 0 },
+              } : undefined,
+              moments: results.insights?.moments?.slice(0, 3).map((mo: any) => ({
+                type: mo.type,
+                label: mo.label,
+                whyItMatters: mo.whyItMatters,
+                betterAlternative: mo.betterAlternative,
+              })),
+              strengths: results.insights?.strengths?.slice(0, 2),
+              improvements: results.insights?.improvements?.slice(0, 2),
+              coachOneliner: results.insights?.coachDebrief?.oneliner,
+            };
+
+            setMessages(prev => prev.map(m => {
+              if (m.id !== analysisMessageId) return m;
+              return {
+                ...m,
+                text: `Klaar! Hier is de analyse van **${title}**. Je scoorde **${analysisEmbed.overallScore}%** overall.${analysisEmbed.coachOneliner ? ` ${analysisEmbed.coachOneliner}` : ''}`,
+                richContent: [{ type: 'analysis_result' as const, data: analysisEmbed }],
+              };
+            }));
+          } else if (statusData.status === 'failed') {
+            clearInterval(pollInterval);
+            setMessages(prev => prev.map(m => {
+              if (m.id !== analysisMessageId) return m;
+              return {
+                ...m,
+                text: `Helaas, de analyse van **${title}** is mislukt. Probeer het opnieuw of upload een ander bestand.`,
+                richContent: [{
+                  type: 'analysis_progress' as const,
+                  data: { conversationId, title, overallScore: 0, status: 'failed' as const } as AnalysisResultEmbed,
+                }],
+              };
+            }));
+          } else {
+            setMessages(prev => prev.map(m => {
+              if (m.id !== analysisMessageId) return m;
+              return {
+                ...m,
+                richContent: m.richContent?.map(rc => ({
+                  ...rc,
+                  data: { ...(rc.data as AnalysisResultEmbed), status: statusData.status },
+                })),
+              };
+            }));
+          }
+        } catch (pollErr) {
+          console.error('[Hugo] Poll error:', pollErr);
+        }
+      }, 3000);
+
+      setTimeout(() => clearInterval(pollInterval), 5 * 60 * 1000);
+    } catch (error: any) {
+      console.error('[Hugo] Inline analysis error:', error);
+      setMessages(prev => prev.map(m => {
+        if (m.id !== analysisMessageId) return m;
+        return {
+          ...m,
+          text: `Sorry, er ging iets mis bij het analyseren van **${file.name}**. Probeer het opnieuw.`,
+          richContent: [],
+        };
+      }));
+    }
+  };
+
   const handleSendMessage = async () => {
     const hasFiles = attachedFiles.length > 0;
     if ((!inputText.trim() && !hasFiles) || isLoading || isStreaming) return;
@@ -811,20 +943,31 @@ export function TalkToHugoAI({
       attachments: messageAttachments.length > 0 ? messageAttachments : undefined,
     };
 
-    const audioFiles = attachedFiles.filter((f) => f.type.startsWith("audio/"));
-    const attachmentContext = hasFiles
+    const audioFiles = attachedFiles.filter((f) => f.type.startsWith("audio/") || /\.(m4a|mp3|wav|ogg|webm|flac|aac)$/i.test(f.name));
+    const lowerText = inputText.toLowerCase();
+    const isAnalyseIntent = audioFiles.length > 0 && (
+      /analy|ontleed|beoordeel/.test(lowerText) ||
+      (!inputText.trim())
+    );
+
+    const attachmentContext = hasFiles && !isAnalyseIntent
       ? `[Gebruiker heeft ${attachedFiles.length} bestand${attachedFiles.length > 1 ? "en" : ""} geüpload: ${attachedFiles.map((f) => `${f.name} (${f.type}, ${formatFileSize(f.size)})`).join(", ")}]`
       : "";
     const messageText = inputText
-      ? (hasFiles ? `${inputText}\n\n${attachmentContext}` : inputText)
+      ? (hasFiles && !isAnalyseIntent ? `${inputText}\n\n${attachmentContext}` : inputText)
       : attachmentContext;
 
+    const filesToAnalyze = isAnalyseIntent ? [...audioFiles] : [];
     attachedFiles.forEach((f) => { if (f.preview) URL.revokeObjectURL(f.preview); });
     setMessages(prev => [...prev, userMessage]);
     setInputText("");
     setAttachedFiles([]);
 
-    // Auto-start a general coach session if no active session exists
+    if (isAnalyseIntent && filesToAnalyze.length > 0) {
+      await handleInlineAnalysis(filesToAnalyze);
+      return;
+    }
+
     if (!hasActiveSession) {
       try {
         await hugoApi.startSession({
@@ -1321,12 +1464,34 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
 
               {message.richContent && message.richContent.length > 0 && (
                 <div className="mt-2 space-y-2">
-                  {message.richContent
-                    .filter(rc => rc.type === 'epic_slide')
-                    .map((rc, idx) => (
-                      <EpicSlideCard key={idx} slide={rc.data as unknown as EpicSlideContent} />
-                    ))
-                  }
+                  {message.richContent.map((rc, idx) => {
+                    switch (rc.type) {
+                      case 'epic_slide':
+                        return <EpicSlideCard key={idx} slide={rc.data as unknown as EpicSlideContent} />;
+                      case 'video':
+                        return <InlineVideoPlayer key={idx} video={rc.data as VideoEmbed} />;
+                      case 'webinar':
+                        return <InlineWebinarCard key={idx} webinar={rc.data as WebinarLink} />;
+                      case 'analysis_result':
+                      case 'analysis_progress':
+                        return (
+                          <InlineAnalysisCard
+                            key={idx}
+                            analysis={rc.data as AnalysisResultEmbed}
+                            onViewFull={rc.type === 'analysis_result' ? (convId) => {
+                              if (navigate) {
+                                navigate('analysis-results');
+                                setTimeout(() => {
+                                  window.dispatchEvent(new CustomEvent('navigate-analysis', { detail: { conversationId: convId } }));
+                                }, 100);
+                              }
+                            } : undefined}
+                          />
+                        );
+                      default:
+                        return null;
+                    }
+                  })}
                 </div>
               )}
               

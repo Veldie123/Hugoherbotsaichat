@@ -64,8 +64,11 @@ The application is built with React 18, TypeScript, and Vite, utilizing Tailwind
 
 **AI Agent-First Rich Responses:**
 - **Rich Content Types:** The `/api/v2/chat` endpoint returns rich content alongside text: video embeds, slide references, webinar links, action buttons, and roleplay proposals.
+- **Inline Analysis from Chat:** When user attaches an audio file (m4a, mp3, etc.) in the chat, Hugo automatically detects the analysis intent, uploads to `/api/v2/analysis/inline`, polls for results, and renders the full analysis inline as an `InlineAnalysisCard` with score donut, phase bars, and coaching moments. No menu navigation needed.
+- **Inline Video Playback:** Training videos render directly in chat using `InlineVideoPlayer` with `@mux/mux-player-react`. Videos have thumbnail play buttons that expand to full Mux players.
+- **Inline Webinar Cards:** Webinar links render as clickable cards via `InlineWebinarCard` with title, description, and external link.
 - **Content Asset Library:** `server/v2/content-assets.ts` maps EPIC techniques to available content assets.
-- **Intent Detection:** `server/v2/intent-detector.ts` uses keyword/pattern matching to detect user intent.
+- **Intent Detection:** `server/v2/intent-detector.ts` uses keyword/pattern matching to detect user intent. Audio file attachments with analyse-related keywords trigger inline analysis flow.
 - **Rich Response Builder:** `server/v2/rich-response-builder.ts` enriches Hugo's text responses with matched content items, action buttons, and suggestion chips.
 - **Shared Types:** `src/types/crossPlatform.ts` contains all shared TypeScript types for cross-platform communication.
 

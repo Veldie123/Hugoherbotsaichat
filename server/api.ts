@@ -2980,6 +2980,44 @@ app.post("/api/v2/analysis/upload", upload.single('file'), async (req: Request, 
   }
 });
 
+app.post("/api/v2/analysis/inline", upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'Geen bestand ontvangen' });
+    }
+
+    const { title, userId } = req.body;
+    const effectiveTitle = title || file.originalname?.replace(/\.[^/.]+$/, '') || `Analyse ${new Date().toLocaleDateString('nl-NL')}`;
+    const effectiveUserId = userId || 'anonymous';
+
+    console.log(`[Analysis:Inline] Starting inline analysis: "${effectiveTitle}" by ${effectiveUserId}, file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+
+    const compressed = await compressAudioIfNeeded(file.buffer, file.originalname, file.mimetype);
+
+    const storageKey = await uploadAndStore(
+      compressed.buffer,
+      compressed.originalName,
+      compressed.mimetype,
+      effectiveUserId
+    );
+
+    const conversationId = crypto.randomUUID();
+
+    runFullAnalysis(conversationId, storageKey, effectiveUserId, effectiveTitle);
+
+    res.json({
+      success: true,
+      conversationId,
+      title: effectiveTitle,
+      status: 'transcribing',
+    });
+  } catch (err: any) {
+    console.error("[Analysis:Inline] Upload error:", err);
+    res.status(500).json({ error: err.message || 'Inline analyse mislukt' });
+  }
+});
+
 app.post("/api/v2/analysis/upload/init", express.json(), (req: Request, res: Response) => {
   try {
     const { fileName, fileSize, totalChunks, mimetype } = req.body;
