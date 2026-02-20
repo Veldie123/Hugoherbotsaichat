@@ -9,6 +9,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { renderSimpleMarkdown } from "../../utils/renderMarkdown";
 import { AdminLayout } from "./AdminLayout";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -341,12 +342,29 @@ export function AdminChatExpertMode({
     }
 
     if (!practiceRaw) {
-      setMessages([{
-        id: `welcome-${Date.now()}`,
-        sender: "ai",
-        text: "Welkom bij de Admin Training. Je kunt direct beginnen met chatten — ik speel de klant. Selecteer optioneel een techniek via het E.P.I.C. menu.",
-        timestamp: new Date(),
-      }]);
+      (async () => {
+        try {
+          const res = await fetch('/api/v2/admin/welcome');
+          if (res.ok) {
+            const data = await res.json();
+            setMessages([{
+              id: `welcome-${Date.now()}`,
+              sender: "ai",
+              text: data.welcomeMessage,
+              timestamp: new Date(),
+            }]);
+            return;
+          }
+        } catch (e) {
+          console.warn("[Admin] Failed to load agent-first welcome:", e);
+        }
+        setMessages([{
+          id: `welcome-${Date.now()}`,
+          sender: "ai",
+          text: "Dag Hugo! Waar kan ik je vandaag mee helpen? Je kunt direct beginnen met chatten, of selecteer een techniek via het E.P.I.C. menu.",
+          timestamp: new Date(),
+        }]);
+      })();
     }
 
     return () => { cancelled = true; };
@@ -1336,7 +1354,7 @@ export function AdminChatExpertMode({
                         : undefined
                       }
                     >
-                      <p className="text-[14px] leading-[20px] whitespace-pre-wrap">{message.text}</p>
+                      <div className="text-[14px] leading-[20px]">{renderSimpleMarkdown(message.text)}</div>
                     </div>
                     
                     {/* Action buttons below AI bubble — admin purple colors */}

@@ -3613,6 +3613,300 @@ app.patch("/api/v2/admin/corrections/:id", async (req: Request, res: Response) =
   }
 });
 
+// ===========================================
+// ADMIN DASHBOARD STATS
+// ===========================================
+app.get("/api/v2/admin/stats", async (req: Request, res: Response) => {
+  try {
+    const { data: allUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const totalUsers = allUsers?.users?.length || 0;
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const activeUsers = allUsers?.users?.filter(u => 
+      u.last_sign_in_at && new Date(u.last_sign_in_at) > new Date(thirtyDaysAgo)
+    ).length || 0;
+
+    const newUsersThisWeek = allUsers?.users?.filter(u => 
+      u.created_at && new Date(u.created_at) > new Date(sevenDaysAgo)
+    ).length || 0;
+
+    const { data: allSessions } = await supabase
+      .from('v2_sessions')
+      .select('id, total_score, technique_id, created_at, user_id, conversation_history')
+      .eq('is_active', 1)
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    const totalSessions = allSessions?.length || 0;
+    const recentSessions = allSessions?.filter(s => 
+      s.created_at && new Date(s.created_at) > new Date(sevenDaysAgo)
+    ).length || 0;
+
+    let totalAnalyses = 0;
+    let completedAnalyses = 0;
+    let avgAnalysisScore = 0;
+    let pendingReviews = 0;
+    try {
+      const uploadResult = await pool.query(
+        "SELECT COUNT(*) as total, COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed FROM conversation_analyses WHERE id NOT LIKE 'session-%'"
+      );
+      totalAnalyses = parseInt(uploadResult.rows[0]?.total || '0');
+      completedAnalyses = parseInt(uploadResult.rows[0]?.completed || '0');
+      
+      const scoreResult = await pool.query(
+        "SELECT AVG((result->>'overallScore')::numeric) as avg_score FROM conversation_analyses WHERE id NOT LIKE 'session-%' AND status = 'completed' AND result->>'overallScore' IS NOT NULL"
+      );
+      avgAnalysisScore = Math.round(parseFloat(scoreResult.rows[0]?.avg_score || '0'));
+
+      const correctionsResult = await pool.query(
+        "SELECT COUNT(*) as pending FROM admin_corrections WHERE status = 'pending'"
+      );
+      pendingReviews = parseInt(correctionsResult.rows[0]?.pending || '0');
+    } catch (e) {
+      console.log('[Admin Stats] DB query error:', (e as any)?.message);
+    }
+
+    const topAnalyses: Array<{id: string; title: string; score: number | null; userName: string}> = [];
+    try {
+      const { rows } = await pool.query(
+        `SELECT id, title, user_id, (result->>'overallScore')::numeric as score 
+         FROM conversation_analyses 
+         WHERE status = 'completed' AND id NOT LIKE 'session-%'
+         ORDER BY created_at DESC LIMIT 3`
+      );
+      const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+      let userMap: Record<string, string> = {};
+      if (userIds.length > 0 && allUsers?.users) {
+        for (const u of allUsers.users) {
+          const name = [u.user_metadata?.first_name, u.user_metadata?.last_name].filter(Boolean).join(' ') || u.email?.split('@')[0] || 'Onbekend';
+          userMap[u.id] = name;
+        }
+      }
+      for (const row of rows) {
+        topAnalyses.push({
+          id: row.id,
+          title: row.title || 'Untitled',
+          score: row.score ? Math.round(row.score) : null,
+          userName: userMap[row.user_id] || 'Anoniem',
+        });
+      }
+    } catch (e) {
+      console.log('[Admin Stats] Top analyses query error:', (e as any)?.message);
+    }
+
+    const topChatSessions: Array<{id: string; technique: string; userName: string; score: number}> = [];
+    if (allSessions && allSessions.length > 0) {
+      for (const s of allSessions.slice(0, 3)) {
+        const technique = getTechnique(s.technique_id);
+        const userName = allUsers?.users?.find(u => u.id === s.user_id);
+        const name = userName ? [userName.user_metadata?.first_name, userName.user_metadata?.last_name].filter(Boolean).join(' ') || userName.email?.split('@')[0] || 'Anoniem' : 'Anoniem';
+        topChatSessions.push({
+          id: s.id,
+          technique: technique?.naam || s.technique_id || 'general',
+          userName: name,
+          score: Math.min(100, Math.round(50 + (s.conversation_history?.length || 0) * 2.5)),
+        });
+      }
+    }
+
+    res.json({
+      platform: {
+        totalUsers,
+        activeUsers,
+        newUsersThisWeek,
+      },
+      sessions: {
+        total: totalSessions,
+        recentWeek: recentSessions,
+      },
+      analyses: {
+        total: totalAnalyses,
+        completed: completedAnalyses,
+        avgScore: avgAnalysisScore,
+      },
+      pendingReviews,
+      topAnalyses,
+      topChatSessions,
+    });
+  } catch (err: any) {
+    console.error('[Admin Stats] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===========================================
+// ADMIN WELCOME BRIEFING
+// ===========================================
+app.get("/api/v2/admin/welcome", async (req: Request, res: Response) => {
+  try {
+    const statsRes = await fetch(`http://localhost:5000/api/v2/admin/stats`);
+    const stats = await statsRes.json();
+    
+    const lines: string[] = [];
+    lines.push(`Dag Hugo! Hier is je overzicht van vandaag:\n`);
+
+    lines.push(`**Platform**`);
+    lines.push(`• ${stats.platform.totalUsers} gebruikers (${stats.platform.newUsersThisWeek} nieuw deze week)`);
+    lines.push(`• ${stats.platform.activeUsers} actieve gebruikers (afgelopen 30 dagen)\n`);
+
+    lines.push(`**Activiteit**`);
+    lines.push(`• ${stats.sessions.total} rollenspellen gespeeld (${stats.sessions.recentWeek} deze week)`);
+    lines.push(`• ${stats.analyses.total} gespreksanalyses${stats.analyses.avgScore ? ` — gem. score: ${stats.analyses.avgScore}%` : ''}\n`);
+
+    if (stats.pendingReviews > 0) {
+      lines.push(`**⚡ Aandacht nodig**`);
+      lines.push(`• ${stats.pendingReviews} correctie(s) wachten op review in Config Review\n`);
+    }
+
+    if (stats.topAnalyses.length > 0) {
+      lines.push(`**Recente analyses**`);
+      for (const a of stats.topAnalyses) {
+        lines.push(`• "${a.title}" van ${a.userName}${a.score !== null ? ` — ${a.score}%` : ' — wacht op resultaat'}`);
+      }
+      lines.push('');
+    }
+
+    lines.push(`Wat wil je doen?`);
+    lines.push(`• Feedback geven op een gespreksanalyse?`);
+    lines.push(`• AI-chats van gebruikers bekijken?`);
+    lines.push(`• Correcties in Config Review behandelen?`);
+    lines.push(`• Een andere vraag?`);
+
+    res.json({
+      welcomeMessage: lines.join('\n'),
+      stats,
+      actions: [
+        { label: 'Review gespreksanalyse', action: 'review_analysis' },
+        { label: 'Bekijk AI-chats', action: 'review_sessions' },
+        { label: 'Config Review', action: 'config_review' },
+        { label: 'Iets anders', action: 'open_question' },
+      ]
+    });
+  } catch (err: any) {
+    console.error('[Admin Welcome] Error:', err.message);
+    res.json({
+      welcomeMessage: 'Dag Hugo! Waar kan ik je vandaag mee helpen?',
+      stats: null,
+      actions: []
+    });
+  }
+});
+
+// ===========================================
+// USER WELCOME BRIEFING (personalized)
+// ===========================================
+app.get("/api/v2/user/welcome", async (req: Request, res: Response) => {
+  try {
+    const userId = req.query.userId as string;
+    
+    let userName = 'daar';
+    let sessionsPlayed = 0;
+    let avgScore = 0;
+    let techniquesUsed: string[] = [];
+    let lastTechnique: string | null = null;
+    let analysesCount = 0;
+
+    if (userId) {
+      try {
+        const { data: userData } = await supabase.auth.admin.getUserById(userId);
+        if (userData?.user) {
+          const fn = userData.user.user_metadata?.first_name;
+          if (fn) userName = fn;
+        }
+      } catch (e) {}
+
+      const { data: sessions } = await supabase
+        .from('v2_sessions')
+        .select('id, technique_id, total_score, conversation_history, created_at')
+        .eq('user_id', userId)
+        .eq('is_active', 1)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (sessions && sessions.length > 0) {
+        sessionsPlayed = sessions.length;
+        const scores = sessions.map(s => Math.min(100, Math.round(50 + (s.conversation_history?.length || 0) * 2.5)));
+        avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        
+        const techIds = [...new Set(sessions.map(s => s.technique_id).filter(Boolean))];
+        techniquesUsed = techIds.map(id => {
+          const t = getTechnique(id);
+          return t?.naam || id;
+        });
+        
+        if (sessions[0]?.technique_id) {
+          const t = getTechnique(sessions[0].technique_id);
+          lastTechnique = t?.naam || sessions[0].technique_id;
+        }
+      }
+
+      try {
+        const analysisResult = await pool.query(
+          "SELECT COUNT(*) as total FROM conversation_analyses WHERE user_id = $1 AND id NOT LIKE 'session-%'",
+          [userId]
+        );
+        analysesCount = parseInt(analysisResult.rows[0]?.total || '0');
+      } catch (e) {}
+    }
+
+    const lines: string[] = [];
+    lines.push(`Hallo ${userName}! Welkom terug.\n`);
+
+    if (sessionsPlayed > 0) {
+      lines.push(`**Jouw voortgang**`);
+      lines.push(`• ${sessionsPlayed} oefensessies gespeeld — gem. score: ${avgScore}%`);
+      if (techniquesUsed.length > 0) {
+        lines.push(`• Technieken geoefend: ${techniquesUsed.slice(0, 5).join(', ')}${techniquesUsed.length > 5 ? '...' : ''}`);
+      }
+      if (analysesCount > 0) {
+        lines.push(`• ${analysesCount} gesprek${analysesCount > 1 ? 'ken' : ''} geanalyseerd`);
+      }
+      lines.push('');
+      if (lastTechnique) {
+        lines.push(`Je was laatst bezig met "${lastTechnique}".`);
+      }
+    } else {
+      lines.push(`Dit is je eerste keer hier — welkom! Ik ben Hugo, je persoonlijke sales coach.\n`);
+      lines.push(`Ik kan je helpen met:`);
+      lines.push(`• Verkooptechnieken oefenen via rollenspel`);
+      lines.push(`• Je verkoopgesprekken analyseren`);
+      lines.push(`• Tips en uitleg over de EPIC-methode\n`);
+    }
+
+    lines.push(`Waar wil je mee aan de slag?`);
+
+    res.json({
+      welcomeMessage: lines.join('\n'),
+      progress: {
+        sessionsPlayed,
+        avgScore,
+        techniquesUsed,
+        analysesCount,
+        lastTechnique,
+      },
+      actions: sessionsPlayed > 0 ? [
+        { label: lastTechnique ? `Verder met ${lastTechnique}` : 'Oefenen', action: 'continue_practice' },
+        { label: 'Nieuwe techniek', action: 'new_technique' },
+        { label: 'Gesprek analyseren', action: 'upload_analysis' },
+        { label: 'Vraag stellen', action: 'open_question' },
+      ] : [
+        { label: 'Start mijn eerste oefening', action: 'first_practice' },
+        { label: 'Wat is EPIC?', action: 'explain_epic' },
+        { label: 'Gesprek uploaden', action: 'upload_analysis' },
+      ]
+    });
+  } catch (err: any) {
+    console.error('[User Welcome] Error:', err.message);
+    res.json({
+      welcomeMessage: `Hallo! Waar kan ik je vandaag mee helpen?`,
+      progress: null,
+      actions: []
+    });
+  }
+});
+
 // Health check - now shows FULL engine
 app.get("/api/health", (req, res) => {
   res.json({ 

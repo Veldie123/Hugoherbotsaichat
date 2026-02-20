@@ -22,6 +22,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useUser } from "../../contexts/UserContext";
+import { renderSimpleMarkdown } from "../../utils/renderMarkdown";
 import { AppLayout } from "./AppLayout";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -296,6 +297,25 @@ export function TalkToHugoAI({
     }
 
     const loadPersonalizedWelcome = async () => {
+      try {
+        const endpoint = isAdmin 
+          ? '/api/v2/admin/welcome'
+          : `/api/v2/user/welcome${user?.id ? `?userId=${user.id}` : ''}`;
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const data = await res.json();
+          setMessages([{
+            id: `welcome-${Date.now()}`,
+            sender: "ai",
+            text: data.welcomeMessage,
+            timestamp: new Date(),
+          }]);
+          console.log("[Hugo] Agent-first welcome loaded, isAdmin:", isAdmin, "userId:", user?.id);
+          return;
+        }
+      } catch (e) {
+        console.warn("[Hugo] Failed to load agent-first welcome, falling back:", e);
+      }
       const { message, summary } = await lastActivityService.getPersonalizedWelcome(user?.id || null);
       setMessages([{
         id: `welcome-${Date.now()}`,
@@ -303,7 +323,6 @@ export function TalkToHugoAI({
         text: message,
         timestamp: new Date(),
       }]);
-      console.log("[Hugo] Started proactive conversation, personalized:", !!summary, "userId:", user?.id);
     };
     loadPersonalizedWelcome();
   }, [user?.id]);
@@ -1259,7 +1278,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                     ))}
                   </div>
                 )}
-                {message.text && <p className="text-[14px] leading-[22px] whitespace-pre-wrap">{message.text}</p>}
+                {message.text && <div className="text-[14px] leading-[22px]">{renderSimpleMarkdown(message.text)}</div>}
               </div>
 
               {message.richContent && message.richContent.length > 0 && (
