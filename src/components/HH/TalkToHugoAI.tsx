@@ -1704,31 +1704,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           <div className={`${assistanceConfig.blindPlay || !desktopSidebarOpen ? 'w-full' : 'flex-1'} flex items-center justify-between px-3 lg:px-6 py-3 lg:py-4 bg-white`}>
             {/* Left: Help sidebar toggle + Title */}
             <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-              {/* Mobile: EPIC Tips button */}
-              {!assistanceConfig.blindPlay && (
-                <>
-                  <button
-                    onClick={() => setMobileSidebarOpen(true)}
-                    className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 -ml-1 rounded-full border border-hh-border bg-white hover:bg-hh-ui-50 transition-colors"
-                    aria-label="E.P.I.C. Tips"
-                  >
-                    <Lightbulb className="w-3.5 h-3.5" style={{ color: '#3C9A6E' }} />
-                    <span className="text-[12px] font-medium text-hh-text">E.P.I.C.</span>
-                  </button>
-                  <button
-                    onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-                    className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 -ml-1 rounded-full border transition-colors"
-                    style={{
-                      borderColor: desktopSidebarOpen ? '#3C9A6E' : undefined,
-                      backgroundColor: desktopSidebarOpen ? 'rgba(60,154,110,0.08)' : undefined,
-                    }}
-                    aria-label="E.P.I.C. Sidebar toggle"
-                  >
-                    <Lightbulb className="w-3.5 h-3.5" style={{ color: '#3C9A6E' }} />
-                    <span className="text-[12px] font-medium text-hh-text">E.P.I.C.</span>
-                  </button>
-                </>
-              )}
+              {/* E.P.I.C. sidebar toggle removed from header — accessible via lightbulb action button under messages */}
               <span className="text-[13px] text-hh-muted font-medium whitespace-nowrap flex items-center gap-1">
                 HugoGPT <span className="text-[11px] text-hh-muted/60 font-normal">v1.0</span>
               </span>
