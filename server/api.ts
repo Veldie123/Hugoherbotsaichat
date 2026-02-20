@@ -3852,30 +3852,19 @@ app.get("/api/v2/user/welcome", async (req: Request, res: Response) => {
     }
 
     const lines: string[] = [];
-    lines.push(`Hallo ${userName}! Welkom terug.\n`);
 
     if (sessionsPlayed > 0) {
-      lines.push(`**Jouw voortgang**`);
-      lines.push(`• ${sessionsPlayed} oefensessies gespeeld — gem. score: ${avgScore}%`);
-      if (techniquesUsed.length > 0) {
-        lines.push(`• Technieken geoefend: ${techniquesUsed.slice(0, 5).join(', ')}${techniquesUsed.length > 5 ? '...' : ''}`);
-      }
-      if (analysesCount > 0) {
-        lines.push(`• ${analysesCount} gesprek${analysesCount > 1 ? 'ken' : ''} geanalyseerd`);
-      }
-      lines.push('');
+      lines.push(`Hé ${userName}, goed je weer te zien.\n`);
+      lines.push(`**Jouw voortgang:** ${sessionsPlayed} sessies • gem. ${avgScore}%${analysesCount > 0 ? ` • ${analysesCount} analyse${analysesCount > 1 ? 's' : ''}` : ''}`);
       if (lastTechnique) {
-        lines.push(`Je was laatst bezig met "${lastTechnique}".`);
+        lines.push(`\nJe was laatst bezig met "${lastTechnique}". Verder gaan, of iets anders?`);
+      } else {
+        lines.push(`\nWaar kan ik je mee helpen?`);
       }
     } else {
-      lines.push(`Dit is je eerste keer hier — welkom! Ik ben Hugo, je persoonlijke sales coach.\n`);
-      lines.push(`Ik kan je helpen met:`);
-      lines.push(`• Verkooptechnieken oefenen via rollenspel`);
-      lines.push(`• Je verkoopgesprekken analyseren`);
-      lines.push(`• Tips en uitleg over de EPIC-methode\n`);
+      lines.push(`Hé ${userName}! Ik ben Hugo.\n`);
+      lines.push(`Ik help je beter verkopen — via rollenspel, video, webinars of door je echte gesprekken te analyseren. Vertel me wat je verkoopt, en we gaan aan de slag.`);
     }
-
-    lines.push(`Waar wil je mee aan de slag?`);
 
     res.json({
       welcomeMessage: lines.join('\n'),
