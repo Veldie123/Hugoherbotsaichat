@@ -1888,7 +1888,18 @@ export function AnalysisResults({
               style={{ backgroundColor: adminColors ? '#9910FA' : '#3C9A6E' }}
               onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#7C3AED' : '#2D7F57')}
               onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = adminColors ? '#9910FA' : '#3C9A6E')}
-              onClick={() => navigate?.("talk-to-hugo")}
+              onClick={() => {
+                const analysisContext = {
+                  analysisDiscussion: true,
+                  conversationId: conversationId,
+                  overallScore: result?.insights?.overallScore,
+                  title: result?.conversation?.title,
+                  summaryMarkdown: result?.insights?.summaryMarkdown,
+                  strengths: result?.insights?.strengths?.slice(0, 3),
+                  improvements: result?.insights?.improvements?.slice(0, 3),
+                };
+                navigate?.("talk-to-hugo", analysisContext);
+              }}
             >
               <Sparkles className="w-4 h-4" /> Bespreek met Hugo <ChevronRight className="w-4 h-4" />
             </button>

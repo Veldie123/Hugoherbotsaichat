@@ -114,11 +114,13 @@ type ChatMode = "chat" | "audio" | "video";
 interface TalkToHugoAIProps {
   navigate?: (page: string) => void;
   isAdmin?: boolean;
+  navigationData?: Record<string, any>;
 }
 
 export function TalkToHugoAI({
   navigate,
   isAdmin,
+  navigationData,
 }: TalkToHugoAIProps) {
   const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -296,11 +298,47 @@ export function TalkToHugoAI({
       }
     }
 
+    if (navigationData?.analysisDiscussion) {
+      const ctx = navigationData;
+      const title = ctx.title || 'je analyse';
+      const score = ctx.overallScore;
+      
+      let welcomeText = `Ik heb de analyse van **"${title}"** bekeken.`;
+      if (score !== undefined) {
+        welcomeText += ` De overall score is **${score}/100**.`;
+      }
+      welcomeText += `\n\n`;
+      
+      if (ctx.strengths?.length > 0) {
+        welcomeText += `**Sterke punten:**\n`;
+        ctx.strengths.forEach((s: any) => {
+          welcomeText += `- ${s.text}\n`;
+        });
+        welcomeText += `\n`;
+      }
+      if (ctx.improvements?.length > 0) {
+        welcomeText += `**Verbeterpunten:**\n`;
+        ctx.improvements.forEach((imp: any) => {
+          welcomeText += `- ${imp.text}\n`;
+        });
+        welcomeText += `\n`;
+      }
+      
+      welcomeText += `Wat wil je bespreken? Ik kan dieper ingaan op een specifiek punt, een oefening voorstellen, of tips geven voor verbetering.`;
+      
+      setMessages([{
+        id: `analysis-discuss-${Date.now()}`,
+        sender: "ai",
+        text: welcomeText,
+        timestamp: new Date(),
+      }]);
+      console.log("[Hugo] Analysis discussion loaded for:", title);
+      return;
+    }
+
     const loadPersonalizedWelcome = async () => {
       try {
-        const endpoint = isAdmin 
-          ? '/api/v2/admin/welcome'
-          : `/api/v2/user/welcome${user?.id ? `?userId=${user.id}` : ''}`;
+        const endpoint = `/api/v2/user/welcome${user?.id ? `?userId=${user.id}` : ''}`;
         const res = await fetch(endpoint);
         if (res.ok) {
           const data = await res.json();
@@ -310,11 +348,11 @@ export function TalkToHugoAI({
             text: data.welcomeMessage,
             timestamp: new Date(),
           }]);
-          console.log("[Hugo] Agent-first welcome loaded, isAdmin:", isAdmin, "userId:", user?.id);
+          console.log("[Hugo] User welcome loaded, userId:", user?.id);
           return;
         }
       } catch (e) {
-        console.warn("[Hugo] Failed to load agent-first welcome, falling back:", e);
+        console.warn("[Hugo] Failed to load user welcome, falling back:", e);
       }
       const { message, summary } = await lastActivityService.getPersonalizedWelcome(user?.id || null);
       setMessages([{
@@ -325,7 +363,7 @@ export function TalkToHugoAI({
       }]);
     };
     loadPersonalizedWelcome();
-  }, [user?.id]);
+  }, [user?.id, navigationData]);
 
   useEffect(() => {
     if (selectedTechnique) {

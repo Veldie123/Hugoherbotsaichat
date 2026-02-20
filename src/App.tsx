@@ -203,7 +203,7 @@ export default function App() {
           {currentPage === "hugo-overview" && <HugoAIOverview navigate={navigate} isAdmin={isAdmin} />}
           {currentPage === "roleplay" && <HugoAIOverview navigate={navigate} isAdmin={isAdmin} />}
           {currentPage === "roleplays" && <HugoAIOverview navigate={navigate} isAdmin={isAdmin} />}
-          {currentPage === "talk-to-hugo" && <TalkToHugoAI key={navigationData?.sessionId || 'default'} navigate={navigate} isAdmin={isAdmin} />}
+          {currentPage === "talk-to-hugo" && <TalkToHugoAI key={navigationData?.sessionId || navigationData?.conversationId || 'default'} navigate={navigate} isAdmin={isAdmin} navigationData={navigationData} />}
 
           {/* User View - Gespreksanalyse */}
           {currentPage === "analysis" && <Analysis navigate={navigate} isAdmin={isAdmin} />}
