@@ -173,9 +173,11 @@ interface DetailedMetrics {
     baatenFound: Array<{ turnIdx: number; text: string; type: string; quality: string }>;
     pijnpuntenFound: number;
     pijnpuntenUsed: number;
+    pijnpuntenDetails?: Array<{ turnIdx: number; text: string; usedInSolution: boolean }>;
     ovbChecks: Array<{ turnIdx: number; hasOplossing: boolean; hasVoordeel: boolean; hasBaat: boolean; quality: string; explanation: string }>;
     ovbQualityScore: number;
     commitBeforePhase3: boolean;
+    commitmentDetail?: { summaryGiven: boolean; confirmationAsked: boolean; turnIdx?: number };
     overallScore: number;
   };
   houdingen: {
@@ -1416,8 +1418,20 @@ export function AnalysisResults({
                     sub: dm.impact.ovbChecks.length > 0
                       ? dm.impact.ovbChecks[0]?.explanation || ''
                       : 'Oplossing → Voordeel → Baat niet toegepast',
-                    matches: dm.impact.ovbChecks.map(o => ({ turnIdx: o.turnIdx, type: `O:${o.hasOplossing ? '✓' : '✗'} V:${o.hasVoordeel ? '✓' : '✗'} B:${o.hasBaat ? '✓' : '✗'}`, recognized: o.quality === 'volledig', treated: o.quality !== 'geen' })),
-                    kind: 'treatment' as const,
+                    ...(dm.impact.ovbChecks.length > 0
+                      ? {
+                          matches: dm.impact.ovbChecks.map(o => ({ turnIdx: o.turnIdx, type: `O:${o.hasOplossing ? '✓' : '✗'} V:${o.hasVoordeel ? '✓' : '✗'} B:${o.hasBaat ? '✓' : '✗'}`, recognized: o.quality === 'volledig', treated: o.quality !== 'geen' })),
+                          kind: 'treatment' as const,
+                        }
+                      : {
+                          kind: 'checklist' as const,
+                          checklistItems: [
+                            { label: 'Oplossing benoemd', found: false },
+                            { label: 'Voordeel uitgelegd', found: false },
+                            { label: 'Baat voor klant', found: false },
+                          ],
+                        }
+                    ),
                   },
                   {
                     label: 'Pijnpunten',
@@ -1426,6 +1440,28 @@ export function AnalysisResults({
                     sub: dm.impact.pijnpuntenUsed > 0
                       ? 'Vertaald naar oplossing'
                       : (dm.impact.pijnpuntenFound > 0 ? 'Niet vertaald naar oplossing' : 'Geen pijnpunten benoemd'),
+                    ...(dm.impact.pijnpuntenDetails && dm.impact.pijnpuntenDetails.length > 0
+                      ? {
+                          matches: dm.impact.pijnpuntenDetails.map(p => ({ turnIdx: p.turnIdx, type: p.text, recognized: p.usedInSolution, treated: p.usedInSolution })),
+                          kind: 'treatment' as const,
+                        }
+                      : (dm.impact.pijnpuntenFound > 0
+                        ? {
+                            kind: 'checklist' as const,
+                            checklistItems: [
+                              { label: `${dm.impact.pijnpuntenFound} pijnpunt${dm.impact.pijnpuntenFound > 1 ? 'en' : ''} gedetecteerd`, found: true },
+                              { label: 'Vertaald naar oplossing', found: dm.impact.pijnpuntenUsed > 0 },
+                            ],
+                          }
+                        : {
+                            kind: 'checklist' as const,
+                            checklistItems: [
+                              { label: 'Pijnpunten besproken', found: false },
+                              { label: 'Vertaald naar oplossing', found: false },
+                            ],
+                          }
+                      )
+                    ),
                   },
                   {
                     label: 'Commitment vóór fase 3',
@@ -1434,6 +1470,12 @@ export function AnalysisResults({
                     sub: dm.impact.commitBeforePhase3
                       ? 'Klant bevestigde begrip voordat aanbeveling kwam'
                       : 'Geen commitment gevraagd vóór aanbeveling',
+                    kind: 'checklist' as const,
+                    checklistItems: [
+                      { label: 'Samenvatting gegeven', found: dm.impact.commitmentDetail?.summaryGiven ?? false },
+                      { label: 'Bevestiging gevraagd', found: dm.impact.commitmentDetail?.confirmationAsked ?? false },
+                      { label: 'Vóór fase 3 (aanbeveling)', found: dm.impact.commitBeforePhase3 },
+                    ],
                   },
                 ],
               },

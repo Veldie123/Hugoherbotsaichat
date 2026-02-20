@@ -56,13 +56,27 @@ export interface OVBCheck {
   explanation: string;
 }
 
+export interface PijnpuntDetail {
+  turnIdx: number;
+  text: string;
+  usedInSolution: boolean;
+}
+
+export interface CommitmentDetail {
+  summaryGiven: boolean;
+  confirmationAsked: boolean;
+  turnIdx?: number;
+}
+
 export interface ImpactMetrics {
   baatenFound: BaatFound[];
   pijnpuntenFound: number;
   pijnpuntenUsed: number;
+  pijnpuntenDetails?: PijnpuntDetail[];
   ovbChecks: OVBCheck[];
   ovbQualityScore: number;
   commitBeforePhase3: boolean;
+  commitmentDetail?: CommitmentDetail;
   overallScore: number;
 }
 
@@ -555,12 +569,23 @@ async function computeImpactMetrics(
   phaseCoverage: PhaseCoverage
 ): Promise<ImpactMetrics> {
   const allTechIds = evaluations.flatMap(e => e.techniques.map(t => t.id));
-  const commitBeforePhase3 = (() => {
+  const commitResult = (() => {
     const commitEval = evaluations.find(e => e.techniques.some(t => t.id.startsWith('2.4')));
     const phase3Eval = evaluations.find(e => e.techniques.some(t => t.id.startsWith('3.')));
-    if (!commitEval || !phase3Eval) return false;
-    return commitEval.turnIdx < phase3Eval.turnIdx;
+    const summaryEval = evaluations.find(e => e.techniques.some(t => t.id === '2.4.1' || t.id === '2.4.2'));
+    const confirmEval = evaluations.find(e => e.techniques.some(t => t.id === '2.4.3' || t.id === '2.4.4'));
+    const beforePhase3 = (commitEval && phase3Eval) ? commitEval.turnIdx < phase3Eval.turnIdx : false;
+    return {
+      commitBeforePhase3: beforePhase3,
+      commitmentDetail: {
+        summaryGiven: !!summaryEval,
+        confirmationAsked: !!confirmEval,
+        turnIdx: commitEval?.turnIdx,
+      }
+    };
   })();
+  const commitBeforePhase3 = commitResult.commitBeforePhase3;
+  const commitmentDetail = commitResult.commitmentDetail;
 
   const phasePerTurn = computePhasePerTurn(evaluations);
   
@@ -571,6 +596,7 @@ async function computeImpactMetrics(
   let ovbChecks: OVBCheck[] = [];
   let pijnpuntenFound = 0;
   let pijnpuntenUsed = 0;
+  let pijnpuntenDetails: PijnpuntDetail[] = [];
 
   if (relevantText.length > 50) {
     try {
@@ -594,6 +620,9 @@ Analyseer en geef JSON:
   ],
   "pijnpunten_found": 2,
   "pijnpunten_used": 1,
+  "pijnpunten_details": [
+    {"turnIdx": 8, "text": "korte beschrijving van het pijnpunt", "usedInSolution": false}
+  ],
   "ovb_checks": [
     {"turnIdx": 30, "hasOplossing": true, "hasVoordeel": true, "hasBaat": false, "quality": "gedeeltelijk", "explanation": "Noemt oplossing en voordeel maar geen persoonlijke baat"}
   ]
@@ -626,6 +655,11 @@ Let op:
         }));
         pijnpuntenFound = parsed.pijnpunten_found || 0;
         pijnpuntenUsed = parsed.pijnpunten_used || 0;
+        pijnpuntenDetails = (parsed.pijnpunten_details || []).map((p: any) => ({
+          turnIdx: p.turnIdx || 0,
+          text: p.text || '',
+          usedInSolution: p.usedInSolution || false,
+        }));
         ovbChecks = (parsed.ovb_checks || []).map((o: any) => ({
           turnIdx: o.turnIdx || 0,
           hasOplossing: o.hasOplossing || false,
@@ -662,9 +696,11 @@ Let op:
     baatenFound,
     pijnpuntenFound,
     pijnpuntenUsed,
+    pijnpuntenDetails: pijnpuntenDetails.length > 0 ? pijnpuntenDetails : undefined,
     ovbChecks,
     ovbQualityScore: Math.min(100, ovbQualityScore),
     commitBeforePhase3,
+    commitmentDetail,
     overallScore: Math.min(100, overallScore),
   };
 }
