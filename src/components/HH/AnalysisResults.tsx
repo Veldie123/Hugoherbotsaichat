@@ -1578,6 +1578,12 @@ export function AnalysisResults({
                       : dm.balance.talkRatio.verdict === 'te_weinig_verkoper'
                       ? 'Verkoper neemt te weinig initiatief'
                       : 'Goed evenwicht',
+                    kind: 'checklist' as const,
+                    checklistItems: [
+                      { label: `Verkoper: ${dm.balance.talkRatio.sellerPercent}% spreektijd`, found: dm.balance.talkRatio.sellerPercent <= 60 },
+                      { label: `Klant: ${dm.balance.talkRatio.customerPercent}% spreektijd`, found: dm.balance.talkRatio.customerPercent >= 40 },
+                      { label: 'Ideaal: verkoper ≤ 60%, klant ≥ 40%', found: dm.balance.talkRatio.verdict === 'goed' },
+                    ],
                   },
                   {
                     label: '"Wij/ik" vs "U/jij"',
@@ -1588,6 +1594,12 @@ export function AnalysisResults({
                       : dm.balance.perspective.verdict === 'zelfgericht'
                       ? 'Te veel "wij doen dit, wij bieden dat"'
                       : 'Gemengd perspectief',
+                    kind: 'checklist' as const,
+                    checklistItems: [
+                      { label: `"U/jij" perspectief: ${dm.balance.perspective.uJijCount}x`, found: dm.balance.perspective.uJijCount > dm.balance.perspective.wijIkCount },
+                      { label: `"Wij/ik" perspectief: ${dm.balance.perspective.wijIkCount}x`, found: dm.balance.perspective.wijIkCount < dm.balance.perspective.uJijCount },
+                      { label: `Ratio: ${dm.balance.perspective.ratio.toFixed(1)}x klantgericht`, found: dm.balance.perspective.verdict === 'klantgericht' },
+                    ],
                   },
                   {
                     label: 'Vraag-ratio (Fase 2)',
@@ -1612,6 +1624,12 @@ export function AnalysisResults({
                     sub: dm.balance.clientLanguage.examples.length > 0
                       ? `Bijv: ${dm.balance.clientLanguage.examples.slice(0, 3).join(', ')}`
                       : 'Geen klanttermen hergebruikt',
+                    kind: 'checklist' as const,
+                    checklistItems: dm.balance.clientLanguage.examples.length > 0
+                      ? dm.balance.clientLanguage.examples.slice(0, 6).map(term => ({
+                          label: `"${term}"`, found: true,
+                        }))
+                      : [{ label: 'Klanttermen hergebruikt', found: false }],
                   },
                 ],
               },
