@@ -22,6 +22,20 @@ import { fileURLToPath } from 'node:url';
 // Speech humanizer disabled — ElevenLabs turbo v2.5 handles natural pacing natively
 // import { getHumanizerForModel } from './v2/speech-humanizer';
 
+function cleanTextForTTS(text: string): string {
+  let cleaned = text;
+  cleaned = cleaned.replace(/\.{2,}/g, '.');
+  cleaned = cleaned.replace(/—/g, ',');
+  cleaned = cleaned.replace(/–/g, ',');
+  cleaned = cleaned.replace(/\*\*/g, '');
+  cleaned = cleaned.replace(/\*/g, '');
+  cleaned = cleaned.replace(/#/g, '');
+  cleaned = cleaned.replace(/\n{2,}/g, '. ');
+  cleaned = cleaned.replace(/\n/g, ' ');
+  cleaned = cleaned.replace(/\s{2,}/g, ' ');
+  return cleaned.trim();
+}
+
 interface HugoSessionState {
   sessionId: string | null;
   techniqueId: string;
@@ -115,13 +129,20 @@ export default defineAgent({
     let debounceTimer: NodeJS.Timeout | null = null;
     
     // Use ElevenLabs plugin with Hugo Herbots' cloned voice
-    // eleven_turbo_v2_5: best balance of quality + speed for Dutch (~100ms TTFB)
-    // Speech humanizer DISABLED — ElevenLabs handles natural pacing natively
-    const TTS_MODEL = 'eleven_turbo_v2_5';
+    // eleven_multilingual_v2: highest quality for Dutch — best intonation, question marks, natural pacing
+    // voiceSettings tuned for consistent volume, natural speed, and voice clone fidelity
+    const TTS_MODEL = 'eleven_multilingual_v2';
     const hugoTTS = new elevenlabsPlugin.TTS({
       voiceId: 'sOsTzBXVBqNYMd5L4sCU',
       model: TTS_MODEL,
       apiKey: process.env.ELEVENLABS_API_KEY,
+      voiceSettings: {
+        stability: 0.75,
+        similarity_boost: 0.80,
+        style: 0.15,
+        speed: 0.92,
+        use_speaker_boost: true,
+      },
     });
     console.log(`[LiveKit Agent] Using Hugo voice (${TTS_MODEL}) - voiceId: sOsTzBXVBqNYMd5L4sCU`);
     
@@ -170,9 +191,10 @@ export default defineAgent({
       
       try {
         const response = await sendMessageToV2(sessionState.sessionId, transcript);
-        console.log('[LiveKit Agent] V2 response:', response.substring(0, 100));
+        const cleaned = cleanTextForTTS(response);
+        console.log('[LiveKit Agent] V2 response:', cleaned.substring(0, 100));
         
-        await session.say(response);
+        await session.say(cleaned);
         console.log('[LiveKit Agent] TTS response sent');
       } catch (error) {
         console.error('[LiveKit Agent] Error processing message:', error);
