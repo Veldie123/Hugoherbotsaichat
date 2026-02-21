@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import MuxPlayer from "@mux/mux-player-react";
 import { getTechniekByNummer, getAllTechnieken, getTechniekenByFase } from "../../data/technieken-service";
 
 interface AnalysisResultsProps {
@@ -231,6 +232,65 @@ const PHASE_LABELS: Record<number, { name: string; description: string; color: s
   3: { name: 'Fase 3: Aanbeveling', description: 'O.V.B., USP\'s, Mening vragen', color: 'text-purple-700', bgColor: 'bg-purple-50 border-purple-200' },
   4: { name: 'Fase 4: Beslissing', description: 'Bezwaarbehandeling, Closing', color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200' },
 };
+
+function VideoRecommendationCard({ video, adminColors }: { video: any; adminColors: boolean }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const hasMux = !!video.muxPlaybackId;
+
+  if (isPlaying && hasMux) {
+    return (
+      <div className="rounded-xl overflow-hidden border" style={{ borderColor: adminColors ? '#9910FA20' : '#4F739620' }}>
+        <div className="relative">
+          <button
+            onClick={() => setIsPlaying(false)}
+            className="absolute top-2 right-2 z-10 p-1 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <MuxPlayer
+            playbackId={video.muxPlaybackId}
+            autoPlay
+            style={{ width: '100%', aspectRatio: '16/9' }}
+            streamType="on-demand"
+            primaryColor="#3C9A6E"
+            accentColor={adminColors ? '#9910FA' : '#3C9A6E'}
+          />
+        </div>
+        <div className="px-3 py-2" style={{ backgroundColor: adminColors ? '#9910FA05' : '#4F739605' }}>
+          <p className="text-[12px] font-medium text-hh-text truncate">{video.title}</p>
+          <p className="text-[10px] text-hh-muted">{video.techniqueName}{video.durationSeconds ? ` · ${Math.round(video.durationSeconds / 60)} min` : ''}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => hasMux && setIsPlaying(true)}
+      className="w-full flex items-center gap-3 p-2.5 rounded-lg border text-left transition-all"
+      style={{
+        borderColor: adminColors ? '#9910FA15' : '#4F739615',
+        backgroundColor: adminColors ? '#9910FA05' : '#4F739605',
+        cursor: hasMux ? 'pointer' : 'default',
+      }}
+    >
+      <div
+        className="rounded-lg flex items-center justify-center flex-shrink-0 transition-transform"
+        style={{
+          width: 36, height: 36,
+          backgroundColor: adminColors ? '#9910FA15' : '#3C9A6E15',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill={adminColors ? '#9910FA' : '#3C9A6E'} stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[12px] font-medium text-hh-text truncate">{video.title}</p>
+        <p className="text-[10px] text-hh-muted">{video.techniqueName}{video.durationSeconds ? ` · ${Math.round(video.durationSeconds / 60)} min` : ''}</p>
+      </div>
+      {hasMux && <span className="text-[10px] font-medium flex-shrink-0" style={{ color: adminColors ? '#9910FA' : '#3C9A6E' }}>Afspelen</span>}
+    </button>
+  );
+}
 
 export function AnalysisResults({
   navigate,
@@ -1027,15 +1087,15 @@ export function AnalysisResults({
 
           {/* SECTION 1: Full-width score header — score ring + phase scores */}
           <div className="p-4 sm:p-5 mb-6 sm:mb-8">
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
-              <div className="relative flex-shrink-0" style={{ width: '80px', height: '80px' }}>
-                <svg width="80" height="80" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="#E5E7EB" strokeWidth="7" />
+            <div className="flex flex-col items-center gap-5 sm:gap-8 sm:flex-row">
+              <div className="relative flex-shrink-0" style={{ width: '140px', height: '140px' }}>
+                <svg width="140" height="140" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#E5E7EB" strokeWidth="6" />
                   <circle
                     cx="50" cy="50" r="42"
                     fill="none"
                     stroke={adminColors ? '#9910FA' : '#3C9A6E'}
-                    strokeWidth="7"
+                    strokeWidth="6"
                     strokeLinecap="round"
                     strokeDasharray={`${2 * Math.PI * 42}`}
                     strokeDashoffset={`${2 * Math.PI * 42 * (1 - overallScore / 100)}`}
@@ -1043,19 +1103,19 @@ export function AnalysisResults({
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-[22px] font-bold text-hh-text leading-none">{overallScore}</span>
-                  <span className="text-[10px] text-hh-muted mt-0.5">%</span>
+                  <span className="font-bold text-hh-text leading-none" style={{ fontSize: '36px' }}>{overallScore}</span>
+                  <span className="text-hh-muted" style={{ fontSize: '14px', marginTop: '2px' }}>%</span>
                 </div>
               </div>
               <div className="flex-1 w-full min-w-0">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-2">
+                <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3">
                   {phaseScores.map((ps) => (
                     <div key={ps.phase}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] text-hh-text font-medium">{ps.sublabel}</span>
-                        <span className={`text-[11px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
+                        <span className="text-[12px] text-hh-text font-medium">{ps.sublabel}</span>
+                        <span className={`text-[12px] font-semibold ${getScoreColor(ps.score)}`}>{ps.score}%</span>
                       </div>
-                      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-700"
                           style={{
@@ -1230,15 +1290,7 @@ export function AnalysisResults({
                                   Aanbevolen trainingsmateriaal:
                                 </p>
                                 {(moment as any).videoRecommendations.map((video: any, vi: number) => (
-                                  <div key={vi} className="flex items-center gap-3 p-2.5 rounded-lg border" style={{ borderColor: adminColors ? '#9910FA15' : '#4F739615', backgroundColor: adminColors ? '#9910FA05' : '#4F739605' }}>
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: adminColors ? '#9910FA15' : '#3C9A6E15' }}>
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={adminColors ? '#9910FA' : '#3C9A6E'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <p className="text-[12px] font-medium text-hh-text truncate">{video.title}</p>
-                                      <p className="text-[10px] text-hh-muted">{video.techniqueName}{video.durationSeconds ? ` · ${Math.round(video.durationSeconds / 60)} min` : ''}</p>
-                                    </div>
-                                  </div>
+                                  <VideoRecommendationCard key={vi} video={video} adminColors={adminColors} />
                                 ))}
                               </div>
                             )}

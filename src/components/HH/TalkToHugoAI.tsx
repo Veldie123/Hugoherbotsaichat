@@ -1544,9 +1544,15 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                   </button>
                   {!assistanceConfig.blindPlay && (
                     <button
-                      onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+                      onClick={() => {
+                        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                          setMobileSidebarOpen(!mobileSidebarOpen);
+                        } else {
+                          setDesktopSidebarOpen(!desktopSidebarOpen);
+                        }
+                      }}
                       className={`p-1.5 rounded-md transition-colors ${
-                        desktopSidebarOpen
+                        (desktopSidebarOpen || mobileSidebarOpen)
                           ? "bg-[#3C9A6E]/10"
                           : "hover:bg-[#3C9A6E]/10"
                       }`}
