@@ -369,15 +369,17 @@ export function TalkToHugoAI({
   }, [user?.id, navigationData]);
 
   useEffect(() => {
-    if (selectedTechnique) {
+    if (selectedTechnique || audioConnectionState === ConnectionState.Connected) {
       timerRef.current = setInterval(() => {
         setSessionTimer(prev => prev + 1);
       }, 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [selectedTechnique]);
+  }, [selectedTechnique, audioConnectionState]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -1545,10 +1547,11 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
                   {!assistanceConfig.blindPlay && (
                     <button
                       onClick={() => {
-                        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                          setMobileSidebarOpen(!mobileSidebarOpen);
-                        } else {
+                        const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
+                        if (isDesktop) {
                           setDesktopSidebarOpen(!desktopSidebarOpen);
+                        } else {
+                          setMobileSidebarOpen(!mobileSidebarOpen);
                         }
                       }}
                       className={`p-1.5 rounded-md transition-colors ${
@@ -1719,7 +1722,7 @@ ${evaluation.nextSteps.map(s => `- ${s}`).join('\n')}`;
           )}
         </div>
         
-        <h3 className="text-white text-[26px] font-bold mb-1">Hugo AI Coach</h3>
+        <h3 className="text-white text-[26px] font-bold mb-1">Hugo Herbots <sup className="text-[14px] font-semibold" style={{ verticalAlign: 'super' }}>AI</sup></h3>
         <p className="text-[16px] mb-2" style={{ color: 'rgba(255,255,255,0.8)' }}>
           {isAudioConnecting ? "Verbinden..." : audioConnectionState === ConnectionState.Connected ? "Verbonden" : "Audio modus"}
         </p>

@@ -19,7 +19,8 @@ import {
 import * as silero from '@livekit/agents-plugin-silero';
 import * as elevenlabsPlugin from '@livekit/agents-plugin-elevenlabs';
 import { fileURLToPath } from 'node:url';
-import { getHumanizerForModel } from './v2/speech-humanizer';
+// Speech humanizer disabled — ElevenLabs turbo v2.5 handles natural pacing natively
+// import { getHumanizerForModel } from './v2/speech-humanizer';
 
 interface HugoSessionState {
   sessionId: string | null;
@@ -114,17 +115,14 @@ export default defineAgent({
     let debounceTimer: NodeJS.Timeout | null = null;
     
     // Use ElevenLabs plugin with Hugo Herbots' cloned voice
-    // Note: eleven_v3 is NOT yet supported by LiveKit plugin (requires single-stream WebSocket)
-    // Using eleven_flash_v2_5 for lowest latency with good quality
-    // When LiveKit adds v3 support, change TTS_MODEL to 'eleven_v3' for emotion tags
-    const TTS_MODEL = 'eleven_flash_v2_5';
+    // eleven_turbo_v2_5: best balance of quality + speed for Dutch (~100ms TTFB)
+    // Speech humanizer DISABLED — ElevenLabs handles natural pacing natively
+    const TTS_MODEL = 'eleven_turbo_v2_5';
     const hugoTTS = new elevenlabsPlugin.TTS({
       voiceId: 'sOsTzBXVBqNYMd5L4sCU',
       model: TTS_MODEL,
       apiKey: process.env.ELEVENLABS_API_KEY,
-      streamingLatency: 2,
     });
-    const humanize = getHumanizerForModel(TTS_MODEL);
     console.log(`[LiveKit Agent] Using Hugo voice (${TTS_MODEL}) - voiceId: sOsTzBXVBqNYMd5L4sCU`);
     
     // Create session WITHOUT LLM - we use V2 engine exclusively
@@ -174,11 +172,7 @@ export default defineAgent({
         const response = await sendMessageToV2(sessionState.sessionId, transcript);
         console.log('[LiveKit Agent] V2 response:', response.substring(0, 100));
         
-        // Humanize the response for more natural speech (pauses, hesitations)
-        const humanizedResponse = humanize(response);
-        console.log('[LiveKit Agent] Humanized response:', humanizedResponse.substring(0, 120));
-        
-        await session.say(humanizedResponse);
+        await session.say(response);
         console.log('[LiveKit Agent] TTS response sent');
       } catch (error) {
         console.error('[LiveKit Agent] Error processing message:', error);
@@ -259,11 +253,9 @@ export default defineAgent({
       sessionState.sessionId = sessionId;
       console.log(`[LiveKit Agent] V2 Session: ${sessionId}`);
       
-      // Humanize and send greeting immediately
-      const humanizedGreeting = humanize(greeting);
       try {
-        await session.say(humanizedGreeting);
-        console.log('[LiveKit Agent] Greeting sent (humanized)');
+        await session.say(greeting);
+        console.log('[LiveKit Agent] Greeting sent');
       } catch (ttsErr) {
         console.error('[LiveKit Agent] Greeting TTS error:', ttsErr);
       }
